@@ -6,6 +6,9 @@
 #include <math.h>
 #include <iostream>
 
+#include <string>
+#include <cstring>
+
 #include <vector>
 #include <stdio.h>
 
@@ -50,8 +53,6 @@ bool loadOBJ(
         if ( strcmp( lineHeader, "v" ) == 0 ){
             glm::vec3 vertex;
             fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z );
-
-            cout<<"vertex"<<vertex.x<<endl;
             temp_vertices.push_back(vertex);
         }
   //       else if ( strcmp( lineHeader, "vt" ) == 0 ){
@@ -63,7 +64,6 @@ bool loadOBJ(
         else if ( strcmp( lineHeader, "vn" ) == 0 ){
             glm::vec3 normal;
             fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z );
-            //cout<<"normal"<<normal.x<<endl;
             temp_normals.push_back(normal);
         }
         else if ( strcmp( lineHeader, "f" ) == 0 ){
@@ -77,9 +77,7 @@ bool loadOBJ(
     vertexIndices.push_back(vertexIndex[0]);
     vertexIndices.push_back(vertexIndex[1]);
     vertexIndices.push_back(vertexIndex[2]);
-    // uvIndices    .push_back(uvIndex[0]);
-    // uvIndices    .push_back(uvIndex[1]);
-    // uvIndices    .push_back(uvIndex[2]);
+
     normalIndices.push_back(normalIndex[0]);
     normalIndices.push_back(normalIndex[1]);
     normalIndices.push_back(normalIndex[2]);
@@ -126,20 +124,9 @@ void debug() {
 
 int main(int argc, char** argv) {
 
-    glutInit(&argc, argv);
-    glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-    glutInitWindowSize(800, 600);
-    glutInitWindowPosition(150, 150);
-    glutCreateWindow("Generic RPG 3D");
 
     debug();
     bool obj = loadOBJ("obj_tool.obj",vertices, normals);
 
-
-    glEnable (GL_DEPTH_TEST);
-    glEnable (GL_LIGHTING);
-    glEnable (GL_LIGHT0);
-
-    glutMainLoop();
     return 0;
 }
