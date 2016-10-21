@@ -5,6 +5,11 @@ find_package(catkin_simple REQUIRED)
 
 #uncomment next line to use OpenCV library
 find_package(OpenCV REQUIRED)
+find_package(OpenGL REQUIRED)
+
+find_package(GLEW REQUIRED)
+find_package(GLUT REQUIRED)
+find_package(GLU REQUIRED)
 
 #uncomment the next line to use the point-cloud library
 #find_package(PCL 1.7 REQUIRED)
@@ -14,6 +19,9 @@ find_package(OpenCV REQUIRED)
 #find_package(Eigen3 REQUIRED)
 #include_directories(${EIGEN3_INCLUDE_DIR})
 #add_definitions(${EIGEN_DEFINITIONS})
+
+include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS}  ${GLEW_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS} ${GLU_INCLUDE_DIRS})
 
 catkin_simple()
 
@@ -34,7 +42,7 @@ cs_add_executable(showing_image src/showing_image.cpp)
 #the following is required, if desire to link a node in this package with a library created in this same package
 # edit the arguments to reference the named node and named library within this package
 # target_link_library(example my_lib)
-
+target_link_libraries(showing_image ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 cs_install()
 cs_export()
     

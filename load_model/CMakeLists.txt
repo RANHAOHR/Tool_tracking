@@ -1,10 +1,9 @@
-cmake_minimum_required(VERSION 2.8.3)
-project(tooltrack)
+cmake_minimum_required(VERSION 2.8)
+project(test_opengl)
 
-find_package(catkin_simple REQUIRED)
 
 #uncomment next line to use OpenCV library
-find_package(OpenCV REQUIRED)
+find_package(OpenGL REQUIRED)
 
 #uncomment the next line to use the point-cloud library
 #find_package(PCL 1.7 REQUIRED)
@@ -15,10 +14,13 @@ find_package(OpenCV REQUIRED)
 #include_directories(${EIGEN3_INCLUDE_DIR})
 #add_definitions(${EIGEN_DEFINITIONS})
 
-include_directories(include ${catkin_INCLUDE_DIRS})
-include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
+#include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
+find_package(GLEW REQUIRED)
+find_package(GLUT REQUIRED)
+find_package(GLU REQUIRED)
 
-catkin_simple()
+
+include_directories(SYSTEM ${OPENGL_INCLUDE_DIRS}  ${GLEW_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS} ${GLU_INCLUDE_DIRS} )
 
 # example boost usage
 # find_package(Boost REQUIRED COMPONENTS system thread)
@@ -32,12 +34,13 @@ catkin_simple()
 
 # Executables: uncomment the following and edit arguments to compile new nodes
 # may add more of these lines for more nodes from the same package
-cs_add_executable(showing_image src/showing_image.cpp)
+add_executable(load_main load_main.cpp)
+
 
 #the following is required, if desire to link a node in this package with a library created in this same package
 # edit the arguments to reference the named node and named library within this package
-# target_link_library(example my_lib)
-target_link_libraries(showing_image ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-cs_install()
-cs_export()
+# target_link_library(example my_lib), put GLEW IN FRONT OF OTHERS
+target_link_libraries(load_main ${OpenGL_LIBRARIES} ${GLUT_LIBRARY} ${GLU_LIBRARY} )
+#target_link_libraries(loadfeature ${OpenGL_LIBRARIES} ${GLEW_LIBRARY} ${GLUT_LIBRARY} ${GLU_LIBRARY})
+
     

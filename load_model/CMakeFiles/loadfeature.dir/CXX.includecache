@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/deeplearning/ros_ws/src/test_opengl/loadfeature.cpp
+GL/glew.h
+-
+GL/gl.h
+-
+GL/glut.h
+-
+stdlib.h
+-
+stdio.h
+-
+math_3d.h
+/home/deeplearning/ros_ws/src/test_opengl/math_3d.h
+iostream
+-
+
+/home/deeplearning/ros_ws/src/test_opengl/math_3d.h
+stdio.h
+-
+math.h
+-
+

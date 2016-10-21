@@ -1,0 +1,34 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/deeplearning/ros_ws/src/test_opengl/load_main.cpp
+GL/gl.h
+-
+GL/glut.h
+-
+GL/glu.h
+-
+stdlib.h
+-
+math.h
+-
+iostream
+-
+vector
+-
+stdio.h
+-
+string
+-
+cstring
+-
+glm/vec3.hpp
+-
+glm/vec2.hpp
+-
+

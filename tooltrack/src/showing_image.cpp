@@ -25,7 +25,7 @@ int main(int argc, char** argv){
   int c;
 
   /// Load an image
-  src = imread( argv[1] );
+  src = imread("tool1.jpg");
 
   if( !src.data )
   { return -1; }

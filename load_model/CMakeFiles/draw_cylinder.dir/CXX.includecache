@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/deeplearning/ros_ws/src/test_opengl/draw_cylinder.cpp
+GL/gl.h
+-
+GL/glut.h
+-
+GL/glu.h
+-
+stdlib.h
+-
+stdio.h
+-
+math.h
+-
+
