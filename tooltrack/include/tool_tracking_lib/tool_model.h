@@ -5,12 +5,17 @@
 #include <stdio.h>
 #include <iostream>
 
-#include <glm/vec3.hpp>
-
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <stdlib.h>
+#include <math.h>
 
+#include <string>
+#include <cstring>
+
+#include <glm/vec3.hpp>
+#include <glm/vec2.hpp>
 
 
 class ToolModel{
@@ -66,11 +71,11 @@ class ToolModel{
 
  		double randomNumber(double stdev, double mean);
 
- 		 void load_model_vertices();
+ 		void load_model_vertices(std::vector< glm::vec3 > &out_vertices );
 
  		toolModel setRandomConfig(const toolModel &initial, double stdev, double mean);
 
- 		// cv::Rect renderTool();
+ 		cv::Rect renderTool(const toolModel &initial, double stdev, double mean);
 
  		// double calculateMatchingScore();
 

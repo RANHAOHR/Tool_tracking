@@ -13,6 +13,7 @@
 
 using cv_projective::reprojectPoint;
 boost::mt19937 rng(time(0));
+using namespace std;
 
 //constructor
 ToolModel::ToolModel(){
@@ -39,8 +40,95 @@ double ToolModel::randomNumber(double stdev, double mean){
 }
 
 //set zero configuratio for tool points;
-ToolModel::load_model_vertices(){
+ToolModel::load_model_vertices( std::vector< glm::vec3 > &out_vertices ){
 
+    printf("Loading OBJ file %s...\n", path);
+
+    std::vector< unsigned int > vertexIndices, uvIndices, normalIndices;
+    //std::vector< unsigned int > vertexIndices;
+	std::vector< glm::vec3 > temp_vertices;
+	std::vector< glm::vec2 > temp_uvs;
+	std::vector< glm::vec3 > temp_normals;
+
+    FILE * file = fopen(path, "r");
+    if( file == NULL ){
+        printf("Impossible to open the file ! Are you in the right path ? See Tutorial 1 for details\n");
+        return false;
+    }
+
+    while( 1 ){
+
+        char lineHeader[128];
+        // read the first word of the line
+        int res = fscanf(file, "%s", lineHeader);
+        if (res == EOF)
+            break; // EOF = End Of File. Quit the loop.
+
+        // else : parse lineHeader
+        
+        if ( strcmp( lineHeader, "v" ) == 0 ){
+            glm::vec3 vertex;
+            
+            fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z );
+            // cout<<"vertex x"<< vertex.x<<endl;
+            // cout<<"vertex y"<<vertex.y<<endl;
+            // cout<<"vertex z"<<vertex.z<<endl;
+            temp_vertices.push_back(vertex);
+        }
+
+        else if ( strcmp( lineHeader, "vt" ) == 0 ){
+	    glm::vec2 uv;
+	    fscanf(file, "%f %f\n", &uv.x, &uv.y );
+	    // cout<<"uv"<<uv.x<<endl;
+	    temp_uvs.push_back(uv);
+		} 
+        else if ( strcmp( lineHeader, "vn" ) == 0 ){
+            glm::vec3 normal;
+            fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z );
+            // cout<<"normal x"<< normal.x<<endl;
+            // cout<<"normal y"<< normal.y<<endl;
+            // cout<<"normal z"<< normal.z<<endl;
+            temp_normals.push_back(normal);
+        }
+        else if ( strcmp( lineHeader, "f" ) == 0 ){
+    std::string vertex1, vertex2, vertex3;
+    unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+    int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
+    if (matches != 9){
+        printf("File can't be read by our simple parser : ( Try exporting with other options\n");
+        return false;
+    }
+    vertexIndices.push_back(vertexIndex[0]);
+    vertexIndices.push_back(vertexIndex[1]);
+    vertexIndices.push_back(vertexIndex[2]);
+    uvIndices    .push_back(uvIndex[0]);
+    uvIndices    .push_back(uvIndex[1]);
+    uvIndices    .push_back(uvIndex[2]);
+    normalIndices.push_back(normalIndex[0]);
+    normalIndices.push_back(normalIndex[1]);
+    normalIndices.push_back(normalIndex[2]);
+            
+        }
+    }
+
+    // For each vertex of each triangle
+    for( unsigned int i=0; i<vertexIndices.size(); i++ ){
+
+        // Get the indices of its attributes
+        unsigned int vertexIndex = vertexIndices[i];
+        
+        // Get the attributes thanks to the index
+        glm::vec3 vertex = temp_vertices[ vertexIndex-1 ];
+        
+        // Put the attributes in buffers
+        out_vertices.push_back(vertex);
+    
+    }
+
+    cout<<"size"<< out_vertices.size()<<endl;
+    printf("loaded file %s successfully.\n", path);
+
+    //return true;
 };
 
 toolModel ToolModel::setRandomConfig(const toolModel &initial, double stdev, double mean)
@@ -139,28 +227,27 @@ toolModel ToolModel::setRandomConfig(const toolModel &initial, double stdev, dou
     newTool.w_x(2) = rotation_mat(2)(0);
     /*get new tool model info*/
 
+
+
 	return newTool;
 }
 
+cv::Rect ToolModel::renderTool(const toolModel &tool_struct, double stdev, double mean){
+    cv::Matx<double,3,3> wz_mat;
 
-ToolModel::setRandomConfig(double stdev, double mean){
-
-	tvec(0) += randomNumber(stdev,mean);
-
-    cv::Matx<double,3,3> w_mat;
-
-	w_mat(0)(0) = 0;
-    w_mat(0)(1) = -w_z(2);
-    w_mat(0)(2) = w_z(1);
-    w_mat(1)(0) = w_z(2);
-    w_mat(1)(1) = 0;
-    w_mat(1)(2) = -w_z(0);
-    w_mat(2)(0) = -w_z(1);
-    w_mat(2)(1) = w_z(0);
-    w_mat(2)(2) = 0;
+	wz_mat(0)(0) = 0;
+    wz_mat(0)(1) = -newTool.w_z(2);
+    wz_mat(0)(2) = newTool.w_z(1);
+    wz_mat(1)(0) = newTool.w_z(2);
+    wz_mat(1)(1) = 0;
+    wz_mat(1)(2) = -newTool.w_z(0);
+    wz_mat(2)(0) = -newTool.w_z(1);
+    wz_mat(2)(1) = newTool.w_z(0);
+    wz_mat(2)(2) = 0;
 
 	cv::Matx<double,3,3> exp_R;
-    exp_R = I + w_mat * sin(theta_ellipse) + w_mat * w_mat * (1-cos(theta_ellipse));
+    exp_R = I + wz_mat * sin(newTool.theta_ellipse) + wz_mat * wz_mat * (1-cos(newTool.theta_ellipse));
+
 
 
 
