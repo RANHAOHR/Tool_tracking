@@ -18,16 +18,32 @@ using namespace std;
 //constructor
 ToolModel::ToolModel(){
 
-////////
+    /****a identity matrix****/
 	for(int i(0); i<3; i++){
 		for(int j(0);j<3;j++){
-			I(i)(j) = 0.0;
+			I[i][j] = 0.0;
 		}
 	}
-	I(1)(1) = 1;
-	I(2)(2) = 1;
-	I(3)(3) = 1;
-///////
+	I[0][0] = 1.0;
+	I[1][1] = 1.0;
+	I[2][2] = 1.0;
+
+    /****initialize the rotation and traslation points*****/
+    q_1[0] = 0;
+    q_1[1] = 40;
+    q_1[2] = 0;
+
+    q_2[0] = 0;
+    q_2[1] = 49.35;  //measure from the model
+    q_2[2] = 0;
+
+
+    /****initialize the vertices fo different part of tools****/
+	load_model_vertices("cylinder.obj", body_vertices );
+	load_model_vertices("ellipse.obj", ellipse_vertices );
+	load_model_vertices("griper1.obj", griper1_vertices );
+	load_model_vertices("griper2.obj", griper2_vertices );
+
 };
 
 double ToolModel::randomNumber(double stdev, double mean){
@@ -40,21 +56,21 @@ double ToolModel::randomNumber(double stdev, double mean){
 }
 
 //set zero configuratio for tool points;
-ToolModel::load_model_vertices( std::vector< glm::vec3 > &out_vertices ){
+void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > &out_vertices ){
 
-    printf("Loading OBJ file %s...\n", path);
+    printf("Loading file %s...\n", path);
+
+    FILE * file = fopen(path, "r");
+    if( file == NULL ){
+        printf("Impossible to open the file ! Are you in the right path ? See Tutorial 1 for details\n");
+        return;
+    }
 
     std::vector< unsigned int > vertexIndices, uvIndices, normalIndices;
     //std::vector< unsigned int > vertexIndices;
 	std::vector< glm::vec3 > temp_vertices;
 	std::vector< glm::vec2 > temp_uvs;
 	std::vector< glm::vec3 > temp_normals;
-
-    FILE * file = fopen(path, "r");
-    if( file == NULL ){
-        printf("Impossible to open the file ! Are you in the right path ? See Tutorial 1 for details\n");
-        return false;
-    }
 
     while( 1 ){
 
@@ -91,22 +107,22 @@ ToolModel::load_model_vertices( std::vector< glm::vec3 > &out_vertices ){
             temp_normals.push_back(normal);
         }
         else if ( strcmp( lineHeader, "f" ) == 0 ){
-    std::string vertex1, vertex2, vertex3;
-    unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
-    int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
-    if (matches != 9){
-        printf("File can't be read by our simple parser : ( Try exporting with other options\n");
-        return false;
-    }
-    vertexIndices.push_back(vertexIndex[0]);
-    vertexIndices.push_back(vertexIndex[1]);
-    vertexIndices.push_back(vertexIndex[2]);
-    uvIndices    .push_back(uvIndex[0]);
-    uvIndices    .push_back(uvIndex[1]);
-    uvIndices    .push_back(uvIndex[2]);
-    normalIndices.push_back(normalIndex[0]);
-    normalIndices.push_back(normalIndex[1]);
-    normalIndices.push_back(normalIndex[2]);
+        std::string vertex1, vertex2, vertex3;
+        unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+        int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
+        if (matches != 9){
+            printf("File can't be read by our simple parser : ( Try exporting with other options\n");
+            return;
+        }
+        vertexIndices.push_back(vertexIndex[0]);
+        vertexIndices.push_back(vertexIndex[1]);
+        vertexIndices.push_back(vertexIndex[2]);
+        uvIndices    .push_back(uvIndex[0]);
+        uvIndices    .push_back(uvIndex[1]);
+        uvIndices    .push_back(uvIndex[2]);
+        normalIndices.push_back(normalIndex[0]);
+        normalIndices.push_back(normalIndex[1]);
+        normalIndices.push_back(normalIndex[2]);
             
         }
     }
@@ -131,7 +147,9 @@ ToolModel::load_model_vertices( std::vector< glm::vec3 > &out_vertices ){
     //return true;
 };
 
-toolModel ToolModel::setRandomConfig(const toolModel &initial, double stdev, double mean)
+/*This function is to generate a tool model, contains the following info:
+traslation, raotion, new z axis, new x axis*/
+ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double stdev, double mean)
 {
 	// copy initial toolModel
 	toolModel newTool = initial;
@@ -178,75 +196,115 @@ toolModel ToolModel::setRandomConfig(const toolModel &initial, double stdev, dou
 
 
 
-   /***********compute exponential map for forward kinematics**********/
-	cv::Matx<double,3,3> roll_mat;
-	cv::Matx<double,3,3> pitch_mat;
-	cv::Matx<double,3,3> yaw_mat;
+   /***********computations for forward kinematics**********/
 
-    roll_mat(0)(0) = 1;
-    roll_mat(0)(1) = 0;
-    roll_mat(0)(2) = 0;
-    roll_mat(1)(0) = 0;
-    roll_mat(1)(1) = cos(newTool.rvec(0));
-    roll_mat(1)(2) = -sin(newTool.rvec(0));
-    roll_mat(2)(0) = 0;
-    roll_mat(2)(1) = sin(newTool.rvec(0));
-    roll_mat(2)(2) = cos(newTool.rvec(0));
+    roll_mat[0][0] = 1;
+    roll_mat[0][1] = 0;
+    roll_mat[0][2] = 0;
+    roll_mat[1][0] = 0;
+    roll_mat[1][1] = cos(newTool.rvec(0));
+    roll_mat[1][2] = -sin(newTool.rvec(0));
+    roll_mat[2][0] = 0;
+    roll_mat[2][1] = sin(newTool.rvec(0));
+    roll_mat[2][2] = cos(newTool.rvec(0));
 
-    pitch_mat(0)(0) = cos(newTool.rvec(1));
-    pitch_mat(0)(1) = 0;
-    pitch_mat(0)(2) = sin(newTool.rvec(1));
-    pitch_mat(1)(0) = 0;
-    pitch_mat(1)(1) = 1;
-    pitch_mat(1)(2) = 0;
-    pitch_mat(2)(0) = sin(newTool.rvec(1));
-    pitch_mat(2)(1) = 0;
-    pitch_mat(2)(2) = cos(newTool.rvec(1));
+    pitch_mat[0][0] = cos(newTool.rvec(1));
+    pitch_mat[0][1] = 0;
+    pitch_mat[0][2] = sin(newTool.rvec(1));
+    pitch_mat[1][0] = 0;
+    pitch_mat[1][1] = 1;
+    pitch_mat[1][2] = 0;
+    pitch_mat[2][0] = sin(newTool.rvec(1));
+    pitch_mat[2][1] = 0;
+    pitch_mat[2][2] = cos(newTool.rvec(1));
 
-    yaw_mat(0)(0) = cos(newTool.rvec(2));
-    yaw_mat(0)(1) = -sin(newTool.rvec(2));
-    yaw_mat(0)(2) = 0;
-    yaw_mat(1)(0) = sin(newTool.rvec(2));
-    yaw_mat(1)(1) = cos(newTool.rvec(2));
-    yaw_mat(1)(2) = 0;
-    yaw_mat(2)(0) = 0;
-    yaw_mat(2)(1) = 0;
-    yaw_mat(2)(2) = 1;
+    yaw_mat[0][0] = cos(newTool.rvec(2));
+    yaw_mat[0][1] = -sin(newTool.rvec(2));
+    yaw_mat[0][2] = 0;
+    yaw_mat[1][0] = sin(newTool.rvec(2));
+    yaw_mat[1][1] = cos(newTool.rvec(2));
+    yaw_mat[1][2] = 0;
+    yaw_mat[2][0] = 0;
+    yaw_mat[2][1] = 0;
+    yaw_mat[2][2] = 1;
 
-    cv::Matx<double,3,3> rotation_mat;
+
     rotation_mat = yaw_mat * pitch_mat * roll_mat;
     
-    //w is z of rotation mat
+    //w for the ellipse is z of rotation mat
     
-    newTool.w_z(0) = rotation_mat(0)(2);
-    newTool.w_z(1) = rotation_mat(1)(2);
-    newTool.w_z(2) = rotation_mat(2)(2);
+    newTool.w_z(0) = rotation_mat[0][2];
+    newTool.w_z(1) = rotation_mat[1][2];
+    newTool.w_z(2) = rotation_mat[2][2];
 
-    newTool.w_x(0) = rotation_mat(0)(0);
-    newTool.w_x(1) = rotation_mat(1)(0);
-    newTool.w_x(2) = rotation_mat(2)(0);
-    /*get new tool model info*/
+    //w for the two girpper part is x of rotation mat
+    newTool.w_x(0) = rotation_mat[0][0];
+    newTool.w_x(1) = rotation_mat[1][0];
+    newTool.w_x(2) = rotation_mat[2][0];
 
 
+    /*get ellipse orininal point */
+    glm::vec3 q_temp;
+    double temp_point;
+
+    q_temp = rotation_mat * q_1;
+    temp_point = newTool.tvec(0);
+    newTool.q_ellipse[0] = q_temp[0] + temp_point;
+
+    temp_point = newTool.tvec(1);
+    newTool.q_ellipse[1] = q_temp[1] + temp_point;
+
+    temp_point = newTool.tvec(2);
+    newTool.q_ellipse[2] = q_temp[2] + temp_point;
+
+
+    glm::mat3 ellip_Rotation;
+    glm::mat3 wz_mat;
+    glm::mat3 wz_mat_1;
+    glm::mat3 wz_mat_2;
+
+    wz_mat[0][0] = 0;
+    wz_mat[0][1] = -newTool.w_z(2);
+    wz_mat[0][2] = newTool.w_z(1);
+    wz_mat[1][0] = newTool.w_z(2);
+    wz_mat[1][1] = 0;
+    wz_mat[1][2] = -newTool.w_z(0);
+    wz_mat[2][0] = -newTool.w_z(1);
+    wz_mat[2][1] = newTool.w_z(0);
+    wz_mat[2][2] = 0;
+
+    for(int i(0); i<3; i++){
+        for(int j(0);j<3;j++){
+            wz_mat_1[i][j] = wz_mat[i][j] * sin(newTool.theta_ellipse);
+        }
+    }
+
+    wz_mat_2 =  wz_mat * wz_mat;
+    for(int i(0); i<3; i++){
+        for(int j(0);j<3;j++){
+            wz_mat_2[i][j] = wz_mat_2[i][j] * (1-cos(newTool.theta_ellipse));
+        }
+    }
+    /*ellip_rotation = I * wz_mat*sin(theta) * wz_mat^2 * (1-cos(theta))*/
+    ellip_Rotation = I + wz_mat_1 + wz_mat_2;
+
+    q_temp = rotation_mat * ellip_Rotation * q_2;
+
+    temp_point = newTool.tvec(0);
+    newTool.q_gripper[0] = q_temp[0] + temp_point;
+
+    temp_point = newTool.tvec(1);
+    newTool.q_gripper[1] = q_temp[1] + temp_point;
+
+    temp_point = newTool.tvec(2);
+    newTool.q_gripper[2] = q_temp[2] + temp_point;
 
 	return newTool;
 }
 
-cv::Rect ToolModel::renderTool(const toolModel &tool_struct, double stdev, double mean){
-    cv::Matx<double,3,3> wz_mat;
+cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, const cv::Mat &P, int size,cv::OutputArray needlePts, cv::OutputArray jac){
 
-	wz_mat(0)(0) = 0;
-    wz_mat(0)(1) = -newTool.w_z(2);
-    wz_mat(0)(2) = newTool.w_z(1);
-    wz_mat(1)(0) = newTool.w_z(2);
-    wz_mat(1)(1) = 0;
-    wz_mat(1)(2) = -newTool.w_z(0);
-    wz_mat(2)(0) = -newTool.w_z(1);
-    wz_mat(2)(1) = newTool.w_z(0);
-    wz_mat(2)(2) = 0;
 
-	cv::Matx<double,3,3> exp_R;
-    exp_R = I + wz_mat * sin(newTool.theta_ellipse) + wz_mat * wz_mat * (1-cos(newTool.theta_ellipse));
 
 
 
