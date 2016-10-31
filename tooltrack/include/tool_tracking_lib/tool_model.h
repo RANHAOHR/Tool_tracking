@@ -24,30 +24,45 @@ class ToolModel{
  private:
 
 		struct toolModel {
-			cv::Matx<double,3,1> tvec;	//translation vector
-			cv::Matx<double,3,1> rvec;	//rotation vector
+			cv::Matx<double,3,1> tvec_cyl;	//cylinder translation vector
+			cv::Matx<double,3,1> rvec_cyl;	//cylinder rotation vector
+
+			cv::Matx<double,3,1> tvec_elp;	//ellipse translation vector
+			cv::Matx<double,3,1> rvec_elp;	//ellipse rotation vector
+
+			cv::Matx<double,3,1> tvec_grip1;	//gripper1 translation vector
+			cv::Matx<double,3,1> rvec_grip1;	//gripper1 rotation vector
+
+			cv::Matx<double,3,1> tvec_grip2;	//gripper2 translation vector
+			cv::Matx<double,3,1> rvec_grip2;	//gripper2 rotation vector
+
 			double theta_ellipse;
 			double theta_grip_1;
 			double theta_grip_2;  //9 DOF
 
-	    	glm::vec3 q_ellipse;
-			glm::vec3 q_gripper;
 
-			cv::Matx<double,3,1> w_z;   //for computational purpose
-		    cv::Matx<double,3,1> w_x;
 
 			//built in operator that handles copying the toolModel in efficient way
 			toolModel& operator =(const toolModel src){
 				this->theta_ellipse = src.theta_ellipse;
 				this->theta_grip_1 = src.theta_grip_1;
 				this->theta_grip_2 = src.theta_grip_2;
+
 				for(int i(0); i<3; i++){
-					this->tvec(i) = src.tvec(i);
-					this->rvec(i) = src.rvec(i);
-					this->w_z(i) = src.w_z(i);
-					this->w_x(i) = src.w_x(i);
-					this->q_ellipse[i] = src.q_ellipse[i];
-					this->q_gripper[i] = src.q_gripper[i];
+
+					this->tvec_cyl(i) = src.tvec_cyl(i);
+					this->rvec_cyl(i) = src.rvec_cyl(i);
+
+					this->tvec_elp(i) = src.tvec_elp(i);
+					this->rvec_elp(i) = src.rvec_elp(i);
+
+					this->tvec_grip1(i) = src.tvec_grip1(i);
+					this->rvec_grip1(i) = src.rvec_grip1(i);
+
+					this->tvec_grip2(i) = src.tvec_grip2(i);
+					this->rvec_grip2(i) = src.rvec_grip2(i);
+
+
 				}
 				return *this;
 			}
@@ -58,12 +73,18 @@ class ToolModel{
 				this->theta_grip_1 = 0.0;
 				this->theta_grip_2 = 0.0;
 				for(int i(0); i<3; i++){
-					this->tvec(i) = 0.0;
-					this->rvec(i) = 0.0;
-					this->w_z(i) = 0.0;
-					this->w_x(i) = 0.0;
-					this->q_ellipse[i] = 0.0;
-					this->q_ellipse[i] = 0.0;
+					this->tvec_cyl(i) = 0.0;
+					this->rvec_cyl(i) = 0.0;
+
+					this->tvec_elp(i) = 0.0;
+					this->rvec_elp(i) = 0.0;
+
+					this->tvec_grip1(i) = 0.0;
+					this->rvec_grip1(i) = 0.0;	
+
+					this->tvec_grip2(i) = 0.0;
+					this->rvec_grip2(i) = 0.0;	
+
 				}
 			}
 
@@ -98,9 +119,11 @@ class ToolModel{
 
  		toolModel setRandomConfig(const toolModel &initial, double stdev, double mean);
 
- 		cv::Rect renderTool(cv::Mat &image, const toolModel &tool, const cv::Mat &P, int size,cv::OutputArray needlePts, cv::OutputArray jac);
+ 		cv::Rect renderTool(cv::Mat &image, const toolModel &tool, const cv::Mat &P, int size,cv::OutputArray toolPts, cv::OutputArray jac);
 
- 		// double calculateMatchingScore();
+        // double calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI, bool displayPause);
+
+ 
 
 };
 
