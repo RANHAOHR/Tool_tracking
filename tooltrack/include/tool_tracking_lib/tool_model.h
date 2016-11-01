@@ -20,6 +20,8 @@
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
 
+
+
 class ToolModel{
  private:
 
@@ -107,6 +109,19 @@ class ToolModel{
 		std::vector< glm::vec3 > griper1_vertices;
 		std::vector< glm::vec3 > griper2_vertices;
 
+		std::vector< cv::Point3d > body_ver_pts;
+		std::vector< cv::Point3d > ellipse_ver_pts;
+		std::vector< cv::Point3d > griper1_ver_pts;
+		std::vector< cv::Point3d > griper2_ver_pts;
+
+		double  offset_ellipse; //inch
+        double offset_gripper; //inch;
+
+		int cyl_size;
+        int elp_size;
+    	int girp1_size;
+    	int girp2_size;
+
 
 
 
@@ -116,6 +131,8 @@ class ToolModel{
  		double randomNumber(double stdev, double mean);
 
  		void load_model_vertices(const char * path, std::vector< glm::vec3 > &out_vertices );
+
+ 		void modify_model_();  ///there are offsets when loading the model convert from glm to cv
 
  		toolModel setRandomConfig(const toolModel &initial, double stdev, double mean);
 

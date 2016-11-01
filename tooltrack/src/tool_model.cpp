@@ -30,19 +30,26 @@ ToolModel::ToolModel(){
 
     /****initialize the rotation and traslation points*****/
     q_1[0] = 0;
-    q_1[1] = 0.04837;  //m,  48.37mm
+    q_1[1] = 17.784;  //0.4571m
     q_1[2] = 0;
 
     q_2[0] = 0;
-    q_2[1] = 0.05784;  //measure from the model
+    q_2[1] = 18.1423;  //0.4608m
     q_2[2] = 0;
 
+offset_gripper = 18.1423;
+offset_ellipse = 17.784;
 
     /****initialize the vertices fo different part of tools****/
 	load_model_vertices("cylinder_part.obj", body_vertices );
 	load_model_vertices("ellipse_contour.obj", ellipse_vertices );
 	load_model_vertices("griper_1.obj", griper1_vertices );
 	load_model_vertices("griper_2.obj", griper2_vertices );
+
+    cyl_size = body_vertices.size();
+    elp_size = ellipse_vertices.size();
+    girp1_size = griper1_vertices.size();
+    girp2_size = griper2_vertices.size();
 
 };
 
@@ -145,6 +152,57 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
     printf("loaded file %s successfully.\n", path);
 
     //return true;
+};
+
+/*******This function is to do transformations to the raw data from the loader, to offset each part*******/
+void ToolModel::modify_model_(){
+//use cylinder's coordinate as body coordinate
+    for (int i = 0; i < elp_size; ++i)
+    {
+        ellipse_vertices[i].y = ellipse_vertices[i].y - offset_ellipse;
+    }
+    for (int i = 0; i < girp1_size; ++i)
+    {
+        griper1_vertices[i].y = griper1_vertices[i].y - offset_gripper;
+    }
+        for (int i = 0; i < girp2_size; ++i)
+    {
+        griper2_vertices[i].y = griper2_vertices[i].y - offset_gripper;
+    }
+// convert glm::vec3 to cv point3
+    body_ver_pts.resize(cyl_size);
+    ellipse_ver_pts.resize(elp_size);
+    griper1_ver_pts.resize(girp1_size);
+    griper2_ver_pts.resize(girp2_size);
+
+    for (int i = 0; i < cyl_size; ++i)
+    {
+        body_ver_pts[i].x = body_vertices[i].x;
+        body_ver_pts[i].y = body_vertices[i].y;
+        body_ver_pts[i].z = body_vertices[i].z;
+    }
+
+    for (int i = 0; i < elp_size; ++i)
+    {
+        ellipse_ver_pts[i].x = ellipse_vertices[i].x;
+        ellipse_ver_pts[i].y = ellipse_vertices[i].y;
+        ellipse_ver_pts[i].z = ellipse_vertices[i].z;
+    }
+
+    for (int i = 0; i < girp1_size; ++i)
+    {
+        griper1_ver_pts[i].x = griper1_vertices[i].x;
+        griper1_ver_pts[i].y = griper1_vertices[i].y;
+        griper1_ver_pts[i].z = griper1_vertices[i].z;
+    }
+
+    for (int i = 0; i < girp2_size; ++i)
+    {
+        griper2_ver_pts[i].x = griper2_vertices[i].x;
+        griper2_ver_pts[i].y = griper2_vertices[i].y;
+        griper2_ver_pts[i].z = griper2_vertices[i].z;
+    }
+
 };
 
 /*This function is to generate a tool model, contains the following info:
@@ -343,69 +401,137 @@ cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, const cv::
     cv::Rect ROI; // rectanle that contains tool model
     cv::Rect cropped; //cropped image to speed up the process
 
-    //points stored in the glm::vec3 
+    //3d points stored in the glm::vec3 
 
     /**********temp vector to store points in new image***********/
-    // std::vector<cv::Point2d> p_pts;
+    std::vector< cv::Point2d > tool_pts_;
+
+    std::vector< cv::Point2d > body_pts_;
+    std::vector< cv::Point2d > elp_pts_;
+    std::vector< cv::Point2d > grip1_pts_;
+    std::vector< cv::Point2d > grip2_pts_;
+
     // p_pts.resize(segmentCount+1);
-    // cv::Mat jacMat;
-    // if(jac.needed())
-    // {
-    //     jac.create(2*(segmentCount+1),6,CV_64FC1);
-    //     jacMat = jac.getMat();
-    // }
 
-    // cv::Mat temp_jac;
+    int total_pts_size = cyl_size + elp_size + girp1_size + girp2_size;
 
-    std::vector< glm::vec2 > body_pts_img;
-    std::vector< glm::vec2 > elp_pts_img;
-    std::vector< glm::vec2 > grip1_pts_img;
-    std::vector< glm::vec2 > grip2_pts_img;
+    tool_pts_.resize(total_pts_size);
 
-    body_pts_img.resize(body_vertices.size());
-    elp_pts_img.resize(ellipse_vertices.size());
-    grip1_pts_img.resize(griper1_vertices.size());
-    grip2_pts_img.resize(griper2_vertices.size());
+    body_pts_.resize(cyl_size);
+    elp_pts_.resize(elp_size);
+    grip1_pts_.resize(girp1_size);
+    grip2_pts_.resize(girp2_size);
 
-    //also need four of jacs
-    // cv::Mat jacMat;
-    // if(jac.needed())
-    // {
-    //     jac.create(2*(segmentCount+1),6,CV_64FC1);
-    //     jacMat = jac.getMat();
-    // }
+    //also need four of jacs, not clear yet
+    cv::Mat jacMat;
+    if(jac.needed())
+    {
+        //jac.create(2*(segmentCount+1),6,CV_64FC1);
+        jac.create(2*(total_pts_size),6,CV_64FC1);
+        jacMat = jac.getMat();
+    }
 
-    // cv::Mat temp_jac;
+     cv::Mat temp_jac;
 
 
     /****************project points***************************/
 
-    int padding(10); //add 10pixels of padding for cropping
+    int padding =10; //add 10pixels of padding for cropping
     cv::Point2d XY_max(-10000,-10000); //minimum of X and Y
     cv::Point2d XY_min(10000,10000); //maximum of X and Y
 
-    for(int i=0; i<(segmentCount+1); i++){
-        p_pts[i] = reprojectPoint(pts[i], P, cv::Mat(needle.rvec), cv::Mat(needle.tvec), temp_jac);
+/***********for cylinder********/
+    for (int i = 0; i < cyl_size; ++i)
+    {
+        
+        body_pts_[i] = reprojectPoint(body_ver_pts[i], P, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), temp_jac);
+
         if(jac.needed())
         {
             //make the jacobian ((2x) x 6)
             temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
         }
 
+        tool_pts_[i] = body_pts_[i];
+
         //find max/min X and Y for cropping purpose
-        if(p_pts[i].x > XY_max.x) XY_max.x = p_pts[i].x;
-        if(p_pts[i].y > XY_max.y) XY_max.y = p_pts[i].y;
-        if(p_pts[i].x < XY_min.x) XY_min.x = p_pts[i].x;
-        if(p_pts[i].y < XY_min.y) XY_min.y = p_pts[i].y;
+        if(tool_pts_[i].x > XY_max.x) XY_max.x = tool_pts_[i].x;
+        if(tool_pts_[i].y > XY_max.y) XY_max.y = tool_pts_[i].y;
+        if(tool_pts_[i].x < XY_min.x) XY_min.x = tool_pts_[i].x;
+        if(tool_pts_[i].y < XY_min.y) XY_min.y = tool_pts_[i].y;
     }
+/*********for ellipse***********/
+    for (int i = 0; i < elp_size; ++i)
+    {
+        elp_pts_[i] = reprojectPoint(ellipse_ver_pts[i], P, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), temp_jac);
+
+        if(jac.needed())
+        {
+            //make the jacobian ((2x) x 6)
+            temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
+        }
+
+        //plus the former size
+        tool_pts_[i+cyl_size] = elp_pts_[i];
+
+        //find max/min X and Y for cropping purpose
+        if(tool_pts_[i+cyl_size].x > XY_max.x) XY_max.x = tool_pts_[i+cyl_size].x;
+        if(tool_pts_[i+cyl_size].y > XY_max.y) XY_max.y = tool_pts_[i+cyl_size].y;
+        if(tool_pts_[i+cyl_size].x < XY_min.x) XY_min.x = tool_pts_[i+cyl_size].x;
+        if(tool_pts_[i+cyl_size].y < XY_min.y) XY_min.y = tool_pts_[i+cyl_size].y;
+
+    }
+/************for gripper 1************/
+    for (int i = 0; i < girp1_size; ++i)
+    {
+        grip1_pts_[i] = reprojectPoint(griper1_ver_pts[i], P, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), temp_jac);
+
+        if(jac.needed())
+        {
+            //make the jacobian ((2x) x 6)
+            temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
+        }
+
+        tool_pts_[i + cyl_size + elp_size] = grip1_pts_[i];
+
+        //find max/min X and Y for cropping purpose
+        if(tool_pts_[i + cyl_size + girp1_size].x > XY_max.x) XY_max.x = tool_pts_[i + cyl_size + girp1_size].x;
+        if(tool_pts_[i + cyl_size + girp1_size].y > XY_max.y) XY_max.y = tool_pts_[i + cyl_size + girp1_size].y;
+        if(tool_pts_[i + cyl_size + girp1_size].x < XY_min.x) XY_min.x = tool_pts_[i + cyl_size + girp1_size].x;
+        if(tool_pts_[i + cyl_size + girp1_size].y < XY_min.y) XY_min.y = tool_pts_[i + cyl_size + girp1_size].y;
+
+    }
+/*************for gripper 2**************/
+    for (int i = 0; i < girp2_size; ++i)
+    {
+        grip2_pts_[i] = reprojectPoint(griper2_ver_pts[i], P, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), temp_jac);
+
+        if(jac.needed())
+        {
+            //make the jacobian ((2x) x 6)
+            temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
+        }
+
+        tool_pts_[i + cyl_size + elp_size + girp1_size] = grip2_pts_[i];
+
+        //find max/min X and Y for cropping purpose
+        if(tool_pts_[i + cyl_size + elp_size + girp1_size].x > XY_max.x) XY_max.x = tool_pts_[i + cyl_size + elp_size + girp1_size].x;
+        if(tool_pts_[i + cyl_size + elp_size + girp1_size].y > XY_max.y) XY_max.y = tool_pts_[i + cyl_size + elp_size + girp1_size].y;
+        if(tool_pts_[i + cyl_size + elp_size + girp1_size].x < XY_min.x) XY_min.x = tool_pts_[i + cyl_size + elp_size + girp1_size].x;
+        if(tool_pts_[i + cyl_size + elp_size + girp1_size].y < XY_min.y) XY_min.y = tool_pts_[i + cyl_size + elp_size + girp1_size].y;
+
+    }
+
+    /***now got all the points from the tool in 2d img***/
+
 
     //connect points with lines to draw the rendered needle 
     // the rendering is for white on a floating point image.
-    for(int i=0; i<(segmentCount-1); i++)
-    {
-        //draw the line
-        cv::line(image, p_pts[i], p_pts[i+1], cv::Scalar(1,1,1), size, 8, 0);
-    }
+    // for(int i=0; i<(segmentCount-1); i++)
+    // {
+    //     //draw the line
+    //     cv::line(image, p_pts[i], p_pts[i+1], cv::Scalar(1,1,1), size, 8, 0);
+    // }
     //draw circle to the base
     //cv::circle(image, p_pts[0], 5, cv::Scalar(1,0,0), size, 8, 0);
 
