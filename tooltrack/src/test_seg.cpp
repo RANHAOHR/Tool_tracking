@@ -5,6 +5,7 @@
  #include <sensor_msgs/image_encodings.h>
  #include <image_transport/image_transport.h>
 
+#include <time.h> 
 
  #include "std_msgs/MultiArrayLayout.h"
  #include "std_msgs/MultiArrayDimension.h"
@@ -107,6 +108,7 @@ void segmentation(cv::Mat InputImg, int code ){
 	  waitKey(10);
 
 	}
+
 	if(code == 2){
 		char* window_name = const_cast<char*>("Right_Segmented");
 		char* original_window_name = const_cast<char*>("right_raw_img");
@@ -163,6 +165,7 @@ int main(int argc, char** argv)
     freshCameraInfo = false;
     freshImage = false;
 
+    clock_t t;
 	// const std::string leftCameraTopic("/davinci_endo/left/image_raw");
 	// const std::string rightCameraTopic("/davinci_endo/right/image_raw");
 	// cameraProjectionMatrices cameraInfoObj(nh, leftCameraTopic, rightCameraTopic);
@@ -188,14 +191,22 @@ int main(int argc, char** argv)
         ros::spinOnce();
 
     	if (freshImage){
-    		cout<<"have fresh image"<<endl;
+    		t = clock();
     		segmentation(rawImage_left, 1);
     		segmentation(rawImage_right, 2);
+    		t = clock() - t;
+    		cout<<"each segmentation peroid takes: "<<t<<endl;
     		freshImage = false;
     	}
 
     	timer.sleep();
 
 	}
+
+	if (!freshImage)
+	{
+		return 1;
+	}
+	
 	
 }
