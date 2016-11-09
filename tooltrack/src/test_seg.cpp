@@ -18,7 +18,6 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include <opencv2/core/core.hpp>
 
- #include <cv_bridge/cv_bridge.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "opencv/cv.hpp"
@@ -30,8 +29,6 @@ bool freshCameraInfo;
 // using namespace cv_projective;
 // double Arr[6];
 using namespace std;
-
-
 
 // updates the local image.
 void newImageCallback(const sensor_msgs::ImageConstPtr& msg, cv::Mat* outputImage)
@@ -50,12 +47,10 @@ void newImageCallback(const sensor_msgs::ImageConstPtr& msg, cv::Mat* outputImag
         ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg ->encoding.c_str());
     }
 
-    // char* original_window_name = const_cast<char*>("raw_img");
-    // imshow( window_name, outputImage[0] );
 
 }
 
-void segmentation(cv::Mat InputImg, int code ){
+cv::Mat segmentation(cv::Mat InputImg){
 
 	cout<<"in segmentation"<<endl;
 	Mat src, src_gray;
@@ -66,13 +61,11 @@ void segmentation(cv::Mat InputImg, int code ){
 	int ddepth = CV_16S;	
 
 	src = InputImg;
-	if( !src.data )
-    { return ; }
+
 	
 	resize(src, src, Size(), 0.5, 0.5);
 
-	if (code == 1)
-	{	
+
 		char* window_name = const_cast<char*>("Left_Segmented");
 		char* original_window_name = const_cast<char*>("left_raw_img");
 		namedWindow( window_name, CV_WINDOW_AUTOSIZE );
@@ -102,49 +95,7 @@ void segmentation(cv::Mat InputImg, int code ){
 	  /// Total Gradient (approximate)
 	  addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad ); //grad = 0.5grad_x + 0.5grad_y
 	  //cout<<"before imshow"<<endl;
-	  imshow( original_window_name, src);
-	  imshow( window_name, grad );
-	  //cout<<"after imshow"<<endl;
-	  waitKey(10);
-
-	}
-
-	if(code == 2){
-		char* window_name = const_cast<char*>("Right_Segmented");
-		char* original_window_name = const_cast<char*>("right_raw_img");
-		namedWindow( window_name, CV_WINDOW_AUTOSIZE );
-
-		GaussianBlur( src, src, Size(3,3), 0, 0, BORDER_DEFAULT );
-
-	  /// Convert it to gray
-	  cvtColor( src, src_gray, CV_BGR2GRAY );
-
-	  /// Create window
-
-
-	  /// Generate grad_x and grad_y
-	  Mat grad_x, grad_y;
-	  Mat abs_grad_x, abs_grad_y;
-
-	  /// Gradient X
-	  //Scharr( src_gray, grad_x, ddepth, 1, 0, scale, delta, BORDER_DEFAULT );
-	  Sobel( src_gray, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT );
-	  convertScaleAbs( grad_x, abs_grad_x );
-
-	  /// Gradient Y
-	  //Scharr( src_gray, grad_y, ddepth, 0, 1, scale, delta, BORDER_DEFAULT );
-	  Sobel( src_gray, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT );
-	  convertScaleAbs( grad_y, abs_grad_y );
-
-	  /// Total Gradient (approximate)
-	  addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad ); //grad = 0.5grad_x + 0.5grad_y
-	  //cout<<"before imshow"<<endl;
-	  imshow( original_window_name, src);
-	  imshow( window_name, grad );
-	  //cout<<"after imshow"<<endl;
-	  waitKey(10);
-	}
-
+	  return grad;
 
 
 }
@@ -186,26 +137,37 @@ int main(int argc, char** argv)
     ROS_INFO("---- done subscribe -----");
 
 
+double avg_tim = 0.0;
+int count = 1;
+
+Mat seg_left;
+Mat seg_right;
+
     while (nh.ok())
     {
         ros::spinOnce();
 
     	if (freshImage){
     		t = clock();
-    		segmentation(rawImage_left, 1);
-    		segmentation(rawImage_right, 2);
+    		seg_left=segmentation(rawImage_left);
+    		seg_right=segmentation(rawImage_right);
     		t = clock() - t;
-    		cout<<"each segmentation peroid takes: "<<t<<endl;
+
+			imshow( "left_raw_img", rawImage_left);
+	  		imshow( "Left_Segmented", seg_left );
+    		imshow( "right_raw_img", rawImage_right);
+	  		imshow( "Right_Segmented", seg_right );
+			  //cout<<"after imshow"<<endl;
+			waitKey(10);
+    		avg_tim += t;
+    		cout<< "avg time is : "<< avg_tim/count<<endl;
+    		count += 1;
+    		//cout<<"each segmentation peroid takes: "<<t<<endl;
     		freshImage = false;
     	}
 
     	timer.sleep();
 
-	}
-
-	if (!freshImage)
-	{
-		return 1;
 	}
 	
 	
