@@ -1,0 +1,4 @@
+<launch>
+  	<node pkg="rosbag" type="play" name="player" output="screen" args="/home/deeplearning/ros_ws/subset.bag"/>
+	<node pkg="tooltrack" type="test_seg" name="test_seg" output="screen" args="--clock /home/me/ros_files/my_file.bag"/>	
+</launch>

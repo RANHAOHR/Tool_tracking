@@ -109,6 +109,12 @@ class ToolModel{
 		std::vector< glm::vec3 > griper1_vertices;
 		std::vector< glm::vec3 > griper2_vertices;
 
+		std::vector< glm::vec3 > body_Vnormal;    //vertex normal, for the computation of the silhouette
+		std::vector< glm::vec3 > ellipse_Vnormal;
+		std::vector< glm::vec3 > griper1_Vnormal;
+		std::vector< glm::vec3 > griper2_Vnormal;
+
+
 		std::vector< cv::Point3d > body_ver_pts;
 		std::vector< cv::Point3d > ellipse_ver_pts;
 		std::vector< cv::Point3d > griper1_ver_pts;
@@ -130,13 +136,17 @@ class ToolModel{
 
  		double randomNumber(double stdev, double mean);
 
- 		void load_model_vertices(const char * path, std::vector< glm::vec3 > &out_vertices );
+ 		void load_model_vertices(const char * path, std::vector< glm::vec3 > &out_vertices, std::vector< glm::vec3 > &vertex_normal);
 
  		void modify_model_();  ///there are offsets when loading the model convert from glm to cv
 
  		toolModel setRandomConfig(const toolModel &initial, double stdev, double mean);
 
  		cv::Rect renderTool(cv::Mat &image, const toolModel &tool, const cv::Mat &P, int size,cv::OutputArray toolPts, cv::OutputArray jac);
+
+ 		void convert_gl_cv(std::vector< glm::vec3 > &input_vertices, std::vector< cv::Point3d > &out_vertices);
+
+ 		void Compute_Silhouette(std::vector< glm::vec3 > &vertex_normal, std::vector< cv::Point3d > &out_vertices);
 
         // double calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI, bool displayPause);
 
