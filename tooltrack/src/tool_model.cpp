@@ -12,6 +12,7 @@
 #include <math.h>
 
 using cv_projective::reprojectPoint;
+using cv_projective::transformPoints;
 boost::mt19937 rng(time(0));
 using namespace std;
 
@@ -37,8 +38,8 @@ ToolModel::ToolModel(){
     q_2[1] = 18.1423;  //0.4608m
     q_2[2] = 0;
 
-offset_gripper = 18.1423;
-offset_ellipse = 17.784;
+    offset_gripper = 18.1423;
+    offset_ellipse = 17.784;
 
     /****initialize the vertices fo different part of tools****/
 	load_model_vertices("cylinder_part.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
@@ -46,10 +47,18 @@ offset_ellipse = 17.784;
 	// load_model_vertices("griper_1.obj", griper1_vertices, griper1_Vnormal );
 	// load_model_vertices("griper_2.obj", griper2_vertices, griper2_Vnormal );
 
-    cyl_size = body_vertices.size();
-    elp_size = ellipse_vertices.size();
-    girp1_size = griper1_vertices.size();
-    girp2_size = griper2_vertices.size();
+    /*convert to cv points for computation*/
+    Convert_glTocv_pts(body_vertices, body_Vpts);
+    // Convert_glTocv_pts(ellipse_vertices, ellipse_Vpts);
+    // Convert_glTocv_pts(griper1_vertices, griper1_Vpts);
+    // Convert_glTocv_pts(griper2_vertices, griper2_Vpts);
+
+    Convert_glTocv_pts(body_Vnormal, body_Npts);
+
+    // cyl_size = body_vertices.size();
+    // elp_size = ellipse_vertices.size();
+    // girp1_size = griper1_vertices.size();
+    // girp2_size = griper2_vertices.size();
 
 };
 
@@ -182,31 +191,34 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
 
     /***find neighbor faces***/
     neighbor_faces.resize(out_faces.size());
+    std::vector<int> temp_match_ver;
 
     for (int i = 0; i < neighbor_faces.size(); ++i)
     {
         /*********find the neighbor faces************/
-        for (int j = 0; j < out_faces.size(); ++j)
+        for (int j = i; j < neighbor_faces.size(); ++j)
         {
             if ( j != i)
             {
-                int match = Compare_vertex(out_faces[i], out_faces[j]); 
+                int match = Compare_vertex(out_faces[i], out_faces[j], temp_match_ver ); 
                 
                 if ( match == 2 ) //so face i and face j share an edge
                 {
-                   neighbor_faces[i].push_back(j);
+                   neighbor_faces[i].push_back(j); // mark the neighbor face index
+                   neighbor_faces[i].push_back(temp_match_ver[1]); // mark the neighbor face index
+                   neighbor_faces[i].push_back(temp_match_ver[2]); // mark the neighbor face index
+                   temp_match_ver.clear();
                 }
             }
 
-
         }
-
+       //cout<< "neighbor number: "<< (neigh_faces[i].size())/3 << endl;  //so now the neighbor contains one 
     }
     //return true;
 };
 
 /*output a glm to a cv 3d point*/
-void ToolModel::convert_gl_cv(std::vector< glm::vec3 > &input_vertices, std::vector< cv::Point3d > &out_vertices){
+void ToolModel::Convert_glTocv_pts(std::vector< glm::vec3 > &input_vertices, std::vector< cv::Point3d > &out_vertices){
     int vsize = input_vertices.size();
     out_vertices.resize(vsize);
         for (int i = 0; i < vsize; ++i)
@@ -217,62 +229,263 @@ void ToolModel::convert_gl_cv(std::vector< glm::vec3 > &input_vertices, std::vec
     }
 };
 
+cv::Point3d ToolModel::Convert_glTocv_pt(glm::vec3 &input_vertex){
+    cv::Point3d out_vertex;
+    out_vertex.x = input_vertex.x;
+    out_vertex.y = input_vertex.y;
+    out_vertex.z = input_vertex.z;
+    return out_vertex;
+
+};
 
 /* find the camera view point, should it be (0,0,0), input faces stores the indices of the vertices and normals, 
 which are not related to the pose of the tool object*/
+cv::Point3d ToolModel::transformation_pts(const cv::Point3d &point, const cv::Mat& rvec, const cv::Mat &tvec){
+    cv::Mat prjPoints(4,1,CV_64FC1);
+
+    cv::Point3d output;
+
+    cv::Mat ptMat(4,1,CV_64FC1);
+    ptMat.at<double>(0,0) = point.x;
+    ptMat.at<double>(1,0) = point.y;
+    ptMat.at<double>(2,0) = point.z;
+    ptMat.at<double>(3,0) = 1.0;
+
+    //Mat transDeriv;
+
+        if(rvec.total()==3 && tvec.total()==3)
+        {
+            // if(jac.needed())
+            // {
+            //     prjPoints = transformPoints(ptMat,rvec,tvec,transDeriv);
+            // }
+            //else
+            //{
+                prjPoints = transformPoints(ptMat,rvec,tvec);
+            //}
+        }
+        else
+        {
+            ROS_INFO("Nothing in point transformed");
+            prjPoints = ptMat;
+        }
+
+        output.x = prjPoints.at<double>(0,0);
+        output.y = prjPoints.at<double>(1,0);
+        output.z = prjPoints.at<double>(2,0);
+
+        return output;
+
+};
+
+cv::Point3d ToolModel::transformation_nrms(const cv::Point3d &vec, const cv::Mat& rvec, const cv::Mat &tvec){
+    cv::Mat prjPoints(4,1,CV_64FC1);
+
+    cv::Point3d output_v;
+
+    cv::Mat ptMat(4,1,CV_64FC1);
+    ptMat.at<double>(0,0) = vec.x;
+    ptMat.at<double>(1,0) = vec.y;
+    ptMat.at<double>(2,0) = vec.z;
+    ptMat.at<double>(3,0) = 0.0;
+
+    //Mat transDeriv;
+
+        if(rvec.total()==3 && tvec.total()==3)
+        {
+            // if(jac.needed())
+            // {
+            //     prjPoints = transformPoints(ptMat,rvec,tvec,transDeriv);
+            // }
+            //else
+            //{
+                prjPoints = transformPoints(ptMat,rvec,tvec);
+            //}
+        }
+        else
+        {
+            ROS_INFO("Nothing in vec transformed");
+            prjPoints = ptMat;
+        }
+
+        output_v.x = prjPoints.at<double>(0,0);
+        output_v.y = prjPoints.at<double>(1,0);
+        output_v.z = prjPoints.at<double>(2,0);
+
+        return output_v;    
+
+};
 void ToolModel::Compute_Silhouette(std::vector< std::vector<int> > &input_faces, std::vector< std::vector<int> > &neighbor_faces, 
-                                   std::vector< glm::vec3 > input_vertices, std::vector< glm::vec3 > input_Vnormal){
+                                   std::vector< cv::Point3d > &input_vertices, std::vector< cv::Point3d > &input_Vnormal, cv::Point3d &Cam_view,
+                                   cv::Mat &image, const cv::Mat& rvec, const cv::Mat &tvec, const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min){
 
-glm::vec3 temp_v1;
-glm::vec3 temp_v2;
-glm::vec3 temp_Vnorm;
-std::vector< glm::vec3 > fnormal;
-fnormal.resize(input_faces.size());
+    // cv::Mat jacMat;
+    // if(jac.needed())
+    // {
+    //     //jac.create(2*(segmentCount+1),6,CV_64FC1);
+    //     jac.create(2*(total_pts_size),6,CV_64FC1);
+    //     jacMat = jac.getMat();
+    // }
 
+    cv::Mat temp_jac;
+
+    int neighbor_num = 0;
     for (int i = 0; i < input_faces.size(); ++i)
     {
+        //when there are neighbors, it is necessary to compute the edge
+        neighbor_num = (neighbor_faces[i].size())/3;
+        if ( neighbor_num > 0)  //0 or 3n
+        {
         /*****first get the surface normal******/
         int v1 = input_faces[i][0];
         int v2 = input_faces[i][1];
         int v3 = input_faces[i][2];
-
-        temp_v1.x = input_vertices[v1].x - input_vertices[v2].x;    //let temp v1 be v1-v2
-        temp_v1.y = input_vertices[v1].y - input_vertices[v2].y;
-        temp_v1.z = input_vertices[v1].z - input_vertices[v2].z;
-
-        temp_v2.x = input_vertices[v1].x - input_vertices[v3].x;    //let temp v1 be v1-v3
-        temp_v2.y = input_vertices[v1].y - input_vertices[v3].y;
-        temp_v2.z = input_vertices[v1].z - input_vertices[v3].z;
-
-        fnormal[i] = glm::cross(temp_v1, temp_v2);
-
         int n1 = input_faces[i][3];
         int n2 = input_faces[i][4];
         int n3 = input_faces[i][5];
+        /******transformation for input faces*******/
+        cv::Point3d pt1 = transformation_pts(input_vertices[v1], rvec, tvec);
+        cv::Point3d pt2 = transformation_pts(input_vertices[v2], rvec, tvec);
+        cv::Point3d pt3 = transformation_pts(input_vertices[v3], rvec, tvec);
 
-        temp_Vnorm = input_Vnormal[n1] + input_Vnormal[n2] + input_Vnormal[n3];
+        cv::Point3d vn1 = transformation_nrms(input_Vnormal[n1], rvec, tvec);
+        cv::Point3d vn2 = transformation_nrms(input_Vnormal[n2], rvec, tvec);
+        cv::Point3d vn3 = transformation_nrms(input_Vnormal[n3], rvec, tvec);
 
-        double dot_normal = glm::dot(fnormal[i], temp_Vnorm);
 
-        if (dot_normal < 0 )  ///so if dot product is nagtive, flip the normal
-        {
-            fnormal[i] = -fnormal[i];
+        cv::Point3d fnormal = FindFaceNormal(pt1, pt2, pt3, vn1, vn2, vn3); //knowing the directionand normalized
+        
+        cv::Point3d face_point_i = pt1 + pt2 + pt3;
+        face_point_i.x = face_point_i.x/3;
+        face_point_i.y = face_point_i.y/3;
+        face_point_i.z = face_point_i.z/3;
+
+
+            for (int j = 0; j < neighbor_num; ++j) 
+            {
+                int v1_ = input_faces[neighbor_faces[i][j]][0];
+                int v2_ = input_faces[neighbor_faces[i][j]][1];
+                int v3_ = input_faces[neighbor_faces[i][j]][2];
+                int n1_ = input_faces[neighbor_faces[i][j]][3];
+                int n2_ = input_faces[neighbor_faces[i][j]][4];
+                int n3_ = input_faces[neighbor_faces[i][j]][5];
+
+                /******transformation for neightbor faces*******/
+                cv::Point3d pt1_ = transformation_pts(input_vertices[v1_], rvec, tvec);
+                cv::Point3d pt2_ = transformation_pts(input_vertices[v2_], rvec, tvec);
+                cv::Point3d pt3_ = transformation_pts(input_vertices[v3_], rvec, tvec);
+
+                cv::Point3d vn1_ = transformation_nrms(input_Vnormal[n1_], rvec, tvec);
+                cv::Point3d vn2_ = transformation_nrms(input_Vnormal[n2_], rvec, tvec);
+                cv::Point3d vn3_ = transformation_nrms(input_Vnormal[n3_], rvec, tvec);
+                    
+                cv::Point3d fnormal_n = FindFaceNormal(pt1_, pt2_, pt3_, vn1_, vn2_, vn3_);
+                cv::Point3d face_point_j = pt1_ + pt2_ + pt3_;
+                face_point_j.x = face_point_j.x/3;
+                face_point_j.y = face_point_j.y/3;
+                face_point_j.z = face_point_j.z/3;
+
+
+                /***find the silhouete using cam information***/
+                cv::Point3d cam_vec_i = face_point_i - Cam_view;
+                cv::Point3d cam_vec_j = face_point_j - Cam_view;
+
+                double view_v1 = dotProduct(fnormal, cam_vec_i);
+                double view_v2 = dotProduct(fnormal_n, cam_vec_j);
+
+                if(view_v1 * view_v2 < 0 ){ //the edge
+                    
+                    cv::Point3d ept_1 = input_vertices[neighbor_faces[i][j+1]];
+                    cv::Point3d ept_2 = input_vertices[neighbor_faces[i][j+2]]; //so the two points that on the edge
+
+                    cv::Point2d prjpt_1 = reprojectPoint(ept_1, P, cv::Mat(rvec), cv::Mat(tvec), temp_jac);
+                    cv::Point2d prjpt_2 = reprojectPoint(ept_2, P, cv::Mat(rvec), cv::Mat(tvec), temp_jac);
+                    // if(jac.needed())
+                    // {
+                    //     //make the jacobian ((2x) x 6)
+                    //     temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
+                    // }
+
+                    cv::line(image, prjpt_1, prjpt_2, cv::Scalar(1,1,1), 1 , 8, 0);  /*InputOutputArray img, InputArrayOfArrays pts,const Scalar &color, 
+                                                                                     int lineType=LINE_8, int shift=0, Point offset=Point())*/
+
+                    if(prjpt_1.x > XY_max.x) XY_max.x = prjpt_1.x;
+                    if(prjpt_1.y > XY_max.y) XY_max.y = prjpt_1.y;
+                    if(prjpt_1.x < XY_min.x) XY_min.x = prjpt_1.x;
+                    if(prjpt_1.y < XY_min.y) XY_min.y = prjpt_1.y;
+
+                    if(prjpt_2.x > XY_max.x) XY_max.x = prjpt_2.x;
+                    if(prjpt_2.y > XY_max.y) XY_max.y = prjpt_2.y;
+                    if(prjpt_2.x < XY_min.x) XY_min.x = prjpt_2.x;
+                    if(prjpt_2.y < XY_min.y) XY_min.y = prjpt_2.y;
+
+
+                }
+
+            }
+
+        
         }
-
-        fnormal[i] = glm::normalize(fnormal[i]);
-
-        /*find the silhouete using cam information*/
-
+        
     }
-
-
 
 
 };
 
-int ToolModel::Compare_vertex(std::vector<int> vec1, std::vector<int> vec2){
+cv::Point3d ToolModel::crossProduct(cv::Point3d vec1, cv::Point3d vec2){    //3d vector
+    cv::Point3d res_vec;
+    res_vec.x = vec1.y * vec2.z - vec1.z * vec2.y;
+    res_vec.y = vec1.z * vec2.x - vec1.x * vec2.z;
+    res_vec.z = vec1.x * vec2.y - vec1.y * vec2.x;
+
+    return res_vec;
+};
+
+double ToolModel::dotProduct(cv::Point3d vec1, cv::Point3d vec2){
+    double dot_res;
+    dot_res = vec1.x*vec2.x + vec1.y*vec2.y + vec1.z*vec2.z;
+
+    return dot_res;
+};
+cv::Point3d ToolModel::FindFaceNormal(cv::Point3d input_v1, cv::Point3d input_v2, cv::Point3d input_v3,
+                                     cv::Point3d input_n1, cv::Point3d input_n2, cv::Point3d input_n3)
+{
+    cv::Point3d temp_v1;
+    cv::Point3d temp_v2;
+    temp_v1.x = input_v1.x - input_v2.x;    //let temp v1 be v1-v2
+    temp_v1.y = input_v1.y - input_v2.y;
+    temp_v1.z = input_v1.z - input_v2.z;
+
+    temp_v2.x = input_v1.x - input_v3.x;    //let temp v1 be v1-v3
+    temp_v2.y = input_v1.y - input_v3.y;
+    temp_v2.z = input_v1.z - input_v3.z;
+
+    cv::Point3d res = crossProduct(temp_v1, temp_v2);
+
+    cv::Point3d temp_Vnorm = input_n1 + input_n2 + input_n3;
+
+    double dot_normal = dotProduct(res, temp_Vnorm);
+
+    if (dot_normal < 0 )  ///so if dot product is nagtive, flip the normal
+    {
+        res = -res;
+    }
+
+    double norm = res.x*res.x + res.y*res.y + res.z*res.z; 
+    norm = pow(norm, 0.5);
+    res.x = res.x/norm;
+    res.y = res.y/norm;
+    res.z = res.z/norm;
+
+    return res;  // knowing the direction
+
+};
+
+int ToolModel::Compare_vertex(std::vector<int> vec1, std::vector<int> vec2, std::vector<int> &Output_vec ){
     int match_count = 0;
-    if (vec1.size() != vec2.size())
+    //std::vector<int> match_vec;   //match_vec should contain both the matching count and the matched vertices
+
+    if (vec1.size() != vec2.size())  ///face vectors
     {
          printf("Two vectors are not in the same size \n");
     }
@@ -284,6 +497,8 @@ int ToolModel::Compare_vertex(std::vector<int> vec1, std::vector<int> vec2){
                 if (vec1[i] == vec2[j])
                 {
                     match_count +=1;
+                    Output_vec.push_back(match_count);
+                    Output_vec.push_back(vec1[i]);
                 }
 
             }
@@ -309,10 +524,10 @@ void ToolModel::modify_model_(){
     }
 ///////////// convert glm::vec3 to cv point3 /////////////////
 
-    convert_gl_cv(body_vertices, body_ver_pts);
-    convert_gl_cv(ellipse_vertices, ellipse_ver_pts);
-    convert_gl_cv(griper1_vertices, griper1_ver_pts);
-    convert_gl_cv(griper2_vertices, griper2_ver_pts);
+    // convert_gl_cv(body_vertices, body_ver_pts);
+    // convert_gl_cv(ellipse_vertices, ellipse_ver_pts);
+    // convert_gl_cv(griper1_vertices, griper1_ver_pts);
+    // convert_gl_cv(griper2_vertices, griper2_ver_pts);
 
 };
 
@@ -507,171 +722,124 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
 }
 
 /****render a rectangle contains the tool model*****/
-cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, const cv::Mat &P, int size,cv::OutputArray toolPts, cv::OutputArray jac){
+// cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, const cv::Mat &P, int size,cv::OutputArray toolPts, cv::OutputArray jac){
 
-    cv::Rect ROI; // rectanle that contains tool model
-    cv::Rect cropped; //cropped image to speed up the process
-
-    //3d points stored in the glm::vec3 
-
-    /**********temp vector to store points in new image***********/
-    std::vector< cv::Point2d > tool_pts_;
-
-    std::vector< cv::Point2d > body_pts_;
-    std::vector< cv::Point2d > elp_pts_;
-    std::vector< cv::Point2d > grip1_pts_;
-    std::vector< cv::Point2d > grip2_pts_;
-
-    // p_pts.resize(segmentCount+1);
-
-    int total_pts_size = cyl_size + elp_size + girp1_size + girp2_size;
-
-    tool_pts_.resize(total_pts_size);
-
-    body_pts_.resize(cyl_size);
-    elp_pts_.resize(elp_size);
-    grip1_pts_.resize(girp1_size);
-    grip2_pts_.resize(girp2_size);
-
-    //also need four of jacs, not clear yet
-    cv::Mat jacMat;
-    if(jac.needed())
-    {
-        //jac.create(2*(segmentCount+1),6,CV_64FC1);
-        jac.create(2*(total_pts_size),6,CV_64FC1);
-        jacMat = jac.getMat();
-    }
-
-     cv::Mat temp_jac;
+//     cv::Rect ROI; // rectanle that contains tool model
+//     cv::Rect cropped; //cropped image to speed up the process
 
 
-    /****************project points***************************/
+//     //also need four of jacs, not clear yet
 
-    int padding =10; //add 10pixels of padding for cropping
-    cv::Point2d XY_max(-10000,-10000); //minimum of X and Y
-    cv::Point2d XY_min(10000,10000); //maximum of X and Y
 
-/***********for cylinder********/
-    for (int i = 0; i < cyl_size; ++i)
-    {
-        
-        body_pts_[i] = reprojectPoint(body_ver_pts[i], P, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), temp_jac);
 
-        if(jac.needed())
-        {
-            //make the jacobian ((2x) x 6)
-            temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
-        }
+//     /****************project points***************************/
 
-        tool_pts_[i] = body_pts_[i];
+//     int padding =10; //add 10pixels of padding for cropping
+//     cv::Point2d XY_max(-10000,-10000); //minimum of X and Y
+//     cv::Point2d XY_min(10000,10000); //maximum of X and Y
 
-        //find max/min X and Y for cropping purpose
-        if(tool_pts_[i].x > XY_max.x) XY_max.x = tool_pts_[i].x;
-        if(tool_pts_[i].y > XY_max.y) XY_max.y = tool_pts_[i].y;
-        if(tool_pts_[i].x < XY_min.x) XY_min.x = tool_pts_[i].x;
-        if(tool_pts_[i].y < XY_min.y) XY_min.y = tool_pts_[i].y;
-    }
+// /***********for cylinder********/
 
-//try to project at one time
+// //try to project at one time
 
-// reprojectPoints(body_ver_pts, body_pts_, P, tool.rvec_cyl, tool.tvec_cyl);
-// for (int i = 0; i < cyl_size; ++i)
-// {
-//         tool_pts_[i] = body_pts_[i];
+// // reprojectPoints(body_ver_pts, body_pts_, P, tool.rvec_cyl, tool.tvec_cyl);
+// // for (int i = 0; i < cyl_size; ++i)
+// // {
+// //         tool_pts_[i] = body_pts_[i];
 
-//         //find max/min X and Y for cropping purpose
-//         if(tool_pts_[i].x > XY_max.x) XY_max.x = tool_pts_[i].x;
-//         if(tool_pts_[i].y > XY_max.y) XY_max.y = tool_pts_[i].y;
-//         if(tool_pts_[i].x < XY_min.x) XY_min.x = tool_pts_[i].x;
-//         if(tool_pts_[i].y < XY_min.y) XY_min.y = tool_pts_[i].y;
+// //         //find max/min X and Y for cropping purpose
+// //         if(tool_pts_[i].x > XY_max.x) XY_max.x = tool_pts_[i].x;
+// //         if(tool_pts_[i].y > XY_max.y) XY_max.y = tool_pts_[i].y;
+// //         if(tool_pts_[i].x < XY_min.x) XY_min.x = tool_pts_[i].x;
+// //         if(tool_pts_[i].y < XY_min.y) XY_min.y = tool_pts_[i].y;
     
-// }
-/*********for ellipse***********/
-//     for (int i = 0; i < elp_size; ++i)
-//     {
-//         elp_pts_[i] = reprojectPoint(ellipse_ver_pts[i], P, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), temp_jac);
+// // }
+// /*********for ellipse***********/
+// //     for (int i = 0; i < elp_size; ++i)
+// //     {
+// //         elp_pts_[i] = reprojectPoint(ellipse_ver_pts[i], P, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), temp_jac);
 
-//         if(jac.needed())
-//         {
-//             //make the jacobian ((2x) x 6)
-//             temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
-//         }
+// //         if(jac.needed())
+// //         {
+// //             //make the jacobian ((2x) x 6)
+// //             temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
+// //         }
 
-//         //plus the former size
-//         tool_pts_[i+cyl_size] = elp_pts_[i];
+// //         //plus the former size
+// //         tool_pts_[i+cyl_size] = elp_pts_[i];
 
-//         //find max/min X and Y for cropping purpose
-//         if(tool_pts_[i+cyl_size].x > XY_max.x) XY_max.x = tool_pts_[i+cyl_size].x;
-//         if(tool_pts_[i+cyl_size].y > XY_max.y) XY_max.y = tool_pts_[i+cyl_size].y;
-//         if(tool_pts_[i+cyl_size].x < XY_min.x) XY_min.x = tool_pts_[i+cyl_size].x;
-//         if(tool_pts_[i+cyl_size].y < XY_min.y) XY_min.y = tool_pts_[i+cyl_size].y;
+// //         //find max/min X and Y for cropping purpose
+// //         if(tool_pts_[i+cyl_size].x > XY_max.x) XY_max.x = tool_pts_[i+cyl_size].x;
+// //         if(tool_pts_[i+cyl_size].y > XY_max.y) XY_max.y = tool_pts_[i+cyl_size].y;
+// //         if(tool_pts_[i+cyl_size].x < XY_min.x) XY_min.x = tool_pts_[i+cyl_size].x;
+// //         if(tool_pts_[i+cyl_size].y < XY_min.y) XY_min.y = tool_pts_[i+cyl_size].y;
 
-//     }
-// /************for gripper 1************/
-//     for (int i = 0; i < girp1_size; ++i)
-//     {
-//         grip1_pts_[i] = reprojectPoint(griper1_ver_pts[i], P, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), temp_jac);
+// //     }
+// // /************for gripper 1************/
+// //     for (int i = 0; i < girp1_size; ++i)
+// //     {
+// //         grip1_pts_[i] = reprojectPoint(griper1_ver_pts[i], P, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), temp_jac);
 
-//         if(jac.needed())
-//         {
-//             //make the jacobian ((2x) x 6)
-//             temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
-//         }
+// //         if(jac.needed())
+// //         {
+// //             //make the jacobian ((2x) x 6)
+// //             temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
+// //         }
 
-//         tool_pts_[i + cyl_size + elp_size] = grip1_pts_[i];
+// //         tool_pts_[i + cyl_size + elp_size] = grip1_pts_[i];
 
-//         //find max/min X and Y for cropping purpose
-//         if(tool_pts_[i + cyl_size + girp1_size].x > XY_max.x) XY_max.x = tool_pts_[i + cyl_size + girp1_size].x;
-//         if(tool_pts_[i + cyl_size + girp1_size].y > XY_max.y) XY_max.y = tool_pts_[i + cyl_size + girp1_size].y;
-//         if(tool_pts_[i + cyl_size + girp1_size].x < XY_min.x) XY_min.x = tool_pts_[i + cyl_size + girp1_size].x;
-//         if(tool_pts_[i + cyl_size + girp1_size].y < XY_min.y) XY_min.y = tool_pts_[i + cyl_size + girp1_size].y;
+// //         //find max/min X and Y for cropping purpose
+// //         if(tool_pts_[i + cyl_size + girp1_size].x > XY_max.x) XY_max.x = tool_pts_[i + cyl_size + girp1_size].x;
+// //         if(tool_pts_[i + cyl_size + girp1_size].y > XY_max.y) XY_max.y = tool_pts_[i + cyl_size + girp1_size].y;
+// //         if(tool_pts_[i + cyl_size + girp1_size].x < XY_min.x) XY_min.x = tool_pts_[i + cyl_size + girp1_size].x;
+// //         if(tool_pts_[i + cyl_size + girp1_size].y < XY_min.y) XY_min.y = tool_pts_[i + cyl_size + girp1_size].y;
 
-//     }
-// /*************for gripper 2**************/
-//     for (int i = 0; i < girp2_size; ++i)
-//     {
-//         grip2_pts_[i] = reprojectPoint(griper2_ver_pts[i], P, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), temp_jac);
+// //     }
+// // /*************for gripper 2**************/
+// //     for (int i = 0; i < girp2_size; ++i)
+// //     {
+// //         grip2_pts_[i] = reprojectPoint(griper2_ver_pts[i], P, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), temp_jac);
 
-//         if(jac.needed())
-//         {
-//             //make the jacobian ((2x) x 6)
-//             temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
-//         }
+// //         if(jac.needed())
+// //         {
+// //             //make the jacobian ((2x) x 6)
+// //             temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
+// //         }
 
-//         tool_pts_[i + cyl_size + elp_size + girp1_size] = grip2_pts_[i];
+// //         tool_pts_[i + cyl_size + elp_size + girp1_size] = grip2_pts_[i];
 
-//         //find max/min X and Y for cropping purpose
-//         if(tool_pts_[i + cyl_size + elp_size + girp1_size].x > XY_max.x) XY_max.x = tool_pts_[i + cyl_size + elp_size + girp1_size].x;
-//         if(tool_pts_[i + cyl_size + elp_size + girp1_size].y > XY_max.y) XY_max.y = tool_pts_[i + cyl_size + elp_size + girp1_size].y;
-//         if(tool_pts_[i + cyl_size + elp_size + girp1_size].x < XY_min.x) XY_min.x = tool_pts_[i + cyl_size + elp_size + girp1_size].x;
-//         if(tool_pts_[i + cyl_size + elp_size + girp1_size].y < XY_min.y) XY_min.y = tool_pts_[i + cyl_size + elp_size + girp1_size].y;
+// //         //find max/min X and Y for cropping purpose
+// //         if(tool_pts_[i + cyl_size + elp_size + girp1_size].x > XY_max.x) XY_max.x = tool_pts_[i + cyl_size + elp_size + girp1_size].x;
+// //         if(tool_pts_[i + cyl_size + elp_size + girp1_size].y > XY_max.y) XY_max.y = tool_pts_[i + cyl_size + elp_size + girp1_size].y;
+// //         if(tool_pts_[i + cyl_size + elp_size + girp1_size].x < XY_min.x) XY_min.x = tool_pts_[i + cyl_size + elp_size + girp1_size].x;
+// //         if(tool_pts_[i + cyl_size + elp_size + girp1_size].y < XY_min.y) XY_min.y = tool_pts_[i + cyl_size + elp_size + girp1_size].y;
 
-//     }
+// //     }
 
-    /***now got all the points from the tool in 2d img***/
-
-
-    //connect points with lines to draw the rendered needle 
-    // the rendering is for white on a floating point image.
-    // for(int i=0; i<(segmentCount-1); i++)
-    // {
-    //     //draw the line
-    //     cv::line(image, p_pts[i], p_pts[i+1], cv::Scalar(1,1,1), size, 8, 0);
-    // }
-    //draw circle to the base
-    //cv::circle(image, p_pts[0], 5, cv::Scalar(1,0,0), size, 8, 0);
+//     /***now got all the points from the tool in 2d img***/
 
 
+//     //connect points with lines to draw the rendered needle 
+//     // the rendering is for white on a floating point image.
+//     // for(int i=0; i<(segmentCount-1); i++)
+//     // {
+//     //     //draw the line
+//     //     cv::line(image, p_pts[i], p_pts[i+1], cv::Scalar(1,1,1), size, 8, 0);
+//     // }
+//     //draw circle to the base
+//     //cv::circle(image, p_pts[0], 5, cv::Scalar(1,0,0), size, 8, 0);
 
-    //shape the rectangle that captures the rendered needle
-    ROI.width = abs(static_cast<int>(XY_max.x-XY_min.x))+2*padding;
-    ROI.height = abs(static_cast<int>(XY_max.y-XY_min.y))+2*padding;
-    ROI.x = XY_min.x-padding;
-    ROI.y = XY_min.y-padding;
 
-    return ROI;
 
-};
+//     //shape the rectangle that captures the rendered needle
+//     ROI.width = abs(static_cast<int>(XY_max.x-XY_min.x))+2*padding;
+//     ROI.height = abs(static_cast<int>(XY_max.y-XY_min.y))+2*padding;
+//     ROI.x = XY_min.x-padding;
+//     ROI.y = XY_min.y-padding;
+
+//     return ROI;
+
+// };
 
 // double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI, bool displayPause)
 // {

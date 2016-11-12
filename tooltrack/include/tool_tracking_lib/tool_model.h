@@ -114,6 +114,16 @@ class ToolModel{
 		std::vector< glm::vec3 > griper1_Vnormal;
 		std::vector< glm::vec3 > griper2_Vnormal;
 
+		std::vector< cv::Point3d > body_Vpts;     ////to save time from converting
+		std::vector< cv::Point3d > ellipse_Vpts;
+		std::vector< cv::Point3d > griper1_Vpts;
+		std::vector< cv::Point3d > griper2_Vpts;
+
+		std::vector< cv::Point3d > body_Npts;    //vertex normal, for the computation of the silhouette
+		std::vector< cv::Point3d > ellipse_Npts;
+		std::vector< cv::Point3d > griper1_Npts;
+		std::vector< cv::Point3d > griper2_Npts;		
+/********************************************************************/
 		std::vector< std::vector<int> > body_faces;
 		std::vector< std::vector<int> > ellipse_faces;
 		std::vector< std::vector<int> > griper1_faces;
@@ -123,12 +133,6 @@ class ToolModel{
 		std::vector< std::vector<int> > ellipse_neighbors;
 		std::vector< std::vector<int> > griper1_neighbors;
 		std::vector< std::vector<int> > griper2_neighbors;
-
-
-		std::vector< cv::Point3d > body_ver_pts;
-		std::vector< cv::Point3d > ellipse_ver_pts;
-		std::vector< cv::Point3d > griper1_ver_pts;
-		std::vector< cv::Point3d > griper2_ver_pts;
 
 
 
@@ -155,14 +159,26 @@ class ToolModel{
 
  		toolModel setRandomConfig(const toolModel &initial, double stdev, double mean);
 
- 		cv::Rect renderTool(cv::Mat &image, const toolModel &tool, const cv::Mat &P, int size,cv::OutputArray toolPts, cv::OutputArray jac);
+ 		//cv::Rect renderTool(cv::Mat &image, const toolModel &tool, const cv::Mat &P, int size,cv::OutputArray toolPts, cv::OutputArray jac);
 
- 		void convert_gl_cv(std::vector< glm::vec3 > &input_vertices, std::vector< cv::Point3d > &out_vertices);
+ 		void Convert_glTocv_pts(std::vector< glm::vec3 > &input_vertices, std::vector< cv::Point3d > &out_vertices);
+
+ 		cv::Point3d Convert_glTocv_pt(glm::vec3 &input_vertex);
 
  		void Compute_Silhouette(std::vector< std::vector<int> > &input_faces, std::vector< std::vector<int> > &neighbor_faces, 
-                                   std::vector< glm::vec3 > input_vertices, std::vector< glm::vec3 > input_Vnormal);
+                                   std::vector< cv::Point3d > &input_vertices, std::vector< cv::Point3d > &input_Vnormal, cv::Point3d &Cam_view,
+                                   cv::Mat &image, const cv::Mat& rvec, const cv::Mat &tvec, const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min);
 
- 		int Compare_vertex(std::vector<int> vec1, std::vector<int> vec2);
+ 		cv::Point3d FindFaceNormal(cv::Point3d input_v1, cv::Point3d input_v2, cv::Point3d input_v3,
+                                     cv::Point3d input_n1, cv::Point3d input_n2, cv::Point3d input_n3);
+
+ 		int Compare_vertex(std::vector<int> vec1, std::vector<int> vec2, std::vector<int> &Output_vec);
+
+ 		cv::Point3d transformation_nrms(const cv::Point3d &vec, const cv::Mat& rvec, const cv::Mat &tvec);
+ 		cv::Point3d transformation_pts(const cv::Point3d &point, const cv::Mat& rvec, const cv::Mat &tvec);
+
+ 		cv::Point3d crossProduct(cv::Point3d vec1, cv::Point3d vec2);
+ 		double dotProduct(cv::Point3d vec1, cv::Point3d vec2);
 
         // double calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI, bool displayPause);
 
