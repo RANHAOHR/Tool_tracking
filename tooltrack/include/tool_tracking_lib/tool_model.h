@@ -114,11 +114,23 @@ class ToolModel{
 		std::vector< glm::vec3 > griper1_Vnormal;
 		std::vector< glm::vec3 > griper2_Vnormal;
 
+		std::vector< std::vector<int> > body_faces;
+		std::vector< std::vector<int> > ellipse_faces;
+		std::vector< std::vector<int> > griper1_faces;
+		std::vector< std::vector<int> > griper2_faces;
+
+		std::vector< std::vector<int> > body_neighbors;
+		std::vector< std::vector<int> > ellipse_neighbors;
+		std::vector< std::vector<int> > griper1_neighbors;
+		std::vector< std::vector<int> > griper2_neighbors;
+
 
 		std::vector< cv::Point3d > body_ver_pts;
 		std::vector< cv::Point3d > ellipse_ver_pts;
 		std::vector< cv::Point3d > griper1_ver_pts;
 		std::vector< cv::Point3d > griper2_ver_pts;
+
+
 
 		double  offset_ellipse; //inch
         double offset_gripper; //inch;
@@ -136,7 +148,8 @@ class ToolModel{
 
  		double randomNumber(double stdev, double mean);
 
- 		void load_model_vertices(const char * path, std::vector< glm::vec3 > &out_vertices, std::vector< glm::vec3 > &vertex_normal);
+ 		void load_model_vertices(const char * path, std::vector< glm::vec3 > &out_vertices, std::vector< glm::vec3 > &vertex_normal, 
+                                 std::vector< std::vector<int> > &out_faces,  std::vector< std::vector<int> > &neighbor_faces );
 
  		void modify_model_();  ///there are offsets when loading the model convert from glm to cv
 
@@ -146,7 +159,10 @@ class ToolModel{
 
  		void convert_gl_cv(std::vector< glm::vec3 > &input_vertices, std::vector< cv::Point3d > &out_vertices);
 
- 		void Compute_Silhouette(std::vector< glm::vec3 > &vertex_normal, std::vector< cv::Point3d > &out_vertices);
+ 		void Compute_Silhouette(std::vector< std::vector<int> > &input_faces, std::vector< std::vector<int> > &neighbor_faces, 
+                                   std::vector< glm::vec3 > input_vertices, std::vector< glm::vec3 > input_Vnormal);
+
+ 		int Compare_vertex(std::vector<int> vec1, std::vector<int> vec2);
 
         // double calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI, bool displayPause);
 

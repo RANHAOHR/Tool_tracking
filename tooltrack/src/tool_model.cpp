@@ -41,10 +41,10 @@ offset_gripper = 18.1423;
 offset_ellipse = 17.784;
 
     /****initialize the vertices fo different part of tools****/
-	load_model_vertices("cylinder_part.obj", body_vertices, body_Vnormal );
-	load_model_vertices("ellipse_contour.obj", ellipse_vertices, ellipse_Vnormal );
-	load_model_vertices("griper_1.obj", griper1_vertices, griper1_Vnormal );
-	load_model_vertices("griper_2.obj", griper2_vertices, griper2_Vnormal );
+	load_model_vertices("cylinder_part.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
+	// load_model_vertices("ellipse_contour.obj", ellipse_vertices, ellipse_Vnormal );
+	// load_model_vertices("griper_1.obj", griper1_vertices, griper1_Vnormal );
+	// load_model_vertices("griper_2.obj", griper2_vertices, griper2_Vnormal );
 
     cyl_size = body_vertices.size();
     elp_size = ellipse_vertices.size();
@@ -63,21 +63,25 @@ double ToolModel::randomNumber(double stdev, double mean){
 }
 
 //set zero configuratio for tool points;
-void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > &out_vertices, std::vector< glm::vec3 > &vertex_normal ){
+void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > &out_vertices, std::vector< glm::vec3 > &vertex_normal, 
+    std::vector< std::vector<int> > &out_faces,  std::vector< std::vector<int> > &neighbor_faces){
 
-    printf("Loading file %s...\n", path);
+    ROS_ERROR("Loading OBJ file %s...\n", path);
+
+    std::vector< unsigned int > vertexIndices, uvIndices, normalIndices;
+    //std::vector< unsigned int > vertexIndices;
+    std::vector< glm::vec3 > temp_vertices;
+    std::vector< glm::vec2 > temp_uvs;
+    std::vector< glm::vec3 > temp_normals;
+
+    std::vector< int > temp_face;
+    temp_face.resize(6);  //need three vertex and corresponding normals
 
     FILE * file = fopen(path, "r");
     if( file == NULL ){
         printf("Impossible to open the file ! Are you in the right path ? See Tutorial 1 for details\n");
-        return;
     }
 
-    std::vector< unsigned int > vertexIndices, uvIndices, normalIndices;
-    //std::vector< unsigned int > vertexIndices;
-	std::vector< glm::vec3 > temp_vertices;
-	std::vector< glm::vec2 > temp_uvs;
-	std::vector< glm::vec3 > temp_normals;
 
     while( 1 ){
 
@@ -100,11 +104,11 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
         }
 
         else if ( strcmp( lineHeader, "vt" ) == 0 ){
-	    glm::vec2 uv;
-	    fscanf(file, "%f %f\n", &uv.x, &uv.y );
-	    // cout<<"uv"<<uv.x<<endl;
-	    temp_uvs.push_back(uv);
-		} 
+        glm::vec2 uv;
+        fscanf(file, "%f %f\n", &uv.x, &uv.y );
+        // cout<<"uv"<<uv.x<<endl;
+        temp_uvs.push_back(uv);
+        } 
         else if ( strcmp( lineHeader, "vn" ) == 0 ){
             glm::vec3 normal;
             fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z );
@@ -114,23 +118,32 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
             temp_normals.push_back(normal);
         }
         else if ( strcmp( lineHeader, "f" ) == 0 ){
-        std::string vertex1, vertex2, vertex3;
-        unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
-        int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
-        if (matches != 9){
-            printf("File can't be read by our simple parser : ( Try exporting with other options\n");
-            return;
-        }
-        vertexIndices.push_back(vertexIndex[0]);
-        vertexIndices.push_back(vertexIndex[1]);
-        vertexIndices.push_back(vertexIndex[2]);
-        uvIndices    .push_back(uvIndex[0]);
-        uvIndices    .push_back(uvIndex[1]);
-        uvIndices    .push_back(uvIndex[2]);
-        normalIndices.push_back(normalIndex[0]);
-        normalIndices.push_back(normalIndex[1]);
-        normalIndices.push_back(normalIndex[2]);
-            
+    
+    unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+    int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
+    if (matches != 9){
+        ROS_ERROR("File can't be read by our simple parser : ( Try exporting with other options\n");
+    }
+    
+    vertexIndices.push_back(vertexIndex[0]);
+    vertexIndices.push_back(vertexIndex[1]);
+    vertexIndices.push_back(vertexIndex[2]);
+    uvIndices    .push_back(uvIndex[0]);
+    uvIndices    .push_back(uvIndex[1]);
+    uvIndices    .push_back(uvIndex[2]);
+    normalIndices.push_back(normalIndex[0]);
+    normalIndices.push_back(normalIndex[1]);
+    normalIndices.push_back(normalIndex[2]);
+
+    temp_face[0] = vertexIndex[0];
+    temp_face[1] = vertexIndex[1];
+    temp_face[2] = vertexIndex[2];
+    temp_face[3] = normalIndex[0];
+    temp_face[4] = normalIndex[1];
+    temp_face[5] = normalIndex[2];
+
+    out_faces.push_back(temp_face);
+               
         }
     }
 
@@ -143,18 +156,56 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
         
         // Get the attributes thanks to the index
         glm::vec3 vertex = temp_vertices[ vertexIndex-1 ];
-        glm::vec3 normal = temp_normals[ vertexIndex-1 ];
+        
         // Put the attributes in buffers
         out_vertices.push_back(vertex);
+    
+    }
+
+
+    // For each vertex of each triangle
+    for( unsigned int i=0; i<normalIndices.size(); i++ ){
+
+        // Get the indices of its attributes
+        unsigned int normalIndex = normalIndices[i];
+        
+        // Get the attributes thanks to the index
+        glm::vec3 normal = temp_normals[ normalIndex-1 ];
+        // Put the attributes in buffers
         vertex_normal.push_back(normal);   //should be the same order and size
     
     }
 
     cout<<"size"<< out_vertices.size()<<endl;
+    cout<<"FACE size "<< out_faces.size()<<endl;
     printf("loaded file %s successfully.\n", path);
+
+    /***find neighbor faces***/
+    neighbor_faces.resize(out_faces.size());
+
+    for (int i = 0; i < neighbor_faces.size(); ++i)
+    {
+        /*********find the neighbor faces************/
+        for (int j = 0; j < out_faces.size(); ++j)
+        {
+            if ( j != i)
+            {
+                int match = Compare_vertex(out_faces[i], out_faces[j]); 
+                
+                if ( match == 2 ) //so face i and face j share an edge
+                {
+                   neighbor_faces[i].push_back(j);
+                }
+            }
+
+
+        }
+
+    }
     //return true;
 };
 
+/*output a glm to a cv 3d point*/
 void ToolModel::convert_gl_cv(std::vector< glm::vec3 > &input_vertices, std::vector< cv::Point3d > &out_vertices){
     int vsize = input_vertices.size();
     out_vertices.resize(vsize);
@@ -167,25 +218,80 @@ void ToolModel::convert_gl_cv(std::vector< glm::vec3 > &input_vertices, std::vec
 };
 
 
-// void ToolModel::Find_aj_triangle(std::vector< glm::vec3 > &vertex_normal, std::vector< cv::Point3d > &input_vertices){
-//     std::vector< cv::Point3d > temp_normal;
-//     convert_gl_cv(vertex_normal, temp_normal);  //put everthing in cv
+/* find the camera view point, should it be (0,0,0), input faces stores the indices of the vertices and normals, 
+which are not related to the pose of the tool object*/
+void ToolModel::Compute_Silhouette(std::vector< std::vector<int> > &input_faces, std::vector< std::vector<int> > &neighbor_faces, 
+                                   std::vector< glm::vec3 > input_vertices, std::vector< glm::vec3 > input_Vnormal){
 
+glm::vec3 temp_v1;
+glm::vec3 temp_v2;
+glm::vec3 temp_Vnorm;
+std::vector< glm::vec3 > fnormal;
+fnormal.resize(input_faces.size());
 
-// };
+    for (int i = 0; i < input_faces.size(); ++i)
+    {
+        /*****first get the surface normal******/
+        int v1 = input_faces[i][0];
+        int v2 = input_faces[i][1];
+        int v3 = input_faces[i][2];
 
-/* find the camera view point, should it be (0,0,0)*/
-void ToolModel::Compute_Silhouette(std::vector< glm::vec3 > &vertex_normal, std::vector< cv::Point3d > &output_vertices){
+        temp_v1.x = input_vertices[v1].x - input_vertices[v2].x;    //let temp v1 be v1-v2
+        temp_v1.y = input_vertices[v1].y - input_vertices[v2].y;
+        temp_v1.z = input_vertices[v1].z - input_vertices[v2].z;
 
+        temp_v2.x = input_vertices[v1].x - input_vertices[v3].x;    //let temp v1 be v1-v3
+        temp_v2.y = input_vertices[v1].y - input_vertices[v3].y;
+        temp_v2.z = input_vertices[v1].z - input_vertices[v3].z;
 
-    /*first get the surface normal*/
+        fnormal[i] = glm::cross(temp_v1, temp_v2);
 
+        int n1 = input_faces[i][3];
+        int n2 = input_faces[i][4];
+        int n3 = input_faces[i][5];
+
+        temp_Vnorm = input_Vnormal[n1] + input_Vnormal[n2] + input_Vnormal[n3];
+
+        double dot_normal = glm::dot(fnormal[i], temp_Vnorm);
+
+        if (dot_normal < 0 )  ///so if dot product is nagtive, flip the normal
+        {
+            fnormal[i] = -fnormal[i];
+        }
+
+        fnormal[i] = glm::normalize(fnormal[i]);
+
+        /*find the silhouete using cam information*/
+
+    }
 
 
 
 
 };
 
+int ToolModel::Compare_vertex(std::vector<int> vec1, std::vector<int> vec2){
+    int match_count = 0;
+    if (vec1.size() != vec2.size())
+    {
+         printf("Two vectors are not in the same size \n");
+    }
+    else{
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                if (vec1[i] == vec2[j])
+                {
+                    match_count +=1;
+                }
+
+            }
+        }
+    }
+
+    return match_count;
+};
 /*******This function is to do transformations to the raw data from the loader, to offset each part*******/
 void ToolModel::modify_model_(){
 /////////use cylinder's coordinate as body coordinate////////////
