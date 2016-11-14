@@ -38,11 +38,14 @@ ToolModel::ToolModel(){
     q_2[1] = 18.1423;  //0.4608m
     q_2[2] = 0;
 
+    CamMat = cv::Mat(4, 4, CV_64FC1);  //obtain this
+
+
     offset_gripper = 18.1423;
     offset_ellipse = 17.784;
 
     /****initialize the vertices fo different part of tools****/
-	load_model_vertices("cylinder_part.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
+	load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/test_cylin.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
 	// load_model_vertices("ellipse_contour.obj", ellipse_vertices, ellipse_Vnormal );
 	// load_model_vertices("griper_1.obj", griper1_vertices, griper1_Vnormal );
 	// load_model_vertices("griper_2.obj", griper2_vertices, griper2_Vnormal );
@@ -55,10 +58,12 @@ ToolModel::ToolModel(){
 
     Convert_glTocv_pts(body_Vnormal, body_Npts);
 
-    // cyl_size = body_vertices.size();
-    // elp_size = ellipse_vertices.size();
-    // girp1_size = griper1_vertices.size();
-    // girp2_size = griper2_vertices.size();
+    cyl_size = body_vertices.size();
+    elp_size = ellipse_vertices.size();
+    girp1_size = griper1_vertices.size();
+    girp2_size = griper2_vertices.size();
+
+    modify_model_();
 
 };
 
@@ -315,8 +320,8 @@ cv::Point3d ToolModel::transformation_nrms(const cv::Point3d &vec, const cv::Mat
         return output_v;    
 
 };
-void ToolModel::Compute_Silhouette(std::vector< std::vector<int> > &input_faces, std::vector< std::vector<int> > &neighbor_faces, 
-                                   std::vector< cv::Point3d > &input_vertices, std::vector< cv::Point3d > &input_Vnormal, cv::Point3d &Cam_view,
+void ToolModel::Compute_Silhouette(const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
+                                   const std::vector< cv::Point3d > &input_vertices, const std::vector< cv::Point3d > &input_Vnormal, const cv::Point3d &Cam_view,
                                    cv::Mat &image, const cv::Mat& rvec, const cv::Mat &tvec, const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min){
 
     // cv::Mat jacMat;
@@ -336,6 +341,7 @@ void ToolModel::Compute_Silhouette(std::vector< std::vector<int> > &input_faces,
         neighbor_num = (neighbor_faces[i].size())/3;
         if ( neighbor_num > 0)  //0 or 3n
         {
+        //ROS_INFO("INSIDE LOOP %d", i);
         /*****first get the surface normal******/
         int v1 = input_faces[i][0];
         int v2 = input_faces[i][1];
@@ -363,6 +369,7 @@ void ToolModel::Compute_Silhouette(std::vector< std::vector<int> > &input_faces,
 
             for (int j = 0; j < neighbor_num; ++j) 
             {
+                ROS_INFO("neighbor count for %d is %d", i, j );
                 int v1_ = input_faces[neighbor_faces[i][j]][0];
                 int v2_ = input_faces[neighbor_faces[i][j]][1];
                 int v3_ = input_faces[neighbor_faces[i][j]][2];
@@ -387,14 +394,16 @@ void ToolModel::Compute_Silhouette(std::vector< std::vector<int> > &input_faces,
 
 
                 /***find the silhouete using cam information***/
-                cv::Point3d cam_vec_i = face_point_i - Cam_view;
+                cv::Point3d cam_vec_i = face_point_i - Cam_view; //stil need to be figured out
                 cv::Point3d cam_vec_j = face_point_j - Cam_view;
 
                 double view_v1 = dotProduct(fnormal, cam_vec_i);
                 double view_v2 = dotProduct(fnormal_n, cam_vec_j);
 
                 if(view_v1 * view_v2 < 0 ){ //the edge
-                    
+                    int count = 1;
+                    ROS_INFO("edgs for %d is %d", j,count);
+                    count +=1;
                     cv::Point3d ept_1 = input_vertices[neighbor_faces[i][j+1]];
                     cv::Point3d ept_2 = input_vertices[neighbor_faces[i][j+2]]; //so the two points that on the edge
 
@@ -408,7 +417,6 @@ void ToolModel::Compute_Silhouette(std::vector< std::vector<int> > &input_faces,
 
                     cv::line(image, prjpt_1, prjpt_2, cv::Scalar(1,1,1), 1 , 8, 0);  /*InputOutputArray img, InputArrayOfArrays pts,const Scalar &color, 
                                                                                      int lineType=LINE_8, int shift=0, Point offset=Point())*/
-
                     if(prjpt_1.x > XY_max.x) XY_max.x = prjpt_1.x;
                     if(prjpt_1.y > XY_max.y) XY_max.y = prjpt_1.y;
                     if(prjpt_1.x < XY_min.x) XY_min.x = prjpt_1.x;
@@ -447,6 +455,7 @@ double ToolModel::dotProduct(cv::Point3d vec1, cv::Point3d vec2){
 
     return dot_res;
 };
+
 cv::Point3d ToolModel::FindFaceNormal(cv::Point3d input_v1, cv::Point3d input_v2, cv::Point3d input_v3,
                                      cv::Point3d input_n1, cv::Point3d input_n2, cv::Point3d input_n3)
 {
@@ -507,6 +516,7 @@ int ToolModel::Compare_vertex(std::vector<int> vec1, std::vector<int> vec2, std:
 
     return match_count;
 };
+
 /*******This function is to do transformations to the raw data from the loader, to offset each part*******/
 void ToolModel::modify_model_(){
 /////////use cylinder's coordinate as body coordinate////////////
@@ -716,130 +726,75 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
     newTool.rvec_grip2(1) = newTool.rvec_cyl(1);
     newTool.rvec_grip2(2) = newTool.rvec_cyl(2);    
 
-
-
 	return newTool;
 }
 
 /****render a rectangle contains the tool model*****/
-// cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, const cv::Mat &P, int size,cv::OutputArray toolPts, cv::OutputArray jac){
+cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, const cv::Mat &P, cv::Mat &Cam_mat, cv::OutputArray jac ){
 
-//     cv::Rect ROI; // rectanle that contains tool model
-//     cv::Rect cropped; //cropped image to speed up the process
+    cv::Rect ROI; // rectanle that contains tool model
+    cv::Rect cropped; //cropped image to speed up the process
+
+    /****************project points ste up***************************/
+
+    int padding =10; //add 10pixels of padding for cropping
+    cv::Point2d XY_max(-10000,-10000); //minimum of X and Y
+    cv::Point2d XY_min(10000,10000); //maximum of X and Y
+
+    cv::Point3d Cam_view;
+    Cam_view.x = Cam_mat.at<double>(0,3);  //4 by 4 
+    Cam_view.y = Cam_mat.at<double>(1,3);
+    Cam_view.z = Cam_mat.at<double>(2,3);
 
 
-//     //also need four of jacs, not clear yet
+/***********for cylinder********/
 
+//try to project at one time
 
+// reprojectPoints(body_ver_pts, body_pts_, P, tool.rvec_cyl, tool.tvec_cyl);
+// for (int i = 0; i < cyl_size; ++i)
+// {
+//         tool_pts_[i] = body_pts_[i];
 
-//     /****************project points***************************/
-
-//     int padding =10; //add 10pixels of padding for cropping
-//     cv::Point2d XY_max(-10000,-10000); //minimum of X and Y
-//     cv::Point2d XY_min(10000,10000); //maximum of X and Y
-
-// /***********for cylinder********/
-
-// //try to project at one time
-
-// // reprojectPoints(body_ver_pts, body_pts_, P, tool.rvec_cyl, tool.tvec_cyl);
-// // for (int i = 0; i < cyl_size; ++i)
-// // {
-// //         tool_pts_[i] = body_pts_[i];
-
-// //         //find max/min X and Y for cropping purpose
-// //         if(tool_pts_[i].x > XY_max.x) XY_max.x = tool_pts_[i].x;
-// //         if(tool_pts_[i].y > XY_max.y) XY_max.y = tool_pts_[i].y;
-// //         if(tool_pts_[i].x < XY_min.x) XY_min.x = tool_pts_[i].x;
-// //         if(tool_pts_[i].y < XY_min.y) XY_min.y = tool_pts_[i].y;
+//         //find max/min X and Y for cropping purpose
+//         if(tool_pts_[i].x > XY_max.x) XY_max.x = tool_pts_[i].x;
+//         if(tool_pts_[i].y > XY_max.y) XY_max.y = tool_pts_[i].y;
+//         if(tool_pts_[i].x < XY_min.x) XY_min.x = tool_pts_[i].x;
+//         if(tool_pts_[i].y < XY_min.y) XY_min.y = tool_pts_[i].y;
     
-// // }
-// /*********for ellipse***********/
-// //     for (int i = 0; i < elp_size; ++i)
-// //     {
-// //         elp_pts_[i] = reprojectPoint(ellipse_ver_pts[i], P, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), temp_jac);
+// }
 
-// //         if(jac.needed())
-// //         {
-// //             //make the jacobian ((2x) x 6)
-// //             temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
-// //         }
+Compute_Silhouette(body_faces, body_neighbors, body_Vpts, body_Npts, Cam_view, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min);
 
-// //         //plus the former size
-// //         tool_pts_[i+cyl_size] = elp_pts_[i];
+/*********for ellipse***********/
 
-// //         //find max/min X and Y for cropping purpose
-// //         if(tool_pts_[i+cyl_size].x > XY_max.x) XY_max.x = tool_pts_[i+cyl_size].x;
-// //         if(tool_pts_[i+cyl_size].y > XY_max.y) XY_max.y = tool_pts_[i+cyl_size].y;
-// //         if(tool_pts_[i+cyl_size].x < XY_min.x) XY_min.x = tool_pts_[i+cyl_size].x;
-// //         if(tool_pts_[i+cyl_size].y < XY_min.y) XY_min.y = tool_pts_[i+cyl_size].y;
+// /************for gripper 1************/
 
-// //     }
-// // /************for gripper 1************/
-// //     for (int i = 0; i < girp1_size; ++i)
-// //     {
-// //         grip1_pts_[i] = reprojectPoint(griper1_ver_pts[i], P, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), temp_jac);
-
-// //         if(jac.needed())
-// //         {
-// //             //make the jacobian ((2x) x 6)
-// //             temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
-// //         }
-
-// //         tool_pts_[i + cyl_size + elp_size] = grip1_pts_[i];
-
-// //         //find max/min X and Y for cropping purpose
-// //         if(tool_pts_[i + cyl_size + girp1_size].x > XY_max.x) XY_max.x = tool_pts_[i + cyl_size + girp1_size].x;
-// //         if(tool_pts_[i + cyl_size + girp1_size].y > XY_max.y) XY_max.y = tool_pts_[i + cyl_size + girp1_size].y;
-// //         if(tool_pts_[i + cyl_size + girp1_size].x < XY_min.x) XY_min.x = tool_pts_[i + cyl_size + girp1_size].x;
-// //         if(tool_pts_[i + cyl_size + girp1_size].y < XY_min.y) XY_min.y = tool_pts_[i + cyl_size + girp1_size].y;
-
-// //     }
-// // /*************for gripper 2**************/
-// //     for (int i = 0; i < girp2_size; ++i)
-// //     {
-// //         grip2_pts_[i] = reprojectPoint(griper2_ver_pts[i], P, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), temp_jac);
-
-// //         if(jac.needed())
-// //         {
-// //             //make the jacobian ((2x) x 6)
-// //             temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
-// //         }
-
-// //         tool_pts_[i + cyl_size + elp_size + girp1_size] = grip2_pts_[i];
-
-// //         //find max/min X and Y for cropping purpose
-// //         if(tool_pts_[i + cyl_size + elp_size + girp1_size].x > XY_max.x) XY_max.x = tool_pts_[i + cyl_size + elp_size + girp1_size].x;
-// //         if(tool_pts_[i + cyl_size + elp_size + girp1_size].y > XY_max.y) XY_max.y = tool_pts_[i + cyl_size + elp_size + girp1_size].y;
-// //         if(tool_pts_[i + cyl_size + elp_size + girp1_size].x < XY_min.x) XY_min.x = tool_pts_[i + cyl_size + elp_size + girp1_size].x;
-// //         if(tool_pts_[i + cyl_size + elp_size + girp1_size].y < XY_min.y) XY_min.y = tool_pts_[i + cyl_size + elp_size + girp1_size].y;
-
-// //     }
-
-//     /***now got all the points from the tool in 2d img***/
+// /*************for gripper 2**************/
 
 
-//     //connect points with lines to draw the rendered needle 
-//     // the rendering is for white on a floating point image.
-//     // for(int i=0; i<(segmentCount-1); i++)
-//     // {
-//     //     //draw the line
-//     //     cv::line(image, p_pts[i], p_pts[i+1], cv::Scalar(1,1,1), size, 8, 0);
-//     // }
-//     //draw circle to the base
-//     //cv::circle(image, p_pts[0], 5, cv::Scalar(1,0,0), size, 8, 0);
+    /***done projecting***/
+    //connect points with lines to draw the rendered needle 
+    // the rendering is for white on a floating point image.
+    // for(int i=0; i<(segmentCount-1); i++)
+    // {
+    //     //draw the line
+    //     cv::line(image, p_pts[i], p_pts[i+1], cv::Scalar(1,1,1), size, 8, 0);
+    // }
+    //draw circle to the base
+    //cv::circle(image, p_pts[0], 5, cv::Scalar(1,0,0), size, 8, 0);
 
 
 
-//     //shape the rectangle that captures the rendered needle
-//     ROI.width = abs(static_cast<int>(XY_max.x-XY_min.x))+2*padding;
-//     ROI.height = abs(static_cast<int>(XY_max.y-XY_min.y))+2*padding;
-//     ROI.x = XY_min.x-padding;
-//     ROI.y = XY_min.y-padding;
+    //shape the rectangle that captures the rendered needle
+    ROI.width = abs(static_cast<int>(XY_max.x-XY_min.x))+2*padding;
+    ROI.height = abs(static_cast<int>(XY_max.y-XY_min.y))+2*padding;
+    ROI.x = XY_min.x-padding;
+    ROI.y = XY_min.y-padding;
 
-//     return ROI;
+    return ROI;
 
-// };
+};
 
 // double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI, bool displayPause)
 // {

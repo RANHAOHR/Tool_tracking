@@ -23,7 +23,7 @@
 
 
 class ToolModel{
- private:
+ public:
 
 		struct toolModel {
 			cv::Matx<double,3,1> tvec_cyl;	//cylinder translation vector
@@ -134,20 +134,19 @@ class ToolModel{
 		std::vector< std::vector<int> > griper1_neighbors;
 		std::vector< std::vector<int> > griper2_neighbors;
 
-
+		cv::Mat CamMat;
 
 		double  offset_ellipse; //inch
         double offset_gripper; //inch;
 
-		int cyl_size;
+        int cyl_size;
         int elp_size;
-    	int girp1_size;
-    	int girp2_size;
+        int girp1_size;
+        int girp2_size;
 
 
 
 
- public:
  		ToolModel();  //cotructor
 
  		double randomNumber(double stdev, double mean);
@@ -159,15 +158,16 @@ class ToolModel{
 
  		toolModel setRandomConfig(const toolModel &initial, double stdev, double mean);
 
- 		//cv::Rect renderTool(cv::Mat &image, const toolModel &tool, const cv::Mat &P, int size,cv::OutputArray toolPts, cv::OutputArray jac);
-
  		void Convert_glTocv_pts(std::vector< glm::vec3 > &input_vertices, std::vector< cv::Point3d > &out_vertices);
 
  		cv::Point3d Convert_glTocv_pt(glm::vec3 &input_vertex);
 
- 		void Compute_Silhouette(std::vector< std::vector<int> > &input_faces, std::vector< std::vector<int> > &neighbor_faces, 
-                                   std::vector< cv::Point3d > &input_vertices, std::vector< cv::Point3d > &input_Vnormal, cv::Point3d &Cam_view,
-                                   cv::Mat &image, const cv::Mat& rvec, const cv::Mat &tvec, const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min);
+ 		//cam view need to be modified
+ 		cv::Rect renderTool(cv::Mat &image, const toolModel &tool, const cv::Mat &P, cv::Mat &Cam_view, cv::OutputArray = cv::noArray() );
+
+ 		void Compute_Silhouette( const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
+                                 const std::vector< cv::Point3d > &input_vertices, const  std::vector< cv::Point3d > &input_Vnormal, const cv::Point3d &Cam_view,
+                                   cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec, const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min);
 
  		cv::Point3d FindFaceNormal(cv::Point3d input_v1, cv::Point3d input_v2, cv::Point3d input_v3,
                                      cv::Point3d input_n1, cv::Point3d input_n2, cv::Point3d input_n3);
