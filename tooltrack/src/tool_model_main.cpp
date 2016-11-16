@@ -50,52 +50,12 @@
  #include <stdio.h>
  #include <stdlib.h>
 
+using namespace std;
 int main(int argc, char** argv)
 {
 	ROS_INFO("---- In main node -----");
 	ros::init(argc, argv, "tool_tracking");
 	ros::NodeHandle nh;	
-
-	ToolModel newToolModel;
-
-	ToolModel::toolModel initial;
-
-	initial.tvec_cyl(0) = 0.0;
-	initial.tvec_cyl(1) = 0.0;
-	initial.tvec_cyl(2) = 1.0;
-	initial.rvec_cyl(0) = 0.0;
-	initial.rvec_cyl(1) = 0.0;
-	initial.rvec_cyl(2) = 1.0;
-
-	initial.tvec_elp(0) = 0.0;
-	initial.tvec_elp(1) = 0.0;
-	initial.tvec_elp(2) = 0.0;
-	initial.rvec_elp(0) = 0.0;
-	initial.rvec_elp(1) = 0.0;
-	initial.rvec_elp(2) = 0.0;
-
-	initial.theta_ellipse = 0.0;
-	initial.theta_grip_1 = 0.0;
-	initial.theta_grip_2 = 0.0;  //9 DOF
-
-
-	cv::Mat testImg; //needleImage
-	cv::Mat P(3,4,CV_64FC1);
-    P.at<double>(0,0) = 1;
-    P.at<double>(1,0) = 0;
-    P.at<double>(2,0) = 0;
-
-    P.at<double>(0,1) = 0;
-    P.at<double>(1,1) = 1;
-    P.at<double>(2,1) = 0;
-
-    P.at<double>(0,2) = 1;
-    P.at<double>(1,2) = 1;
-    P.at<double>(2,2) = 1;
-
-    P.at<double>(0,3) = 0;
-    P.at<double>(1,3) = 0;
-    P.at<double>(2,3) = 0;
 
     cv::Mat Cam(4,4,CV_64FC1);
     Cam.at<double>(0,0) = 1;
@@ -113,20 +73,106 @@ int main(int argc, char** argv)
     Cam.at<double>(2,2) = 1;
     Cam.at<double>(3,2) = 0;
 
-    Cam.at<double>(0,3) = 0;   //should this be in inch
-    Cam.at<double>(1,3) = 0;
-    Cam.at<double>(2,3) = 0;
+    Cam.at<double>(0,3) = 0.0;   //should this be in inch
+    Cam.at<double>(1,3) = 0.0;
+    Cam.at<double>(2,3) = 0.10;
     Cam.at<double>(3,3) = 1;
+
+	ToolModel newToolModel(Cam);
+
+	ToolModel::toolModel initial;
+
+	initial.tvec_cyl(0) = 0.0;
+	initial.tvec_cyl(1) = 0.0;
+	initial.tvec_cyl(2) = 0.0;
+	initial.rvec_cyl(0) = 0.0;
+	initial.rvec_cyl(1) = 0.0;
+	initial.rvec_cyl(2) = 0.0;
+
+/*	initial.tvec_elp(0) = 0.0;
+	initial.tvec_elp(1) = 0.0;
+	initial.tvec_elp(2) = 0.0;
+	initial.rvec_elp(0) = 0.0;
+	initial.rvec_elp(1) = 0.0;
+	initial.rvec_elp(2) = 0.0;*/
+
+	initial.theta_ellipse = 0.0;
+	initial.theta_grip_1 = 0.0;
+	initial.theta_grip_2 = 0.0;  //9 DOF
+
+
+	cv::Mat testImg = cv::Mat::zeros(480, 640, CV_64FC1); //
+	cv::Mat P(3,4,CV_64FC1);
+
+    P.at<double>(0,0) = 1000;
+    P.at<double>(1,0) = 0;
+    P.at<double>(2,0) = 0;
+
+    P.at<double>(0,1) = 0;
+    P.at<double>(1,1) = 1000;
+    P.at<double>(2,1) = 0;
+
+    P.at<double>(0,2) = 320;
+    P.at<double>(1,2) = 240;
+    P.at<double>(2,2) = 1;
+
+    P.at<double>(0,3) = 0;
+    P.at<double>(1,3) = 0;
+    P.at<double>(2,3) = 0;
+
+
 
 	ToolModel::toolModel newTool;
 
 	ROS_INFO("after loading");
-	newTool = newToolModel.setRandomConfig(initial, 1, 0);
+	//newTool = newToolModel.setRandomConfig(initial, 1, 0);
+	newTool = initial;
 	ROS_INFO("after setRandomconfig");
 	cv::Rect testROI = newToolModel.renderTool(testImg, newTool, P, Cam);
 	ROS_INFO("after render");
+	ROS_INFO_STREAM("p: " << P);
 
-	imshow("test", testImg);
+	// cv::Point3d input_v1;
+	// input_v1.x = -1;
+	// input_v1.y = 0;
+	// input_v1.z = 0;
+
+	// cv::Point3d input_v2;
+	// input_v2.x = 0;
+	// input_v2.y = -1;
+	// input_v2.z = 0;
+
+	// cv::Point3d input_v3;
+	// input_v3.x = 0;
+	// input_v3.y = 0;
+	// input_v3.z = -1;
+
+	// cv::Point3d input_n1;
+	// input_n1.x = 0;
+	// input_n1.y = 0;
+	// input_n1.z = 1;
+
+	// cv::Point3d input_n2;
+	// input_n2.x = 0;
+	// input_n2.y = 0;
+	// input_n2.z = 1;
+
+	// cv::Point3d input_n3;
+	// input_n3.x = 0;
+	// input_n3.y = 0;
+	// input_n3.z = 1;
+
+	// cv::Point3d normal = newToolModel.FindFaceNormal(input_v1, input_v2, input_v3,
+ //                                     input_n1, input_n2, input_n3);
+
+	// cout<<"normal.x "<< normal.x <<endl;
+	// cout<<"normal.y "<< normal.y <<endl;
+	// cout<<"normal.z "<< normal.z <<endl;
+
+	if(!testImg.empty()){
+        imshow("test", testImg);
+    }
+	
 
 	cv::waitKey(0);
 

@@ -104,6 +104,7 @@ class ToolModel{
 		glm::vec3 q_1;  //initial point for ellipse
 		glm::vec3 q_2;  //intial point for girpper 
 
+/******************the model points and vecs********************/
 		std::vector< glm::vec3 > body_vertices;
 		std::vector< glm::vec3 > ellipse_vertices;
 		std::vector< glm::vec3 > griper1_vertices;
@@ -123,6 +124,17 @@ class ToolModel{
 		std::vector< cv::Point3d > ellipse_Npts;
 		std::vector< cv::Point3d > griper1_Npts;
 		std::vector< cv::Point3d > griper2_Npts;		
+/***************cam view points************************/
+
+		std::vector< cv::Point3d > CamBodyPts;     ////to save time from converting
+		std::vector< cv::Point3d > CamEllipPts;
+		std::vector< cv::Point3d > CamGripPts_1;
+		std::vector< cv::Point3d > CamGripPts_2;
+
+		std::vector< cv::Point3d > CamBodyNorms;    //vertex normal, for the computation of the silhouette
+		std::vector< cv::Point3d > CamEllipNorms;
+		std::vector< cv::Point3d > CamGripNorms_1;
+		std::vector< cv::Point3d > CamGripNorms_2;		
 /********************************************************************/
 		std::vector< std::vector<int> > body_faces;
 		std::vector< std::vector<int> > ellipse_faces;
@@ -147,7 +159,7 @@ class ToolModel{
 
 
 
- 		ToolModel();  //cotructor
+ 		ToolModel(cv::Mat& CamMat);  //cotructor
 
  		double randomNumber(double stdev, double mean);
 
@@ -162,23 +174,29 @@ class ToolModel{
 
  		cv::Point3d Convert_glTocv_pt(glm::vec3 &input_vertex);
 
+ 		void ConvertInchtoMeters(std::vector< cv::Point3d > &input_vertices);
+
  		//cam view need to be modified
- 		cv::Rect renderTool(cv::Mat &image, const toolModel &tool, const cv::Mat &P, cv::Mat &Cam_view, cv::OutputArray = cv::noArray() );
+ 		cv::Rect renderTool(cv::Mat &image, const toolModel &tool, const cv::Mat &P, cv::OutputArray = cv::noArray() );
 
  		void Compute_Silhouette( const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
-                                 const std::vector< cv::Point3d > &input_vertices, const  std::vector< cv::Point3d > &input_Vnormal, const cv::Point3d &Cam_view,
+                                 const std::vector< cv::Point3d > &input_vertices, const  std::vector< cv::Point3d > &input_Vnormal,
                                    cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec, const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min);
 
- 		cv::Point3d FindFaceNormal(cv::Point3d input_v1, cv::Point3d input_v2, cv::Point3d input_v3,
-                                     cv::Point3d input_n1, cv::Point3d input_n2, cv::Point3d input_n3);
+ 		cv::Point3d FindFaceNormal(cv::Point3d &input_v1, cv::Point3d &input_v2, cv::Point3d &input_v3,
+                                     cv::Point3d &input_n1, cv::Point3d &input_n2, cv::Point3d &input_n3);
 
- 		int Compare_vertex(std::vector<int> vec1, std::vector<int> vec2, std::vector<int> &Output_vec);
+ 		int Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2);
 
  		cv::Point3d transformation_nrms(const cv::Point3d &vec, const cv::Mat& rvec, const cv::Mat &tvec);
  		cv::Point3d transformation_pts(const cv::Point3d &point, const cv::Mat& rvec, const cv::Mat &tvec);
 
- 		cv::Point3d crossProduct(cv::Point3d vec1, cv::Point3d vec2);
- 		double dotProduct(cv::Point3d vec1, cv::Point3d vec2);
+ 		cv::Point3d crossProduct(cv::Point3d &vec1, cv::Point3d &vec2);
+ 		double dotProduct(cv::Point3d &vec1, cv::Point3d &vec2);
+ 		cv::Point3d Normalize(cv::Point3d &vec1);
+
+ 		void camTransformPoints(cv::Mat &cam_mat, std::vector< cv::Point3d > &input_vertices, std::vector< cv::Point3d > &output_vertices);
+ 		void camTransformVecs(cv::Mat &cam_mat, std::vector< cv::Point3d > &input_normals, std::vector< cv::Point3d > &output_normals);
 
         // double calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI, bool displayPause);
 
