@@ -73,10 +73,13 @@ int main(int argc, char** argv)
     Cam.at<double>(2,2) = 1;
     Cam.at<double>(3,2) = 0;
 
-    Cam.at<double>(0,3) = 0.0;   //should this be in inch
+    Cam.at<double>(0,3) = 0.1;   //should be in meters
     Cam.at<double>(1,3) = 0.0;
-    Cam.at<double>(2,3) = 0.10;
+    Cam.at<double>(2,3) = 0.01;
     Cam.at<double>(3,3) = 1;
+
+    cv::Mat Inv = Cam.inv();
+    ROS_INFO_STREAM("cam inv is: " << Inv );
 
 	ToolModel newToolModel(Cam);
 
@@ -104,16 +107,16 @@ int main(int argc, char** argv)
 	cv::Mat testImg = cv::Mat::zeros(480, 640, CV_64FC1); //
 	cv::Mat P(3,4,CV_64FC1);
 
-    P.at<double>(0,0) = 1000;
+    P.at<double>(0,0) = 50;
     P.at<double>(1,0) = 0;
     P.at<double>(2,0) = 0;
 
     P.at<double>(0,1) = 0;
-    P.at<double>(1,1) = 1000;
+    P.at<double>(1,1) = 50;
     P.at<double>(2,1) = 0;
 
-    P.at<double>(0,2) = 320;
-    P.at<double>(1,2) = 240;
+    P.at<double>(0,2) = 1000;
+    P.at<double>(1,2) = 300;
     P.at<double>(2,2) = 1;
 
     P.at<double>(0,3) = 0;
@@ -124,10 +127,10 @@ int main(int argc, char** argv)
 
 	ToolModel::toolModel newTool;
 
-	ROS_INFO("after loading");
+	//ROS_INFO("after loading");
 	//newTool = newToolModel.setRandomConfig(initial, 1, 0);
 	newTool = initial;
-	ROS_INFO("after setRandomconfig");
+	//ROS_INFO("after setRandomconfig");
 	cv::Rect testROI = newToolModel.renderTool(testImg, newTool, P, Cam);
 	ROS_INFO("after render");
 	ROS_INFO_STREAM("p: " << P);

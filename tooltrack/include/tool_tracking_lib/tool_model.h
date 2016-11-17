@@ -194,6 +194,7 @@ class ToolModel{
  		cv::Point3d crossProduct(cv::Point3d &vec1, cv::Point3d &vec2);
  		double dotProduct(cv::Point3d &vec1, cv::Point3d &vec2);
  		cv::Point3d Normalize(cv::Point3d &vec1);
+ 		cv::Point3d ConvertCelitoMeters(cv::Point3d &input_pt);
 
  		void camTransformPoints(cv::Mat &cam_mat, std::vector< cv::Point3d > &input_vertices, std::vector< cv::Point3d > &output_vertices);
  		void camTransformVecs(cv::Mat &cam_mat, std::vector< cv::Point3d > &input_normals, std::vector< cv::Point3d > &output_normals);
