@@ -182,7 +182,7 @@ class ToolModel{
                                  const std::vector< cv::Point3d > &input_vertices, const  std::vector< cv::Point3d > &input_Vnormal,
                                    cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec, const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min);
 
- 		int Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2);
+ 		int Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2, std::vector<int> &match_vec);
  		cv::Point3d transformation_nrms(const cv::Point3d &vec, const cv::Mat& rvec, const cv::Mat &tvec);
  		cv::Point3d transformation_pts(const cv::Point3d &point, const cv::Mat& rvec, const cv::Mat &tvec);
 

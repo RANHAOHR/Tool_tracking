@@ -128,7 +128,6 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
 
     std::vector< int > temp_face;
     temp_face.resize(6);  //need three vertex and corresponding normals
-    //int face_size = 0;
 
     FILE * file = fopen(path, "r");
     if( file == NULL ){
@@ -199,7 +198,7 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
     temp_face[5] = normalIndex[2]-1;
 
     out_faces.push_back(temp_face);
-    //face_size += 1;
+
                
         }
     }
@@ -210,6 +209,7 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
 
     /***find neighbor faces***/
     neighbor_faces.resize(out_faces.size());
+    std::vector< int > temp_vec;
 
     for (int i = 0; i < neighbor_faces.size(); ++i)
     {
@@ -218,13 +218,18 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
         {
             if ( j != i)
             {
-                int match = Compare_vertex(out_faces[i], out_faces[j]); 
+                int match = Compare_vertex(out_faces[i], out_faces[j], temp_vec); 
                 
                 if ( match == 2 ) //so face i and face j share an edge
                 {
-                   neighbor_faces[i].push_back(j); // mark the neighbor face index
+                    ROS_INFO_STREAM("SIZE FO THE TEMP VEC: " << temp_vec.size() );
+                    neighbor_faces[i].push_back(j); // mark the neighbor face index
+                    neighbor_faces[i].push_back(temp_vec[0]);
+                    neighbor_faces[i].push_back(temp_vec[1]);
 
                 }
+
+                temp_vec.clear();
             }
 
         }
@@ -459,14 +464,14 @@ void ToolModel::Compute_Silhouette(const std::vector< std::vector<int> > &input_
     // cv::Mat temp_jac;
 
     int neighbor_num = 0;
-    std::vector<int> record;
 
 /********************approach one: using body frame for transformation**************************/
     for (int i = 0; i < input_faces.size(); ++i)
     {
         //when there are neighbors, it is necessary to compute the edge
 
-        neighbor_num = neighbor_faces[i].size();
+        neighbor_num = (neighbor_faces[i].size())/3;  //each neighbor has two vertices
+
         if ( neighbor_num > 0)  
         {
             //ROS_INFO("INSIDE LOOP %d", i);
@@ -535,7 +540,9 @@ void ToolModel::Compute_Silhouette(const std::vector< std::vector<int> > &input_
         double isfront_i = dotProduct(fnormal, face_point_i);
         ROS_INFO_STREAM("isfront_i: " << isfront_i);
 
-        for (int j = 0; j < neighbor_num; ++j){
+        for (int neighbor_count = 0; neighbor_count < neighbor_num; ++neighbor_count){  //notice: cannot use J here, since the last j will not be counted
+
+                int j = 3*neighbor_count;
 
                 int v1_ = input_faces[neighbor_faces[i][j]][0];
                 int v2_ = input_faces[neighbor_faces[i][j]][1];
@@ -592,45 +599,17 @@ void ToolModel::Compute_Silhouette(const std::vector< std::vector<int> > &input_
                 if (isfront_i * isfront_j <= 0.0) // one is front, another is back
                 {
                     ROS_INFO("IS AN EGDE");
-                    for (int tj = 0; tj < 3; ++tj)
-                    {
-                        if (v1 == input_faces[neighbor_faces[i][j]][tj])
-                        {
-                            record.push_back(v1);
-                        }
 
-                    }
-
-                    for (int tj = 0; tj < 3; ++tj)
-                    {
-                        if (v2 == input_faces[neighbor_faces[i][j]][tj])
-                        {
-                            record.push_back(v2);
-                        }
-
-                    }
-
-                    for (int tj = 0; tj < 3; ++tj)
-                    {
-                        if (v3 == input_faces[neighbor_faces[i][j]][tj])
-                        {
-                            record.push_back(v3);
-                        }
-
-                    }
 
                     /*finish finding*/
-                    cv::Point3d temp = body_vertices[record[0]];
+                    cv::Point3d temp = body_vertices[neighbor_faces[i][j+1]];
                     cv::Point3d ept_1 = transformation_pts(temp, rvec, tvec);  //transform before the the camera transformation
                     ept_1 = camTransformPoint(CamMat, ept_1 );
                     
 
-                    temp = body_vertices[record[1]];
+                    temp = body_vertices[neighbor_faces[i][j+2]];
                     cv::Point3d ept_2 = transformation_pts(temp, rvec, tvec);
                     ept_2 = camTransformPoint(CamMat, ept_2 ); //so the two points that on the edge
-
-                    //ROS_INFO_STREAM("size of record is: " << record.size()); //debug
-                    record.clear();
 
                     cout<<"ept_1.x "<< ept_1.x<< " ept_1.y " << ept_1.y <<" ept_1.z " << ept_1.z <<endl;
                     cout<<"ept_2.x "<< ept_2.x<< " ept_2.y " << ept_2.y <<" ept_2.z " << ept_2.z <<endl;
@@ -688,14 +667,14 @@ void ToolModel::Compute_Silhouette(const std::vector< std::vector<int> > &input_
     // cv::Mat temp_jac;
 
     int neighbor_num = 0;
-    std::vector<int> record;
+    //std::vector<int> record;
 
 /********************approach two: use camera frame fro transformation************************/
     for (int i = 0; i < input_faces.size(); ++i)
     {
         //when there are neighbors, it is necessary to compute the edge
 
-        neighbor_num = neighbor_faces[i].size();
+        neighbor_num = (neighbor_faces[i].size())/3;
         if ( neighbor_num > 0)  
         {
             //ROS_INFO("INSIDE LOOP %d", i);
@@ -754,8 +733,9 @@ void ToolModel::Compute_Silhouette(const std::vector< std::vector<int> > &input_
         double isfront_i = dotProduct(fnormal, face_point_i);
         ROS_INFO_STREAM("isfront_i: " << isfront_i);
 
-        for (int j = 0; j < neighbor_num; ++j){
+        for (int neighbor_count = 0; neighbor_count < neighbor_num; ++neighbor_count){  //notice: cannot use J here, since the last j will not be counted
 
+                int j = 3*neighbor_count;
                 int v1_ = input_faces[neighbor_faces[i][j]][0];
                 int v2_ = input_faces[neighbor_faces[i][j]][1];
                 int v3_ = input_faces[neighbor_faces[i][j]][2];
@@ -803,38 +783,10 @@ void ToolModel::Compute_Silhouette(const std::vector< std::vector<int> > &input_
                 if (isfront_i * isfront_j <= 0.0) // one is front, another is back
                 {
                     ROS_INFO("IS AN EGDE");
-                    for (int tj = 0; tj < 3; ++tj)
-                    {
-                        if (v1 == input_faces[neighbor_faces[i][j]][tj])
-                        {
-                            record.push_back(v1);
-                        }
 
-                    }
+                    cv::Point3d ept_1 = input_vertices[neighbor_faces[i][j+1]];
+                    cv::Point3d ept_2 = input_vertices[neighbor_faces[i][j+2]]; //so the two points that on the edge
 
-                    for (int tj = 0; tj < 3; ++tj)
-                    {
-                        if (v2 == input_faces[neighbor_faces[i][j]][tj])
-                        {
-                            record.push_back(v2);
-                        }
-
-                    }
-
-                    for (int tj = 0; tj < 3; ++tj)
-                    {
-                        if (v3 == input_faces[neighbor_faces[i][j]][tj])
-                        {
-                            record.push_back(v3);
-                        }
-
-                    }
-
-                    /*finish finding*/
-                    cv::Point3d ept_1 = input_vertices[record[0]];
-                    cv::Point3d ept_2 = input_vertices[record[1]]; //so the two points that on the edge
-                    //ROS_INFO_STREAM("size of record is: " << record.size()); //debug
-                    record.clear();
 
                     cout<<"ept_1.x "<< ept_1.x<< " ept_1.y " << ept_1.y <<" ept_1.z " << ept_1.z <<endl;
                     cout<<"ept_2.x "<< ept_2.x<< " ept_2.y " << ept_2.y <<" ept_2.z " << ept_2.z <<endl;
@@ -951,7 +903,7 @@ cv::Point3d ToolModel::FindFaceNormal(cv::Point3d &input_v1, cv::Point3d &input_
 
 };
 
-int ToolModel::Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2 ){
+int ToolModel::Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2, std::vector<int> &match_vec ){
     int match_count = 0;
     //std::vector<int> match_vec;   //match_vec should contain both the matching count and the matched vertices
 
@@ -965,6 +917,7 @@ int ToolModel::Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2 ){
                 if (vec1[0] == vec2[j])
                 {
                     match_count +=1;
+                    match_vec.push_back(vec1[0]);
 
                 }
 
@@ -975,7 +928,7 @@ int ToolModel::Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2 ){
                 if (vec1[1] == vec2[j])
                 {
                     match_count +=1;
-
+                    match_vec.push_back(vec1[1]);
 
                 }
 
@@ -986,7 +939,7 @@ int ToolModel::Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2 ){
                 if (vec1[2] == vec2[j])
                 {
                     match_count +=1;
-
+                    match_vec.push_back(vec1[2]);
 
                 }
 
@@ -1238,8 +1191,8 @@ cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &C
     
 // }
 
-Compute_Silhouette(body_faces, body_neighbors, CamBodyPts, CamBodyNorms, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min);
-//Compute_Silhouette(body_faces, body_neighbors, body_Vpts, body_Npts, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min);
+//Compute_Silhouette(body_faces, body_neighbors, CamBodyPts, CamBodyNorms, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min);
+Compute_Silhouette(body_faces, body_neighbors, body_Vpts, body_Npts, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min);
 
 /*********for ellipse***********/
 
@@ -1311,7 +1264,7 @@ Compute_Silhouette(body_faces, body_neighbors, CamBodyPts, CamBodyNorms, image, 
 //     return matchingScore;
 // }
 
-/*************reproject a single point without rvec and tvec, and no jac*******************/
+/*************reproject a single point without rvec and tvec, and no jac, FOR THE BODY COORD TRNSFORMATION*******************/
 cv::Point2d ToolModel::reproject(const cv::Point3d &point, const cv::Mat &P)
 {
 

@@ -88,9 +88,9 @@ int main(int argc, char** argv)
 
 	initial.tvec_cyl(0) = 0.0;
 	initial.tvec_cyl(1) = 0.0;
-	initial.tvec_cyl(2) = 0.2;
+	initial.tvec_cyl(2) = 0.0;
 	initial.rvec_cyl(0) = 0.0;
-	initial.rvec_cyl(1) = 0.0;
+	initial.rvec_cyl(1) = M_PI/2;
 	initial.rvec_cyl(2) = 0.0;
 
 /*	initial.tvec_elp(0) = 0.0;
@@ -116,8 +116,8 @@ int main(int argc, char** argv)
     P.at<double>(1,1) = 1000;
     P.at<double>(2,1) = 0;
 
-    P.at<double>(0,2) = 300;
-    P.at<double>(1,2) = 100;
+    P.at<double>(0,2) = 320;
+    P.at<double>(1,2) = 240;
     P.at<double>(2,2) = 1;
 
     P.at<double>(0,3) = 0;
