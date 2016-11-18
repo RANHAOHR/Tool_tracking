@@ -49,6 +49,7 @@
  #include "std_msgs/Float64MultiArray.h"
  #include <stdio.h>
  #include <stdlib.h>
+ #include <math.h>
 
 using namespace std;
 int main(int argc, char** argv)
@@ -73,13 +74,13 @@ int main(int argc, char** argv)
     Cam.at<double>(2,2) = 1;
     Cam.at<double>(3,2) = 0;
 
-    Cam.at<double>(0,3) = 0.1;   //should be in meters
+    Cam.at<double>(0,3) = 0.0;   //should be in meters
     Cam.at<double>(1,3) = 0.0;
-    Cam.at<double>(2,3) = 0.01;
+    Cam.at<double>(2,3) = 0.2;  // cannot have z = 0 for reprojection, camera_z must be always point to object
     Cam.at<double>(3,3) = 1;
 
-    cv::Mat Inv = Cam.inv();
-    ROS_INFO_STREAM("cam inv is: " << Inv );
+    //cv::Mat Inv = Cam.inv(); use the inv od cam_mat to transform the body coord to the cam coord
+    //ROS_INFO_STREAM("cam inv is: " << Inv );
 
 	ToolModel newToolModel(Cam);
 
@@ -87,7 +88,7 @@ int main(int argc, char** argv)
 
 	initial.tvec_cyl(0) = 0.0;
 	initial.tvec_cyl(1) = 0.0;
-	initial.tvec_cyl(2) = 0.0;
+	initial.tvec_cyl(2) = 0.2;
 	initial.rvec_cyl(0) = 0.0;
 	initial.rvec_cyl(1) = 0.0;
 	initial.rvec_cyl(2) = 0.0;
@@ -107,16 +108,16 @@ int main(int argc, char** argv)
 	cv::Mat testImg = cv::Mat::zeros(480, 640, CV_64FC1); //
 	cv::Mat P(3,4,CV_64FC1);
 
-    P.at<double>(0,0) = 50;
+    P.at<double>(0,0) = 1000;
     P.at<double>(1,0) = 0;
     P.at<double>(2,0) = 0;
 
     P.at<double>(0,1) = 0;
-    P.at<double>(1,1) = 50;
+    P.at<double>(1,1) = 1000;
     P.at<double>(2,1) = 0;
 
-    P.at<double>(0,2) = 1000;
-    P.at<double>(1,2) = 300;
+    P.at<double>(0,2) = 300;
+    P.at<double>(1,2) = 100;
     P.at<double>(2,2) = 1;
 
     P.at<double>(0,3) = 0;
@@ -131,46 +132,10 @@ int main(int argc, char** argv)
 	//newTool = newToolModel.setRandomConfig(initial, 1, 0);
 	newTool = initial;
 	//ROS_INFO("after setRandomconfig");
-	cv::Rect testROI = newToolModel.renderTool(testImg, newTool, P, Cam);
+	cv::Rect testROI = newToolModel.renderTool(testImg, newTool, Cam, P );
 	ROS_INFO("after render");
 	ROS_INFO_STREAM("p: " << P);
 
-	// cv::Point3d input_v1;
-	// input_v1.x = -1;
-	// input_v1.y = 0;
-	// input_v1.z = 0;
-
-	// cv::Point3d input_v2;
-	// input_v2.x = 0;
-	// input_v2.y = -1;
-	// input_v2.z = 0;
-
-	// cv::Point3d input_v3;
-	// input_v3.x = 0;
-	// input_v3.y = 0;
-	// input_v3.z = -1;
-
-	// cv::Point3d input_n1;
-	// input_n1.x = 0;
-	// input_n1.y = 0;
-	// input_n1.z = 1;
-
-	// cv::Point3d input_n2;
-	// input_n2.x = 0;
-	// input_n2.y = 0;
-	// input_n2.z = 1;
-
-	// cv::Point3d input_n3;
-	// input_n3.x = 0;
-	// input_n3.y = 0;
-	// input_n3.z = 1;
-
-	// cv::Point3d normal = newToolModel.FindFaceNormal(input_v1, input_v2, input_v3,
- //                                     input_n1, input_n2, input_n3);
-
-	// cout<<"normal.x "<< normal.x <<endl;
-	// cout<<"normal.y "<< normal.y <<endl;
-	// cout<<"normal.z "<< normal.z <<endl;
 
 	if(!testImg.empty()){
         imshow("test", testImg);

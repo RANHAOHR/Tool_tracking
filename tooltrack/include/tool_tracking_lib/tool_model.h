@@ -126,7 +126,7 @@ class ToolModel{
 		std::vector< cv::Point3d > griper2_Npts;		
 /***************cam view points************************/
 
-		std::vector< cv::Point3d > CamBodyPts;     ////to save time from converting
+		std::vector< cv::Point3d > CamBodyPts;     ////points in camera coord
 		std::vector< cv::Point3d > CamEllipPts;
 		std::vector< cv::Point3d > CamGripPts_1;
 		std::vector< cv::Point3d > CamGripPts_2;
@@ -159,7 +159,7 @@ class ToolModel{
 
 
 
- 		ToolModel(cv::Mat& CamMat);  //cotructor
+ 		ToolModel(cv::Mat& CamMat);  //constructor
 
  		double randomNumber(double stdev, double mean);
 
@@ -169,35 +169,42 @@ class ToolModel{
  		void modify_model_();  ///there are offsets when loading the model convert from glm to cv
 
  		toolModel setRandomConfig(const toolModel &initial, double stdev, double mean);
-
- 		void Convert_glTocv_pts(std::vector< glm::vec3 > &input_vertices, std::vector< cv::Point3d > &out_vertices);
-
- 		cv::Point3d Convert_glTocv_pt(glm::vec3 &input_vertex);
-
- 		void ConvertInchtoMeters(std::vector< cv::Point3d > &input_vertices);
-
+ 
  		//cam view need to be modified
- 		cv::Rect renderTool(cv::Mat &image, const toolModel &tool, const cv::Mat &P, cv::OutputArray = cv::noArray() );
+ 		cv::Rect renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P, cv::OutputArray = cv::noArray() );
+
+ 		/**************compute silhoutes*****************/
+ 		void Compute_Silhouette(const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
+                                   const std::vector< cv::Point3d > &body_vertices, const std::vector< cv::Point3d > &body_Vnormal, cv::Mat &CamMat,
+                                   cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec, const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min);
 
  		void Compute_Silhouette( const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
                                  const std::vector< cv::Point3d > &input_vertices, const  std::vector< cv::Point3d > &input_Vnormal,
                                    cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec, const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min);
 
- 		cv::Point3d FindFaceNormal(cv::Point3d &input_v1, cv::Point3d &input_v2, cv::Point3d &input_v3,
-                                     cv::Point3d &input_n1, cv::Point3d &input_n2, cv::Point3d &input_n3);
-
  		int Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2);
-
  		cv::Point3d transformation_nrms(const cv::Point3d &vec, const cv::Mat& rvec, const cv::Mat &tvec);
  		cv::Point3d transformation_pts(const cv::Point3d &point, const cv::Mat& rvec, const cv::Mat &tvec);
 
+ 		/**********************math computation*******************/
  		cv::Point3d crossProduct(cv::Point3d &vec1, cv::Point3d &vec2);
  		double dotProduct(cv::Point3d &vec1, cv::Point3d &vec2);
  		cv::Point3d Normalize(cv::Point3d &vec1);
  		cv::Point3d ConvertCelitoMeters(cv::Point3d &input_pt);
+ 		void ConvertInchtoMeters(std::vector< cv::Point3d > &input_vertices);
+ 		cv::Point3d FindFaceNormal(cv::Point3d &input_v1, cv::Point3d &input_v2, cv::Point3d &input_v3,
+                                     cv::Point3d &input_n1, cv::Point3d &input_n2, cv::Point3d &input_n3);
 
+		void Convert_glTocv_pts(std::vector< glm::vec3 > &input_vertices, std::vector< cv::Point3d > &out_vertices);
+ 		cv::Point3d Convert_glTocv_pt(glm::vec3 &input_vertex);
+
+		/*************camera transforms************************/
  		void camTransformPoints(cv::Mat &cam_mat, std::vector< cv::Point3d > &input_vertices, std::vector< cv::Point3d > &output_vertices);
  		void camTransformVecs(cv::Mat &cam_mat, std::vector< cv::Point3d > &input_normals, std::vector< cv::Point3d > &output_normals);
+ 		cv::Point3d camTransformPoint(cv::Mat &cam_mat, cv::Point3d &input_vertex);
+ 		cv::Point3d camTransformVec(cv::Mat &cam_mat, cv::Point3d &input_vec);
+
+ 		cv::Point2d reproject(const cv::Point3d &point, const cv::Mat &P);
 
         // double calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI, bool displayPause);
 
