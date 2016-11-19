@@ -41,12 +41,13 @@ ToolModel::ToolModel(cv::Mat& CamMat){
     //CamMat = cv::Mat(4, 4, CV_64FC1);  //obtain this
 
     offset_body = 0.34299906;
+    offset_ellipse = 0.45352716;
     offset_gripper = 18.1423;
-    offset_ellipse = 17.784;
 
     /****initialize the vertices fo different part of tools****/
-	load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/new_cylin_add.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
-	// load_model_vertices("ellipse_contour.obj", ellipse_vertices, ellipse_Vnormal );
+	load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/new_cylin_add.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
+    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/new_ellipse_face.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
+
 	// load_model_vertices("griper_1.obj", griper1_vertices, griper1_Vnormal );
 	// load_model_vertices("griper_2.obj", griper2_vertices, griper2_Vnormal );
 
@@ -55,7 +56,9 @@ ToolModel::ToolModel(cv::Mat& CamMat){
     ROS_INFO("after loading");
     modify_model_();
     /****convert to cv points for computation****/
-    camTransformPoints(CamMat, body_Vpts, CamBodyPts);
+    //camTransformPoints(CamMat, body_Vpts, CamBodyPts);
+    camTransformPoints(CamMat, ellipse_Vpts, CamEllipPts);
+
 //    cv::Point3d maxx(0.0) , minn(0.0);
 //    for (auto abc: CamBodyPts) {
 //        maxx.x = max(maxx.x, abc.x);
@@ -67,12 +70,10 @@ ToolModel::ToolModel(cv::Mat& CamMat){
 //    }
 //    cout << "max x:" << maxx.x << " max y:" << maxx.y << " max z:" << maxx.z << endl;
 //    cout << "min x:" << minn.x << " min y:" << minn.y << " min z:" << minn.z << endl;
-    // Convert_glTocv_pts(ellipse_vertices, ellipse_Vpts);
-    // Convert_glTocv_pts(griper1_vertices, griper1_Vpts);
-    // Convert_glTocv_pts(griper2_vertices, griper2_Vpts);
 
 
-    camTransformVecs(CamMat, body_Npts, CamBodyNorms);
+    //camTransformVecs(CamMat, body_Npts, CamBodyNorms);
+    camTransformVecs(CamMat, ellipse_Npts, CamEllipNorms);
 
 
     cyl_size = (int) body_vertices.size();
@@ -954,10 +955,10 @@ void ToolModel::modify_model_(){
     {
         body_vertices[i].y = body_vertices[i].y - offset_body;
     }
-    // for (int i = 0; i < elp_size; ++i)
-    // {
-    //     ellipse_vertices[i].y = ellipse_vertices[i].y - offset_ellipse;
-    // }
+    for (int i = 0; i < elp_size; ++i)
+    {
+        ellipse_vertices[i].y = ellipse_vertices[i].y - offset_ellipse;
+    }
     // for (int i = 0; i < girp1_size; ++i)
     // {
     //     griper1_vertices[i].y = griper1_vertices[i].y - offset_gripper;
@@ -972,7 +973,12 @@ void ToolModel::modify_model_(){
 
     Convert_glTocv_pts(body_Vnormal, body_Npts); //not using homogenous for v reight now
     ConvertInchtoMeters(body_Npts);
+///////////// modify ellipse points /////////////////
+    Convert_glTocv_pts(ellipse_vertices, ellipse_Vpts);
+    ConvertInchtoMeters(ellipse_Vpts);
 
+    Convert_glTocv_pts(ellipse_Vnormal, ellipse_Npts); //not using homogenous for v reight now
+    ConvertInchtoMeters(ellipse_Npts);
     // convert_gl_cv(body_vertices, body_ver_pts);
     // convert_gl_cv(ellipse_vertices, ellipse_ver_pts);
     // convert_gl_cv(griper1_vertices, griper1_ver_pts);
@@ -1202,7 +1208,7 @@ cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &C
 Compute_Silhouette(body_faces, body_neighbors, body_Vpts, body_Npts, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min);
 
 /*********for ellipse***********/
-
+Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vpts, ellipse_Npts, CamMat, image, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac, XY_max, XY_min);
 // /************for gripper 1************/
 
 // /*************for gripper 2**************/
@@ -1293,4 +1299,28 @@ cv::Point2d ToolModel::reproject(const cv::Point3d &point, const cv::Mat &P)
     output.y = results.at<double>(1,0)/results.at<double>(2,0);
 
     return output;
+};
+
+/*****************testing functions**********************/
+ToolModel::toolModel ToolModel::test_tool_model(const toolModel &initial){
+
+    toolModel newTool = initial;
+    //translation vectors
+    newTool.tvec_cyl(0) = 0.0;
+    newTool.tvec_cyl(1) = 0.0;
+    newTool.tvec_cyl(2) = 0.0;
+    newTool.rvec_cyl(0) = 0.0;
+    newTool.rvec_cyl(1) = M_PI/2;
+    newTool.rvec_cyl(2) = 0.0;
+
+    newTool.tvec_elp(0) = 0.0;
+    newTool.tvec_elp(1) = offset_ellipse;
+    newTool.tvec_elp(2) = 0.0;
+    newTool.rvec_elp(0) = 0.0;
+    newTool.rvec_elp(1) = M_PI/2;
+    newTool.rvec_elp(2) = 0.0;
+
+    return newTool;
+
+
 };
