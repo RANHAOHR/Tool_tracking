@@ -76,13 +76,17 @@ int main(int argc, char** argv)
 
     Cam.at<double>(0,3) = 0.0;   //should be in meters
     Cam.at<double>(1,3) = 0.0;
-    Cam.at<double>(2,3) = 0.2;  // cannot have z = 0 for reprojection, camera_z must be always point to object
+    Cam.at<double>(2,3) = 0.4;  // cannot have z = 0 for reprojection, camera_z must be always point to object
     Cam.at<double>(3,3) = 1;
 
     //cv::Mat Inv = Cam.inv(); use the inv od cam_mat to transform the body coord to the cam coord
     //ROS_INFO_STREAM("cam inv is: " << Inv );
 
 	ToolModel newToolModel(Cam);
+
+	ROS_INFO("After Loading Model and Initializetion, please press ENTER to go on");
+	cin.ignore();
+
 
 	ToolModel::toolModel initial;
 
@@ -108,16 +112,16 @@ int main(int argc, char** argv)
 	cv::Mat testImg = cv::Mat::zeros(480, 640, CV_64FC1); //
 	cv::Mat P(3,4,CV_64FC1);
 
-    P.at<double>(0,0) = 1000;
+    P.at<double>(0,0) = 300;
     P.at<double>(1,0) = 0;
     P.at<double>(2,0) = 0;
 
     P.at<double>(0,1) = 0;
-    P.at<double>(1,1) = 1000;
+    P.at<double>(1,1) = 300;
     P.at<double>(2,1) = 0;
 
     P.at<double>(0,2) = 320;
-    P.at<double>(1,2) = 240;
+    P.at<double>(1,2) = 400;
     P.at<double>(2,2) = 1;
 
     P.at<double>(0,3) = 0;

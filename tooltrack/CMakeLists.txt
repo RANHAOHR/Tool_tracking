@@ -9,7 +9,7 @@ find_package(OpenCV REQUIRED)
                std_msgs 
                sensor_msgs
                cwru_opencv_common
-               vesselness_image_filter_cpu
+               
                )
 
 #uncomment the next line to use the point-cloud library
@@ -24,7 +24,7 @@ find_package(OpenCV REQUIRED)
 include_directories(include ${catkin_INCLUDE_DIRS})
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 
-catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_common vesselness_image_filter_cpu) 
+catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_common ) 
 
 
 # example boost usage

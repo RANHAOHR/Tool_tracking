@@ -148,8 +148,10 @@ class ToolModel{
 
 		cv::Mat CamMat;
 
-		double  offset_ellipse; //inch
-        double offset_gripper; //inch;
+		double offset_body;
+		double  offset_ellipse; //meter
+        double offset_gripper; //
+         //
 
         int cyl_size;
         int elp_size;

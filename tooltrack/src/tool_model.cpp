@@ -40,22 +40,21 @@ ToolModel::ToolModel(cv::Mat& CamMat){
 
     //CamMat = cv::Mat(4, 4, CV_64FC1);  //obtain this
 
-
+    offset_body = 0.34299906;
     offset_gripper = 18.1423;
     offset_ellipse = 17.784;
 
     /****initialize the vertices fo different part of tools****/
-	load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/cylinder.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
+	load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/new_cylin_add.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
 	// load_model_vertices("ellipse_contour.obj", ellipse_vertices, ellipse_Vnormal );
 	// load_model_vertices("griper_1.obj", griper1_vertices, griper1_Vnormal );
 	// load_model_vertices("griper_2.obj", griper2_vertices, griper2_Vnormal );
 
     // ConvertInchtoMeters(body_vertices);
     // ConvertInchtoMeters(body_Vnormal);
-
+    ROS_INFO("after loading");
+    modify_model_();
     /****convert to cv points for computation****/
-    Convert_glTocv_pts(body_vertices, body_Vpts);
-    ConvertInchtoMeters(body_Vpts);
     camTransformPoints(CamMat, body_Vpts, CamBodyPts);
 //    cv::Point3d maxx(0.0) , minn(0.0);
 //    for (auto abc: CamBodyPts) {
@@ -72,8 +71,7 @@ ToolModel::ToolModel(cv::Mat& CamMat){
     // Convert_glTocv_pts(griper1_vertices, griper1_Vpts);
     // Convert_glTocv_pts(griper2_vertices, griper2_Vpts);
 
-    Convert_glTocv_pts(body_Vnormal, body_Npts); //not using homogenous for v reight now
-    ConvertInchtoMeters(body_Npts);
+
     camTransformVecs(CamMat, body_Npts, CamBodyNorms);
 
 
@@ -82,7 +80,7 @@ ToolModel::ToolModel(cv::Mat& CamMat){
     girp1_size = (int) griper1_vertices.size();
     girp2_size = (int) griper2_vertices.size();
 
-    modify_model_();
+
 
 };
 
@@ -952,19 +950,28 @@ int ToolModel::Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2, st
 /*******This function is to do transformations to the raw data from the loader, to offset each part*******/
 void ToolModel::modify_model_(){
 /////////use cylinder's coordinate as body coordinate////////////
-    for (int i = 0; i < elp_size; ++i)
+    for (int i = 0; i < cyl_size; ++i)
     {
-        ellipse_vertices[i].y = ellipse_vertices[i].y - offset_ellipse;
+        body_vertices[i].y = body_vertices[i].y - offset_body;
     }
-    for (int i = 0; i < girp1_size; ++i)
-    {
-        griper1_vertices[i].y = griper1_vertices[i].y - offset_gripper;
-    }
-        for (int i = 0; i < girp2_size; ++i)
-    {
-        griper2_vertices[i].y = griper2_vertices[i].y - offset_gripper;
-    }
-///////////// convert glm::vec3 to cv point3 /////////////////
+    // for (int i = 0; i < elp_size; ++i)
+    // {
+    //     ellipse_vertices[i].y = ellipse_vertices[i].y - offset_ellipse;
+    // }
+    // for (int i = 0; i < girp1_size; ++i)
+    // {
+    //     griper1_vertices[i].y = griper1_vertices[i].y - offset_gripper;
+    // }
+    //     for (int i = 0; i < girp2_size; ++i)
+    // {
+    //     griper2_vertices[i].y = griper2_vertices[i].y - offset_gripper;
+    // }
+///////////// modify body points /////////////////
+    Convert_glTocv_pts(body_vertices, body_Vpts);
+    ConvertInchtoMeters(body_Vpts);
+
+    Convert_glTocv_pts(body_Vnormal, body_Npts); //not using homogenous for v reight now
+    ConvertInchtoMeters(body_Npts);
 
     // convert_gl_cv(body_vertices, body_ver_pts);
     // convert_gl_cv(ellipse_vertices, ellipse_ver_pts);
