@@ -86,7 +86,7 @@ int main(int argc, char** argv)
 
 	ROS_INFO("After Loading Model and Initializetion, please press ENTER to go on");
 	cin.ignore();
-	ToolModel::toolModel initial;
+
 
 	cv::Mat testImg = cv::Mat::zeros(480, 640, CV_64FC1); //
 	cv::Mat P(3,4,CV_64FC1);
@@ -107,13 +107,28 @@ int main(int argc, char** argv)
     P.at<double>(1,3) = 0;
     P.at<double>(2,3) = 0;
 
+	ToolModel::toolModel initial;
+
+	initial.tvec_cyl(0) = 0.1;
+	initial.tvec_cyl(1) = 0.0;
+	initial.tvec_cyl(2) = 0.0;
+	initial.rvec_cyl(0) = 0.0;
+	initial.rvec_cyl(1) = 0.0;
+	initial.rvec_cyl(2) = 0.0;
+
+	initial.tvec_elp(0) = 0.1;
+	initial.tvec_elp(1) = 0.4;
+	initial.tvec_elp(2) = 0.0;
+	initial.rvec_elp(0) = 0.0;
+	initial.rvec_elp(1) = 0.0;
+	initial.rvec_elp(2) = 0.0;	
 
 
 	ToolModel::toolModel newTool;
 
 	//ROS_INFO("after loading");
 	//newTool = newToolModel.setRandomConfig(initial, 1, 0);
-	newTool = newToolModel.test_tool_model(initial);
+	newTool = initial;
 	//ROS_INFO("after setRandomconfig");
 	cv::Rect testROI = newToolModel.renderTool(testImg, newTool, Cam, P );
 	ROS_INFO("after render");

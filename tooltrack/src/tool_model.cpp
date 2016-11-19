@@ -45,8 +45,8 @@ ToolModel::ToolModel(cv::Mat& CamMat){
     offset_gripper = 18.1423;
 
     /****initialize the vertices fo different part of tools****/
-	load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/new_cylin_add.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
-    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/new_ellipse_face.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
+	load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/refine_cylinder.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
+    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/new_ellipse_face.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
 
 	// load_model_vertices("griper_1.obj", griper1_vertices, griper1_Vnormal );
 	// load_model_vertices("griper_2.obj", griper2_vertices, griper2_Vnormal );
@@ -1301,26 +1301,3 @@ cv::Point2d ToolModel::reproject(const cv::Point3d &point, const cv::Mat &P)
     return output;
 };
 
-/*****************testing functions**********************/
-ToolModel::toolModel ToolModel::test_tool_model(const toolModel &initial){
-
-    toolModel newTool = initial;
-    //translation vectors
-    newTool.tvec_cyl(0) = 0.0;
-    newTool.tvec_cyl(1) = 0.0;
-    newTool.tvec_cyl(2) = 0.0;
-    newTool.rvec_cyl(0) = 0.0;
-    newTool.rvec_cyl(1) = M_PI/2;
-    newTool.rvec_cyl(2) = 0.0;
-
-    newTool.tvec_elp(0) = 0.0;
-    newTool.tvec_elp(1) = offset_ellipse;
-    newTool.tvec_elp(2) = 0.0;
-    newTool.rvec_elp(0) = 0.0;
-    newTool.rvec_elp(1) = M_PI/2;
-    newTool.rvec_elp(2) = 0.0;
-
-    return newTool;
-
-
-};

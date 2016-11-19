@@ -172,7 +172,7 @@ public:
  		void modify_model_();  ///there are offsets when loading the model convert from glm to cv
 
  		toolModel setRandomConfig(const toolModel &initial, double stdev, double mean);
-		toolModel test_tool_model(const toolModel &tool); 
+
  		//cam view need to be modified
  		cv::Rect renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P, cv::OutputArray = cv::noArray() );
 
