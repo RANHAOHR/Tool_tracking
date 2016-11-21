@@ -24,11 +24,11 @@ ToolModel::ToolModel(cv::Mat& CamMat){
     offset_gripper = 18.1423;
 
     /****initialize the rotation and traslation points*****/
-    q_ellipse = cv::Mat(3,1,CV_64FC1);
+    q_ellipse = cv::Mat(4,1,CV_64FC1);
     q_ellipse.at<double>(0,0) = 0;
     q_ellipse.at<double>(1,0) = offset_ellipse - offset_body;  //0.1106m
     q_ellipse.at<double>(2,0) = 0;
-    //q_ellipse.at<double>(3,0) = 1;
+    q_ellipse.at<double>(3,0) = 1;
 
 
     // q_2[0] = 0;
@@ -40,8 +40,8 @@ ToolModel::ToolModel(cv::Mat& CamMat){
 
 
     /****initialize the vertices fo different part of tools****/
-	load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/refine_cylinder.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
-    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/refine_ellipse.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
+	load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_cylinder.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
+    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_ellipse.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
 
     ROS_INFO("after loading");
     modify_model_(body_vertices, body_Vnormal, body_Vpts, body_Npts, offset_body );
@@ -943,59 +943,6 @@ void ToolModel::modify_model_(std::vector< glm::vec3 > &input_vertices, std::vec
     {
         input_Vpts[i].y = input_Vpts[i].y - offset;
     }
-    /*debug*/
-    // double max_y = 0;
-    // double min_y = input_Vpts[0].y;
-
-    // double max_z = 0;
-    // double min_z = input_Vpts[0].z;
-
-    // double max_x = 0;
-    // double min_x = input_Vpts[0].x;
-
-    // for (unsigned int i = 0; i < input_Vpts.size(); i++) {
-
-    //     if (max_y < input_Vpts[i].y )  //for finding max y
-    //     {
-    //         max_y = input_Vpts[i].y;
-    //     }
-    //     if (min_y > input_Vpts[i].y )  //for finding max y
-    //     {
-    //         min_y = input_Vpts[i].y;
-    //     }
-
-
-
-    //     if (max_z < input_Vpts[i].z )  
-    //     {
-    //         max_z = input_Vpts[i].z;
-    //     }
-    //     if (min_z > input_Vpts[i].z )  
-    //     {
-    //         min_z = input_Vpts[i].z;
-    //     }
-
-    //     if (input_Vpts[i].x - max_x > 0.0)  
-    //     {
-    //         max_x = input_Vpts[i].x;
-    //     }
-    //     if (input_Vpts[i].x - min_x < 0.0)
-    //     {
-    //         min_x = input_Vpts[i].x;
-    //     }
-
-    //     //cout << vertices[i].x << endl;   
-    // }  
-    // cout << "max y "<< max_y << endl;
-    // cout << "min y "<< min_y << endl;
-
-    // cout << "max z "<<max_z << endl;
-    // cout << "min z "<<min_z << endl;
-
-    // cout << "max x "<< max_x << endl;
-    // cout << "min x "<< min_x << endl;
-
-
     Convert_glTocv_pts(input_Vnormal, input_Npts); //not using homogenous for v reight now
     ConvertInchtoMeters(input_Npts);
 
@@ -1008,7 +955,13 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
 
 
 	toolModel newTool = initial;  //BODY part is done here
-    newTool.theta_ellipse = 0.0;
+
+    /******testing section here********/
+    newTool.theta_ellipse = 0.1;
+    newTool.theta_grip_1 = 0.5;
+    newTool.theta_grip_2 = 0.5;
+
+    /******testing section here********/
 
 	//create normally distributed random number with the given stdev and mean
 
@@ -1051,65 +1004,22 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
 		newTool.theta_grip_1 = newTool.theta_grip_2 - randomNumber(stdev,mean);*/
 
 
-   /***********need computations for forward kinematics**********/
-    cv::Mat roll_mat(3,3,CV_64FC1);
-    cv::Mat pitch_mat(3,3,CV_64FC1);
-    cv::Mat yaw_mat(3,3,CV_64FC1);
+   /***********computations for ellipse kinematics**********/
 
-    cv::Mat q_(3,1,CV_64FC1);
-    q_.at<double>(0,0) = newTool.tvec_cyl(0);
-    q_.at<double>(1,0) = newTool.tvec_cyl(1);
-    q_.at<double>(2,0) = newTool.tvec_cyl(2);
+    cv::Mat q_temp(4,1,CV_64FC1);
 
-    /*get ellipse orininal point */
-    cv::Mat wx(3,1,CV_64FC1);
-    cv::Mat wy(3,1,CV_64FC1);
-    cv::Mat wz(3,1,CV_64FC1);
+    q_temp = transformPoints(q_ellipse,cv::Mat(initial.rvec_cyl),cv::Mat(initial.tvec_cyl)); 
 
-    cv::Mat I = cv::Mat::eye(3,3,CV_64FC1); 
+    newTool.tvec_elp(0) = q_temp.at<double>(0,0);
+    newTool.tvec_elp(1) = q_temp.at<double>(1,0);
+    newTool.tvec_elp(2) = q_temp.at<double>(2,0);       
 
-    wx.at<double>(0,0) = 1;
-    wx.at<double>(1,0) = 0;
-    wx.at<double>(2,0) = 0;
+    newTool.rvec_elp(0) = newTool.rvec_cyl(0); //roll angle should be the same.
+    newTool.rvec_elp(1) = newTool.rvec_cyl(1); //pitch angle should be the same.
+    newTool.rvec_elp(2) = newTool.rvec_cyl(2) + newTool.theta_ellipse; //yaw angle is plus the theta_ellipse
 
-    wy.at<double>(0,0) = 0;
-    wy.at<double>(1,0) = 1;
-    wy.at<double>(2,0) = 0;
+   /***********computations for gripper kinematics**********/
 
-    wz.at<double>(0,0) = 0;
-    wz.at<double>(1,0) = 0;
-    wz.at<double>(2,0) = 1;
-
-    cv::Mat skew_wx = computeSkew(wx);
-
-    roll_mat = I + skew_wx*sin(newTool.rvec_cyl(0)) + (1-cos(newTool.rvec_cyl(0))) * skew_wx * skew_wx;
-
-    cv::Mat skew_wy = computeSkew(wy);
-
-    pitch_mat = I + skew_wy*sin(newTool.rvec_cyl(1)) + (1-cos(newTool.rvec_cyl(1))) * skew_wy * skew_wy;
-
-    //wz = pitch_mat * wz;
-
-    cv::Mat skew_wz = computeSkew(wz);
-
-    yaw_mat = I + skew_wz*sin(newTool.rvec_cyl(2)) + (1-cos(newTool.rvec_cyl(2))) * skew_wz * skew_wz; 
-
-    cv::Mat q_temp(3,1,CV_64FC1);
-    q_temp = yaw_mat * pitch_mat * roll_mat * q_ellipse;  //q_ellipse is 3 by 1 here
-
-    ROS_INFO_STREAM("AFTER pitch: " << q_temp);
-
-    newTool.tvec_elp(0) = q_temp.at<double>(0,0) + newTool.tvec_cyl(0);
-    newTool.tvec_elp(1) = q_temp.at<double>(1,0) + newTool.tvec_cyl(1);
-    newTool.tvec_elp(2) = q_temp.at<double>(2,0) + newTool.tvec_cyl(2);
-/*homogenous*/
-
-    // cv::Mat new_q = trnaslationCompute(q_, roll_mat, pitch_mat, yaw_mat );
-    // newTool.tvec_elp(0) = new_q.at<double>(0,0);
-
-    // newTool.tvec_elp(1) = new_q.at<double>(1,0);
-
-    // newTool.tvec_elp(2) = new_q.at<double>(2,0);
 
 
     //w for the ellipse is z of rotation mat
@@ -1181,9 +1091,7 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
     newTool.tvec_grip2(2) = q_gripper[2];*/
 
     //rotation vetors, Euler angle
-    newTool.rvec_elp(0) = newTool.rvec_cyl(0); //roll angle should be the same.
-    newTool.rvec_elp(1) = newTool.rvec_cyl(1); //pitch angle should be the same.
-    newTool.rvec_elp(2) = newTool.rvec_cyl(2) + newTool.theta_ellipse; //yaw angle is plus the theta_ellipse
+
 
 /*    newTool.rvec_grip1(0) = newTool.rvec_cyl(0) + newTool.theta_grip_1;  //roll angle is plus the theta_gripper
     newTool.rvec_grip1(1) = newTool.rvec_cyl(1);
@@ -1211,90 +1119,7 @@ cv::Mat ToolModel::computeSkew(cv::Mat &w){
     return skew;
 
 };
-cv::Mat ToolModel::trnaslationCompute(cv::Mat &q_, cv::Mat &roll_mat, cv::Mat &pitch_mat, cv::Mat &yaw_mat ){
 
-    cv::Mat I = cv::Mat::eye(3,3,CV_64FC1);    
-    cv::Mat roll_trans(3,1,CV_64FC1);
-    cv::Mat pitch_trans(3,1,CV_64FC1);
-    cv::Mat yaw_trans(3,1,CV_64FC1);
-
-    cv::Mat roll_exp(4,4,CV_64FC1);
-    cv::Mat pitch_exp(4,4,CV_64FC1);
-    cv::Mat yaw_exp(4,4,CV_64FC1);
-
-
-    roll_trans = (I - roll_mat) * q_;
-    pitch_trans = (I - pitch_mat) * q_;
-    yaw_trans = (I - yaw_mat) * q_;
-
-    roll_exp.at<double>(0,0) = 1;
-    roll_exp.at<double>(1,0) = 0;
-    roll_exp.at<double>(2,0) = 0;
-    roll_exp.at<double>(3,0) = 0;
-
-    roll_exp.at<double>(0,1) = 0;
-    roll_exp.at<double>(1,1) = roll_mat.at<double>(1,1);
-    roll_exp.at<double>(2,1) = roll_mat.at<double>(2,1);
-    roll_exp.at<double>(3,1) = 0;
-
-    roll_exp.at<double>(0,2) = 0;
-    roll_exp.at<double>(1,2) = roll_mat.at<double>(1,2);
-    roll_exp.at<double>(2,2) = roll_mat.at<double>(2,2);
-    roll_exp.at<double>(3,2) = 0;
-
-    roll_exp.at<double>(0,3) = roll_trans.at<double>(0,0);
-    roll_exp.at<double>(1,3) = roll_trans.at<double>(1,0);
-    roll_exp.at<double>(2,3) = roll_trans.at<double>(2,0);
-    roll_exp.at<double>(3,3) = 1;    
-
-
-    pitch_exp.at<double>(0,0) = pitch_mat.at<double>(0,0);
-    pitch_exp.at<double>(1,0) = 0;
-    pitch_exp.at<double>(2,0) = pitch_mat.at<double>(2,0);
-    pitch_exp.at<double>(3,0) = 0;
-
-    pitch_exp.at<double>(0,1) = 0;
-    pitch_exp.at<double>(1,1) = 1;
-    pitch_exp.at<double>(2,1) = 0;
-    pitch_exp.at<double>(3,1) = 0;
-
-    pitch_exp.at<double>(0,2) = pitch_mat.at<double>(0,2);
-    pitch_exp.at<double>(1,2) = 0;
-    pitch_exp.at<double>(2,2) = pitch_mat.at<double>(2,2);
-    pitch_exp.at<double>(3,2) = 0;
-
-    pitch_exp.at<double>(0,3) = pitch_trans.at<double>(0,0);
-    pitch_exp.at<double>(1,3) = pitch_trans.at<double>(1,0);
-    pitch_exp.at<double>(2,3) = pitch_trans.at<double>(2,0);
-    pitch_exp.at<double>(3,3) = 1; 
-
-
-    yaw_exp.at<double>(0,0) = yaw_mat.at<double>(0,0);
-    yaw_exp.at<double>(1,0) = yaw_mat.at<double>(1,0);
-    yaw_exp.at<double>(2,0) = 0;
-    yaw_exp.at<double>(3,0) = 0;
-
-    yaw_exp.at<double>(0,1) = yaw_mat.at<double>(0,1);
-    yaw_exp.at<double>(1,1) = yaw_mat.at<double>(1,1);
-    yaw_exp.at<double>(2,1) = 0;
-    yaw_exp.at<double>(3,1) = 0;
-
-    yaw_exp.at<double>(0,2) = 0;
-    yaw_exp.at<double>(1,2) = 0;
-    yaw_exp.at<double>(2,2) = 1;
-    yaw_exp.at<double>(3,2) = 0;
-
-    yaw_exp.at<double>(0,3) = yaw_trans.at<double>(0,0);
-    yaw_exp.at<double>(1,3) = yaw_trans.at<double>(1,0);
-    yaw_exp.at<double>(2,3) = yaw_trans.at<double>(2,0);
-    yaw_exp.at<double>(3,3) = 1;
-
-
-    cv::Mat res(4,1,CV_64FC1);
-    res = yaw_exp * pitch_exp * roll_exp * q_ellipse; //q_ellipse is 4 by 1 here
-
-    return res;
-};
 
 /****render a rectangle contains the tool model*****/
 cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P, cv::OutputArray jac ){

@@ -186,7 +186,6 @@ public:
 		void Convert_glTocv_pts(std::vector< glm::vec3 > &input_vertices, std::vector< cv::Point3d > &out_vertices);
  		cv::Point3d Convert_glTocv_pt(glm::vec3 &input_vertex);
 
- 		cv::Mat trnaslationCompute(cv::Mat &q_, cv::Mat &roll_mat, cv::Mat &pitch_mat, cv::Mat &yaw_mat );
  		cv::Mat computeSkew(cv::Mat &w);
 
 		/*************camera transforms************************/
