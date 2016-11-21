@@ -26,7 +26,7 @@ ToolModel::ToolModel(cv::Mat& CamMat){
     /****initialize the rotation and traslation points*****/
     q_ellipse = cv::Mat(3,1,CV_64FC1);
     q_ellipse.at<double>(0,0) = 0;
-    q_ellipse.at<double>(1,0) = offset_ellipse - offset_body;  //0.4571m
+    q_ellipse.at<double>(1,0) = offset_ellipse - offset_body;  //0.1106m
     q_ellipse.at<double>(2,0) = 0;
     //q_ellipse.at<double>(3,0) = 1;
 
@@ -40,8 +40,8 @@ ToolModel::ToolModel(cv::Mat& CamMat){
 
 
     /****initialize the vertices fo different part of tools****/
-	load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_cylinder.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
-    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_ellipse.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
+	load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/refine_cylinder.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
+    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/refine_ellipse.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
 
     ROS_INFO("after loading");
     modify_model_(body_vertices, body_Vnormal, body_Vpts, body_Npts, offset_body );
@@ -1055,70 +1055,61 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
     cv::Mat roll_mat(3,3,CV_64FC1);
     cv::Mat pitch_mat(3,3,CV_64FC1);
     cv::Mat yaw_mat(3,3,CV_64FC1);
-    cv::Mat rotation_mat(3,3,CV_64FC1);
 
     cv::Mat q_(3,1,CV_64FC1);
     q_.at<double>(0,0) = newTool.tvec_cyl(0);
     q_.at<double>(1,0) = newTool.tvec_cyl(1);
     q_.at<double>(2,0) = newTool.tvec_cyl(2);
 
-
-    roll_mat.at<double>(0,0) = 1;
-    roll_mat.at<double>(1,0) = 0;
-    roll_mat.at<double>(2,0) = 0;
-    roll_mat.at<double>(0,1) = 0;
-    roll_mat.at<double>(1,1) = cos(newTool.rvec_cyl(0));
-    roll_mat.at<double>(2,1) = sin(newTool.rvec_cyl(0));  
-    roll_mat.at<double>(0,2) = 0;
-    roll_mat.at<double>(1,2) = -sin(newTool.rvec_cyl(0));
-    roll_mat.at<double>(2,2) = cos(newTool.rvec_cyl(0));  
-
-
-    pitch_mat.at<double>(0,0) = cos(newTool.rvec_cyl(1));
-    pitch_mat.at<double>(1,0) = 0;
-    pitch_mat.at<double>(2,0) = -sin(newTool.rvec_cyl(1));
-    pitch_mat.at<double>(0,1) = 0;
-    pitch_mat.at<double>(1,1) = 1;
-    pitch_mat.at<double>(2,1) = 0;
-    pitch_mat.at<double>(0,2) = sin(newTool.rvec_cyl(1));
-    pitch_mat.at<double>(1,2) = 0;
-    pitch_mat.at<double>(2,2) = cos(newTool.rvec_cyl(1)); 
-
-
-    yaw_mat.at<double>(0,0) = cos(newTool.rvec_cyl(2));
-    yaw_mat.at<double>(1,0) = sin(newTool.rvec_cyl(2));
-    yaw_mat.at<double>(2,0) = 0;
-    yaw_mat.at<double>(0,1) = -sin(newTool.rvec_cyl(2));
-    yaw_mat.at<double>(1,1) = cos(newTool.rvec_cyl(2));
-    yaw_mat.at<double>(2,1) = 0;
-    yaw_mat.at<double>(0,2) = 0;
-    yaw_mat.at<double>(1,2) = 0;
-    yaw_mat.at<double>(2,2) = 1;  
-
-    rotation_mat = yaw_mat * pitch_mat * roll_mat;
-    //rotation_mat = roll_mat * pitch_mat * yaw_mat;
-
     /*get ellipse orininal point */
+    cv::Mat wx(3,1,CV_64FC1);
+    cv::Mat wy(3,1,CV_64FC1);
+    cv::Mat wz(3,1,CV_64FC1);
+
+    cv::Mat I = cv::Mat::eye(3,3,CV_64FC1); 
+
+    wx.at<double>(0,0) = 1;
+    wx.at<double>(1,0) = 0;
+    wx.at<double>(2,0) = 0;
+
+    wy.at<double>(0,0) = 0;
+    wy.at<double>(1,0) = 1;
+    wy.at<double>(2,0) = 0;
+
+    wz.at<double>(0,0) = 0;
+    wz.at<double>(1,0) = 0;
+    wz.at<double>(2,0) = 1;
+
+    cv::Mat skew_wx = computeSkew(wx);
+
+    roll_mat = I + skew_wx*sin(newTool.rvec_cyl(0)) + (1-cos(newTool.rvec_cyl(0))) * skew_wx * skew_wx;
+
+    cv::Mat skew_wy = computeSkew(wy);
+
+    pitch_mat = I + skew_wy*sin(newTool.rvec_cyl(1)) + (1-cos(newTool.rvec_cyl(1))) * skew_wy * skew_wy;
+
+    //wz = pitch_mat * wz;
+
+    cv::Mat skew_wz = computeSkew(wz);
+
+    yaw_mat = I + skew_wz*sin(newTool.rvec_cyl(2)) + (1-cos(newTool.rvec_cyl(2))) * skew_wz * skew_wz; 
+
     cv::Mat q_temp(3,1,CV_64FC1);
+    q_temp = yaw_mat * pitch_mat * roll_mat * q_ellipse;  //q_ellipse is 3 by 1 here
 
-    // //glm::vec3 q_gripper;
-
-    q_temp = rotation_mat * q_ellipse;  //q_ellipse is 3 by 1 here
+    ROS_INFO_STREAM("AFTER pitch: " << q_temp);
 
     newTool.tvec_elp(0) = q_temp.at<double>(0,0) + newTool.tvec_cyl(0);
-
     newTool.tvec_elp(1) = q_temp.at<double>(1,0) + newTool.tvec_cyl(1);
-
     newTool.tvec_elp(2) = q_temp.at<double>(2,0) + newTool.tvec_cyl(2);
-
 /*homogenous*/
 
-    // cv::Mat q_temp = trnaslationCompute(q_, roll_mat, pitch_mat, yaw_mat );
-    // newTool.tvec_elp(0) = q_temp.at<double>(0,0);
+    // cv::Mat new_q = trnaslationCompute(q_, roll_mat, pitch_mat, yaw_mat );
+    // newTool.tvec_elp(0) = new_q.at<double>(0,0);
 
-    // newTool.tvec_elp(1) = q_temp.at<double>(1,0);
+    // newTool.tvec_elp(1) = new_q.at<double>(1,0);
 
-    // newTool.tvec_elp(2) = q_temp.at<double>(2,0);
+    // newTool.tvec_elp(2) = new_q.at<double>(2,0);
 
 
     //w for the ellipse is z of rotation mat
@@ -1134,9 +1125,6 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
     // newTool.w_x(0) = rotation_mat[0][0];
     // newTool.w_x(1) = rotation_mat[1][0];
     // newTool.w_x(2) = rotation_mat[2][0];
-
-
-
 
 /*    glm::mat3 ellip_Rotation;
     glm::mat3 wz_mat;
@@ -1208,6 +1196,21 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
 	return newTool;
 };
 
+cv::Mat ToolModel::computeSkew(cv::Mat &w){
+    cv::Mat skew(3,3, CV_64FC1);
+    skew.at<double>(0,0) = 0;
+    skew.at<double>(1,0) = w.at<double>(2,0);
+    skew.at<double>(2,0) = -w.at<double>(1,0);
+    skew.at<double>(0,1) = -w.at<double>(2,0);
+    skew.at<double>(1,1) = 0;
+    skew.at<double>(2,1) = w.at<double>(0,0);
+    skew.at<double>(0,2) = w.at<double>(1,0);
+    skew.at<double>(1,2) = -w.at<double>(0,0);
+    skew.at<double>(2,2) = 0;
+
+    return skew;
+
+};
 cv::Mat ToolModel::trnaslationCompute(cv::Mat &q_, cv::Mat &roll_mat, cv::Mat &pitch_mat, cv::Mat &yaw_mat ){
 
     cv::Mat I = cv::Mat::eye(3,3,CV_64FC1);    
