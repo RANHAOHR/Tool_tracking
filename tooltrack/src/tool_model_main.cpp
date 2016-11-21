@@ -65,17 +65,17 @@ int main(int argc, char** argv)
     Cam.at<double>(3,0) = 0;    
 
     Cam.at<double>(0,1) = 0;
-    Cam.at<double>(1,1) = 1;
+    Cam.at<double>(1,1) = -1;
     Cam.at<double>(2,1) = 0;
     Cam.at<double>(3,1) = 0;
 
     Cam.at<double>(0,2) = 0;
     Cam.at<double>(1,2) = 0;
-    Cam.at<double>(2,2) = 1;
+    Cam.at<double>(2,2) = -1;
     Cam.at<double>(3,2) = 0;
 
     Cam.at<double>(0,3) = 0.0;   //should be in meters
-    Cam.at<double>(1,3) = 0.0;
+    Cam.at<double>(1,3) = 0.1;
     Cam.at<double>(2,3) = 0.2;  // cannot have z = 0 for reprojection, camera_z must be always point to object
     Cam.at<double>(3,3) = 1;
 
@@ -91,44 +91,54 @@ int main(int argc, char** argv)
 	cv::Mat testImg = cv::Mat::zeros(480, 640, CV_64FC1); //
 	cv::Mat P(3,4,CV_64FC1);
 /******************magic numbers!!!!!!!!!!!!!!*************/
-    P.at<double>(0,0) = 400;
+    P.at<double>(0,0) = 500;
     P.at<double>(1,0) = 0;
     P.at<double>(2,0) = 0;
 
     P.at<double>(0,1) = 0;
-    P.at<double>(1,1) = 400;
+    P.at<double>(1,1) = 500;
     P.at<double>(2,1) = 0;
 
     P.at<double>(0,2) = 320; // horiz
-    P.at<double>(1,2) = 1000; //verticle
+    P.at<double>(1,2) = 200; //verticle
     P.at<double>(2,2) = 1;
 
     P.at<double>(0,3) = 0;
     P.at<double>(1,3) = 0;
     P.at<double>(2,3) = 0;
 
+/*GENERAL P CONFIGS for DVRK*/
+    // P.at<double>(0,0) = 1000;
+    // P.at<double>(1,0) = 0;
+    // P.at<double>(2,0) = 0;
+
+    // P.at<double>(0,1) = 0;
+    // P.at<double>(1,1) = 1000;
+    // P.at<double>(2,1) = 0;
+
+    // P.at<double>(0,2) = 320; // horiz
+    // P.at<double>(1,2) = 240; //verticle
+    // P.at<double>(2,2) = 1;
+
+    // P.at<double>(0,3) = 0;
+    // P.at<double>(1,3) = 0;
+    // P.at<double>(2,3) = 0;
+
 	ToolModel::toolModel initial;
 
-	initial.tvec_cyl(0) = 0.1;
+	initial.tvec_cyl(0) = 0.0;
 	initial.tvec_cyl(1) = 0.0;
 	initial.tvec_cyl(2) = 0.0;
 	initial.rvec_cyl(0) = 0.0;
-	initial.rvec_cyl(1) = 0.0;
-	initial.rvec_cyl(2) = 0.0;
-
-	initial.tvec_elp(0) = 0.1;
-	initial.tvec_elp(1) = 0.4;
-	initial.tvec_elp(2) = 0.0;
-	initial.rvec_elp(0) = 0.0;
-	initial.rvec_elp(1) = 0.0;
-	initial.rvec_elp(2) = 0.0;	
+	initial.rvec_cyl(1) = 0.3;
+	initial.rvec_cyl(2) = -0.5;
 
 
 	ToolModel::toolModel newTool;
 
 	//ROS_INFO("after loading");
-	//newTool = newToolModel.setRandomConfig(initial, 1, 0);
-	newTool = initial;
+	newTool = newToolModel.setRandomConfig(initial, 1, 0);
+	//newTool = initial;
 	//ROS_INFO("after setRandomconfig");
 	cv::Rect testROI = newToolModel.renderTool(testImg, newTool, Cam, P );
 	ROS_INFO("after render");

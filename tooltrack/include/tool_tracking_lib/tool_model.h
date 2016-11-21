@@ -93,17 +93,6 @@ public:
 
 		};   //end struct
         
-		//std::vector< std::vector<double> > I;
-		glm::mat3 I;
-
-		glm::mat3 roll_mat;
-    	glm::mat3 pitch_mat;
-    	glm::mat3 yaw_mat;
-
-    	glm::mat3 rotation_mat;
-
-		glm::vec3 q_1;  //initial point for ellipse
-		glm::vec3 q_2;  //intial point for girpper 
 
 /******************the model points and vecs********************/
 		std::vector< glm::vec3 > body_vertices;
@@ -152,14 +141,9 @@ public:
 		double offset_body;
 		double  offset_ellipse; //meter
         double offset_gripper; //
-         //
 
-        int cyl_size;
-        int elp_size;
-        int girp1_size;
-        int girp2_size;
-
-
+        cv::Mat q_ellipse;  //initial point for ellipse
+        //cv::Mat q_2;  //intial point for girpper 
 
 
  		ToolModel(cv::Mat& CamMat);  //constructor
@@ -169,7 +153,8 @@ public:
  		void load_model_vertices(const char * path, std::vector< glm::vec3 > &out_vertices, std::vector< glm::vec3 > &vertex_normal, 
                                  std::vector< std::vector<int> > &out_faces,  std::vector< std::vector<int> > &neighbor_faces );
 
- 		void modify_model_();  ///there are offsets when loading the model convert from glm to cv
+ 		void modify_model_(std::vector< glm::vec3 > &input_vertices, std::vector< glm::vec3 > &input_Vnormal, 
+                              std::vector< cv::Point3d > &input_Vpts, std::vector< cv::Point3d > &input_Npts, double &offset );  ///there are offsets when loading the model convert from glm to cv
 
  		toolModel setRandomConfig(const toolModel &initial, double stdev, double mean);
 
@@ -200,6 +185,8 @@ public:
 
 		void Convert_glTocv_pts(std::vector< glm::vec3 > &input_vertices, std::vector< cv::Point3d > &out_vertices);
  		cv::Point3d Convert_glTocv_pt(glm::vec3 &input_vertex);
+
+ 		cv::Mat trnaslationCompute(cv::Mat &q_, cv::Mat &roll_mat, cv::Mat &pitch_mat, cv::Mat &yaw_mat );
 
 		/*************camera transforms************************/
  		void camTransformPoints(cv::Mat &cam_mat, std::vector< cv::Point3d > &input_vertices, std::vector< cv::Point3d > &output_vertices);
