@@ -30,11 +30,11 @@ ToolModel::ToolModel(cv::Mat& CamMat){
     q_ellipse.at<double>(2,0) = 0;
     q_ellipse.at<double>(3,0) = 1;
 
-    q_gripper = cv::Mat(4,1,CV_64FC1);
+    q_gripper = cv::Mat(3,1,CV_64FC1);
     q_gripper.at<double>(0,0) = 0;
     q_gripper.at<double>(1,0) = offset_gripper - 0.4522;  //
     q_gripper.at<double>(2,0) = 0;
-    q_gripper.at<double>(3,0) = 1;
+
 
 
     //CamMat = cv::Mat(4, 4, CV_64FC1);  //obtain this
@@ -190,9 +190,8 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
         }
     }
 
-    cout<<"size"<< out_vertices.size()<<endl;
-    cout<<"NORMAL size "<< vertex_normal.size()<<endl;
-    printf("loaded file %s successfully.\n", path);
+    // cout<<"size"<< out_vertices.size()<<endl;
+    // cout<<"NORMAL size "<< vertex_normal.size()<<endl;
 
     /***find neighbor faces***/
     neighbor_faces.resize(out_faces.size());
@@ -222,6 +221,8 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
         }
        //cout<< "neighbor number: "<< (neigh_faces[i].size())/3 << endl;  //so now the neighbor contains one 
     }
+
+    printf("loaded file %s successfully.\n", path);
     /*debug for faces*/
     // for (int i = 0; i < 10; ++i)
     // {
@@ -511,10 +512,10 @@ void ToolModel::Compute_Silhouette(const std::vector< std::vector<int> > &input_
         cv::Point3d fnormal = FindFaceNormal(Cpt1, Cpt2, Cpt3, Cvn1, Cvn2, Cvn3); //knowing the direction and normalized
         //ROS_INFO_STREAM("fnormal: " << fnormal);
 
-        if (fnormal.x == 0.0 && fnormal.y == 0.0 && fnormal.z == 0.0 )
-        {
-            ROS_ERROR("ONE SURFACE HAS TWO ALIGNED VECTORS???");
-        }
+        // if (fnormal.x == 0.0 && fnormal.y == 0.0 && fnormal.z == 0.0 )
+        // {
+        //     ROS_ERROR("ONE SURFACE HAS TWO ALIGNED VECTORS???");
+        // }
         cv::Point3d face_point_i = Cpt1 + Cpt2 + Cpt3;
         face_point_i.x = face_point_i.x/3;
         face_point_i.y = face_point_i.y/3;
@@ -525,7 +526,7 @@ void ToolModel::Compute_Silhouette(const std::vector< std::vector<int> > &input_
         face_point_i = Normalize(face_point_i);
         //ROS_INFO_STREAM("cam_vec_i.x: " << cam_vec_i.x << "cam_vec_i.y: " << cam_vec_i.y << "cam_vec_i.z: " << cam_vec_i.z  );
         double isfront_i = dotProduct(fnormal, face_point_i);
-        ROS_INFO_STREAM("isfront_i: " << isfront_i);
+        //ROS_INFO_STREAM("isfront_i: " << isfront_i);
 
         for (int neighbor_count = 0; neighbor_count < neighbor_num; ++neighbor_count){  //notice: cannot use J here, since the last j will not be counted
 
@@ -564,13 +565,13 @@ void ToolModel::Compute_Silhouette(const std::vector< std::vector<int> > &input_
                 cv::Point3d Cvn3_ = camTransformVec(CamMat, vn3_);    
 
                 cv::Point3d fnormal_n = FindFaceNormal(Cpt1_, Cpt2_, Cpt3_, Cvn1_, Cvn2_, Cvn3_);
-                ROS_INFO_STREAM("fnormal_n: " << fnormal_n);
+                //ROS_INFO_STREAM("fnormal_n: " << fnormal_n);
 
 
-                if (fnormal_n.x == 0.0 && fnormal_n.y == 0.0 && fnormal_n.z == 0.0 )
-                {
-                    ROS_ERROR("neighbor SURFACE HAS TWO ALIGNED VECTORS???");
-                }
+                // if (fnormal_n.x == 0.0 && fnormal_n.y == 0.0 && fnormal_n.z == 0.0 )
+                // {
+                //     ROS_ERROR("neighbor SURFACE HAS TWO ALIGNED VECTORS???");
+                // }
                 //ROS_INFO_STREAM("fnormal_n.x: " << fnormal_n.x << "fnormal_n.y: " << fnormal_n.y << "fnormal_n.z: " << fnormal_n.z  );
 
                 cv::Point3d face_point_j = Cpt1_ + Cpt2_ + Cpt3_;
@@ -581,11 +582,11 @@ void ToolModel::Compute_Silhouette(const std::vector< std::vector<int> > &input_
 
                 double isfront_j = dotProduct(fnormal_n, face_point_j);
 
-                ROS_INFO_STREAM("isfront_j: " << isfront_j);
+                //ROS_INFO_STREAM("isfront_j: " << isfront_j);
 
                 if (isfront_i * isfront_j <= 0.0) // one is front, another is back
                 {
-                    ROS_INFO("IS AN EGDE");
+                    //ROS_INFO("IS AN EGDE");
 
 
                     /*finish finding*/
@@ -598,15 +599,15 @@ void ToolModel::Compute_Silhouette(const std::vector< std::vector<int> > &input_
                     cv::Point3d ept_2 = transformation_pts(temp, rvec, tvec);
                     ept_2 = camTransformPoint(CamMat, ept_2 ); //so the two points that on the edge
 
-                    cout<<"ept_1.x "<< ept_1.x<< " ept_1.y " << ept_1.y <<" ept_1.z " << ept_1.z <<endl;
-                    cout<<"ept_2.x "<< ept_2.x<< " ept_2.y " << ept_2.y <<" ept_2.z " << ept_2.z <<endl;
+                    //ROS_INFO_STREAM("ept_1: " << ept_1);
+                    //ROS_INFO_STREAM("ept_2: " << ept_2);
 
 
                     cv::Point2d prjpt_1 = reproject(ept_1, P);
                     cv::Point2d prjpt_2 = reproject(ept_2, P);
 
-                    cout<<"prjpt_1.x "<< prjpt_1.x<< " prjpt_1.y " << prjpt_1.y <<endl;
-                    cout<<"prjpt_2.x "<< prjpt_2.x<< " prjpt_2.y " << prjpt_2.y <<endl;
+                    //ROS_INFO_STREAM("prjpt_1: " << prjpt_1);
+                    //ROS_INFO_STREAM("prjpt_2: " << prjpt_2);
 
                     // if(jac.needed())
                     // {
@@ -616,7 +617,7 @@ void ToolModel::Compute_Silhouette(const std::vector< std::vector<int> > &input_
 
                     cv::line(image, prjpt_1, prjpt_2, cv::Scalar(1,1,1), 1, 8, 0);  /*InputOutputArray img, InputArrayOfArrays pts,const Scalar &color, 
                                                                                      int lineType=LINE_8, int shift=0, Point offset=Point())*/
-                    ROS_INFO("DRAW THE LINE!!!!!!!!");
+                    //ROS_INFO("DRAW THE LINE!!!!!!!!");
                     if(prjpt_1.x > XY_max.x) XY_max.x = prjpt_1.x;
                     if(prjpt_1.y > XY_max.y) XY_max.y = prjpt_1.y;
                     if(prjpt_1.x < XY_min.x) XY_min.x = prjpt_1.x;
@@ -838,9 +839,9 @@ cv::Point3d ToolModel::Normalize(cv::Point3d &vec1){
     cv::Point3d norm_res;
     
     double norm = vec1.x*vec1.x + vec1.y*vec1.y + vec1.z*vec1.z;
-    if (norm == 0.0)
+    if (norm == 0.00000)
      {
-        ROS_ERROR("Trying to normalize a zero vector!");
+        //ROS_ERROR("Trying to normalize a zero vector!");
      }
      else{
         norm = pow(norm, 0.5);
@@ -962,7 +963,7 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
 	toolModel newTool = initial;  //BODY part is done here
 
     /******testing section here********/
-    newTool.theta_ellipse = 0.0;
+    newTool.theta_ellipse = -0.3;
     newTool.theta_grip_1 = 0.0;
     newTool.theta_grip_2 = 0.0;
 
@@ -1056,7 +1057,7 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
     cv::Mat yaw_mat = I + sin(newTool.rvec_elp(2)) * skew_z + (1-cos(newTool.rvec_elp(2))) * skew_z * skew_z;
     cv::Mat rotation_mat = yaw_mat*pitch_mat*roll_mat;
 
-    cv::Mat q_rotation = rotation_mat * test_gripper;
+    cv::Mat q_rotation = rotation_mat * q_gripper;
 
     newTool.tvec_grip1(0) = q_rotation.at<double>(0,0) + newTool.tvec_elp(0);
     newTool.tvec_grip1(1) = q_rotation.at<double>(1,0) + newTool.tvec_elp(1);
@@ -1077,8 +1078,6 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
     newTool.rvec_grip2(2) = newTool.rvec_elp(2);  
 
  
-
-
 	return newTool;
 };
 
