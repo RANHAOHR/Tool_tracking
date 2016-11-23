@@ -21,7 +21,7 @@ ToolModel::ToolModel(cv::Mat& CamMat){
 
     offset_body = 0.3429;  //meters
     offset_ellipse = 0.45352716;
-    offset_gripper = 18.1423;
+    offset_gripper = 0.46118; //0.46118 - 0.4522
 
     /****initialize the rotation and traslation points*****/
     q_ellipse = cv::Mat(4,1,CV_64FC1);
@@ -30,29 +30,34 @@ ToolModel::ToolModel(cv::Mat& CamMat){
     q_ellipse.at<double>(2,0) = 0;
     q_ellipse.at<double>(3,0) = 1;
 
+    q_gripper = cv::Mat(4,1,CV_64FC1);
+    q_gripper.at<double>(0,0) = 0;
+    q_gripper.at<double>(1,0) = offset_gripper - 0.4522;  //
+    q_gripper.at<double>(2,0) = 0;
+    q_gripper.at<double>(3,0) = 1;
 
-    // q_2[0] = 0;
-    // q_2[1] = 18.1423;  //0.4608m
-    // q_2[2] = 0;
 
     //CamMat = cv::Mat(4, 4, CV_64FC1);  //obtain this
 
 
 
     /****initialize the vertices fo different part of tools****/
-	load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_cylinder.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
-    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_ellipse.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
+	load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/refine_cylinder_2.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
+    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/refine_ellipse_2.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
+    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/gripper_1.obj", griper1_vertices, griper1_Vnormal, griper1_faces, griper1_neighbors );
+    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/gripper_2.obj", griper2_vertices, griper2_Vnormal, griper2_faces, griper2_neighbors );
 
     ROS_INFO("after loading");
     modify_model_(body_vertices, body_Vnormal, body_Vpts, body_Npts, offset_body );
     modify_model_(ellipse_vertices, ellipse_Vnormal, ellipse_Vpts, ellipse_Npts, offset_ellipse );
-
+    modify_model_(griper1_vertices, griper1_Vnormal, griper1_Vpts, griper1_Npts, offset_gripper );
+    modify_model_(griper2_vertices, griper2_Vnormal, griper2_Vpts, griper2_Npts, offset_gripper );
     /****convert to cv points for second silhouette computation****/
-    camTransformPoints(CamMat, body_Vpts, CamBodyPts);
-    camTransformPoints(CamMat, ellipse_Vpts, CamEllipPts);
+    // camTransformPoints(CamMat, body_Vpts, CamBodyPts);
+    // camTransformPoints(CamMat, ellipse_Vpts, CamEllipPts);
 
-    camTransformVecs(CamMat, body_Npts, CamBodyNorms);
-    camTransformVecs(CamMat, ellipse_Npts, CamEllipNorms);
+    // camTransformVecs(CamMat, body_Npts, CamBodyNorms);
+    // camTransformVecs(CamMat, ellipse_Npts, CamEllipNorms);
 
 //    cv::Point3d maxx(0.0) , minn(0.0);
 //    for (auto abc: CamBodyPts) {
@@ -204,7 +209,7 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
                 
                 if ( match == 2 ) //so face i and face j share an edge
                 {
-                    ROS_INFO_STREAM("SIZE FO THE TEMP VEC: " << temp_vec.size() );
+                    //ROS_INFO_STREAM("SIZE FO THE TEMP VEC: " << temp_vec.size() );
                     neighbor_faces[i].push_back(j); // mark the neighbor face index
                     neighbor_faces[i].push_back(temp_vec[0]);
                     neighbor_faces[i].push_back(temp_vec[1]);
@@ -957,10 +962,11 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
 	toolModel newTool = initial;  //BODY part is done here
 
     /******testing section here********/
-    newTool.theta_ellipse = 0.1;
-    newTool.theta_grip_1 = 0.5;
-    newTool.theta_grip_2 = 0.5;
+    newTool.theta_ellipse = 0.0;
+    newTool.theta_grip_1 = 0.0;
+    newTool.theta_grip_2 = 0.0;
 
+    cv::Mat I = cv::Mat::eye(3,3,CV_64FC1);
     /******testing section here********/
 
 	//create normally distributed random number with the given stdev and mean
@@ -1020,86 +1026,58 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
 
    /***********computations for gripper kinematics**********/
 
+    cv::Mat test_gripper(3,1,CV_64FC1);
+    test_gripper.at<double>(0,0) = 0;
+    test_gripper.at<double>(1,0) = offset_gripper - 0.4522;  //
+    test_gripper.at<double>(2,0) = 0;
+    // q_temp = transformPoints(q_gripper,cv::Mat(initial.rvec_elp),cv::Mat(initial.tvec_cyl));
+    cv::Mat w_x(4,1,CV_64FC1);
+    cv::Mat w_y(4,1,CV_64FC1);
+    cv::Mat w_z(4,1,CV_64FC1);
 
+    w_x.at<double>(0) = 1;
+    w_x.at<double>(1) = 0;
+    w_x.at<double>(2) = 0;
 
-    //w for the ellipse is z of rotation mat
+    w_y.at<double>(0) = 0;
+    w_y.at<double>(1) = 1;
+    w_y.at<double>(2) = 0;
 
-    //cv::Matx<double,3,1> w_z;   //for computational purpose
-    //cv::Matx<double,3,1> w_x;
-    
-    // w_z(0) = rotation_mat[0][2];
-    // w_z(1) = rotation_mat[1][2];
-    // w_z(2) = rotation_mat[2][2];
+    w_z.at<double>(0) = 0;
+    w_z.at<double>(1) = 0;
+    w_z.at<double>(2) = 1;
 
-    //w for the two girpper part is x of rotation mat
-    // newTool.w_x(0) = rotation_mat[0][0];
-    // newTool.w_x(1) = rotation_mat[1][0];
-    // newTool.w_x(2) = rotation_mat[2][0];
+    cv::Mat skew_x = computeSkew(w_x);
+    cv::Mat skew_y = computeSkew(w_y);
+    cv::Mat skew_z = computeSkew(w_z);
 
-/*    glm::mat3 ellip_Rotation;
-    glm::mat3 wz_mat;
-    glm::mat3 wz_mat_1;
-    glm::mat3 wz_mat_2;
+    cv::Mat roll_mat = I + sin(newTool.rvec_elp(0)) * skew_x + (1-cos(newTool.rvec_elp(0))) * skew_x * skew_x;
+    cv::Mat pitch_mat = I + sin(newTool.rvec_elp(1)) * skew_y + (1-cos(newTool.rvec_elp(1))) * skew_y * skew_y;
+    cv::Mat yaw_mat = I + sin(newTool.rvec_elp(2)) * skew_z + (1-cos(newTool.rvec_elp(2))) * skew_z * skew_z;
+    cv::Mat rotation_mat = yaw_mat*pitch_mat*roll_mat;
 
-    wz_mat[0][0] = 0;
-    wz_mat[0][1] = -w_z(2);
-    wz_mat[0][2] = w_z(1);
-    wz_mat[1][0] = w_z(2);
-    wz_mat[1][1] = 0;
-    wz_mat[1][2] = -w_z(0);
-    wz_mat[2][0] = -w_z(1);
-    wz_mat[2][1] = w_z(0);
-    wz_mat[2][2] = 0;
+    cv::Mat q_rotation = rotation_mat * test_gripper;
 
-    for(int i(0); i<3; i++){
-        for(int j(0);j<3;j++){
-            wz_mat_1[i][j] = wz_mat[i][j] * sin(newTool.theta_ellipse);
-        }
-    }
+    newTool.tvec_grip1(0) = q_rotation.at<double>(0,0) + newTool.tvec_elp(0);
+    newTool.tvec_grip1(1) = q_rotation.at<double>(1,0) + newTool.tvec_elp(1);
+    newTool.tvec_grip1(2) = q_rotation.at<double>(2,0) + newTool.tvec_elp(2);
 
-    wz_mat_2 =  wz_mat * wz_mat;
-    for(int i(0); i<3; i++){
-        for(int j(0);j<3;j++){
-            wz_mat_2[i][j] = wz_mat_2[i][j] * (1-cos(newTool.theta_ellipse));
-        }
-    }
-    //ellip_rotation = I * wz_mat*sin(theta) * wz_mat^2 * (1-cos(theta))
-    ellip_Rotation = I + wz_mat_1 + wz_mat_2;
+    newTool.rvec_grip1(0) = newTool.rvec_elp(0) + newTool.theta_grip_1;  //roll angle is plus the theta_gripper
+    newTool.rvec_grip1(1) = newTool.rvec_elp(1);
+    newTool.rvec_grip1(2) = newTool.rvec_elp(2);    
 
-    q_temp = rotation_mat * ellip_Rotation * q_2;
+    /*gripper 2*/
 
-    temp_point = newTool.tvec_cyl(0);
-    q_gripper[0] = q_temp[0] + temp_point;
+    newTool.tvec_grip2(0) = newTool.tvec_grip1(0);
+    newTool.tvec_grip2(1) = newTool.tvec_grip1(1);
+    newTool.tvec_grip2(2) = newTool.tvec_grip1(2);
 
-    temp_point = newTool.tvec_cyl(1);
-    q_gripper[1] = q_temp[1] + temp_point;
+    newTool.rvec_grip2(0) = newTool.rvec_elp(0) + newTool.theta_grip_2;  //roll angle is plus the theta_gripper
+    newTool.rvec_grip2(1) = newTool.rvec_elp(1);
+    newTool.rvec_grip2(2) = newTool.rvec_elp(2);  
 
-    temp_point = newTool.tvec_cyl(2);
-    q_gripper[2] = q_temp[2] + temp_point;*/
+ 
 
-    /*now compute the t and r for ellipse and grippers*/
-
-    //translation vectors
-
-
-/*    newTool.tvec_grip1(0) = q_gripper[0];
-    newTool.tvec_grip1(1) = q_gripper[1];
-    newTool.tvec_grip1(2) = q_gripper[2];
-
-    newTool.tvec_grip2(0) = q_gripper[0];
-    newTool.tvec_grip2(1) = q_gripper[1];
-    newTool.tvec_grip2(2) = q_gripper[2];*/
-
-    //rotation vetors, Euler angle
-
-
-/*    newTool.rvec_grip1(0) = newTool.rvec_cyl(0) + newTool.theta_grip_1;  //roll angle is plus the theta_gripper
-    newTool.rvec_grip1(1) = newTool.rvec_cyl(1);
-    newTool.rvec_grip1(2) = newTool.rvec_cyl(2);
-
-    newTool.rvec_grip2(0) = newTool.rvec_cyl(0) + newTool.theta_grip_2;  //roll angle is plus the theta_gripper
-    newTool.rvec_grip2(1) = newTool.rvec_cyl(1);
-    newTool.rvec_grip2(2) = newTool.rvec_cyl(2);   */ 
 
 	return newTool;
 };
@@ -1157,8 +1135,10 @@ Compute_Silhouette(body_faces, body_neighbors, body_Vpts, body_Npts, CamMat, ima
 /*********for ellipse***********/
 Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vpts, ellipse_Npts, CamMat, image, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac, XY_max, XY_min);
 // /************for gripper 1************/
+Compute_Silhouette(griper1_faces, griper1_neighbors, griper1_Vpts, griper1_Npts, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
 
 // /*************for gripper 2**************/
+Compute_Silhouette(griper2_faces, griper2_neighbors, griper2_Vpts, griper2_Npts, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
 
 
     /***done projecting***/

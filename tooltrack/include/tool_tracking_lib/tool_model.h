@@ -143,7 +143,7 @@ public:
         double offset_gripper; //
 
         cv::Mat q_ellipse;  //initial point for ellipse
-        //cv::Mat q_2;  //intial point for girpper 
+        cv::Mat q_gripper;  //intial point for girpper 
 
 
  		ToolModel(cv::Mat& CamMat);  //constructor
