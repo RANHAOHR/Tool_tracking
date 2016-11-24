@@ -92,62 +92,64 @@ int main(int argc, char** argv)
 	cv::Mat testImg = cv::Mat::zeros(480, 640, CV_64FC1); //
 	cv::Mat P(3,4,CV_64FC1);
 /******************magic numbers!!!!!!!!!!!!!!*************/
-    P.at<double>(0,0) = 500;
-    P.at<double>(1,0) = 0;
-    P.at<double>(2,0) = 0;
-
-    P.at<double>(0,1) = 0;
-    P.at<double>(1,1) = 500;
-    P.at<double>(2,1) = 0;
-
-    P.at<double>(0,2) = 320; // horiz
-    P.at<double>(1,2) = 200; //verticle
-    P.at<double>(2,2) = 1;
-
-    P.at<double>(0,3) = 0;
-    P.at<double>(1,3) = 0;
-    P.at<double>(2,3) = 0;
-
-/*GENERAL P CONFIGS for DVRK*/
-    // P.at<double>(0,0) = 1000;
+    // P.at<double>(0,0) = 500;
     // P.at<double>(1,0) = 0;
     // P.at<double>(2,0) = 0;
 
     // P.at<double>(0,1) = 0;
-    // P.at<double>(1,1) = 1000;
+    // P.at<double>(1,1) = 500;
     // P.at<double>(2,1) = 0;
 
     // P.at<double>(0,2) = 320; // horiz
-    // P.at<double>(1,2) = 240; //verticle
+    // P.at<double>(1,2) = 200; //verticle
     // P.at<double>(2,2) = 1;
 
     // P.at<double>(0,3) = 0;
     // P.at<double>(1,3) = 0;
     // P.at<double>(2,3) = 0;
 
+/*GENERAL P CONFIGS for DVRK*/
+    P.at<double>(0,0) = 1000;
+    P.at<double>(1,0) = 0;
+    P.at<double>(2,0) = 0;
+
+    P.at<double>(0,1) = 0;
+    P.at<double>(1,1) = 1000;
+    P.at<double>(2,1) = 0;
+
+    P.at<double>(0,2) = 320; // horiz
+    P.at<double>(1,2) = 240; //verticle
+    P.at<double>(2,2) = 1;
+
+    P.at<double>(0,3) = 0;
+    P.at<double>(1,3) = 0;
+    P.at<double>(2,3) = 0;
+
 	ToolModel::toolModel initial;
 
 	initial.tvec_cyl(0) = 0.0;
 	initial.tvec_cyl(1) = 0.0;
 	initial.tvec_cyl(2) = 0.0;
-	initial.rvec_cyl(0) = 0.2;
+	initial.rvec_cyl(0) = 0.0;
 	initial.rvec_cyl(1) = 0.0;
-	initial.rvec_cyl(2) = 0.3;
+	initial.rvec_cyl(2) = 0.0;
 
 
 	ToolModel::toolModel newTool;
-	
+
+	// cv::Mat A(4,1,CV_64FC1);
+	// cv::Mat B(4,1,CV_64FC1);
+	// double res = A.dot(B);
+
 	t = clock();
 	newTool = newToolModel.setRandomConfig(initial, 1, 0);
 	//newTool = initial;
-	//ROS_INFO("after setRandomconfig");
 	cv::Rect testROI = newToolModel.renderTool(testImg, newTool, Cam, P );
 
 	t = clock() - t;
 
 	float sec = (float)t/CLOCKS_PER_SEC;
-	ROS_INFO("after render");
-	//ROS_INFO_STREAM("p: " << P);
+
 	ROS_INFO_STREAM("render time is: " << sec);
 
 	if(!testImg.empty()){

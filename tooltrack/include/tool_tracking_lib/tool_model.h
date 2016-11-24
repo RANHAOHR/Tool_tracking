@@ -119,6 +119,12 @@ public:
 		cv::Mat ellipse_Vmat;
 		cv::Mat gripper1_Vmat;
 		cv::Mat gripper2_Vmat;
+
+		cv::Mat body_Nmat;
+		cv::Mat ellipse_Nmat;
+		cv::Mat gripper1_Nmat;
+		cv::Mat gripper2_Nmat;
+
 /***************cam view points************************/
 
 		std::vector< cv::Point3d > CamBodyPts;     ////points in camera coord
@@ -142,11 +148,6 @@ public:
 		std::vector< std::vector<int> > griper1_neighbors;
 		std::vector< std::vector<int> > griper2_neighbors;
 
-		cv::Mat bodyFace_info;
-		cv::Mat ellipseFace_info;
-		cv::Mat gripper1Face_info;
-		cv::Mat gripper2Face_info;
-
 		cv::Mat bodyFace_normal;
 		cv::Mat ellipseFace_normal;
 		cv::Mat gripper1Face_normal;
@@ -156,7 +157,6 @@ public:
 		cv::Mat ellipseFace_centroid;
 		cv::Mat gripper1Face_centroid;
 		cv::Mat gripper2Face_cnetroid;
-
 
 /******************************************************************/
 
@@ -178,14 +178,13 @@ public:
                                  std::vector< std::vector<int> > &out_faces,  std::vector< std::vector<int> > &neighbor_faces );
 
 		void modify_model_(std::vector< glm::vec3 > &input_vertices, std::vector< glm::vec3 > &input_Vnormal, 
-                              std::vector< cv::Point3d > &input_Vpts, std::vector< cv::Point3d > &input_Npts, double &offset, cv::Mat &input_Vmat);//there are offsets when loading the model convert 
+                              std::vector< cv::Point3d > &input_Vpts, std::vector< cv::Point3d > &input_Npts, double &offset, cv::Mat &input_Vmat,cv::Mat &input_Nmat);//there are offsets when loading the model convert 
 
-		cv::Mat collectFacesTranform(const std::vector< std::vector<int> > &input_faces, const std::vector< cv::Point3d > &input_vertices, 
-                                    const std::vector< cv::Point3d > &input_Vnormal);
+		void getFaceInfo(const std::vector< std::vector<int> > &input_faces, const std::vector< cv::Point3d > &input_vertices,
+         const std::vector< cv::Point3d > &input_Vnormal, cv::Mat &face_normals, cv::Mat &face_centroids );
 
-		cv::Mat getFaceNormals(const std::vector< std::vector<int> > &input_faces, const std::vector< cv::Point3d > &input_vertices, const std::vector< cv::Point3d > &input_Vnormal);
-
-		cv::Mat getFaceCentroid(const std::vector< std::vector<int> > &input_faces, const std::vector< cv::Point3d > &input_vertices);
+		void totalFaceInfo(const std::vector< std::vector<int> > &input_faces, const std::vector< cv::Point3d > &input_vertices,
+         const std::vector< cv::Point3d > &input_Vnormal, cv::Mat &outputFaceInfo);
 
  		toolModel setRandomConfig(const toolModel &initial, double stdev, double mean);
 
@@ -198,14 +197,22 @@ public:
                                    cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec, const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min);
 
 		void Compute_Silhouette( const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
-                                 const cv::Mat &input_Vmat, cv::Mat &face_normal, cv::Mat &face_centroid, cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec, 
-                                 const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min);
+                                 const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
+                                 cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec, 
+                                 const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min );
+
+
+		void N_Compute_Silhouette( const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
+                                 const cv::Mat &input_Vmat, const cv::Mat &face_normals, cv::Mat &face_centro,
+                                 cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec, 
+                                 const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min );
+
+
 
  		int Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2, std::vector<int> &match_vec);
  		cv::Point3d transformation_nrms(const cv::Point3d &vec, const cv::Mat& rvec, const cv::Mat &tvec);
  		cv::Point3d transformation_pts(const cv::Point3d &point, const cv::Mat& rvec, const cv::Mat &tvec);
 
- 		cv::Mat transformMats(const cv::Mat &face_info, cv::Mat &CamMat, const cv::Mat &rvec, const cv::Mat &tvec);
  		/**********************math computation*******************/
  		cv::Point3d crossProduct(cv::Point3d &vec1, cv::Point3d &vec2);
  		double dotProduct(cv::Point3d &vec1, cv::Point3d &vec2);
@@ -224,6 +231,12 @@ public:
  		cv::Mat computeSkew(cv::Mat &w);
 
  		cv::Point3d convert_MattoPts(cv::Mat &input_Mat);
+ 		cv::Mat convert4to3(cv::Mat &inputMat);
+
+ 		cv::Mat normalizeMat(cv::Mat &inputMat);
+ 		cv::Mat crossProductMat(cv::Mat &vec1, cv::Mat &vec2);
+ 		cv::Mat getFaceNormal(cv::Mat &single_face_info);
+ 		cv::Mat computeFaceCentro(cv::Mat &single_face_info);
 		/*************camera transforms************************/
  		void camTransformPoints(cv::Mat &cam_mat, std::vector< cv::Point3d > &input_vertices, std::vector< cv::Point3d > &output_vertices);
  		void camTransformVecs(cv::Mat &cam_mat, std::vector< cv::Point3d > &input_normals, std::vector< cv::Point3d > &output_normals);
