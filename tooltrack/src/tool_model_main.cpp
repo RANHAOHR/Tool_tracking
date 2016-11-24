@@ -50,7 +50,7 @@
  #include <stdio.h>
  #include <stdlib.h>
  #include <math.h>
-
+ #include <time.h> 
 using namespace std;
 int main(int argc, char** argv)
 {
@@ -87,6 +87,7 @@ int main(int argc, char** argv)
 	ROS_INFO("After Loading Model and Initializetion, please press ENTER to go on");
 	cin.ignore();
 
+	clock_t t;
 
 	cv::Mat testImg = cv::Mat::zeros(480, 640, CV_64FC1); //
 	cv::Mat P(3,4,CV_64FC1);
@@ -129,20 +130,25 @@ int main(int argc, char** argv)
 	initial.tvec_cyl(0) = 0.0;
 	initial.tvec_cyl(1) = 0.0;
 	initial.tvec_cyl(2) = 0.0;
-	initial.rvec_cyl(0) = 0.0;
+	initial.rvec_cyl(0) = 0.2;
 	initial.rvec_cyl(1) = 0.0;
 	initial.rvec_cyl(2) = 0.3;
 
 
 	ToolModel::toolModel newTool;
-
+	
+	t = clock();
 	newTool = newToolModel.setRandomConfig(initial, 1, 0);
 	//newTool = initial;
 	//ROS_INFO("after setRandomconfig");
 	cv::Rect testROI = newToolModel.renderTool(testImg, newTool, Cam, P );
-	ROS_INFO("after render");
-	ROS_INFO_STREAM("p: " << P);
 
+	t = clock() - t;
+
+	float sec = (float)t/CLOCKS_PER_SEC;
+	ROS_INFO("after render");
+	//ROS_INFO_STREAM("p: " << P);
+	ROS_INFO_STREAM("render time is: " << sec);
 
 	if(!testImg.empty()){
         imshow("test", testImg);
