@@ -88,6 +88,7 @@ int main(int argc, char** argv)
 	cin.ignore();
 
 	clock_t t;
+	clock_t t1;
 
 	cv::Mat testImg = cv::Mat::zeros(480, 640, CV_64FC1); //
 	cv::Mat P(3,4,CV_64FC1);
@@ -131,25 +132,27 @@ int main(int argc, char** argv)
 	initial.tvec_cyl(1) = 0.0;
 	initial.tvec_cyl(2) = 0.0;
 	initial.rvec_cyl(0) = 0.0;
-	initial.rvec_cyl(1) = 0.0;
+	initial.rvec_cyl(1) = M_PI/2;
 	initial.rvec_cyl(2) = 0.0;
 
 
 	ToolModel::toolModel newTool;
 
-	// cv::Mat A(4,1,CV_64FC1);
-	// cv::Mat B(4,1,CV_64FC1);
-	// double res = A.dot(B);
-
-	t = clock();
+	
+	t1 = clock();
 	newTool = newToolModel.setRandomConfig(initial, 1, 0);
-	//newTool = initial;
-	cv::Rect testROI = newToolModel.renderTool(testImg, newTool, Cam, P );
+	t1 = clock() - t1;
 
+	//newTool = initial;
+	t = clock();
+	cv::Rect testROI = newToolModel.renderTool(testImg, newTool, Cam, P );
 	t = clock() - t;
 
+	float sec1 = (float)t1/CLOCKS_PER_SEC;
 	float sec = (float)t/CLOCKS_PER_SEC;
 
+
+	ROS_INFO_STREAM("setRandomConfig time is: " << sec1);
 	ROS_INFO_STREAM("render time is: " << sec);
 
 	if(!testImg.empty()){

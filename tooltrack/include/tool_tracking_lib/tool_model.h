@@ -158,6 +158,8 @@ public:
 		cv::Mat gripper1Face_centroid;
 		cv::Mat gripper2Face_cnetroid;
 
+		cv::Mat body_face_info;
+
 /******************************************************************/
 
 		cv::Mat CamMat;
@@ -217,8 +219,6 @@ public:
  		cv::Point3d crossProduct(cv::Point3d &vec1, cv::Point3d &vec2);
  		double dotProduct(cv::Point3d &vec1, cv::Point3d &vec2);
 
- 		double dotProductMat(cv::Mat &vec1, cv::Mat &vec2);
-
  		cv::Point3d Normalize(cv::Point3d &vec1);
  		cv::Point3d ConvertCelitoMeters(cv::Point3d &input_pt);
  		void ConvertInchtoMeters(std::vector< cv::Point3d > &input_vertices);
@@ -234,7 +234,6 @@ public:
  		cv::Mat convert4to3(cv::Mat &inputMat);
 
  		cv::Mat normalizeMat(cv::Mat &inputMat);
- 		cv::Mat crossProductMat(cv::Mat &vec1, cv::Mat &vec2);
  		cv::Mat getFaceNormal(cv::Mat &single_face_info);
  		cv::Mat computeFaceCentro(cv::Mat &single_face_info);
 		/*************camera transforms************************/
