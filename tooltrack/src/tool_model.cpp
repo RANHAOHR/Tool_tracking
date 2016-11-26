@@ -685,7 +685,6 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
 
     for (int i = 0; i < input_faces.size(); ++i)
     {
-        //when there are neighbors, it is necessary to compute the edge
 
         neighbor_num = (neighbor_faces[i].size())/3;  //each neighbor has two vertices
 
@@ -698,7 +697,6 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
         int n2 = input_faces[i][4];
         int n3 = input_faces[i][5];
 
-        /******transformation for neightbor faces*******/
         new_Vertices.col(v1).copyTo(temp.col(0));
         cv::Point3d pt1 = convert_MattoPts(temp);
         new_Vertices.col(v2).copyTo(temp.col(0));
@@ -715,12 +713,7 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
   
 
         cv::Point3d fnormal = FindFaceNormal(pt1, pt2, pt3, vn1, vn2, vn3); //knowing the direction and normalized
-        //ROS_INFO_STREAM("fnormal: " << fnormal);
 
-        // if (fnormal.x == 0.0 && fnormal.y == 0.0 && fnormal.z == 0.0 )
-        // {
-        //     ROS_ERROR("ONE SURFACE HAS TWO ALIGNED VECTORS???");
-        // }
         cv::Point3d face_point_i = pt1 + pt2 + pt3;
         face_point_i.x = face_point_i.x/3;
         face_point_i.y = face_point_i.y/3;
@@ -739,9 +732,7 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
                 int n1_ = input_faces[neighbor_faces[i][j]][3];
                 int n2_ = input_faces[neighbor_faces[i][j]][4];
                 int n3_ = input_faces[neighbor_faces[i][j]][5];
-
-
-                /******transformation for neightbor faces*******/
+        
                 new_Vertices.col(v1_).copyTo(temp.col(0));
                 cv::Point3d pt1_ = convert_MattoPts(temp);
                 new_Vertices.col(v2_).copyTo(temp.col(0));
@@ -771,9 +762,6 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
 
                 if (isfront_i * isfront_j < 0.0) // one is front, another is back
                 {
-                    //ROS_INFO("IS AN EGDE");
-
-
                     /*finish finding*/
                     new_Vertices.col(neighbor_faces[i][j+1]).copyTo(temp.col(0));
                     cv::Point3d ept_1 = convert_MattoPts(temp);  //transform before the the camera transformation
@@ -786,8 +774,7 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
                     cv::Point2d prjpt_2 = reproject(ept_2, P);
 
 
-                    cv::line(image, prjpt_1, prjpt_2, cv::Scalar(1,1,1), 1, 8, 0);  /*InputOutputArray img, InputArrayOfArrays pts,const Scalar &color, 
-                                                                                     int lineType=LINE_8, int shift=0, Point offset=Point())*/
+                    cv::line(image, prjpt_1, prjpt_2, cv::Scalar(1,1,1), 1, 8, 0);  
                     
                     if(prjpt_1.x > XY_max.x) XY_max.x = prjpt_1.x;
                     if(prjpt_1.y > XY_max.y) XY_max.y = prjpt_1.y;
