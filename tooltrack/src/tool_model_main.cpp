@@ -132,8 +132,8 @@ int main(int argc, char** argv)
 	initial.tvec_cyl(1) = 0.0;
 	initial.tvec_cyl(2) = 0.0;
 	initial.rvec_cyl(0) = 0.0;
-	initial.rvec_cyl(1) = M_PI/2;
-	initial.rvec_cyl(2) = 0.0;
+	initial.rvec_cyl(1) = 0.0;
+	initial.rvec_cyl(2) = 0.1;
 
 
 	ToolModel::toolModel newTool;

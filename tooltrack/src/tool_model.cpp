@@ -36,31 +36,25 @@ ToolModel::ToolModel(cv::Mat& CamMat){
     q_gripper.at<double>(2,0) = 0;
 
     /****initialize the vertices fo different part of tools****/
-	load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/refine_cylinder_2.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
-    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/refine_ellipse_2.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
-    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/gripper_1.obj", griper1_vertices, griper1_Vnormal, griper1_faces, griper1_neighbors );
-    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/gripper_2.obj", griper2_vertices, griper2_Vnormal, griper2_faces, griper2_neighbors );
+	load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_cylinder.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
+    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_ellipse_2.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
+    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/gripper3_1.obj", griper1_vertices, griper1_Vnormal, griper1_faces, griper1_neighbors );
+    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/gripper3_2.obj", griper2_vertices, griper2_Vnormal, griper2_faces, griper2_neighbors );
 
     ROS_INFO("after loading");
     modify_model_(body_vertices, body_Vnormal, body_Vpts, body_Npts, offset_body, body_Vmat, body_Nmat);
     modify_model_(ellipse_vertices, ellipse_Vnormal, ellipse_Vpts, ellipse_Npts, offset_ellipse, ellipse_Vmat, ellipse_Nmat);
     modify_model_(griper1_vertices, griper1_Vnormal, griper1_Vpts, griper1_Npts, offset_gripper, gripper1_Vmat, gripper1_Nmat);
     modify_model_(griper2_vertices, griper2_Vnormal, griper2_Vpts, griper2_Npts, offset_gripper, gripper2_Vmat, gripper2_Nmat);
-    // modify_model_(ellipse_vertices, ellipse_Vnormal, ellipse_Vpts, ellipse_Npts, offset_ellipse );
-    // modify_model_(griper1_vertices, griper1_Vnormal, griper1_Vpts, griper1_Npts, offset_gripper );
-    // modify_model_(griper2_vertices, griper2_Vnormal, griper2_Vpts, griper2_Npts, offset_gripper );
 
     getFaceInfo(body_faces, body_Vpts, body_Npts, bodyFace_normal, bodyFace_centroid );
+    getFaceInfo(ellipse_faces, ellipse_Vpts, ellipse_Npts, ellipseFace_normal, ellipseFace_centroid );
+    getFaceInfo(griper1_faces, griper1_Vpts, griper1_Npts, gripper1Face_normal, gripper1Face_centroid );
+    getFaceInfo(griper2_faces, griper2_Vpts, griper2_Npts, gripper2Face_normal, gripper2Face_centroid );
 
     //totalFaceInfo(body_faces, body_Vpts, body_Npts, body_face_info);
 
     //ROS_INFO_STREAM("bodyFace_normal: " << bodyFace_normal);
-    /****convert to cv points for second silhouette computation****/
-    // camTransformPoints(CamMat, body_Vpts, CamBodyPts);
-    // camTransformPoints(CamMat, ellipse_Vpts, CamEllipPts);
-
-    // camTransformVecs(CamMat, body_Npts, CamBodyNorms);
-    // camTransformVecs(CamMat, ellipse_Npts, CamEllipNorms);
 
 //    cv::Point3d maxx(0.0) , minn(0.0);
 //    for (auto abc: CamBodyPts) {
@@ -409,59 +403,6 @@ cv::Point3d ToolModel::camTransformVec(cv::Mat &cam_mat, cv::Point3d &input_vec)
     return output_vec;
 };
 
-void ToolModel::camTransformPoints(cv::Mat &cam_mat, std::vector< cv::Point3d > &input_vertices, std::vector< cv::Point3d > &output_vertices){
-
-    /*cam mat should be a 4x4*/
-    cv::Mat temp(4,1,CV_64FC1);
-    output_vertices.resize(input_vertices.size());
-
-    temp.at<double>(3,0) = 1; //point
-
-    cv::Mat Inv = cam_mat.inv();
-
-   for (int i = 0; i < output_vertices.size(); ++i)
-    {
-        //transform to homogenous
-        temp.at<double>(0,0) = input_vertices[i].x;
-        temp.at<double>(1,0) = input_vertices[i].y;
-        temp.at<double>(2,0) = input_vertices[i].z;
-
-        temp = Inv*temp; //transform the obj to camera frames
-
-        output_vertices[i].x = temp.at<double>(0,0);
-        output_vertices[i].y = temp.at<double>(1,0);
-        output_vertices[i].z = temp.at<double>(2,0);
-
-    } 
-
-};
-
-void ToolModel::camTransformVecs(cv::Mat &cam_mat, std::vector< cv::Point3d > &input_normals, std::vector< cv::Point3d > &output_normals){
-
-    /*cam mat should be a 4x4*/
-    cv::Mat temp(4,1,CV_64FC1);
-    output_normals.resize(input_normals.size());
-
-    temp.at<double>(3,0) = 0;  //vector
-    cv::Mat Inv = cam_mat.inv();
-    
-   for (int i = 0; i < output_normals.size(); ++i)
-    {
-        //transform to homogenous
-        temp.at<double>(0,0) = input_normals[i].x;
-        temp.at<double>(1,0) = input_normals[i].y;
-        temp.at<double>(2,0) = input_normals[i].z;
-
-        temp = Inv*temp; //transform the obj to camera frames
-
-        output_normals[i].x = temp.at<double>(0,0);
-        output_normals[i].y = temp.at<double>(1,0);
-        output_normals[i].z = temp.at<double>(2,0);
-
-        //output_normals[i] = Normalize(output_normals[i]);
-    } 
-
-};
 /****camera transformations****/
 
 /***********using BODY frame for transformation********************/
@@ -720,7 +661,6 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
         face_point_i.z = face_point_i.z/3;
 
         double isfront_i = dotProduct(fnormal, face_point_i);
-        //ROS_INFO_STREAM("isfront_i: " << isfront_i);
 
         for (int neighbor_count = 0; neighbor_count < neighbor_num; ++neighbor_count){  //notice: cannot use J here, since the last j will not be counted
 
@@ -757,8 +697,6 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
                 //face_point_j = Normalize(face_point_j);
 
                 double isfront_j = dotProduct(fnormal_n, face_point_j);
-
-                //ROS_INFO_STREAM("isfront_j: " << isfront_j);
 
                 if (isfront_i * isfront_j < 0.0) // one is front, another is back
                 {
@@ -802,7 +740,7 @@ void ToolModel::N_Compute_Silhouette( const std::vector< std::vector<int> > &inp
                                  const cv::Mat &input_Vmat, const cv::Mat &face_normals, cv::Mat &face_centro,
                                  cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec, 
                                  const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min ){
-/********************approach one: using body frame for transformation**************************/
+/********************New approach: using body frame for transformation**************************/
  
     cv::Mat newFaceNorm = transformPoints(face_normals, rvec, tvec);
     newFaceNorm = camTransformMats(CamMat, newFaceNorm);
@@ -828,7 +766,6 @@ void ToolModel::N_Compute_Silhouette( const std::vector< std::vector<int> > &inp
 
     for (int i = 0; i < input_faces.size(); ++i)
     {
-        //when there are neighbors, it is necessary to compute the edge
 
         neighbor_num = (neighbor_faces[i].size())/3;  //each neighbor has two vertices
 
@@ -876,25 +813,12 @@ void ToolModel::N_Compute_Silhouette( const std::vector< std::vector<int> > &inp
                     new_Vertices.col(neighbor_faces[i][j+2]).copyTo(temp.col(0));
                     cv::Point3d ept_2 = convert_MattoPts(temp);
 
-                    //ROS_INFO_STREAM("ept_1: " << ept_1);
-                    //ROS_INFO_STREAM("ept_2: " << ept_2);
-
 
                     cv::Point2d prjpt_1 = reproject(ept_1, P);
                     cv::Point2d prjpt_2 = reproject(ept_2, P);
 
-                    //ROS_INFO_STREAM("prjpt_1: " << prjpt_1);
-                    //ROS_INFO_STREAM("prjpt_2: " << prjpt_2);
-
-                    // if(jac.needed())
-                    // {
-                    //     //make the jacobian ((2x) x 6)
-                    //     temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
-                    // }
-
                     cv::line(image, prjpt_1, prjpt_2, cv::Scalar(1,1,1), 1, 8, 0);  /*InputOutputArray img, InputArrayOfArrays pts,const Scalar &color, 
                                                                                      int lineType=LINE_8, int shift=0, Point offset=Point())*/
-                    //ROS_INFO("DRAW THE LINE!!!!!!!!");
                     if(prjpt_1.x > XY_max.x) XY_max.x = prjpt_1.x;
                     if(prjpt_1.y > XY_max.y) XY_max.y = prjpt_1.y;
                     if(prjpt_1.x < XY_min.x) XY_min.x = prjpt_1.x;
@@ -1444,13 +1368,15 @@ cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &C
 
 /*approach 2: using Vertices mat and normal mat*/
 Compute_Silhouette(body_faces, body_neighbors, body_Vmat, body_Nmat, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min);
-// Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac, XY_max, XY_min);
-// Compute_Silhouette(griper1_faces, griper1_neighbors, griper1_Vpts, griper1_Npts, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
-// Compute_Silhouette(griper2_faces, griper2_neighbors, griper2_Vpts, griper2_Npts, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
+Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac, XY_max, XY_min);
+Compute_Silhouette(griper1_faces, griper1_neighbors, griper1_Vpts, griper1_Npts, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
+Compute_Silhouette(griper2_faces, griper2_neighbors, griper2_Vpts, griper2_Npts, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
 
 /*approach 3: using Face info mat*/
-//N_Compute_Silhouette(body_faces, body_neighbors, body_Vmat,bodyFace_normal, bodyFace_centroid, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min );
+// N_Compute_Silhouette(body_faces, body_neighbors, body_Vmat,bodyFace_normal, bodyFace_centroid, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min );
 // N_Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat,ellipseFace_normal, ellipseFace_centroid, CamMat, image, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac, XY_max, XY_min);
+// N_Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat,gripper1Face_normal, gripper1Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
+// N_Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat,gripper2Face_normal, gripper2Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
 
 
 

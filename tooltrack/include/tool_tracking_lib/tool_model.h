@@ -125,17 +125,6 @@ public:
 		cv::Mat gripper1_Nmat;
 		cv::Mat gripper2_Nmat;
 
-/***************cam view points************************/
-
-		std::vector< cv::Point3d > CamBodyPts;     ////points in camera coord
-		std::vector< cv::Point3d > CamEllipPts;
-		std::vector< cv::Point3d > CamGripPts_1;
-		std::vector< cv::Point3d > CamGripPts_2;
-
-		std::vector< cv::Point3d > CamBodyNorms;    //vertex normal, for the computation of the silhouette
-		std::vector< cv::Point3d > CamEllipNorms;
-		std::vector< cv::Point3d > CamGripNorms_1;
-		std::vector< cv::Point3d > CamGripNorms_2;		
 /**************************Faces informations******************************************/
 
 		std::vector< std::vector<int> > body_faces;
@@ -156,9 +145,7 @@ public:
 		cv::Mat bodyFace_centroid;
 		cv::Mat ellipseFace_centroid;
 		cv::Mat gripper1Face_centroid;
-		cv::Mat gripper2Face_cnetroid;
-
-		cv::Mat body_face_info;
+		cv::Mat gripper2Face_centroid;
 
 /******************************************************************/
 
@@ -237,8 +224,7 @@ public:
  		cv::Mat getFaceNormal(cv::Mat &single_face_info);
  		cv::Mat computeFaceCentro(cv::Mat &single_face_info);
 		/*************camera transforms************************/
- 		void camTransformPoints(cv::Mat &cam_mat, std::vector< cv::Point3d > &input_vertices, std::vector< cv::Point3d > &output_vertices);
- 		void camTransformVecs(cv::Mat &cam_mat, std::vector< cv::Point3d > &input_normals, std::vector< cv::Point3d > &output_normals);
+
  		cv::Point3d camTransformPoint(cv::Mat &cam_mat, cv::Point3d &input_vertex);
  		cv::Point3d camTransformVec(cv::Mat &cam_mat, cv::Point3d &input_vec);
  		cv::Mat camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat );
