@@ -272,82 +272,6 @@ cv::Point3d ToolModel::Convert_glTocv_pt(glm::vec3 &input_vertex){
 which are not related to the pose of the tool object*/
 
 
-cv::Point3d ToolModel::transformation_pts(const cv::Point3d &point, const cv::Mat& rvec, const cv::Mat &tvec){
-    cv::Mat prjPoints(4,1,CV_64FC1);
-
-    cv::Point3d output;
-
-    cv::Mat ptMat(4,1,CV_64FC1);
-    ptMat.at<double>(0,0) = point.x;
-    ptMat.at<double>(1,0) = point.y;
-    ptMat.at<double>(2,0) = point.z;
-    ptMat.at<double>(3,0) = 1.0;
-
-    //Mat transDeriv;
-
-        if(rvec.total()==3 && tvec.total()==3)
-        {
-            // if(jac.needed())
-            // {
-            //     prjPoints = transformPoints(ptMat,rvec,tvec,transDeriv);
-            // }
-            //else
-            //{
-                prjPoints = transformPoints(ptMat,rvec,tvec);
-            //}
-        }
-        else
-        {
-            ROS_INFO("Nothing in point transformed");
-            prjPoints = ptMat;
-        }
-
-        output.x = prjPoints.at<double>(0,0);
-        output.y = prjPoints.at<double>(1,0);
-        output.z = prjPoints.at<double>(2,0);
-
-        return output;
-
-};
-
-cv::Point3d ToolModel::transformation_nrms(const cv::Point3d &vec, const cv::Mat& rvec, const cv::Mat &tvec){
-    cv::Mat prjPoints(4,1,CV_64FC1);
-
-    cv::Point3d output_v;
-
-    cv::Mat ptMat(4,1,CV_64FC1);
-    ptMat.at<double>(0,0) = vec.x;
-    ptMat.at<double>(1,0) = vec.y;
-    ptMat.at<double>(2,0) = vec.z;
-    ptMat.at<double>(3,0) = 0.0;
-
-    //Mat transDeriv;
-
-        if(rvec.total()==3 && tvec.total()==3)
-        {
-            // if(jac.needed())
-            // {
-            //     prjPoints = transformPoints(ptMat,rvec,tvec,transDeriv);
-            // }
-            //else
-            //{
-                prjPoints = transformPoints(ptMat,rvec,tvec);
-            //}
-        }
-        else
-        {
-            ROS_INFO("Nothing in vec transformed");
-            prjPoints = ptMat;
-        }
-
-        output_v.x = prjPoints.at<double>(0,0);
-        output_v.y = prjPoints.at<double>(1,0);
-        output_v.z = prjPoints.at<double>(2,0);
-
-        return output_v;    
-
-};
-
 /*camera transformations*/
 cv::Mat ToolModel::camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat ){
     /*cam mat should be a 4x4*/
@@ -405,208 +329,6 @@ cv::Point3d ToolModel::camTransformVec(cv::Mat &cam_mat, cv::Point3d &input_vec)
 
 /****camera transformations****/
 
-/***********using BODY frame for transformation********************/
-void ToolModel::Compute_Silhouette(const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
-                                   const std::vector< cv::Point3d > &body_vertices, const std::vector< cv::Point3d > &body_Vnormal, cv::Mat &CamMat,
-                                   cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec, const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min){
-    // cv::Mat jacMat;
-    // if(jac.needed())
-    // {
-    //     //jac.create(2*(segmentCount+1),6,CV_64FC1);
-    //     jac.create(2*(total_pts_size),6,CV_64FC1);
-    //     jacMat = jac.getMat();
-    // }
-
-    // cv::Mat temp_jac;
-
-    int neighbor_num = 0;
-
-/********************approach one: using body frame for transformation**************************/
-    for (int i = 0; i < input_faces.size(); ++i)
-    {
-        //when there are neighbors, it is necessary to compute the edge
-
-        neighbor_num = (neighbor_faces[i].size())/3;  //each neighbor has two vertices
-
-        if ( neighbor_num > 0)  
-        {
-            //ROS_INFO("INSIDE LOOP %d", i);
-            /*****first get the surface normal******/
-
-        int v1 = input_faces[i][0];
-        int v2 = input_faces[i][1];
-        int v3 = input_faces[i][2];
-        int n1 = input_faces[i][3];
-        int n2 = input_faces[i][4];
-        int n3 = input_faces[i][5];
-
-        /*testing*/
-        // cv::Point3d pt1 = body_vertices[v1];
-        // cv::Point3d pt2 = body_vertices[v2];
-        // cv::Point3d pt3 = body_vertices[v3];
-
-        // cv::Point3d vn1 = body_Vnormal[n1];
-        // cv::Point3d vn2 = body_Vnormal[n2];
-        // cv::Point3d vn3 = body_Vnormal[n3];
-        /*debug*/
-        // ROS_INFO_STREAM("face: " << i );
-        // ROS_INFO_STREAM("pt1.x: " << pt1.x << " pt1.y: " << pt1.y << " pt1.z: " << pt1.z );
-        // ROS_INFO_STREAM("pt2.x: " << pt2.x << " pt2.y: " << pt2.y << " pt2.z: " << pt2.z );
-        // ROS_INFO_STREAM("pt3.x: " << pt3.x << " pt3.y: " << pt3.y << " pt3.z: " << pt3.z );
-
-        // ROS_INFO_STREAM("vn1.x: " << vn1.x << " vn1.y: " << vn1.y << " vn1.z: " << vn1.z );
-        // ROS_INFO_STREAM("vn2.x: " << vn2.x << " vn2.y: " << vn2.y << " vn2.z: " << vn2.z );
-        // ROS_INFO_STREAM("vn3.x: " << vn3.x << " vn3.y: " << vn3.y << " vn3.z: " << vn3.z ); 
-        // ROS_INFO("NEXT FACE");
-        /******transformation for neightbor faces*******/
-        cv::Point3d pt1 = transformation_pts(body_vertices[v1], rvec, tvec);
-        cv::Point3d pt2 = transformation_pts(body_vertices[v2], rvec, tvec);
-        cv::Point3d pt3 = transformation_pts(body_vertices[v3], rvec, tvec);
-
-        cv::Point3d vn1 = transformation_nrms(body_Vnormal[n1], rvec, tvec);
-        cv::Point3d vn2 = transformation_nrms(body_Vnormal[n2], rvec, tvec);
-        cv::Point3d vn3 = transformation_nrms(body_Vnormal[n3], rvec, tvec);
-
-
-        cv::Point3d Cpt1 = camTransformPoint(CamMat, pt1);
-        cv::Point3d Cpt2 = camTransformPoint(CamMat, pt2);
-        cv::Point3d Cpt3 = camTransformPoint(CamMat, pt3);
-
-        cv::Point3d Cvn1 = camTransformVec(CamMat, vn1);
-        cv::Point3d Cvn2 = camTransformVec(CamMat, vn1);
-        cv::Point3d Cvn3 = camTransformVec(CamMat, vn1);
-  
-
-        cv::Point3d fnormal = FindFaceNormal(Cpt1, Cpt2, Cpt3, Cvn1, Cvn2, Cvn3); //knowing the direction and normalized
-        //ROS_INFO_STREAM("fnormal: " << fnormal);
-
-        // if (fnormal.x == 0.0 && fnormal.y == 0.0 && fnormal.z == 0.0 )
-        // {
-        //     ROS_ERROR("ONE SURFACE HAS TWO ALIGNED VECTORS???");
-        // }
-        cv::Point3d face_point_i = Cpt1 + Cpt2 + Cpt3;
-        face_point_i.x = face_point_i.x/3;
-        face_point_i.y = face_point_i.y/3;
-        face_point_i.z = face_point_i.z/3;
-
-        //ROS_INFO_STREAM("face_point_i: " << face_point_i);
-
-        face_point_i = Normalize(face_point_i);
-        //ROS_INFO_STREAM("cam_vec_i.x: " << cam_vec_i.x << "cam_vec_i.y: " << cam_vec_i.y << "cam_vec_i.z: " << cam_vec_i.z  );
-        double isfront_i = dotProduct(fnormal, face_point_i);
-        //ROS_INFO_STREAM("isfront_i: " << isfront_i);
-
-        for (int neighbor_count = 0; neighbor_count < neighbor_num; ++neighbor_count){  //notice: cannot use J here, since the last j will not be counted
-
-                int j = 3*neighbor_count;
-
-                int v1_ = input_faces[neighbor_faces[i][j]][0];
-                int v2_ = input_faces[neighbor_faces[i][j]][1];
-                int v3_ = input_faces[neighbor_faces[i][j]][2];
-                int n1_ = input_faces[neighbor_faces[i][j]][3];
-                int n2_ = input_faces[neighbor_faces[i][j]][4];
-                int n3_ = input_faces[neighbor_faces[i][j]][5];
-
-                /*testing*/
-                // cv::Point3d pt1_ = body_vertices[v1_];
-                // cv::Point3d pt2_ = body_vertices[v2_];
-                // cv::Point3d pt3_ = body_vertices[v3_];
-
-                // cv::Point3d vn1_ = body_Vnormal[n1_];
-                // cv::Point3d vn2_ = body_Vnormal[n2_];
-                // cv::Point3d vn3_ = body_Vnormal[n3_];
-                /******transformation for neightbor faces*******/
-                cv::Point3d pt1_ = transformation_pts(body_vertices[v1_], rvec, tvec);
-                cv::Point3d pt2_ = transformation_pts(body_vertices[v2_], rvec, tvec);
-                cv::Point3d pt3_ = transformation_pts(body_vertices[v3_], rvec, tvec);
-
-                cv::Point3d vn1_ = transformation_nrms(body_Vnormal[n1_], rvec, tvec);
-                cv::Point3d vn2_ = transformation_nrms(body_Vnormal[n2_], rvec, tvec);
-                cv::Point3d vn3_ = transformation_nrms(body_Vnormal[n3_], rvec, tvec);
-
-                cv::Point3d Cpt1_ = camTransformPoint(CamMat, pt1_);
-                cv::Point3d Cpt2_ = camTransformPoint(CamMat, pt2_);
-                cv::Point3d Cpt3_ = camTransformPoint(CamMat, pt3_);
-
-                cv::Point3d Cvn1_ = camTransformVec(CamMat, vn1_);
-                cv::Point3d Cvn2_ = camTransformVec(CamMat, vn2_);
-                cv::Point3d Cvn3_ = camTransformVec(CamMat, vn3_);    
-
-                cv::Point3d fnormal_n = FindFaceNormal(Cpt1_, Cpt2_, Cpt3_, Cvn1_, Cvn2_, Cvn3_);
-                //ROS_INFO_STREAM("fnormal_n: " << fnormal_n);
-
-
-                // if (fnormal_n.x == 0.0 && fnormal_n.y == 0.0 && fnormal_n.z == 0.0 )
-                // {
-                //     ROS_ERROR("neighbor SURFACE HAS TWO ALIGNED VECTORS???");
-                // }
-                //ROS_INFO_STREAM("fnormal_n.x: " << fnormal_n.x << "fnormal_n.y: " << fnormal_n.y << "fnormal_n.z: " << fnormal_n.z  );
-
-                cv::Point3d face_point_j = Cpt1_ + Cpt2_ + Cpt3_;
-                face_point_j.x = face_point_j.x/3;
-                face_point_j.y = face_point_j.y/3;
-                face_point_j.z = face_point_j.z/3;
-                face_point_j = Normalize(face_point_j);
-
-                double isfront_j = dotProduct(fnormal_n, face_point_j);
-
-                //ROS_INFO_STREAM("isfront_j: " << isfront_j);
-
-                if (isfront_i * isfront_j <= 0.0) // one is front, another is back
-                {
-                    //ROS_INFO("IS AN EGDE");
-
-
-                    /*finish finding*/
-                    cv::Point3d temp = body_vertices[neighbor_faces[i][j+1]];
-                    cv::Point3d ept_1 = transformation_pts(temp, rvec, tvec);  //transform before the the camera transformation
-                    ept_1 = camTransformPoint(CamMat, ept_1 );
-                    
-
-                    temp = body_vertices[neighbor_faces[i][j+2]];
-                    cv::Point3d ept_2 = transformation_pts(temp, rvec, tvec);
-                    ept_2 = camTransformPoint(CamMat, ept_2 ); //so the two points that on the edge
-
-                    //ROS_INFO_STREAM("ept_1: " << ept_1);
-                    //ROS_INFO_STREAM("ept_2: " << ept_2);
-
-
-                    cv::Point2d prjpt_1 = reproject(ept_1, P);
-                    cv::Point2d prjpt_2 = reproject(ept_2, P);
-
-                    //ROS_INFO_STREAM("prjpt_1: " << prjpt_1);
-                    //ROS_INFO_STREAM("prjpt_2: " << prjpt_2);
-
-                    // if(jac.needed())
-                    // {
-                    //     //make the jacobian ((2x) x 6)
-                    //     temp_jac.colRange(3,9).copyTo(jacMat.rowRange(i*2,i*2+2));
-                    // }
-
-                    cv::line(image, prjpt_1, prjpt_2, cv::Scalar(1,1,1), 1, 8, 0);  /*InputOutputArray img, InputArrayOfArrays pts,const Scalar &color, 
-                                                                                     int lineType=LINE_8, int shift=0, Point offset=Point())*/
-                    //ROS_INFO("DRAW THE LINE!!!!!!!!");
-                    if(prjpt_1.x > XY_max.x) XY_max.x = prjpt_1.x;
-                    if(prjpt_1.y > XY_max.y) XY_max.y = prjpt_1.y;
-                    if(prjpt_1.x < XY_min.x) XY_min.x = prjpt_1.x;
-                    if(prjpt_1.y < XY_min.y) XY_min.y = prjpt_1.y;
-
-                    if(prjpt_2.x > XY_max.x) XY_max.x = prjpt_2.x;
-                    if(prjpt_2.y > XY_max.y) XY_max.y = prjpt_2.y;
-                    if(prjpt_2.x < XY_min.x) XY_min.x = prjpt_2.x;
-                    if(prjpt_2.y < XY_min.y) XY_min.y = prjpt_2.y;
-
-                }
-
-            }
-
-        }
-
-
-    } 
-
-};
-
 /***************approach 2: using Vertices Mat and normal Mat*******************/
 void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
                                  const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
@@ -621,8 +343,10 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
     new_Normals = camTransformMats(CamMat, new_Normals);
 
     int neighbor_num = 0;
-
     cv::Mat temp(4,1, CV_64FC1);
+
+    cv::Mat ept_1(4,1,CV_64FC1);
+    cv::Mat ept_2(4,1,CV_64FC1);
 
     for (int i = 0; i < input_faces.size(); ++i)
     {
@@ -694,23 +418,18 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
                 face_point_j.x = face_point_j.x/3;
                 face_point_j.y = face_point_j.y/3;
                 face_point_j.z = face_point_j.z/3;
-                //face_point_j = Normalize(face_point_j);
 
                 double isfront_j = dotProduct(fnormal_n, face_point_j);
 
-                if (isfront_i * isfront_j < 0.0) // one is front, another is back
+                if (isfront_i * isfront_j <= 0.0) // one is front, another is back
                 {
                     /*finish finding*/
-                    new_Vertices.col(neighbor_faces[i][j+1]).copyTo(temp.col(0));
-                    cv::Point3d ept_1 = convert_MattoPts(temp);  //transform before the the camera transformation
 
-                    
-                    new_Vertices.col(neighbor_faces[i][j+2]).copyTo(temp.col(0));
-                    cv::Point3d ept_2 = convert_MattoPts(temp);
+                    new_Vertices.col(neighbor_faces[i][j+1]).copyTo(ept_1);
+                    new_Vertices.col(neighbor_faces[i][j+2]).copyTo(ept_2);             
 
                     cv::Point2d prjpt_1 = reproject(ept_1, P);
                     cv::Point2d prjpt_2 = reproject(ept_2, P);
-
 
                     cv::line(image, prjpt_1, prjpt_2, cv::Scalar(1,1,1), 1, 8, 0);  
                     
@@ -734,9 +453,10 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
     } 
  
     /**************Second approach done*******************/
+
 };
 
-void ToolModel::N_Compute_Silhouette( const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
+void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
                                  const cv::Mat &input_Vmat, const cv::Mat &face_normals, cv::Mat &face_centro,
                                  cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec, 
                                  const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min ){
@@ -762,6 +482,9 @@ void ToolModel::N_Compute_Silhouette( const std::vector< std::vector<int> > &inp
 
     cv::Mat n_normal(3,1, CV_64FC1);
     cv::Mat n_centro(3,1, CV_64FC1);
+
+    cv::Mat ept_1(4,1,CV_64FC1);
+    cv::Mat ept_2(4,1,CV_64FC1);
 
 
     for (int i = 0; i < input_faces.size(); ++i)
@@ -797,22 +520,14 @@ void ToolModel::N_Compute_Silhouette( const std::vector< std::vector<int> > &inp
                 newFaceCentro.col(n_face_index).copyTo(temp);
                 n_centro = convert4to3(temp);
 
-                //double isfront_j = dotProductMat(n_normal, n_centro);
                 double isfront_j = n_normal.dot(n_centro);
 
-                //ROS_INFO_STREAM("isfront_j: " << isfront_j);
-
-                if (isfront_i * isfront_j < 0.0 ) // one is front, another is back
+                if (isfront_i * isfront_j <= 0.0 ) // one is front, another is back
                 {
                     
                     /*finish finding*/
-                    new_Vertices.col(neighbor_faces[i][j+1]).copyTo(temp.col(0));
-                    cv::Point3d ept_1 = convert_MattoPts(temp);  //transform before the the camera transformation
-
-                    
-                    new_Vertices.col(neighbor_faces[i][j+2]).copyTo(temp.col(0));
-                    cv::Point3d ept_2 = convert_MattoPts(temp);
-
+                    new_Vertices.col(neighbor_faces[i][j+1]).copyTo(ept_1);
+                    new_Vertices.col(neighbor_faces[i][j+2]).copyTo(ept_2);             
 
                     cv::Point2d prjpt_1 = reproject(ept_1, P);
                     cv::Point2d prjpt_2 = reproject(ept_2, P);
@@ -839,7 +554,7 @@ void ToolModel::N_Compute_Silhouette( const std::vector< std::vector<int> > &inp
     }    
 };
 
-cv::Mat ToolModel::convert4to3(cv::Mat &inputMat){
+cv::Mat ToolModel::convert4to3(const cv::Mat &inputMat){
 
     cv::Mat res_mat(3,1,CV_64FC1);
     res_mat.at<double>(0,0) = inputMat.at<double>(0,0);
@@ -850,23 +565,15 @@ cv::Mat ToolModel::convert4to3(cv::Mat &inputMat){
 
 };
 
-cv::Mat ToolModel::computeFaceCentro(cv::Mat &single_face_info){
+cv::Point3d ToolModel::computeFaceCentro(cv::Mat &pt1, cv::Mat &pt2, cv::Mat &pt3){
 
-    cv::Mat temp_v1(4,1,CV_64FC1);
-    cv::Mat temp_v2(4,1,CV_64FC1);
-    cv::Mat temp_v3(4,1,CV_64FC1);
+    cv::Point3d res_centro;
+    cv::Mat centro = pt1 + pt2 + pt3;
 
-    single_face_info.col(0).copyTo(temp_v1);
-    single_face_info.col(1).copyTo(temp_v2);
-    single_face_info.col(2).copyTo(temp_v3);
 
-    cv::Mat centro =  temp_v1 + temp_v2 + temp_v3;
-
-    cv::Mat res_centro(3,1, CV_64FC1);
-
-    res_centro.at<double>(0,0) = centro.at<double>(0,0)/3;
-    res_centro.at<double>(1,0) = centro.at<double>(1,0)/3;
-    res_centro.at<double>(2,0) = centro.at<double>(2,0)/3;
+    res_centro.x = centro.at<double>(0,0)/3.000;
+    res_centro.y = centro.at<double>(1,0)/3.000;
+    res_centro.z = centro.at<double>(2,0)/3.000;
 
     return res_centro;
 
@@ -894,43 +601,42 @@ cv::Mat ToolModel::normalizeMat(cv::Mat &inputMat){ //give a 3 by 3 mat
     return norm_res;
 };
 
-cv::Mat ToolModel::getFaceNormal(cv::Mat &single_face_info){ //should be 4 by 6
+cv::Point3d ToolModel::getFaceNormal(const cv::Mat &pt1,const cv::Mat &pt2,const cv::Mat &pt3,const cv::Mat &vn1,const cv::Mat &vn2,const cv::Mat &vn3 ){ //should be 4 by 6
+
 
     cv::Mat temp_v1(4,1,CV_64FC1);
     cv::Mat temp_v2(4,1,CV_64FC1);
-    cv::Mat temp_v3(4,1,CV_64FC1);
 
-    single_face_info.col(0).copyTo(temp_v1);
-    single_face_info.col(1).copyTo(temp_v2);
-    single_face_info.col(2).copyTo(temp_v3);
+    temp_v1 = pt1 - pt2;
+    temp_v2 = pt1 - pt3;
 
-    cv::Mat temp_n1(4,1,CV_64FC1);
-    cv::Mat temp_n2(4,1,CV_64FC1);
-    cv::Mat temp_n3(4,1,CV_64FC1);
+    cv::Mat temp_v1_ = convert4to3(temp_v1);
+    cv::Mat temp_v2_ = convert4to3(temp_v2);
 
-    single_face_info.col(3).copyTo(temp_n1);
-    single_face_info.col(4).copyTo(temp_n2);
-    single_face_info.col(5).copyTo(temp_n3);    
+    cv::Mat temp_n1 = convert4to3(vn1);
+    cv::Mat temp_n2 = convert4to3(vn2);
+    cv::Mat temp_n3 = convert4to3(vn3);
 
-    cv::Mat v1 = temp_v1 - temp_v2;
-    cv::Mat v2 = temp_v1 - temp_v3;
+    cv::Mat resNorm = temp_v1_.cross(temp_v2_);
 
-    cv::Mat res = v1.cross(v2); ///3 by 1
 
-    double outward_normal_1 = res.dot(temp_n1);
-    double outward_normal_2 = res.dot(temp_n2);
-    double outward_normal_3 = res.dot(temp_n3);
-
+    double outward_normal_1 = resNorm.dot(temp_n1);
+    double outward_normal_2 = resNorm.dot(temp_n2);
+    double outward_normal_3 = resNorm.dot(temp_n3);
 
     if ((outward_normal_1 < 0) || (outward_normal_2 < 0) || (outward_normal_2 < 0) )
     {
-        res = -res;
+        resNorm = -resNorm;
     }
 
+    //res = Normalize(res);
+    cv::Point3d res;
+    res.x = resNorm.at<double>(0,0);
+    res.y = resNorm.at<double>(1,0);
+    res.z = resNorm.at<double>(2,0);
 
-    //res = normalizeMat(res);
 
-    return res;  // knowing the direction    
+    return res;  // knowing the direction  
 
 };
 
@@ -998,8 +704,6 @@ void ToolModel::totalFaceInfo(const std::vector< std::vector<int> > &input_faces
 void ToolModel::getFaceInfo(const std::vector< std::vector<int> > &input_faces, const std::vector< cv::Point3d > &input_vertices,
          const std::vector< cv::Point3d > &input_Vnormal, cv::Mat &face_normals, cv::Mat &face_centroids ){
 
-    ROS_INFO("INSIDE GET face info");
-
     int face_size = input_faces.size();
     face_normals = cv::Mat(4, face_size,CV_64FC1 );
     face_centroids = cv::Mat(4, face_size,CV_64FC1 );
@@ -1030,9 +734,9 @@ void ToolModel::getFaceInfo(const std::vector< std::vector<int> > &input_faces, 
 
         cv::Point3d face_point = pt1 + pt2 + pt3;
 
-        face_point.x = face_point.x/3;
-        face_point.y = face_point.y/3;
-        face_point.z = face_point.z/3;
+        face_point.x = face_point.x/3.000000;
+        face_point.y = face_point.y/3.000000;
+        face_point.z = face_point.z/3.000000;
         face_point = Normalize(face_point);
 
         face_centroids.at<double>(0,i) = face_point.x;
@@ -1065,7 +769,7 @@ cv::Point3d ToolModel::Normalize(cv::Point3d &vec1){
     cv::Point3d norm_res;
     
     double norm = vec1.x*vec1.x + vec1.y*vec1.y + vec1.z*vec1.z;
-    if (norm == 0.00000)
+    if (norm == 0.000000)
      {
         //ROS_ERROR("Trying to normalize a zero vector!");
      }
@@ -1213,8 +917,8 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
 
     /******testing section here********/
     newTool.theta_ellipse = 0.0;
-    newTool.theta_grip_1 = 0.0;
-    newTool.theta_grip_2 = 0.0;
+    newTool.theta_grip_1 = 0.5;
+    newTool.theta_grip_2 = -0.5;
 
     cv::Mat I = cv::Mat::eye(3,3,CV_64FC1);
     /******testing section here********/
@@ -1359,24 +1063,17 @@ cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &C
     cv::Point2d XY_max(-10000,-10000); //minimum of X and Y
     cv::Point2d XY_min(10000,10000); //maximum of X and Y
 
-
-/**************approach 1: using cv::Points***************/
-//Compute_Silhouette(body_faces, body_neighbors, body_Vpts, body_Npts, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min);
-// Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vpts, ellipse_Npts, CamMat, image, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac, XY_max, XY_min);
-// Compute_Silhouette(griper1_faces, griper1_neighbors, griper1_Vpts, griper1_Npts, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
-// Compute_Silhouette(griper2_faces, griper2_neighbors, griper2_Vpts, griper2_Npts, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
-
 /*approach 2: using Vertices mat and normal mat*/
 Compute_Silhouette(body_faces, body_neighbors, body_Vmat, body_Nmat, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min);
 Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac, XY_max, XY_min);
-Compute_Silhouette(griper1_faces, griper1_neighbors, griper1_Vpts, griper1_Npts, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
-Compute_Silhouette(griper2_faces, griper2_neighbors, griper2_Vpts, griper2_Npts, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
+Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat, gripper1_Nmat, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
+Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
 
 /*approach 3: using Face info mat*/
-// N_Compute_Silhouette(body_faces, body_neighbors, body_Vmat,bodyFace_normal, bodyFace_centroid, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min );
-// N_Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat,ellipseFace_normal, ellipseFace_centroid, CamMat, image, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac, XY_max, XY_min);
-// N_Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat,gripper1Face_normal, gripper1Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
-// N_Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat,gripper2Face_normal, gripper2Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
+// Compute_Silhouette(body_faces, body_neighbors, body_Vmat,bodyFace_normal, bodyFace_centroid, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min );
+// Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat,ellipseFace_normal, ellipseFace_centroid, CamMat, image, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac, XY_max, XY_min);
+// Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat,gripper1Face_normal, gripper1Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
+// Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat,gripper2Face_normal, gripper2Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
 
 
 
@@ -1432,7 +1129,7 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, griper2_Vpts, griper2_Npts,
 // }
 
 /*************reproject a single point without rvec and tvec, and no jac, FOR THE BODY COORD TRNSFORMATION*******************/
-cv::Point2d ToolModel::reproject(const cv::Point3d &point, const cv::Mat &P)
+cv::Point2d ToolModel::reproject(const cv::Mat &point, const cv::Mat &P)
 {
 
 
@@ -1441,9 +1138,9 @@ cv::Point2d ToolModel::reproject(const cv::Point3d &point, const cv::Mat &P)
     cv::Point2d output;
 
     cv::Mat ptMat(4,1,CV_64FC1);
-    ptMat.at<double>(0,0) = point.x;
-    ptMat.at<double>(1,0) = point.y;
-    ptMat.at<double>(2,0) = point.z;
+    ptMat.at<double>(0,0) = point.at<double>(0,0);
+    ptMat.at<double>(1,0) = point.at<double>(1,0);
+    ptMat.at<double>(2,0) = point.at<double>(2,0);
     ptMat.at<double>(3,0) = 1.0;
 
     prjPoints = ptMat;

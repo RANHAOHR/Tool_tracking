@@ -26,7 +26,6 @@ include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 
 catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_common ) 
 
-
 # example boost usage
 # find_package(Boost REQUIRED COMPONENTS system thread)
 

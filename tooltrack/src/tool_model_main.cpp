@@ -132,7 +132,7 @@ int main(int argc, char** argv)
 	initial.tvec_cyl(1) = 0.0;
 	initial.tvec_cyl(2) = 0.0;
 	initial.rvec_cyl(0) = 0.0;
-	initial.rvec_cyl(1) = 0.0;
+	initial.rvec_cyl(1) = M_PI/2;
 	initial.rvec_cyl(2) = 0.1;
 
 
@@ -143,7 +143,6 @@ int main(int argc, char** argv)
 	newTool = newToolModel.setRandomConfig(initial, 1, 0);
 	t1 = clock() - t1;
 
-	//newTool = initial;
 	t = clock();
 	cv::Rect testROI = newToolModel.renderTool(testImg, newTool, Cam, P );
 	t = clock() - t;
