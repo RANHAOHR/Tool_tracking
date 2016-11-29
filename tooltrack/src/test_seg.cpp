@@ -52,7 +52,7 @@ void newImageCallback(const sensor_msgs::ImageConstPtr& msg, cv::Mat* outputImag
 
 cv::Mat segmentation(cv::Mat InputImg){
 
-	cout<<"in segmentation"<<endl;
+	//cout<<"in segmentation"<<endl;
 	Mat src, src_gray;
 	Mat grad;
 
@@ -63,39 +63,35 @@ cv::Mat segmentation(cv::Mat InputImg){
 	src = InputImg;
 
 	
-	resize(src, src, Size(), 0.5, 0.5);
+	resize(src, src, Size(), 1, 1);
 
+	// char* window_name = const_cast<char*>("Left_Segmented");
+	// char* original_window_name = const_cast<char*>("left_raw_img");
+	// namedWindow( window_name, CV_WINDOW_AUTOSIZE );
 
-		char* window_name = const_cast<char*>("Left_Segmented");
-		char* original_window_name = const_cast<char*>("left_raw_img");
-		namedWindow( window_name, CV_WINDOW_AUTOSIZE );
+	GaussianBlur( src, src, Size(3,3), 0, 0, BORDER_DEFAULT );
 
-		GaussianBlur( src, src, Size(3,3), 0, 0, BORDER_DEFAULT );
+	/// Convert it to gray
+	cv::cvtColor( src, src_gray, CV_BGR2GRAY );
 
-	  /// Convert it to gray
-	  cvtColor( src, src_gray, CV_BGR2GRAY );
+	/// Generate grad_x and grad_y
+	Mat grad_x, grad_y;
+	Mat abs_grad_x, abs_grad_y;
 
-	  /// Create window
+	/// Gradient X
+	//Scharr( src_gray, grad_x, ddepth, 1, 0, scale, delta, BORDER_DEFAULT );
+	Sobel( src_gray, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT );
+	convertScaleAbs( grad_x, abs_grad_x );
 
+	/// Gradient Y
+	//Scharr( src_gray, grad_y, ddepth, 0, 1, scale, delta, BORDER_DEFAULT );
+	Sobel( src_gray, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT );
+	convertScaleAbs( grad_y, abs_grad_y );
 
-	  /// Generate grad_x and grad_y
-	  Mat grad_x, grad_y;
-	  Mat abs_grad_x, abs_grad_y;
+	/// Total Gradient (approximate)
+	addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad ); //grad = 0.5grad_x + 0.5grad_y
 
-	  /// Gradient X
-	  //Scharr( src_gray, grad_x, ddepth, 1, 0, scale, delta, BORDER_DEFAULT );
-	  Sobel( src_gray, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT );
-	  convertScaleAbs( grad_x, abs_grad_x );
-
-	  /// Gradient Y
-	  //Scharr( src_gray, grad_y, ddepth, 0, 1, scale, delta, BORDER_DEFAULT );
-	  Sobel( src_gray, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT );
-	  convertScaleAbs( grad_y, abs_grad_y );
-
-	  /// Total Gradient (approximate)
-	  addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad ); //grad = 0.5grad_x + 0.5grad_y
-	  //cout<<"before imshow"<<endl;
-	  return grad;
+	return grad;
 
 
 }
@@ -148,10 +144,13 @@ Mat seg_right;
         ros::spinOnce();
 
     	if (freshImage){
+    		
     		t = clock();
     		seg_left=segmentation(rawImage_left);
     		seg_right=segmentation(rawImage_right);
     		t = clock() - t;
+
+    		float sec = (float)t/CLOCKS_PER_SEC;
 
 			imshow( "left_raw_img", rawImage_left);
 	  		imshow( "Left_Segmented", seg_left );
@@ -159,7 +158,7 @@ Mat seg_right;
 	  		imshow( "Right_Segmented", seg_right );
 			  //cout<<"after imshow"<<endl;
 			waitKey(10);
-    		avg_tim += t;
+    		avg_tim += sec;
     		cout<< "avg time is : "<< avg_tim/count<<endl;
     		count += 1;
     		//cout<<"each segmentation peroid takes: "<<t<<endl;

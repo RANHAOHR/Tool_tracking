@@ -13,6 +13,7 @@
 
 using cv_projective::reprojectPoint;
 using cv_projective::transformPoints;
+
 boost::mt19937 rng((const uint32_t &) time(0));
 using namespace std;
 
@@ -36,12 +37,11 @@ ToolModel::ToolModel(cv::Mat& CamMat){
     q_gripper.at<double>(2,0) = 0;
 
     /****initialize the vertices fo different part of tools****/
-	load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_cylinder.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
-    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_ellipse_2.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
+	load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_cylinder_2.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
+    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_ellipse_3.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
     load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/gripper3_1.obj", griper1_vertices, griper1_Vnormal, griper1_faces, griper1_neighbors );
     load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/gripper3_2.obj", griper2_vertices, griper2_Vnormal, griper2_faces, griper2_neighbors );
 
-    ROS_INFO("after loading");
     modify_model_(body_vertices, body_Vnormal, body_Vpts, body_Npts, offset_body, body_Vmat, body_Nmat);
     modify_model_(ellipse_vertices, ellipse_Vnormal, ellipse_Vpts, ellipse_Npts, offset_ellipse, ellipse_Vmat, ellipse_Nmat);
     modify_model_(griper1_vertices, griper1_Vnormal, griper1_Vpts, griper1_Npts, offset_gripper, gripper1_Vmat, gripper1_Nmat);
@@ -104,7 +104,7 @@ cv::Point3d ToolModel::ConvertCelitoMeters(cv::Point3d &input_pt){
 void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > &out_vertices, std::vector< glm::vec3 > &vertex_normal, 
     std::vector< std::vector<int> > &out_faces,  std::vector< std::vector<int> > &neighbor_faces){
 
-    ROS_INFO("Loading OBJ file %s...\n", path);
+    //ROS_INFO("Loading OBJ file %s...\n", path);
 
     std::vector< unsigned int > vertexIndices, uvIndices, normalIndices;
     //std::vector< unsigned int > vertexIndices;
@@ -199,7 +199,7 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
     for (int i = 0; i < neighbor_faces.size(); ++i)
     {
         /*********find the neighbor faces************/
-        for (int j = i; j < neighbor_faces.size(); ++j)
+        for (int j = 0; j < neighbor_faces.size(); ++j)
         {
             if ( j != i)
             {
@@ -386,7 +386,9 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
 
         double isfront_i = dotProduct(fnormal, face_point_i);
 
-        for (int neighbor_count = 0; neighbor_count < neighbor_num; ++neighbor_count){  //notice: cannot use J here, since the last j will not be counted
+        if (isfront_i < 0.0000)
+        {
+            for (int neighbor_count = 0; neighbor_count < neighbor_num; ++neighbor_count){  //notice: cannot use J here, since the last j will not be counted
 
                 int j = 3*neighbor_count;
 
@@ -451,6 +453,10 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
 
 
     } 
+        
+    }
+
+        
  
     /**************Second approach done*******************/
 
@@ -501,13 +507,11 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
             newFaceCentro.col(i).copyTo(temp);
             f_centro = convert4to3(temp);
 
-
-            //double isfront_i = dotProductMat(f_normal, f_centro);
             double isfront_i = f_normal.dot(f_centro);
 
-            //ROS_INFO_STREAM("isfront_i: " << isfront_i);
-
-        for (int neighbor_count = 0; neighbor_count < neighbor_num; ++neighbor_count){  //notice: cannot use J here, since the last j will not be counted
+            if (isfront_i < 0.0)
+            {
+                for (int neighbor_count = 0; neighbor_count < neighbor_num; ++neighbor_count){  //notice: cannot use J here, since the last j will not be counted
 
                 int j = 3*neighbor_count;
 
@@ -551,7 +555,11 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
         }
 
 
-    }    
+    }   
+            
+    }
+
+ 
 };
 
 cv::Mat ToolModel::convert4to3(const cv::Mat &inputMat){
@@ -1077,7 +1085,6 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nma
 
 
 
-
     //shape the rectangle that captures the rendered needle
     ROI.width = abs(static_cast<int>(XY_max.x-XY_min.x))+2*padding;
     ROI.height = abs(static_cast<int>(XY_max.y-XY_min.y))+2*padding;
@@ -1088,45 +1095,41 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nma
 
 };
 
-// double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI, bool displayPause)
-// {
+double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI, bool displayPause)
+{
             
 
-//     double matchingScore(0.0);
+    double matchingScore =0.0;
     
-//     cv::Mat ROI_toolImage = toolImage(ROI); //crop tool image
-//     cv::Mat ROI_segmentedImage = segmentedImage(ROI); //crop segmented image
+    cv::Mat ROI_toolImage = toolImage(ROI); //crop tool image
+    cv::Mat ROI_segmentedImage = segmentedImage(ROI); //crop segmented image
 
 
-//     cv::Mat product; //elementwise product of images
-//     cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
-//     cv::Mat toolImFloat; //Float data type of grey scale tool image
-//     cv::Mat toolImFloatBlured; //Float data type of grey scale blurred toolImage
+    cv::Mat product; //elementwise product of images
+    cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
+    cv::Mat toolImFloat; //Float data type of grey scale tool image
+    cv::Mat toolImFloatBlured; //Float data type of grey scale blurred toolImage
 
-//     cv::cvtColor(ROI_toolImage,toolImageGrey,CV_BGR2GRAY); //convert it to grey scale
+    cv::cvtColor(ROI_toolImage,toolImageGrey,CV_BGR2GRAY); //convert it to grey scale
 
+    toolImageGrey.convertTo(toolImFloat, CV_32FC1); // convert grey scale to float
 
+    //blur imtoolfloat
+    cv::GaussianBlur(toolImFloat,toolImFloatBlured, cv::Size(9,9),2,2);
 
-//     toolImageGrey.convertTo(toolImFloat, CV_32FC1); // convert grey scale to float
-
-
-
-//     //blur imtoolfloat
-//     cv::GaussianBlur(toolImFloat,toolImFloatBlured, cv::Size(9,9),2,2);
-
-//     imshow("blurred image", toolImFloatBlured);
+    imshow("blurred image", toolImFloatBlured);
 
 
-//     toolImFloatBlured /= 255; //scale the blurred image
+    toolImFloatBlured /= 255; //scale the blurred image
 
 
 
-//     cv::Mat result(1,1,CV_32FC1);
-//     cv::matchTemplate(ROI_segmentedImage,toolImFloatBlured,result,CV_TM_CCORR);
-//     matchingScore = static_cast<double> (result.at< float >(0));
+    cv::Mat result(1,1,CV_32FC1);
+    cv::matchTemplate(ROI_segmentedImage,toolImFloatBlured,result,CV_TM_CCORR);
+    matchingScore = static_cast<double> (result.at< float >(0));
 
-//     return matchingScore;
-// }
+    return matchingScore;
+}
 
 /*************reproject a single point without rvec and tvec, and no jac, FOR THE BODY COORD TRNSFORMATION*******************/
 cv::Point2d ToolModel::reproject(const cv::Mat &point, const cv::Mat &P)

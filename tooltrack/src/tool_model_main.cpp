@@ -41,7 +41,6 @@
  #include <sensor_msgs/image_encodings.h>
  #include <image_transport/image_transport.h>
  #include <cwru_opencv_common/projective_geometry.h>
- //#include <cwru_needle_tracking/particle_filter.h>
  //#include <vesselness_image_filter_cpu/vesselness_lib.h>
  #include <tool_tracking_lib/tool_model.h>
  #include "std_msgs/MultiArrayLayout.h"
@@ -133,7 +132,7 @@ int main(int argc, char** argv)
 	initial.tvec_cyl(2) = 0.0;
 	initial.rvec_cyl(0) = 0.0;
 	initial.rvec_cyl(1) = M_PI/2;
-	initial.rvec_cyl(2) = 0.1;
+	initial.rvec_cyl(2) = 0.3;
 
 
 	ToolModel::toolModel newTool;

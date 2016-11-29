@@ -158,6 +158,7 @@ public:
         cv::Mat q_ellipse;  //initial point for ellipse
         cv::Mat q_gripper;  //intial point for girpper 
 
+		/* public funcs*/
 
  		ToolModel(cv::Mat& CamMat);  //constructor
 
@@ -176,6 +177,8 @@ public:
 
  		cv::Point2d reproject(const cv::Mat &point, const cv::Mat &P);
 
+ 		double calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI, bool displayPause);
+
  		/**************compute silhoutes*****************/
 
 		void Compute_Silhouette( const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
@@ -188,8 +191,6 @@ public:
                                  const cv::Mat &input_Vmat, const cv::Mat &face_normals, cv::Mat &face_centro,
                                  cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec, 
                                  const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min );
-
- 		int Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2, std::vector<int> &match_vec);
 
  		/**********************math computation*******************/
  		cv::Point3d crossProduct(cv::Point3d &vec1, cv::Point3d &vec2);
@@ -217,6 +218,8 @@ public:
 		cv::Point3d getFaceNormal(const cv::Mat &pt1,const cv::Mat &pt2,const cv::Mat &pt3,const cv::Mat &vn1,const cv::Mat &vn2,const cv::Mat &vn3 );
 
  		cv::Point3d computeFaceCentro(cv::Mat &pt1, cv::Mat &pt2, cv::Mat &pt3);
+ 		
+ 		int Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2, std::vector<int> &match_vec);
 
  		void getFaceInfo(const std::vector< std::vector<int> > &input_faces, const std::vector< cv::Point3d > &input_vertices,
          const std::vector< cv::Point3d > &input_Vnormal, cv::Mat &face_normals, cv::Mat &face_centroids );
