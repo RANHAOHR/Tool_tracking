@@ -56,10 +56,6 @@ cv::Mat segmentation(cv::Mat InputImg){
 	Mat src, src_gray;
 	Mat grad;
 
-	int scale = 1;
-	int delta = 0;
-	int ddepth = CV_16S;	
-
 	src = InputImg;
 
 	
@@ -69,10 +65,14 @@ cv::Mat segmentation(cv::Mat InputImg){
 	// char* original_window_name = const_cast<char*>("left_raw_img");
 	// namedWindow( window_name, CV_WINDOW_AUTOSIZE );
 
-	GaussianBlur( src, src, Size(3,3), 0, 0, BORDER_DEFAULT );
+/*	GaussianBlur( src, src, Size(3,3), 0, 0, BORDER_DEFAULT );
 
 	/// Convert it to gray
 	cv::cvtColor( src, src_gray, CV_BGR2GRAY );
+
+	int scale = 1;
+	int delta = 0;
+	int ddepth = CV_16S;	
 
 	/// Generate grad_x and grad_y
 	Mat grad_x, grad_y;
@@ -89,7 +89,14 @@ cv::Mat segmentation(cv::Mat InputImg){
 	convertScaleAbs( grad_y, abs_grad_y );
 
 	/// Total Gradient (approximate)
-	addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad ); //grad = 0.5grad_x + 0.5grad_y
+	addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad ); //grad = 0.5grad_x + 0.5grad_y*/
+
+	double lowThresh = 43;
+	cv::cvtColor( src, src_gray, CV_BGR2GRAY );
+
+	blur( src_gray, src_gray, Size(3,3) );
+
+	Canny( src_gray, grad, lowThresh, 4*lowThresh, 3 );
 
 	return grad;
 
@@ -152,6 +159,8 @@ Mat seg_right;
 
     		float sec = (float)t/CLOCKS_PER_SEC;
 
+
+    		
 			imshow( "left_raw_img", rawImage_left);
 	  		imshow( "Left_Segmented", seg_left );
     		imshow( "right_raw_img", rawImage_right);

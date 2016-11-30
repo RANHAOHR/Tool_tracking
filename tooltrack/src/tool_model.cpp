@@ -386,7 +386,7 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
 
         double isfront_i = dotProduct(fnormal, face_point_i);
 
-        if (isfront_i < 0.0000)
+        if (isfront_i < 0.00000)
         {
             for (int neighbor_count = 0; neighbor_count < neighbor_num; ++neighbor_count){  //notice: cannot use J here, since the last j will not be counted
 
@@ -423,7 +423,7 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
 
                 double isfront_j = dotProduct(fnormal_n, face_point_j);
 
-                if (isfront_i * isfront_j <= 0.0) // one is front, another is back
+                if (isfront_i * isfront_j < 0.0) // one is front, another is back
                 {
                     /*finish finding*/
 
