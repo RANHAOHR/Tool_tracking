@@ -153,6 +153,23 @@ int main(int argc, char** argv)
 	ROS_INFO_STREAM("setRandomConfig time is: " << sec1);
 	ROS_INFO_STREAM("render time is: " << sec);
 
+	// cv::Mat test;
+	// test.convertTo(testImg, CV_8UC3); 
+	// imshow("test", test);
+	// cv::waitKey(0);	
+
+
+	// cv::Mat Img;
+	// Img = cv::imread("/home/deeplearning/ros_ws/src/tooltrack/src/result_img.jpg");
+	// imshow("test", Img);
+
+
+	// cv::cvtColor(test,test,CV_BGR2GRAY); //convert it to grey scale  
+	// cv::Mat segImg;
+	// segImg = cv::imread("/home/deeplearning/ros_ws/src/tooltrack/src/result_img.jpg");
+
+	// double result = newToolModel.calculateMatchingScore(testImg, segImg, testROI);
+
 	if(!testImg.empty()){
         imshow("test", testImg);
     }

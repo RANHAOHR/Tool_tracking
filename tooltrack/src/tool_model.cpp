@@ -37,7 +37,7 @@ ToolModel::ToolModel(cv::Mat& CamMat){
     q_gripper.at<double>(2,0) = 0;
 
     /****initialize the vertices fo different part of tools****/
-	load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_cylinder_2.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
+	load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_cylinder_3.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
     load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_ellipse_3.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
     load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/gripper3_1.obj", griper1_vertices, griper1_Vnormal, griper1_faces, griper1_neighbors );
     load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/gripper3_2.obj", griper2_vertices, griper2_Vnormal, griper2_faces, griper2_neighbors );
@@ -117,7 +117,7 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
 
     FILE * file = fopen(path, "r");
     if( file == NULL ){
-        printf("Impossible to open the file ! Are you in the right path ? See Tutorial 1 for details\n");
+        printf("Impossible to open the file ! Are you in the right path ?\n");
     }
 
 
@@ -1067,7 +1067,7 @@ cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &C
 
     /****************project points ste up***************************/
 
-    int padding =10; //add 10pixels of padding for cropping
+    int padding =0; //add 10pixels of padding for cropping
     cv::Point2d XY_max(-10000,-10000); //minimum of X and Y
     cv::Point2d XY_min(10000,10000); //maximum of X and Y
 
@@ -1084,6 +1084,22 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nma
 // Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat,gripper2Face_normal, gripper2Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
 
 
+    // ROS_INFO_STREAM("XY_max: " << XY_max);
+    // ROS_INFO_STREAM("XY_min: " << XY_min);
+
+    /*cannot get all body part fo the tool, decided by the size of the image*/
+    int row = image.rows;
+    int col = image.cols;
+
+    if (XY_max.x - col > 0)
+    {
+        XY_max.x = col;
+    }
+    if (XY_max.y - row > 0)
+    {
+        XY_max.y = row;
+    }
+
 
     //shape the rectangle that captures the rendered needle
     ROI.width = abs(static_cast<int>(XY_max.x-XY_min.x))+2*padding;
@@ -1091,42 +1107,60 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nma
     ROI.x = XY_min.x-padding;
     ROI.y = XY_min.y-padding;
 
+
+    // ROS_INFO_STREAM("ROI.X: " << ROI.x);
+    // ROS_INFO_STREAM("ROI.y: " << ROI.y);
+    // ROS_INFO_STREAM("ROI.width: " << ROI.width);
+    // ROS_INFO_STREAM("ROI.height: " << ROI.height);
+
+
+    // ROS_INFO_STREAM("row: " << row);
+    // ROS_INFO_STREAM("col: " << col);
+
     return ROI;
 
 };
 
-double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI, bool displayPause)
+double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI)
 {
             
 
     double matchingScore =0.0;
-    
+
+
     cv::Mat ROI_toolImage = toolImage(ROI); //crop tool image
-    cv::Mat ROI_segmentedImage = segmentedImage(ROI); //crop segmented image
 
 
-    cv::Mat product; //elementwise product of images
-    cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
+    //cv::Mat product; //elementwise product of images
+    //cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
     cv::Mat toolImFloat; //Float data type of grey scale tool image
     cv::Mat toolImFloatBlured; //Float data type of grey scale blurred toolImage
 
-    cv::cvtColor(ROI_toolImage,toolImageGrey,CV_BGR2GRAY); //convert it to grey scale
+    // if (ROI_toolImage.empty())
+    // {
+    //    ROS_ERROR("INPUT IMAGE IS EMPTY");
+    // }else{
+    // cv::cvtColor(ROI_toolImage,toolImageGrey,CV_BGR2GRAY); //convert it to grey scale        
+    // }
 
-    toolImageGrey.convertTo(toolImFloat, CV_32FC1); // convert grey scale to float
+
+    ROI_toolImage.convertTo(toolImFloat, CV_32FC1); // convert grey scale to float
 
     //blur imtoolfloat
     cv::GaussianBlur(toolImFloat,toolImFloatBlured, cv::Size(9,9),2,2);
 
     imshow("blurred image", toolImFloatBlured);
-
-
-    toolImFloatBlured /= 255; //scale the blurred image
+    cv::waitKey(0);
 
 
 
-    cv::Mat result(1,1,CV_32FC1);
-    cv::matchTemplate(ROI_segmentedImage,toolImFloatBlured,result,CV_TM_CCORR);
-    matchingScore = static_cast<double> (result.at< float >(0));
+    //toolImFloatBlured /= 255; //scale the blurred image
+
+    // cv::Mat result(1,1,CV_32FC1);
+    // cv::matchTemplate(ROI_segmentedImage,toolImFloatBlured,result,CV_TM_CCORR);
+    // matchingScore = static_cast<double> (result.at< float >(0));
+
+    matchingScore = 0;
 
     return matchingScore;
 }

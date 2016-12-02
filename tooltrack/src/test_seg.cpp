@@ -50,7 +50,7 @@ void newImageCallback(const sensor_msgs::ImageConstPtr& msg, cv::Mat* outputImag
 
 }
 
-cv::Mat segmentation(cv::Mat InputImg){
+cv::Mat segmentation(cv::Mat &InputImg){
 
 	//cout<<"in segmentation"<<endl;
 	Mat src, src_gray;
