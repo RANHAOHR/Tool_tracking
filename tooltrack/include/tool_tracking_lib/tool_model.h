@@ -39,17 +39,17 @@ public:
 			cv::Matx<double,3,1> tvec_grip2;	//gripper2 translation vector
 			cv::Matx<double,3,1> rvec_grip2;	//gripper2 rotation vector
 
-			double theta_ellipse;
-			double theta_grip_1;
-			double theta_grip_2;  //9 DOF
+			// double theta_ellipse;
+			// double theta_grip_1;
+			// double theta_grip_2;  //9 DOF
 
 
 
 			//built in operator that handles copying the toolModel in efficient way
 			toolModel& operator =(const toolModel src){
-				this->theta_ellipse = src.theta_ellipse;
-				this->theta_grip_1 = src.theta_grip_1;
-				this->theta_grip_2 = src.theta_grip_2;
+				// this->theta_ellipse = src.theta_ellipse;
+				// this->theta_grip_1 = src.theta_grip_1;
+				// this->theta_grip_2 = src.theta_grip_2;
 
 				for(int i(0); i<3; i++){
 
@@ -72,9 +72,9 @@ public:
 
 			// toolModel constructor, creates an empty toolModel
 			toolModel(void){
-				this->theta_ellipse = 0.0;
-				this->theta_grip_1 = 0.0;
-				this->theta_grip_2 = 0.0;
+				// this->theta_ellipse = 0.0;
+				// this->theta_grip_1 = 0.0;
+				// this->theta_grip_2 = 0.0;
 				for(int i(0); i<3; i++){
 					this->tvec_cyl(i) = 0.0;
 					this->rvec_cyl(i) = 0.0;

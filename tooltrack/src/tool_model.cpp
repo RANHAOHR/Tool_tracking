@@ -922,13 +922,13 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
 
 
 	toolModel newTool = initial;  //BODY part is done here
-
-    /******testing section here********/
-    newTool.theta_ellipse = 0.0;
-    newTool.theta_grip_1 = 0.5;
-    newTool.theta_grip_2 = -0.5;
-
     cv::Mat I = cv::Mat::eye(3,3,CV_64FC1);
+    /******testing section here********/
+    double theta_ellipse = 0.0;
+    double theta_grip_1 = 0.5;
+    double theta_grip_2 = -0.5;
+
+
     /******testing section here********/
 
 	//create normally distributed random number with the given stdev and mean
@@ -984,7 +984,7 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
 
     newTool.rvec_elp(0) = newTool.rvec_cyl(0); //roll angle should be the same.
     newTool.rvec_elp(1) = newTool.rvec_cyl(1); //pitch angle should be the same.
-    newTool.rvec_elp(2) = newTool.rvec_cyl(2) + newTool.theta_ellipse; //yaw angle is plus the theta_ellipse
+    newTool.rvec_elp(2) = newTool.rvec_cyl(2) + theta_ellipse; //yaw angle is plus the theta_ellipse
 
    /***********computations for gripper kinematics**********/
 
@@ -1024,7 +1024,7 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
     newTool.tvec_grip1(1) = q_rotation.at<double>(1,0) + newTool.tvec_elp(1);
     newTool.tvec_grip1(2) = q_rotation.at<double>(2,0) + newTool.tvec_elp(2);
 
-    newTool.rvec_grip1(0) = newTool.rvec_elp(0) + newTool.theta_grip_1;  //roll angle is plus the theta_gripper
+    newTool.rvec_grip1(0) = newTool.rvec_elp(0) + theta_grip_1;  //roll angle is plus the theta_gripper
     newTool.rvec_grip1(1) = newTool.rvec_elp(1);
     newTool.rvec_grip1(2) = newTool.rvec_elp(2);    
 
@@ -1034,7 +1034,7 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
     newTool.tvec_grip2(1) = newTool.tvec_grip1(1);
     newTool.tvec_grip2(2) = newTool.tvec_grip1(2);
 
-    newTool.rvec_grip2(0) = newTool.rvec_elp(0) + newTool.theta_grip_2;  //roll angle is plus the theta_gripper
+    newTool.rvec_grip2(0) = newTool.rvec_elp(0) + theta_grip_2;  //roll angle is plus the theta_gripper
     newTool.rvec_grip2(1) = newTool.rvec_elp(1);
     newTool.rvec_grip2(2) = newTool.rvec_elp(2);  
 
@@ -1063,11 +1063,8 @@ cv::Mat ToolModel::computeSkew(cv::Mat &w){
 cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P, cv::OutputArray jac ){
 
     cv::Rect ROI; // rectanle that contains tool model
-    cv::Rect cropped; //cropped image to speed up the process
 
-    /****************project points ste up***************************/
-
-    int padding =0; //add 10pixels of padding for cropping
+    int padding =1; //add 10pixels of padding for cropping
     cv::Point2d XY_max(-10000,-10000); //minimum of X and Y
     cv::Point2d XY_min(10000,10000); //maximum of X and Y
 
@@ -1113,10 +1110,6 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nma
     // ROS_INFO_STREAM("ROI.width: " << ROI.width);
     // ROS_INFO_STREAM("ROI.height: " << ROI.height);
 
-
-    // ROS_INFO_STREAM("row: " << row);
-    // ROS_INFO_STREAM("col: " << col);
-
     return ROI;
 
 };
@@ -1139,19 +1132,17 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 
     toolImageGrey.convertTo(toolImFloat, CV_32FC1); // convert grey scale to float
 
-    //blur imtoolfloat
+    //blur imtoolfloat, probably don't need this
     cv::GaussianBlur(toolImFloat,toolImFloatBlured, cv::Size(9,9),2,2);
 
-    //imshow("blurred image", toolImFloatBlured);
+    imshow("blurred image", toolImFloatBlured);
 
-    // cv::waitKey(0); //for testing
-
-
+    cv::waitKey(0); //for testing
 
     toolImFloatBlured /= 255; //scale the blurred image
 
     cv::Mat result(1,1,CV_32FC1);
-    cv::matchTemplate(toolImFloatBlured,toolImFloat,result,CV_TM_CCORR);
+    cv::matchTemplate(ROI_segmentedImage,toolImFloatBlured,result,CV_TM_CCORR);
     matchingScore = static_cast<double> (result.at< float >(0));
 
     return matchingScore;
