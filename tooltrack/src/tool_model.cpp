@@ -1126,41 +1126,33 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
             
 
     double matchingScore =0.0;
-
-
     cv::Mat ROI_toolImage = toolImage(ROI); //crop tool image
+    cv::Mat ROI_segmentedImage = segmentedImage(ROI); //crop segmented image, notice the size of the sgemented image
 
 
     //cv::Mat product; //elementwise product of images
-    //cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
+    cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
     cv::Mat toolImFloat; //Float data type of grey scale tool image
     cv::Mat toolImFloatBlured; //Float data type of grey scale blurred toolImage
 
-    // if (ROI_toolImage.empty())
-    // {
-    //    ROS_ERROR("INPUT IMAGE IS EMPTY");
-    // }else{
-    // cv::cvtColor(ROI_toolImage,toolImageGrey,CV_BGR2GRAY); //convert it to grey scale        
-    // }
+    cv::cvtColor(ROI_toolImage,toolImageGrey,CV_BGR2GRAY); //convert it to grey scale        
 
-
-    ROI_toolImage.convertTo(toolImFloat, CV_32FC1); // convert grey scale to float
+    toolImageGrey.convertTo(toolImFloat, CV_32FC1); // convert grey scale to float
 
     //blur imtoolfloat
     cv::GaussianBlur(toolImFloat,toolImFloatBlured, cv::Size(9,9),2,2);
 
-    imshow("blurred image", toolImFloatBlured);
-    cv::waitKey(0);
+    //imshow("blurred image", toolImFloatBlured);
+
+    // cv::waitKey(0); //for testing
 
 
 
-    //toolImFloatBlured /= 255; //scale the blurred image
+    toolImFloatBlured /= 255; //scale the blurred image
 
-    // cv::Mat result(1,1,CV_32FC1);
-    // cv::matchTemplate(ROI_segmentedImage,toolImFloatBlured,result,CV_TM_CCORR);
-    // matchingScore = static_cast<double> (result.at< float >(0));
-
-    matchingScore = 0;
+    cv::Mat result(1,1,CV_32FC1);
+    cv::matchTemplate(toolImFloatBlured,toolImFloat,result,CV_TM_CCORR);
+    matchingScore = static_cast<double> (result.at< float >(0));
 
     return matchingScore;
 }

@@ -86,10 +86,7 @@ int main(int argc, char** argv)
 	ROS_INFO("After Loading Model and Initializetion, please press ENTER to go on");
 	cin.ignore();
 
-	clock_t t;
-	clock_t t1;
-
-	cv::Mat testImg = cv::Mat::zeros(480, 640, CV_64FC1); //
+	cv::Mat testImg = cv::Mat::zeros(480, 640, CV_8UC3); //
 	cv::Mat P(3,4,CV_64FC1);
 /******************magic numbers!!!!!!!!!!!!!!*************/
     // P.at<double>(0,0) = 500;
@@ -130,14 +127,18 @@ int main(int argc, char** argv)
 	initial.tvec_cyl(0) = 0.0;
 	initial.tvec_cyl(1) = 0.0;
 	initial.tvec_cyl(2) = 0.0;
-	initial.rvec_cyl(0) = 0.0;
+	initial.rvec_cyl(0) = -0.1;
 	initial.rvec_cyl(1) = M_PI/2;
 	initial.rvec_cyl(2) = 0.3;
 
 
 	ToolModel::toolModel newTool;
 
-	
+
+	clock_t t;
+	clock_t t1;
+	clock_t t2;
+
 	t1 = clock();
 	newTool = newToolModel.setRandomConfig(initial, 1, 0);
 	t1 = clock() - t1;
@@ -153,29 +154,24 @@ int main(int argc, char** argv)
 	ROS_INFO_STREAM("setRandomConfig time is: " << sec1);
 	ROS_INFO_STREAM("render time is: " << sec);
 
-	// cv::Mat test;
-	// test.convertTo(testImg, CV_8UC3); 
-	// imshow("test", test);
-	// cv::waitKey(0);	
+	t2 = clock();
+	cv::Mat segImg = cv::Mat::zeros(480, 640, CV_32FC1);
+	//segImg = cv::imread("/home/deeplearning/ros_ws/src/tooltrack/src/result_img.jpg");
 
 
-	// cv::Mat Img;
-	// Img = cv::imread("/home/deeplearning/ros_ws/src/tooltrack/src/result_img.jpg");
-	// imshow("test", Img);
+	double result = newToolModel.calculateMatchingScore(testImg, segImg, testROI);
 
-
-	// cv::cvtColor(test,test,CV_BGR2GRAY); //convert it to grey scale  
-	// cv::Mat segImg;
-	// segImg = cv::imread("/home/deeplearning/ros_ws/src/tooltrack/src/result_img.jpg");
-
-	// double result = newToolModel.calculateMatchingScore(testImg, segImg, testROI);
-
-	if(!testImg.empty()){
-        imshow("test", testImg);
-    }
+	ROS_INFO_STREAM("THE MATCHING SCORE IS: " << result);
+	t2 = clock() - t2;
+	
+	float sec2 = (float)t2/CLOCKS_PER_SEC;
+	ROS_INFO_STREAM("MATCHING TIME: " << sec2);
+	// if(!testImg.empty()){
+ //        imshow("test", testImg);
+ //    }
 	
 
-	cv::waitKey(0);
+	// cv::waitKey(0);
 
 
 
