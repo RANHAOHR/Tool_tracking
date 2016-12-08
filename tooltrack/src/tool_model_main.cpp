@@ -86,8 +86,9 @@ int main(int argc, char** argv)
 	ROS_INFO("After Loading Model and Initializetion, please press ENTER to go on");
 	cin.ignore();
 
-	cv::Mat testImg = cv::Mat::zeros(480, 640, CV_8UC3); //
+	cv::Mat testImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3
 	cv::Mat P(3,4,CV_64FC1);
+
 /******************magic numbers!!!!!!!!!!!!!!*************/
     // P.at<double>(0,0) = 500;
     // P.at<double>(1,0) = 0;
@@ -125,9 +126,9 @@ int main(int argc, char** argv)
 	ToolModel::toolModel initial;
 
 	initial.tvec_cyl(0) = 0.0;
-	initial.tvec_cyl(1) = 0.0;
+	initial.tvec_cyl(1) = -0.01;
 	initial.tvec_cyl(2) = 0.0;
-	initial.rvec_cyl(0) = -0.1;
+	initial.rvec_cyl(0) = 0.0;
 	initial.rvec_cyl(1) = M_PI/2;
 	initial.rvec_cyl(2) = 0.3;
 
@@ -150,13 +151,12 @@ int main(int argc, char** argv)
 	float sec1 = (float)t1/CLOCKS_PER_SEC;
 	float sec = (float)t/CLOCKS_PER_SEC;
 
-
 	ROS_INFO_STREAM("setRandomConfig time is: " << sec1);
 	ROS_INFO_STREAM("render time is: " << sec);
 
 	t2 = clock();
 	cv::Mat segImg = cv::Mat::zeros(480, 640, CV_32FC1);
-	//segImg = cv::imread("/home/deeplearning/ros_ws/src/tooltrack/src/result_img.jpg");
+	// segImg = cv::imread("/home/deeplearning/ros_ws/src/tooltrack/src/result_img.jpg");
 
 
 	double result = newToolModel.calculateMatchingScore(testImg, segImg, testROI);
@@ -166,6 +166,8 @@ int main(int argc, char** argv)
 	
 	float sec2 = (float)t2/CLOCKS_PER_SEC;
 	ROS_INFO_STREAM("MATCHING TIME: " << sec2);
+
+
 	// if(!testImg.empty()){
  //        imshow("test", testImg);
  //    }

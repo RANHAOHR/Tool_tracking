@@ -1084,31 +1084,40 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nma
     // ROS_INFO_STREAM("XY_max: " << XY_max);
     // ROS_INFO_STREAM("XY_min: " << XY_min);
 
-    /*cannot get all body part fo the tool, decided by the size of the image*/
+    /*cannot get all body part fo the tool, decided by the size of the image;
+    bound the tool according to the image position*/
     int row = image.rows;
     int col = image.cols;
 
-    if (XY_max.x - col > 0)
+    if (XY_min.x - col >0 || XY_min.y - row >0 )
     {
-        XY_max.x = col;
+        ROS_INFO("Tool is NOT in the visible region of the camera, position is not valid !");
     }
-    if (XY_max.y - row > 0)
-    {
-        XY_max.y = row;
+    else{
+
+        if (XY_max.x - col > 0)
+        {
+            XY_max.x = col;
+        }
+        if (XY_max.y - row > 0)
+        {
+            XY_max.y = row;
+        }
+
+
+        //shape the rectangle that captures the rendered needle
+        ROI.width = abs(static_cast<int>(XY_max.x-XY_min.x))+2*padding;
+        ROI.height = abs(static_cast<int>(XY_max.y-XY_min.y))+2*padding;
+        ROI.x = XY_min.x-padding;
+        ROI.y = XY_min.y-padding;
+
+        // ROS_INFO_STREAM("ROI.X: " << ROI.x);
+        // ROS_INFO_STREAM("ROI.y: " << ROI.y);
+        // ROS_INFO_STREAM("ROI.width: " << ROI.width);
+        // ROS_INFO_STREAM("ROI.height: " << ROI.height);
     }
 
 
-    //shape the rectangle that captures the rendered needle
-    ROI.width = abs(static_cast<int>(XY_max.x-XY_min.x))+2*padding;
-    ROI.height = abs(static_cast<int>(XY_max.y-XY_min.y))+2*padding;
-    ROI.x = XY_min.x-padding;
-    ROI.y = XY_min.y-padding;
-
-
-    // ROS_INFO_STREAM("ROI.X: " << ROI.x);
-    // ROS_INFO_STREAM("ROI.y: " << ROI.y);
-    // ROS_INFO_STREAM("ROI.width: " << ROI.width);
-    // ROS_INFO_STREAM("ROI.height: " << ROI.height);
 
     return ROI;
 
@@ -1119,31 +1128,38 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
             
 
     double matchingScore =0.0;
-    cv::Mat ROI_toolImage = toolImage(ROI); //crop tool image
-    cv::Mat ROI_segmentedImage = segmentedImage(ROI); //crop segmented image, notice the size of the sgemented image
+
+    /*When ROI is an empty rec, the position of tool is simply just not match, return 0 matching score*/
+    if (ROI.area() != 0) 
+    {
+        cv::Mat ROI_toolImage = toolImage(ROI); //crop tool image
+        cv::Mat ROI_segmentedImage = segmentedImage(ROI); //crop segmented image, notice the size of the sgemented image
 
 
-    //cv::Mat product; //elementwise product of images
-    cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
-    cv::Mat toolImFloat; //Float data type of grey scale tool image
-    cv::Mat toolImFloatBlured; //Float data type of grey scale blurred toolImage
+        //cv::Mat product; //elementwise product of images
+        cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
+        cv::Mat toolImFloat; //Float data type of grey scale tool image
+        cv::Mat toolImFloatBlured; //Float data type of grey scale blurred toolImage
 
-    cv::cvtColor(ROI_toolImage,toolImageGrey,CV_BGR2GRAY); //convert it to grey scale        
+        cv::cvtColor(ROI_toolImage,toolImageGrey,CV_BGR2GRAY); //convert it to grey scale        
 
-    toolImageGrey.convertTo(toolImFloat, CV_32FC1); // convert grey scale to float
+        toolImageGrey.convertTo(toolImFloat, CV_32FC1); // convert grey scale to float
 
-    //blur imtoolfloat, probably don't need this
-    cv::GaussianBlur(toolImFloat,toolImFloatBlured, cv::Size(9,9),2,2);
+        //blur imtoolfloat, probably don't need this
+        cv::GaussianBlur(toolImFloat, toolImFloatBlured, cv::Size(9,9),1,1);
 
-    imshow("blurred image", toolImFloatBlured);
+        imshow("blurred image", toolImFloatBlured);
 
-    cv::waitKey(0); //for testing
+        cv::waitKey(0); //for testing
 
-    toolImFloatBlured /= 255; //scale the blurred image
+        toolImFloatBlured /= 255; //scale the blurred image
 
-    cv::Mat result(1,1,CV_32FC1);
-    cv::matchTemplate(ROI_segmentedImage,toolImFloatBlured,result,CV_TM_CCORR);
-    matchingScore = static_cast<double> (result.at< float >(0));
+        cv::Mat result(1,1,CV_32FC1);
+        cv::matchTemplate(ROI_segmentedImage,toolImFloatBlured,result,CV_TM_CCORR);
+        matchingScore = static_cast<double> (result.at< float >(0));
+        
+    }
+
 
     return matchingScore;
 }
