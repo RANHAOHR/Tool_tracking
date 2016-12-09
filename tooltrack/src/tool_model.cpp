@@ -1111,13 +1111,11 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nma
         ROI.x = XY_min.x-padding;
         ROI.y = XY_min.y-padding;
 
-        // ROS_INFO_STREAM("ROI.X: " << ROI.x);
-        // ROS_INFO_STREAM("ROI.y: " << ROI.y);
-        // ROS_INFO_STREAM("ROI.width: " << ROI.width);
-        // ROS_INFO_STREAM("ROI.height: " << ROI.height);
+        ROS_INFO_STREAM("ROI.X: " << ROI.x);
+        ROS_INFO_STREAM("ROI.y: " << ROI.y);
+        ROS_INFO_STREAM("ROI.width: " << ROI.width);
+        ROS_INFO_STREAM("ROI.height: " << ROI.height);
     }
-
-
 
     return ROI;
 
@@ -1148,14 +1146,14 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
         //blur imtoolfloat, probably don't need this
         cv::GaussianBlur(toolImFloat, toolImFloatBlured, cv::Size(9,9),1,1);
 
-        imshow("blurred image", toolImFloatBlured);
+        // imshow("blurred image", toolImFloatBlured);
 
-        cv::waitKey(0); //for testing
+        // cv::waitKey(0); //for testing
 
         toolImFloatBlured /= 255; //scale the blurred image
 
         cv::Mat result(1,1,CV_32FC1);
-        cv::matchTemplate(ROI_segmentedImage,toolImFloatBlured,result,CV_TM_CCORR);
+        cv::matchTemplate(toolImFloatBlured,toolImFloatBlured,result,CV_TM_CCORR_NORMED);
         matchingScore = static_cast<double> (result.at< float >(0));
         
     }
