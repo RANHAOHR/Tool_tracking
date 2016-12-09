@@ -42,7 +42,7 @@
  #include <image_transport/image_transport.h>
  #include <cwru_opencv_common/projective_geometry.h>
  //#include <vesselness_image_filter_cpu/vesselness_lib.h>
- #include <tool_tracking_lib/tool_model.h>
+ #include <tool_model_lib/tool_model.h>
  #include "std_msgs/MultiArrayLayout.h"
  #include "std_msgs/MultiArrayDimension.h"
  #include "std_msgs/Float64MultiArray.h"
@@ -126,11 +126,11 @@ int main(int argc, char** argv)
 	ToolModel::toolModel initial;
 
 	initial.tvec_cyl(0) = 0.0;
-	initial.tvec_cyl(1) = 0.0;
+	initial.tvec_cyl(1) = -0.01;
 	initial.tvec_cyl(2) = 0.0;
 	initial.rvec_cyl(0) = 0.0;
-	initial.rvec_cyl(1) = M_PI/2;
-	initial.rvec_cyl(2) = 0.3;
+	initial.rvec_cyl(1) = 0.0;//M_PI/2;
+	initial.rvec_cyl(2) = -0.3;
 
 
 	ToolModel::toolModel newTool;

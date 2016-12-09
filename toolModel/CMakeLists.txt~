@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(tooltrack)
+project(toolModel)
 
 #uncomment next line to use OpenCV library
 find_package(OpenCV REQUIRED)
@@ -37,7 +37,9 @@ catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_c
 
 # Libraries: uncomment the following and edit arguments to create a new library
 # cs_add_library(my_lib src/my_lib.cpp)   
-add_library(tool_tracking_lib src/tool_model.cpp)
+add_library(tool_tracking_lib 
+	    src/tool_model.cpp
+)
 # Executables: uncomment the following and edit arguments to compile new nodes
 # may add more of these lines for more nodes from the same package
 add_executable(showing_image src/showing_image.cpp)

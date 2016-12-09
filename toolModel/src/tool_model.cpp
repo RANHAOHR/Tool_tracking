@@ -1,8 +1,9 @@
 /*
 *  Copyright (c) 2016 Ran Hao
 *  All rights reserved.
-*  @The function in this file creats and randers the random Tool Model to image
+*  @The functions in this file creat and render the random Tool Model to Image
 */
+
 #include <ros/ros.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -13,7 +14,7 @@
 #include <iostream>
 #include <cwru_opencv_common/projective_geometry.h>
 
-#include <tool_tracking_lib/tool_model.h>
+#include <tool_model_lib/tool_model.h>
 #include <math.h>
 
 using cv_projective::reprojectPoint;
@@ -42,10 +43,10 @@ ToolModel::ToolModel(cv::Mat& CamMat){
     q_gripper.at<double>(2,0) = 0;
 
     /****initialize the vertices fo different part of tools****/
-	load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/refine_cylinder_3.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
-    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/refine_ellipse_3.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
-    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/gripper3_1.obj", griper1_vertices, griper1_Vnormal, griper1_faces, griper1_neighbors );
-    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/gripper3_2.obj", griper2_vertices, griper2_Vnormal, griper2_faces, griper2_neighbors );
+	load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_cylinder_3.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
+    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_ellipse_3.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
+    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/gripper3_1.obj", griper1_vertices, griper1_Vnormal, griper1_faces, griper1_neighbors );
+    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/gripper3_2.obj", griper2_vertices, griper2_Vnormal, griper2_faces, griper2_neighbors );
 
     modify_model_(body_vertices, body_Vnormal, body_Vpts, body_Npts, offset_body, body_Vmat, body_Nmat);
     modify_model_(ellipse_vertices, ellipse_Vnormal, ellipse_Vpts, ellipse_Npts, offset_ellipse, ellipse_Vmat, ellipse_Nmat);
@@ -276,7 +277,6 @@ cv::Point3d ToolModel::Convert_glTocv_pt(glm::vec3 &input_vertex){
 /* find the camera view point, should it be (0,0,0), input faces stores the indices of the vertices and normals, 
 which are not related to the pose of the tool object*/
 
-
 /*camera transformations*/
 cv::Mat ToolModel::camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat ){
     /*cam mat should be a 4x4*/
@@ -331,8 +331,6 @@ cv::Point3d ToolModel::camTransformVec(cv::Mat &cam_mat, cv::Point3d &input_vec)
 
     return output_vec;
 };
-
-/****camera transformations****/
 
 /***************approach 2: using Vertices Mat and normal Mat*******************/
 void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
@@ -461,10 +459,6 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
         
     }
 
-        
- 
-    /**************Second approach done*******************/
-
 };
 
 void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
@@ -563,7 +557,7 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
     }   
             
     }
-
+    /**************Second approach done*******************/
  
 };
 
@@ -1151,9 +1145,9 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
         //blur imtoolfloat, probably don't need this
         cv::GaussianBlur(toolImFloat, toolImFloatBlured, cv::Size(9,9),1,1);
 
-        // imshow("blurred image", toolImFloatBlured);
+        imshow("blurred image", toolImFloatBlured);
 
-        // cv::waitKey(0); //for testing
+        cv::waitKey(0); //for testing
 
         toolImFloatBlured /= 255; //scale the blurred image
 
