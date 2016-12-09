@@ -45,5 +45,7 @@ target_link_libraries(tool_tracking
 
 target_link_libraries(tool_tracking tool_model_lib)
 
+add_dependencies(toolModel particle_filter_cpp)
+
 
 

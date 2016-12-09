@@ -16,7 +16,7 @@ project(tool_tracking)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
-include_directories(include ${tool_model_lib_INCLUDE_DIRS})
+include_directories(include ${toolModel_INCLUDE_DIRS})
 
 catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_common )
 # example boost usage
@@ -44,6 +44,8 @@ target_link_libraries(tool_tracking
 )
 
 target_link_libraries(tool_tracking tool_model_lib)
+
+add_dependencies(toolModel particle_filter)
 
 
 
