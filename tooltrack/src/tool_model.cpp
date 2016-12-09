@@ -1,3 +1,8 @@
+/*
+*  Copyright (c) 2016 Ran Hao
+*  All rights reserved.
+*  @The function in this file creats and randers the random Tool Model to image
+*/
 #include <ros/ros.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -37,10 +42,10 @@ ToolModel::ToolModel(cv::Mat& CamMat){
     q_gripper.at<double>(2,0) = 0;
 
     /****initialize the vertices fo different part of tools****/
-	load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_cylinder_3.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
-    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/refine_ellipse_3.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
-    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/gripper3_1.obj", griper1_vertices, griper1_Vnormal, griper1_faces, griper1_neighbors );
-    load_model_vertices("/home/deeplearning/ros_ws/src/tooltrack/tool_parts/gripper3_2.obj", griper2_vertices, griper2_Vnormal, griper2_faces, griper2_neighbors );
+	load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/refine_cylinder_3.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
+    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/refine_ellipse_3.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
+    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/gripper3_1.obj", griper1_vertices, griper1_Vnormal, griper1_faces, griper1_neighbors );
+    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tooltrack/tool_parts/gripper3_2.obj", griper2_vertices, griper2_Vnormal, griper2_faces, griper2_neighbors );
 
     modify_model_(body_vertices, body_Vnormal, body_Vpts, body_Npts, offset_body, body_Vmat, body_Nmat);
     modify_model_(ellipse_vertices, ellipse_Vnormal, ellipse_Vpts, ellipse_Npts, offset_ellipse, ellipse_Vmat, ellipse_Nmat);
@@ -1111,10 +1116,10 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nma
         ROI.x = XY_min.x-padding;
         ROI.y = XY_min.y-padding;
 
-        ROS_INFO_STREAM("ROI.X: " << ROI.x);
-        ROS_INFO_STREAM("ROI.y: " << ROI.y);
-        ROS_INFO_STREAM("ROI.width: " << ROI.width);
-        ROS_INFO_STREAM("ROI.height: " << ROI.height);
+        // ROS_INFO_STREAM("ROI.X: " << ROI.x);
+        // ROS_INFO_STREAM("ROI.y: " << ROI.y);
+        // ROS_INFO_STREAM("ROI.width: " << ROI.width);
+        // ROS_INFO_STREAM("ROI.height: " << ROI.height);
     }
 
     return ROI;

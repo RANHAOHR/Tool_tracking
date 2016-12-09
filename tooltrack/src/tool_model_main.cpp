@@ -3,7 +3,7 @@
  *
  *  Copyright (c) 2016 Case Western Reserve University
  *    
- *    Orhan Ozguner <oxo31@case.edu>
+ *    Ran Hao <rxh349@case.edu>
  *
  *  All rights reserved.
  *
@@ -89,7 +89,7 @@ int main(int argc, char** argv)
 	cv::Mat testImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3
 	cv::Mat P(3,4,CV_64FC1);
 
-/******************magic numbers!!!!!!!!!!!!!!*************/
+/******************magic numbers*************/
     // P.at<double>(0,0) = 500;
     // P.at<double>(1,0) = 0;
     // P.at<double>(2,0) = 0;
