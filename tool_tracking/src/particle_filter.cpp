@@ -1,4 +1,3 @@
- 
  #include <ros/ros.h>
  #include <tool_tracking/particle_filter.h>
  #include <opencv2/calib3d/calib3d.hpp>
@@ -36,8 +35,6 @@ ParticleFilter::ParticleFilter():
     Cam.at<double>(1,3) = 0.1;
     Cam.at<double>(2,3) = 0.2;  // cannot have z = 0 for reprojection, camera_z must be always point to object
     Cam.at<double>(3,3) = 1;
-
-	//newToolModel(Cam);
 
 	//initialize particles by randomly assigning around the initial guess
 	initializeParticles();
