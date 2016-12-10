@@ -42,7 +42,7 @@
  #include <image_transport/image_transport.h>
  #include <cwru_opencv_common/projective_geometry.h>
  //#include <vesselness_image_filter_cpu/vesselness_lib.h>
- #include <tool_model_lib/tool_model.h>
+ #include <toolModel/tool_model.h>
  #include "std_msgs/MultiArrayLayout.h"
  #include "std_msgs/MultiArrayDimension.h"
  #include "std_msgs/Float64MultiArray.h"

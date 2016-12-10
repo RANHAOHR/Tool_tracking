@@ -2,6 +2,7 @@
  #include <ros/ros.h>
  #include <tool_tracking/particle_filter.h>
  //#include <tool_model_lib/tool_model.h>
+#include <toolModel/tool_model.h>
  #include <opencv2/imgproc/imgproc.hpp>
  #include <opencv2/highgui/highgui.hpp>
  #include <opencv2/calib3d/calib3d.hpp>

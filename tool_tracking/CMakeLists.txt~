@@ -6,7 +6,7 @@ project(tool_tracking)
 ## is used, also find other catkin packages
   find_package(OpenCV REQUIRED)
 
-  find_package(catkin REQUIRED COMPONENTS
+  find_package(catkin_simple REQUIRED COMPONENTS
                message_generation 
                std_msgs 
                sensor_msgs
@@ -14,24 +14,23 @@ project(tool_tracking)
 	       toolModel
                )
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} )
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
-include_directories(include ${toolModel_INCLUDE_DIRS})
 
-catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_common )
+#catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_common toolModel)
 # example boost usage
 # find_package(Boost REQUIRED COMPONENTS system thread)
 
 # C++0x support - not quite the same as final C++11!
-# use carefully;  can interfere with point-cloud library
+# This is the gprof: profiler, can slow the code
 # SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -pg -Q" )
 # SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg -Q")
-
+catkin_simple()
 
 # Libraries: uncomment the following and edit arguments to create a new library
 # add_library(my_lib src/my_lib.cpp)   
 
-  add_library(tool_tracking
+cs_add_library(tool_tracking
               src/particle_filter.cpp
   )
 
@@ -41,11 +40,13 @@ catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_c
 target_link_libraries(tool_tracking
       ${OpenCV_LIBRARIES}
       ${catkin_LIBRARIES}
+      ${toolModel_LIBRARIES}
 )
 
-target_link_libraries(tool_tracking tool_model_lib)
+cs_install()
+cs_export() 
 
-add_dependencies(toolModel particle_filter)
+
 
 
 
