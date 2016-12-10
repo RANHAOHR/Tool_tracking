@@ -1,18 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(tool_tracking)
 
-find_package(catkin_simple REQUIRED)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(OpenCV REQUIRED)
+  find_package(OpenCV REQUIRED)
 
-<<<<<<< HEAD
-# find_package(catkin REQUIRED COMPONENTS message_generation std_msgs sensor_msgs cwru_opencv_common toolModel)
-
-catkin_simple()
-#include_directories(include ${catkin_INCLUDE_DIRS} ${toolModel_INCLUDE_DIRS})
-=======
   find_package(catkin_simple REQUIRED COMPONENTS
                message_generation 
                std_msgs 
@@ -21,8 +14,7 @@ catkin_simple()
 	       toolModel
                )
 
-#include_directories(include ${catkin_INCLUDE_DIRS} )
->>>>>>> d24d5f3d83d4939ebf6228dd230caebf6ad72f26
+include_directories(include ${catkin_INCLUDE_DIRS} )
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 
 #catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_common toolModel)
@@ -38,24 +30,16 @@ catkin_simple()
 # Libraries: uncomment the following and edit arguments to create a new library
 # add_library(my_lib src/my_lib.cpp)   
 
-<<<<<<< HEAD
-  cs_add_library(tool_tracking
-=======
 cs_add_library(tool_tracking
->>>>>>> d24d5f3d83d4939ebf6228dd230caebf6ad72f26
               src/particle_filter.cpp
   )
 
 #the following is required, if desire to link a node in this package with a library created in this same package
 # edit the arguments to reference the named node and named library within this package
 # target_link_library(example my_lib)
-<<<<<<< HEAD
-target_link_libraries(tool_tracking ${OpenCV_LIBRARIES} ${catkin_LIBRARIES} tool_model_lib)
-
-=======
 target_link_libraries(tool_tracking
       ${OpenCV_LIBRARIES}
-      #${catkin_LIBRARIES}
+      ${catkin_LIBRARIES}
       ${toolModel_LIBRARIES}
 )
 
@@ -63,9 +47,6 @@ cs_install()
 cs_export() 
 
 
->>>>>>> d24d5f3d83d4939ebf6228dd230caebf6ad72f26
 
 
-cs_install()
-cs_export()
 

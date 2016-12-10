@@ -1,6 +1,13 @@
  
  #include <ros/ros.h>
  #include <tool_tracking/particle_filter.h>
+<<<<<<< HEAD
+=======
+ //#include <tool_model_lib/tool_model.h>
+#include <toolModel/tool_model.h>
+ #include <opencv2/imgproc/imgproc.hpp>
+ #include <opencv2/highgui/highgui.hpp>
+>>>>>>> d24d5f3d83d4939ebf6228dd230caebf6ad72f26
  #include <opencv2/calib3d/calib3d.hpp>
 
 ParticleFilter::ParticleFilter():

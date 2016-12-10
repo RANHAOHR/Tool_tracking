@@ -14,7 +14,7 @@
 #include <iostream>
 #include <cwru_opencv_common/projective_geometry.h>
 
-#include <tool_model_lib/tool_model.h>
+#include <toolModel/tool_model.h>
 #include <math.h>
 
 using cv_projective::reprojectPoint;

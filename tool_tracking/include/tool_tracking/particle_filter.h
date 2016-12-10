@@ -13,8 +13,7 @@
 
 #include <string>
 #include <cstring>
-
-#include <tool_model_lib/tool_model.h>
+#include <toolModel/tool_model.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <sensor_msgs/image_encodings.h>
@@ -27,7 +26,11 @@
 
  	cv::Mat Cam;
 
+<<<<<<< HEAD
  	ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
+=======
+ 	ToolModel newToolModel(Cam);  /// it should be set up the first time, probably need updates of the camera poses
+>>>>>>> d24d5f3d83d4939ebf6228dd230caebf6ad72f26
 
  	ToolModel::toolModel initial; //initial configuration
 
