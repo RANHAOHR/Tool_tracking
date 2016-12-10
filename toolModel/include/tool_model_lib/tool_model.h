@@ -232,10 +232,6 @@ public:
  		cv::Point3d camTransformVec(cv::Mat &cam_mat, cv::Point3d &input_vec);
  		cv::Mat camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat );
 
-
-
-        // double calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI, bool displayPause);
-
  
 
 };

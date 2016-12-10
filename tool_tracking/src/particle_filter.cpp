@@ -1,17 +1,12 @@
  
  #include <ros/ros.h>
  #include <tool_tracking/particle_filter.h>
- //#include <tool_model_lib/tool_model.h>
- #include <opencv2/imgproc/imgproc.hpp>
- #include <opencv2/highgui/highgui.hpp>
  #include <opencv2/calib3d/calib3d.hpp>
- #include <sensor_msgs/image_encodings.h>
- #include <cv_bridge/cv_bridge.h>
 
 ParticleFilter::ParticleFilter():
-    numParticles(2), toolSize(2), perturbStd(0.001)
+    numParticles(2), toolSize(2), perturbStd(0.001), newToolModel(Cam)
 {
-	
+
 	// initial needle position guess
 	// everything here is in meters.
 	initial.tvec_cyl(0) = 0.0;
@@ -42,7 +37,7 @@ ParticleFilter::ParticleFilter():
     Cam.at<double>(2,3) = 0.2;  // cannot have z = 0 for reprojection, camera_z must be always point to object
     Cam.at<double>(3,3) = 1;
 
-	newToolModel(Cam);
+	//newToolModel(Cam);
 
 	//initialize particles by randomly assigning around the initial guess
 	initializeParticles();

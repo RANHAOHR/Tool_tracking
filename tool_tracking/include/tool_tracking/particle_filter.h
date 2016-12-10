@@ -27,7 +27,7 @@
 
  	cv::Mat Cam;
 
- 	ToolModel newToolModel(cv::Mat &Cam);  /// it should be set up the first time, probably need updates of the camera poses
+ 	ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
 
  	ToolModel::toolModel initial; //initial configuration
 

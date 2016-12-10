@@ -1,22 +1,17 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(tool_tracking)
 
+find_package(catkin_simple REQUIRED)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-  find_package(OpenCV REQUIRED)
+find_package(OpenCV REQUIRED)
 
-  find_package(catkin REQUIRED COMPONENTS
-               message_generation 
-               std_msgs 
-               sensor_msgs
-               cwru_opencv_common
-	       toolModel
-               )
+# find_package(catkin REQUIRED COMPONENTS message_generation std_msgs sensor_msgs cwru_opencv_common toolModel)
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+catkin_simple()
+#include_directories(include ${catkin_INCLUDE_DIRS} ${toolModel_INCLUDE_DIRS})
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
-include_directories(include ${toolModel_INCLUDE_DIRS})
 
 catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_common )
 # example boost usage
@@ -31,21 +26,17 @@ catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_c
 # Libraries: uncomment the following and edit arguments to create a new library
 # add_library(my_lib src/my_lib.cpp)   
 
-  add_library(tool_tracking
+  cs_add_library(tool_tracking
               src/particle_filter.cpp
   )
 
 #the following is required, if desire to link a node in this package with a library created in this same package
 # edit the arguments to reference the named node and named library within this package
 # target_link_library(example my_lib)
-target_link_libraries(tool_tracking
-      ${OpenCV_LIBRARIES}
-      ${catkin_LIBRARIES}
-)
-
-target_link_libraries(tool_tracking tool_model_lib)
-
-add_dependencies(toolModel particle_filter_cpp)
+target_link_libraries(tool_tracking ${OpenCV_LIBRARIES} ${catkin_LIBRARIES} tool_model_lib)
 
 
+
+cs_install()
+cs_export()
 

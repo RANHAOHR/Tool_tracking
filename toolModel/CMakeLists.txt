@@ -2,15 +2,15 @@ cmake_minimum_required(VERSION 2.8.3)
 project(toolModel)
 
 #uncomment next line to use OpenCV library
+find_package(catkin_simple REQUIRED)
 find_package(OpenCV REQUIRED)
 
-  find_package(catkin REQUIRED COMPONENTS
-               message_generation 
-               std_msgs 
-               sensor_msgs
-               cwru_opencv_common
-               
-               )
+#  find_package(catkin REQUIRED COMPONENTS
+#               message_generation
+#               std_msgs
+#               sensor_msgs
+#               cwru_opencv_common
+#               )
 
 #uncomment the next line to use the point-cloud library
 #find_package(PCL 1.7 REQUIRED)
@@ -21,10 +21,13 @@ find_package(OpenCV REQUIRED)
 #include_directories(${EIGEN3_INCLUDE_DIR})
 #add_definitions(${EIGEN_DEFINITIONS})
 
+catkin_simple()
+
 include_directories(include ${catkin_INCLUDE_DIRS})
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 
-catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_common ) 
+catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_common)
+
 
 # example boost usage
 # find_package(Boost REQUIRED COMPONENTS system thread)
@@ -37,14 +40,12 @@ catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_c
 
 # Libraries: uncomment the following and edit arguments to create a new library
 # cs_add_library(my_lib src/my_lib.cpp)   
-add_library(tool_model_lib 
-	    src/tool_model.cpp
-)
+cs_add_library(tool_model_lib src/tool_model.cpp)
 # Executables: uncomment the following and edit arguments to compile new nodes
 # may add more of these lines for more nodes from the same package
-add_executable(showing_image src/showing_image.cpp)
-add_executable(test_seg src/test_seg.cpp)
-add_executable(tool_model_main src/tool_model_main.cpp)
+cs_add_executable(showing_image src/showing_image.cpp)
+cs_add_executable(test_seg src/test_seg.cpp)
+cs_add_executable(tool_model_main src/tool_model_main.cpp)
 
 
 #the following is required, if desire to link a node in this package with a library created in this same package
@@ -59,4 +60,6 @@ target_link_libraries(test_seg ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 target_link_libraries(tool_model_main tool_model_lib ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} )
 target_link_libraries(showing_image ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
- 
+
+cs_install()
+cs_export()

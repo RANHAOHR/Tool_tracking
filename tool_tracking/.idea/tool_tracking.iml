@@ -2,10 +2,7 @@
 <module type="CPP_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src/test_seg.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/tool_model.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/tool_model_main.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/showing_image.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/particle_filter.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/package.xml" isTestSource="false" />
     </content>
@@ -24,6 +21,7 @@
           <root url="file:///usr/include" />
           <root url="file:///usr/local/include" />
           <root url="file:///opt/ros/indigo/include" />
+          <root url="file://$MODULE_DIR$/../toolModel/include" />
           <root url="file://$MODULE_DIR$/../../cwru_vision/cwru_opencv_common/include" />
           <root url="file://$MODULE_DIR$/../../../external_packages/vision_opencv/cv_bridge/include" />
           <root url="file://$MODULE_DIR$/../../../../devel/include" />
@@ -34,6 +32,7 @@
           <root url="file:///usr/include" />
           <root url="file:///usr/local/include" />
           <root url="file:///opt/ros/indigo/include" />
+          <root url="file://$MODULE_DIR$/../toolModel/include" />
           <root url="file://$MODULE_DIR$/../../cwru_vision/cwru_opencv_common/include" />
           <root url="file://$MODULE_DIR$/../../../external_packages/vision_opencv/cv_bridge/include" />
           <root url="file://$MODULE_DIR$/../../../../devel/include" />
