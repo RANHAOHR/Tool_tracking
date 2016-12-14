@@ -19,7 +19,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Case Western Reserve Univeristy, nor the names of its
+ *   * Neither the name of Case Western Reserve University, nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -70,11 +70,11 @@
 
  	ToolModel::toolModel initial; //initial configuration
 
-    int toolSize; //size of the needle to be rendered
+    unsigned int toolSize; //size of the needle to be rendered
 
     double perturbStd; //standard deviation for perturbing, if we obtain good matching it gets smaller to stay in the region
 
- 	int numParticles; //total number of particles
+ 	unsigned int numParticles; //total number of particles
     cv::Mat toolImage_left; //needleImage
     cv::Mat toolImage_right; //needleImage
     cv::Mat segmentedImage; //segmented needle image (retrieved from vessellness)
@@ -82,8 +82,7 @@
     cv::Rect ROI_right; //ROI for the right image containing needle geometry
 
  	std::vector<ToolModel::toolModel> particles; // particles
- //	std::vector<needle_detection::needleGeometry> oldParticles; //this is used while resampling
- 	std::vector<double> mathcingScores; // particle scores (matching scores)
+ 	std::vector<double> matchingScores; // particle scores (matching scores)
  	std::vector<double> particleWeights; // particle weights calculated from matching scores
 
 
@@ -105,19 +104,22 @@
      */
     void initializeParticles();
 
- //    /*
- //    * This is the main function for tracking the needle. This function is called and it syncs all of the functions
- //    */
- //    std::vector<cv::Mat> trackTool(const cv::Mat &bodyVel,const cv::Mat &segmented_left, const cv::Mat &segmented_right,const cv::Mat &P_left, const cv::Mat &P_right);
-	// /*
-	// * resampling method
-	// */
- //    void resampleLowVariance(const std::vector<ToolModel::toolModel> &initial, const std::vector<double> &particleWeight,  std::vector<ToolModel::toolModel> &results);
-	// /*
-	// * perturb the paritlces for more usable poses
-	// */
- //    std::vector<ToolModel::toolModel> perturb(const std::vector<ToolModel::toolModel> &particles, double stdev, double mean);
+    /*
+     * This is the main function for tracking the needle. This function is called and it syncs all of the functions
+    */
+     std::vector<cv::Mat> trackingTool(const cv::Mat &bodyVel,const cv::Mat &segmented_left, const cv::Mat &segmented_right,const cv::Mat &P_left, const cv::Mat &P_right);
 
+    /*
+     * resampling method
+     */
+     void resampleLowVariance(const std::vector<ToolModel::toolModel> &initial, const std::vector<double> &particleWeight,  std::vector<ToolModel::toolModel> &results);
+
+	 /*
+	  * perturb the particles for more usable poses
+	  */
+     std::vector<ToolModel::toolModel> perturb(const std::vector<ToolModel::toolModel> &particles, double stdev, double mean);
+
+     double randomNum(double min, double max);
 
 
 

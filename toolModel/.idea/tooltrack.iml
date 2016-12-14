@@ -25,8 +25,7 @@
           <root url="file:///usr/local/include" />
           <root url="file:///opt/ros/indigo/include" />
           <root url="file://$MODULE_DIR$/../../cwru_vision/cwru_opencv_common/include" />
-          <root url="file://$MODULE_DIR$/../../../external_packages/vision_opencv/cv_bridge/include" />
-          <root url="file://$MODULE_DIR$/../../../../devel/include" />
+          <root url="file://$MODULE_DIR$/../../../devel/include" />
         </CLASSES>
         <SOURCES>
           <root url="file:///usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed" />
@@ -35,8 +34,7 @@
           <root url="file:///usr/local/include" />
           <root url="file:///opt/ros/indigo/include" />
           <root url="file://$MODULE_DIR$/../../cwru_vision/cwru_opencv_common/include" />
-          <root url="file://$MODULE_DIR$/../../../external_packages/vision_opencv/cv_bridge/include" />
-          <root url="file://$MODULE_DIR$/../../../../devel/include" />
+          <root url="file://$MODULE_DIR$/../../../devel/include" />
         </SOURCES>
       </library>
     </orderEntry>

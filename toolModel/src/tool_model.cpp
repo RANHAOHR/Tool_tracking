@@ -1,7 +1,10 @@
 /*
-*  Copyright (c) 2016 Ran Hao
+*  Copyright (c) 2016 
+*  Ran Hao <rxh349@case.edu>
+*
 *  All rights reserved.
-*  @The functions in this file creat and render the random Tool Model to Image
+*
+*  @The functions in this file creat and render the random Tool Model (loaded OBJ files) to Image
 */
 
 #include <ros/ros.h>
@@ -428,7 +431,7 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
 
                 if (isfront_i * isfront_j < 0.0) // one is front, another is back
                 {
-                    /*finish finding*/
+                    /*finish finding, drawing the image*/
 
                     new_Vertices.col(neighbor_faces[i][j+1]).copyTo(ept_1);
                     new_Vertices.col(neighbor_faces[i][j+2]).copyTo(ept_2);             
@@ -461,6 +464,7 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
 
 };
 
+/***Although this method will bring inaccuracy pf the final Silhouettes, it's faster in 2 miliseconds than the 1st method****/
 void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
                                  const cv::Mat &input_Vmat, const cv::Mat &face_normals, cv::Mat &face_centro,
                                  cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec, 
@@ -928,8 +932,6 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
     double theta_grip_2 = -0.5;
 
 
-    /******testing section here********/
-
 	//create normally distributed random number with the given stdev and mean
 
 	//TODO: pertub all translation components
@@ -950,11 +952,11 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
     /**************smaple the angles of the joints**************/
 	//-90,90//
 /*	angle = randomNumber(stdev,mean);
-	newTool.theta_ellipse += (angle/10.0)*1000.0;
+	theta_ellipse += (angle/10.0)*1000.0;
 	if (newTool.theta_ellipse < -M_PI/2 || newTool.theta_ellipse > M_PI/2)   //use M_PI HERE
 		newTool.theta_ellipse = randomNumber(stdev,mean);
 
-	// lets a assign the upside one 1, and set positive as clockwise 
+	// lets assign the upside one 1, and set positive as clockwise 
 	angle = randomNumber(stdev,mean);
 	newTool.theta_grip_1 += (angle/10.0)*1000.0;
 	if (newTool.theta_grip_1 < -1.2*M_PI/2 || newTool.theta_grip_1 > 1.2*M_PI/2)   //use M_PI HERE
@@ -992,6 +994,7 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
     test_gripper.at<double>(1,0) = offset_gripper - 0.4522;  //
     test_gripper.at<double>(2,0) = 0;
     // q_temp = transformPoints(q_gripper,cv::Mat(initial.rvec_elp),cv::Mat(initial.tvec_cyl));
+
     cv::Mat w_x(4,1,CV_64FC1);
     cv::Mat w_y(4,1,CV_64FC1);
     cv::Mat w_z(4,1,CV_64FC1);
