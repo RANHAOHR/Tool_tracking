@@ -113,13 +113,16 @@
      * resampling method
      */
      void resampleLowVariance(const std::vector<ToolModel::toolModel> &initial, const std::vector<double> &particleWeight,  std::vector<ToolModel::toolModel> &results);
-
+    /*
+     * update particles
+     */
+     void updateParticles(const cv::Mat &bodyVel, double &updateRate);
 	 /*
 	  * perturb the particles for more usable poses
 	  */
      std::vector<ToolModel::toolModel> perturb(const std::vector<ToolModel::toolModel> &particles, double stdev, double mean);
 
-     double randomNum(double min, double max);
+     cv::Mat adjoint(cv::Mat& G);
 
 
 

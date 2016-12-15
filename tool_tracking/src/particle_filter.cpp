@@ -67,7 +67,7 @@ void ParticleFilter::initializeParticles()
 
 };
 
- std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &bodyVel,const cv::Mat &segmented_left, const cv::Mat &segmented_right,const cv::Mat &P_left, const cv::Mat &P_right){
+ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,const cv::Mat &P_left, const cv::Mat &P_right){
      cv::Mat segmentedImage_left = segmented_left.clone();
      cv::Mat segmentedImage_right = segmented_right.clone();
 
@@ -103,20 +103,77 @@ void ParticleFilter::initializeParticles()
      /***you may wanna do this in a different stream***/
      ROS_INFO_STREAM(maxScore);
 
-     newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx],Cam, P_left);
+     newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx], Cam, P_left);
      newToolModel.renderTool(segmentedImage_right, particles[maxScoreIdx], Cam, P_right);
 
      trackedNeedleImages[0] = segmentedImage_left;
      trackedNeedleImages[1] = segmentedImage_right;
 
      /***calculate weights using matching score and do the resampling***/
+     for (int j = 0; j <numParticles; ++j) { // normalize the weights
+         particleWeights[j] = (matchingScores[j]/totalScore);
+     }
+     std::vector<ToolModel::toolModel>  oldParticles = particles;
+     resampleLowVariance(oldParticles,particleWeights,particles);
+
+     double dT = 0.1; //sampling rate
+
+     /***update particles, based on the diven body vel and updating rate***/
+     updateParticles(bodyVel, dT);
 
 
  };
 
- void ParticleFilter::resampleLowVariance(const std::vector<ToolModel::toolModel> &initial, const std::vector<double> &particleWeight,  std::vector<ToolModel::toolModel> &results)
+ void ParticleFilter::updateParticles(const cv::Mat &bodyVel, double &updateRate){ //get particles and update them based on given spatial velocity
+
+     cv::Mat Rot = cv::Mat::zeros(3,3,CV_64F);
+     cv::Mat p = cv::Mat::zeros(3,1,CV_64F);
+     cv::Mat particleFrame=cv::Mat::eye(4,4,CV_64F);
+
+     cv::Mat spatialVel = cv::Mat::zeros(6,1,CV_64F);
+     cv::Mat updatedParticleFrame=cv::Mat::eye(4,4,CV_64F);
+
+     for (int k = 0; k < particles.size(); ++k) {
+
+         cv::Rodrigues(particles[k].rvec_cyl, Rot); //get rotation mat from cylinder
+         p.at<double>(0,0)=particles[k].tvec_cyl(0); //get translation vec from cylinder
+         p.at<double>(1,0)=particles[k].tvec_cyl(1);
+         p.at<double>(2,0)=particles[k].tvec_cyl(2);
+
+         Rot.copyTo(particleFrame.colRange(0,3).rowRange(0,3));
+         p.copyTo(particleFrame.colRange(3,4).rowRange(0,3));
+
+         //calculate spatial velocity
+         spatialVel = adjoint(particleFrame) * bodyVel;
+
+
+
+
+
+
+
+     }
+ };
+
+ cv::Mat ParticleFilter::adjoint(cv::Mat& G)
  {
-     int M = initial.size(); //total number of particles
+     cv::Mat adjG = cv::Mat::zeros(6,6,CV_64F);
+
+     cv::Mat Rot = G.colRange(0,3).rowRange(0,3);
+     cv::Mat p = G.colRange(3,4).rowRange(0,3);
+
+     cv::Mat p_skew = newToolModel.computeSkew(p);
+     //upper right corner
+     cv::Mat temp = p_skew*Rot;
+     Rot.copyTo(adjG.colRange(0,3).rowRange(0,3));
+     Rot.copyTo(adjG.colRange(3,6).rowRange(3,6));
+     temp.copyTo(adjG.colRange(3,6).rowRange(0,3));
+     return adjG;
+ };
+
+ void ParticleFilter::resampleLowVariance(const std::vector<ToolModel::toolModel> &sampleModel, const std::vector<double> &particleWeight,  std::vector<ToolModel::toolModel> &results)
+ {
+     int M = sampleModel.size(); //total number of particles
      double max = 1.0/M;
      double min(0.0);
      double U(0.0);
@@ -126,7 +183,7 @@ void ParticleFilter::initializeParticles()
      c = particleWeight[0]; //first particle weight
      int idx(0); //index
      results.clear(); //final particles (how to clear)
-     r = randomNum(min,max); //random number in range [0,1/M]
+     r = newToolModel.randomNum(min,max); //random number in range [0,1/M]
 
      for(int i(1); i<=M; i++)
      {
@@ -136,7 +193,7 @@ void ParticleFilter::initializeParticles()
              idx +=1;
              c += particleWeight[idx];
          }
-         results.push_back(initial[idx]);
+         results.push_back(sampleModel[idx]);
      }
 
  };
@@ -154,14 +211,3 @@ void ParticleFilter::initializeParticles()
 
      return result;
  };
-
- double ParticleFilter::randomNum(double min, double max) {
-
-     srand((unsigned) time( NULL));
-     int N = 999;
-
-     double randN = rand() % (N + 1) / (double) (N + 1);  // a rand number frm 0 to 1
-     double res = randN * (max -  min) + min;
-
-     return res;
-};

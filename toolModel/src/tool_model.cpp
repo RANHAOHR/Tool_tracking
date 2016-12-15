@@ -88,7 +88,20 @@ double ToolModel::randomNumber(double stdev, double mean){
 
 	return d;
 
-}
+};
+
+/*generate random number in a certain range*/
+double ToolModel::randomNum(double min, double max) {
+
+     srand((unsigned) time( NULL));
+     int N = 999;
+
+     double randN = rand() % (N + 1) / (double) (N + 1);  // a rand number frm 0 to 1
+     double res = randN * (max -  min) + min;
+
+     return res;
+};
+
 void ToolModel::ConvertInchtoMeters(std::vector< cv::Point3d > &input_vertices){
     int size = (int) input_vertices.size();
     for (int i = 0; i < size; ++i)
@@ -97,7 +110,7 @@ void ToolModel::ConvertInchtoMeters(std::vector< cv::Point3d > &input_vertices){
         input_vertices[i].y = input_vertices[i].y * 0.0254;
         input_vertices[i].z = input_vertices[i].z * 0.0254;
     }
-}
+};
 
 cv::Point3d ToolModel::ConvertCelitoMeters(cv::Point3d &input_pt){
 
@@ -255,6 +268,8 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
     // }
 
 };
+
+
 
 /*output a glm to a cv 3d point*/
 void ToolModel::Convert_glTocv_pts(std::vector< glm::vec3 > &input_vertices, std::vector< cv::Point3d > &out_vertices){
@@ -922,15 +937,12 @@ void ToolModel::modify_model_(std::vector< glm::vec3 > &input_vertices, std::vec
 traslation, raotion, new z axis, new x axis*/
 ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double stdev, double mean)
 {
-
-
 	toolModel newTool = initial;  //BODY part is done here
-    cv::Mat I = cv::Mat::eye(3,3,CV_64FC1);
+
     /******testing section here********/
     double theta_ellipse = 0.0;
-    double theta_grip_1 = 0.5;
-    double theta_grip_2 = -0.5;
-
+    double theta_grip_1 = 0.2;
+    double theta_grip_2 = 0.2;
 
 	//create normally distributed random number with the given stdev and mean
 
@@ -951,48 +963,54 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
 
     /**************smaple the angles of the joints**************/
 	//-90,90//
-/*	angle = randomNumber(stdev,mean);
-	theta_ellipse += (angle/10.0)*1000.0;
-	if (newTool.theta_ellipse < -M_PI/2 || newTool.theta_ellipse > M_PI/2)   //use M_PI HERE
-		newTool.theta_ellipse = randomNumber(stdev,mean);
+ //    double angle = randomNumber(stdev,mean);
+	// theta_ellipse += (angle/10.0)*1000.0;
+	// if (theta_ellipse < -M_PI/2 || theta_ellipse > M_PI/2)   //use M_PI HERE
+	// 	theta_ellipse = randomNumber(stdev,mean);
 
-	// lets assign the upside one 1, and set positive as clockwise 
-	angle = randomNumber(stdev,mean);
-	newTool.theta_grip_1 += (angle/10.0)*1000.0;
-	if (newTool.theta_grip_1 < -1.2*M_PI/2 || newTool.theta_grip_1 > 1.2*M_PI/2)   //use M_PI HERE
-		newTool.theta_grip_1 = randomNumber(stdev,mean);
+	// // lets assign the upside one 1, and set positive as clockwise 
+	// angle = randomNumber(stdev,mean);
+	// theta_grip_1 += (angle/10.0)*1000.0;
+	// if (theta_grip_1 < -1.2*M_PI/2 || theta_grip_1 > 1.2*M_PI/2)   //use M_PI HERE
+	// 	theta_grip_1 = randomNumber(stdev,mean);
 	
-	// lets a assign the udownside one 2, and set positive as clockwise
-	angle = randomNumber(stdev,mean);
-	newTool.theta_grip_2 += (angle/10.0)*1000.0;
-	if (newTool.theta_grip_1 < -1.2*M_PI/2 || newTool.theta_grip_1 > 1.2*M_PI/2)   //use M_PI HERE
-		newTool.theta_grip_1 = randomNumber(stdev,mean);
+	// // lets a assign the udownside one 2, and set positive as clockwise
+	// angle = randomNumber(stdev,mean);
+	// theta_grip_2 += (angle/10.0)*1000.0;
+	// if (theta_grip_1 < -1.2*M_PI/2 || theta_grip_1 > 1.2*M_PI/2)   //use M_PI HERE
+	// 	theta_grip_1 = randomNumber(stdev,mean);
 
-	///if the two joints get overflow/////
-	if (newTool.theta_grip_1 > newTool.theta_grip_2)
-		newTool.theta_grip_1 = newTool.theta_grip_2 - randomNumber(stdev,mean);*/
+	// /***if the two joints get overflow****/
+	// if (theta_grip_1 > theta_grip_2)
+	// 	theta_grip_1 = theta_grip_2 - randomNumber(stdev,mean);
 
+    computeModelPose(newTool, theta_ellipse, theta_grip_1, theta_grip_2 );
 
+    return newTool;
+};
+
+void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_ellipse, const double &theta_grip_1, const double &theta_grip_2){
+
+    cv::Mat I = cv::Mat::eye(3,3,CV_64FC1);
    /***********computations for ellipse kinematics**********/
 
     cv::Mat q_temp(4,1,CV_64FC1);
+    q_temp = transformPoints(q_ellipse,cv::Mat(inputModel.rvec_cyl),cv::Mat(inputModel.tvec_cyl)); //transform the ellipse coord according to cylinder pose
 
-    q_temp = transformPoints(q_ellipse,cv::Mat(initial.rvec_cyl),cv::Mat(initial.tvec_cyl)); 
+    inputModel.tvec_elp(0) = q_temp.at<double>(0,0);
+    inputModel.tvec_elp(1) = q_temp.at<double>(1,0);
+    inputModel.tvec_elp(2) = q_temp.at<double>(2,0);
 
-    newTool.tvec_elp(0) = q_temp.at<double>(0,0);
-    newTool.tvec_elp(1) = q_temp.at<double>(1,0);
-    newTool.tvec_elp(2) = q_temp.at<double>(2,0);       
-
-    newTool.rvec_elp(0) = newTool.rvec_cyl(0); //roll angle should be the same.
-    newTool.rvec_elp(1) = newTool.rvec_cyl(1); //pitch angle should be the same.
-    newTool.rvec_elp(2) = newTool.rvec_cyl(2) + theta_ellipse; //yaw angle is plus the theta_ellipse
+    inputModel.rvec_elp(0) = inputModel.rvec_cyl(0); //roll angle should be the same.
+    inputModel.rvec_elp(1) = inputModel.rvec_cyl(1); //pitch angle should be the same.
+    inputModel.rvec_elp(2) = inputModel.rvec_cyl(2) + theta_ellipse; //yaw angle is plus the theta_ellipse
 
    /***********computations for gripper kinematics**********/
 
-    cv::Mat test_gripper(3,1,CV_64FC1);
-    test_gripper.at<double>(0,0) = 0;
-    test_gripper.at<double>(1,0) = offset_gripper - 0.4522;  //
-    test_gripper.at<double>(2,0) = 0;
+//    cv::Mat test_gripper(3,1,CV_64FC1);
+//    test_gripper.at<double>(0,0) = 0;
+//    test_gripper.at<double>(1,0) = offset_gripper - 0.4522;  //
+//    test_gripper.at<double>(2,0) = 0;
     // q_temp = transformPoints(q_gripper,cv::Mat(initial.rvec_elp),cv::Mat(initial.tvec_cyl));
 
     cv::Mat w_x(4,1,CV_64FC1);
@@ -1015,33 +1033,31 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
     cv::Mat skew_y = computeSkew(w_y);
     cv::Mat skew_z = computeSkew(w_z);
 
-    cv::Mat roll_mat = I + sin(newTool.rvec_elp(0)) * skew_x + (1-cos(newTool.rvec_elp(0))) * skew_x * skew_x;
-    cv::Mat pitch_mat = I + sin(newTool.rvec_elp(1)) * skew_y + (1-cos(newTool.rvec_elp(1))) * skew_y * skew_y;
-    cv::Mat yaw_mat = I + sin(newTool.rvec_elp(2)) * skew_z + (1-cos(newTool.rvec_elp(2))) * skew_z * skew_z;
+    cv::Mat roll_mat = I + sin(inputModel.rvec_elp(0)) * skew_x + (1-cos(inputModel.rvec_elp(0))) * skew_x * skew_x;
+    cv::Mat pitch_mat = I + sin(inputModel.rvec_elp(1)) * skew_y + (1-cos(inputModel.rvec_elp(1))) * skew_y * skew_y;
+    cv::Mat yaw_mat = I + sin(inputModel.rvec_elp(2)) * skew_z + (1-cos(inputModel.rvec_elp(2))) * skew_z * skew_z;
     cv::Mat rotation_mat = yaw_mat*pitch_mat*roll_mat;
 
     cv::Mat q_rotation = rotation_mat * q_gripper;
 
-    newTool.tvec_grip1(0) = q_rotation.at<double>(0,0) + newTool.tvec_elp(0);
-    newTool.tvec_grip1(1) = q_rotation.at<double>(1,0) + newTool.tvec_elp(1);
-    newTool.tvec_grip1(2) = q_rotation.at<double>(2,0) + newTool.tvec_elp(2);
+    inputModel.tvec_grip1(0) = q_rotation.at<double>(0,0) + inputModel.tvec_elp(0);
+    inputModel.tvec_grip1(1) = q_rotation.at<double>(1,0) + inputModel.tvec_elp(1);
+    inputModel.tvec_grip1(2) = q_rotation.at<double>(2,0) + inputModel.tvec_elp(2);
 
-    newTool.rvec_grip1(0) = newTool.rvec_elp(0) + theta_grip_1;  //roll angle is plus the theta_gripper
-    newTool.rvec_grip1(1) = newTool.rvec_elp(1);
-    newTool.rvec_grip1(2) = newTool.rvec_elp(2);    
+    inputModel.rvec_grip1(0) = inputModel.rvec_elp(0) + theta_grip_1;  //roll angle is plus the theta_gripper
+    inputModel.rvec_grip1(1) = inputModel.rvec_elp(1);
+    inputModel.rvec_grip1(2) = inputModel.rvec_elp(2);
 
     /*gripper 2*/
 
-    newTool.tvec_grip2(0) = newTool.tvec_grip1(0);
-    newTool.tvec_grip2(1) = newTool.tvec_grip1(1);
-    newTool.tvec_grip2(2) = newTool.tvec_grip1(2);
+    inputModel.tvec_grip2(0) = inputModel.tvec_grip1(0);
+    inputModel.tvec_grip2(1) = inputModel.tvec_grip1(1);
+    inputModel.tvec_grip2(2) = inputModel.tvec_grip1(2);
 
-    newTool.rvec_grip2(0) = newTool.rvec_elp(0) + theta_grip_2;  //roll angle is plus the theta_gripper
-    newTool.rvec_grip2(1) = newTool.rvec_elp(1);
-    newTool.rvec_grip2(2) = newTool.rvec_elp(2);  
+    inputModel.rvec_grip2(0) = inputModel.rvec_elp(0) + theta_grip_2;  //roll angle is plus the theta_gripper
+    inputModel.rvec_grip2(1) = inputModel.rvec_elp(1);
+    inputModel.rvec_grip2(2) = inputModel.rvec_elp(2);
 
- 
-	return newTool;
 };
 
 cv::Mat ToolModel::computeSkew(cv::Mat &w){
@@ -1066,7 +1082,7 @@ cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &C
 
     cv::Rect ROI; // rectanle that contains tool model
 
-    int padding =1; //add 10pixels of padding for cropping
+    int padding = 5; //add 10pixels of padding for cropping
     cv::Point2d XY_max(-10000,-10000); //minimum of X and Y
     cv::Point2d XY_min(10000,10000); //maximum of X and Y
 
@@ -1108,10 +1124,10 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nma
 
 
         //shape the rectangle that captures the rendered needle
-        ROI.width = abs(static_cast<int>(XY_max.x-XY_min.x))+2*padding;
-        ROI.height = abs(static_cast<int>(XY_max.y-XY_min.y))+2*padding;
-        ROI.x = XY_min.x-padding;
-        ROI.y = XY_min.y-padding;
+        ROI.width = abs(static_cast<int>(XY_max.x-XY_min.x)) + 2*padding;
+        ROI.height = abs(static_cast<int>(XY_max.y-XY_min.y));
+        ROI.x = XY_min.x - padding;
+        ROI.y = XY_min.y - padding;
 
         // ROS_INFO_STREAM("ROI.X: " << ROI.x);
         // ROS_INFO_STREAM("ROI.y: " << ROI.y);
