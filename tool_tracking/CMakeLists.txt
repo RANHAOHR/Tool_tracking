@@ -30,11 +30,12 @@ catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_c
               src/particle_filter.cpp
   )
 
+cs_add_executable(tracking_main src/tracking_main.cpp)
 #the following is required, if desire to link a node in this package with a library created in this same package
 # edit the arguments to reference the named node and named library within this package
 # target_link_library(example my_lib)
 target_link_libraries(tool_tracking ${OpenCV_LIBRARIES} ${catkin_LIBRARIES} tool_model_lib)
-
+target_link_libraries(tracking_main tool_tracking ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} )
 
 
 cs_install()

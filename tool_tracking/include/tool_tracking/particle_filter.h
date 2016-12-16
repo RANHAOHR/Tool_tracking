@@ -64,26 +64,32 @@
 
  private:
 
- 	cv::Mat Cam;
+    cv::Mat Cam;
+    ros::NodeHandle nh_;  //may need this
 
- 	ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
+    ///ros::Timer timer;
 
- 	ToolModel::toolModel initial; //initial configuration
+    ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
+
+    ToolModel::toolModel initial; //initial configuration
 
     unsigned int toolSize; //size of the needle to be rendered
 
     double perturbStd; //standard deviation for perturbing, if we obtain good matching it gets smaller to stay in the region
 
- 	unsigned int numParticles; //total number of particles
+    unsigned int numParticles; //total number of particles
     cv::Mat toolImage_left; //needleImage
     cv::Mat toolImage_right; //needleImage
-    cv::Mat segmentedImage; //segmented needle image (retrieved from vessellness)
+
+    // cv::Mat segmentedImage; //segmented needle image (retrieved from vessellness)
+
+
     cv::Rect ROI_left; //ROI for the left image containing needle geometry
     cv::Rect ROI_right; //ROI for the right image containing needle geometry
 
- 	std::vector<ToolModel::toolModel> particles; // particles
- 	std::vector<double> matchingScores; // particle scores (matching scores)
- 	std::vector<double> particleWeights; // particle weights calculated from matching scores
+    std::vector<ToolModel::toolModel> particles; // particles
+    std::vector<double> matchingScores; // particle scores (matching scores)
+    std::vector<double> particleWeights; // particle weights calculated from matching scores
 
 
  public:
@@ -91,7 +97,7 @@
      /*
      * The default constructor 
      */
-    ParticleFilter();
+    ParticleFilter(ros::NodeHandle* nodehandle);
 
     /*
      * The deconstructor 
@@ -104,10 +110,13 @@
      */
     void initializeParticles();
 
+    // void timerCallback(const ros::TimerEvent&);
+
+
     /*
      * This is the main function for tracking the needle. This function is called and it syncs all of the functions
     */
-     std::vector<cv::Mat> trackingTool(const cv::Mat &bodyVel,const cv::Mat &segmented_left, const cv::Mat &segmented_right,const cv::Mat &P_left, const cv::Mat &P_right);
+    std::vector<cv::Rect> trackingTool(const cv::Mat &bodyVel,const cv::Mat &segmented_left, const cv::Mat &segmented_right,const cv::Mat &P_left, const cv::Mat &P_right);
 
     /*
      * resampling method
@@ -117,9 +126,9 @@
      * update particles
      */
      void updateParticles(const cv::Mat &bodyVel, double &updateRate);
-	 /*
-	  * perturb the particles for more usable poses
-	  */
+     /*
+      * perturb the particles for more usable poses
+      */
      std::vector<ToolModel::toolModel> perturb(const std::vector<ToolModel::toolModel> &particles, double stdev, double mean);
 
      cv::Mat adjoint(cv::Mat& G);

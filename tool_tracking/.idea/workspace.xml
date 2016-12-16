@@ -27,6 +27,7 @@
       <config projectName="tool_tracking" targetName="rosgraph_msgs_generate_messages_py" />
       <config projectName="tool_tracking" targetName="rosgraph_msgs_generate_messages_cpp" />
       <config projectName="tool_tracking" targetName="sensor_msgs_generate_messages_lisp" />
+      <config projectName="tool_tracking" targetName="tracking_main" />
       <config projectName="tool_tracking" targetName="sensor_msgs_generate_messages_py" />
       <config projectName="tool_tracking" targetName="rosgraph_msgs_generate_messages_lisp" />
       <config projectName="tool_tracking" targetName="geometry_msgs_generate_messages_cpp" />
@@ -57,11 +58,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="particle_filter.cpp" pinned="false" current-in-tab="true">
+      <file leaf-file-name="particle_filter.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/particle_filter.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="180">
-              <caret line="113" column="61" selection-start-line="113" selection-start-column="61" selection-end-line="113" selection-end-column="61" />
+            <state relative-caret-position="2355">
+              <caret line="266" column="21" selection-start-line="266" selection-start-column="21" selection-end-line="266" selection-end-column="21" />
               <folding>
                 <element signature="e#1#21#0" expanded="true" />
               </folding>
@@ -72,10 +73,23 @@
       <file leaf-file-name="particle_filter.h" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/include/tool_tracking/particle_filter.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="342">
-              <caret line="118" column="58" selection-start-line="118" selection-start-column="58" selection-end-line="118" selection-end-column="58" />
+            <state relative-caret-position="379">
+              <caret line="118" column="38" selection-start-line="118" selection-start-column="26" selection-end-line="118" selection-end-column="38" />
               <folding>
                 <element signature="e#1862#1879#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="tracking_main.cpp" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/tracking_main.cpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="234">
+              <caret line="159" column="33" selection-start-line="159" selection-start-column="33" selection-end-line="159" selection-end-column="33" />
+              <folding>
+                <element signature="e#0#20#0" expanded="true" />
+                <element signature="e#294#332#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -94,8 +108,8 @@
       <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="378">
-              <caret line="21" column="62" selection-start-line="21" selection-start-column="62" selection-end-line="21" selection-end-column="62" />
+            <state relative-caret-position="321">
+              <caret line="32" column="49" selection-start-line="32" selection-start-column="36" selection-end-line="32" selection-end-column="49" />
               <folding />
             </state>
           </provider>
@@ -109,8 +123,9 @@
         <option value="$USER_HOME$/devel/share/toolModel/cmake/toolModelConfig.cmake" />
         <option value="$USER_HOME$/devel/share/catkin_simple/cmake/catkin_simple-extras.cmake" />
         <option value="$PROJECT_DIR$/CMakeLists.txt" />
-        <option value="$PROJECT_DIR$/include/tool_tracking/particle_filter.h" />
         <option value="$PROJECT_DIR$/src/particle_filter.cpp" />
+        <option value="$PROJECT_DIR$/include/tool_tracking/particle_filter.h" />
+        <option value="$PROJECT_DIR$/src/tracking_main.cpp" />
       </list>
     </option>
   </component>
@@ -162,10 +177,6 @@
             <PATH_ELEMENT>
               <option name="myItemId" value="External Libraries" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Header Search Paths" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode" />
             </PATH_ELEMENT>
           </PATH>
           <PATH>
@@ -240,6 +251,8 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="two.files.diff.last.used.file" value="$PROJECT_DIR$/include/tool_tracking/particle_filter.h" />
+    <property name="settings.editor.selected.configurable" value="configurable.group.tools" />
+    <property name="settings.editor.splitter.proportion" value="0.2" />
   </component>
   <component name="RunManager" selected="Application.tool_tracking">
     <configuration default="true" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" PASS_PARENT_ENVS_2="true" PROJECT_NAME="tool_tracking" TARGET_NAME="_catkin_empty_exported_target" CONFIG_NAME="Debug" TEST_MODE="SUITE_TEST">
@@ -539,7 +552,11 @@
       <envs />
       <method />
     </configuration>
-    <list size="29">
+    <configuration default="false" name="tracking_main" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="tool_tracking" TARGET_NAME="tracking_main" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="tool_tracking" RUN_TARGET_NAME="tracking_main">
+      <envs />
+      <method />
+    </configuration>
+    <list size="30">
       <item index="0" class="java.lang.String" itemvalue="Application.Build All" />
       <item index="1" class="java.lang.String" itemvalue="Application._catkin_empty_exported_target" />
       <item index="2" class="java.lang.String" itemvalue="Application.clean_test_results" />
@@ -569,6 +586,7 @@
       <item index="26" class="java.lang.String" itemvalue="Application.gtest" />
       <item index="27" class="java.lang.String" itemvalue="Application.gtest_main" />
       <item index="28" class="java.lang.String" itemvalue="Application.tool_tracking_package" />
+      <item index="29" class="java.lang.String" itemvalue="Application.tracking_main" />
     </list>
   </component>
   <component name="ShelveChangesManager" show_recycled="false">
@@ -585,12 +603,13 @@
       <workItem from="1481343236626" duration="1556000" />
       <workItem from="1481732508890" duration="3941000" />
       <workItem from="1481737927848" duration="7196000" />
-      <workItem from="1481822686410" duration="11755000" />
+      <workItem from="1481822686410" duration="12321000" />
+      <workItem from="1481906579797" duration="18052000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="27101000" />
+    <option name="totallyTimeSpent" value="45719000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="65" y="24" width="1855" height="1056" extended-state="6" />
@@ -632,6 +651,42 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/particle_filter.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#1#21#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/include/tool_tracking/particle_filter.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2124">
+          <caret line="118" column="58" selection-start-line="118" selection-start-column="58" selection-end-line="118" selection-end-column="58" />
+          <folding>
+            <element signature="e#1862#1879#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/package.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="216">
+          <caret line="12" column="27" selection-start-line="12" selection-start-column="27" selection-end-line="12" selection-end-column="27" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="378">
+          <caret line="21" column="62" selection-start-line="21" selection-start-column="62" selection-end-line="21" selection-end-column="62" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/particle_filter.cpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -769,8 +824,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="378">
-          <caret line="21" column="62" selection-start-line="21" selection-start-column="62" selection-end-line="21" selection-end-column="62" />
+        <state relative-caret-position="321">
+          <caret line="32" column="49" selection-start-line="32" selection-start-column="36" selection-end-line="32" selection-end-column="49" />
           <folding />
         </state>
       </provider>
@@ -783,25 +838,51 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/include/tool_tracking/particle_filter.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="342">
-          <caret line="118" column="58" selection-start-line="118" selection-start-column="58" selection-end-line="118" selection-end-column="58" />
-          <folding>
-            <element signature="e#1862#1879#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/particle_filter.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="113" column="61" selection-start-line="113" selection-start-column="61" selection-end-line="113" selection-end-column="61" />
+        <state relative-caret-position="2355">
+          <caret line="266" column="21" selection-start-line="266" selection-start-column="21" selection-end-line="266" selection-end-column="21" />
           <folding>
             <element signature="e#1#21#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/include/tool_tracking/particle_filter.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="379">
+          <caret line="118" column="38" selection-start-line="118" selection-start-column="26" selection-end-line="118" selection-end-column="38" />
+          <folding>
+            <element signature="e#1862#1879#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/tracking_main.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="234">
+          <caret line="159" column="33" selection-start-line="159" selection-start-column="33" selection-end-line="159" selection-end-column="33" />
+          <folding>
+            <element signature="e#0#20#0" expanded="true" />
+            <element signature="e#294#332#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ScopeChooserConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+    </states>
   </component>
 </project>

@@ -1080,7 +1080,7 @@ cv::Mat ToolModel::computeSkew(cv::Mat &w){
 /****render a rectangle contains the tool model*****/
 cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P, cv::OutputArray jac ){
 
-    cv::Rect ROI; // rectanle that contains tool model
+    cv::Rect ROI; // rectangle that contains tool model
 
     int padding = 5; //add 10pixels of padding for cropping
     cv::Point2d XY_max(-10000,-10000); //minimum of X and Y

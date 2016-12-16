@@ -1,22 +1,24 @@
  #include <ros/ros.h>
- #include <tool_tracking/particle_filter.h>
+ #include <tool_tracking/particle_filter.h>  //everything inside here
  #include <opencv2/calib3d/calib3d.hpp>
+
 
  using namespace std;
 
- ParticleFilter::ParticleFilter():
-    numParticles(2), toolSize(2), perturbStd(0.001), newToolModel(Cam)
+ ParticleFilter::ParticleFilter(ros::NodeHandle* nodehandle):
+     nh_(*nodehandle), numParticles(2), toolSize(2), perturbStd(0.001), newToolModel(Cam)
 {
 
-	// initial needle position guess
-	// everything here is in meters.
+    /****initial position guess
+	everything here is in meters*****/
 	initial.tvec_cyl(0) = 0.0;
-	initial.tvec_cyl(1) = -0.01;
+	initial.tvec_cyl(1) = 0.0;
 	initial.tvec_cyl(2) = 0.0;
 	initial.rvec_cyl(0) = 0.0;
-	initial.rvec_cyl(1) = M_PI/2;
-	initial.rvec_cyl(2) = 0.3;
+	initial.rvec_cyl(1) = 0.0;   //better make everything zero
+	initial.rvec_cyl(2) = 0.0;
 
+    /****need to subscrib this***/
     Cam = cv::Mat(4,4,CV_64FC1);
     Cam.at<double>(0,0) = 1;
     Cam.at<double>(1,0) = 0;
@@ -40,11 +42,13 @@
 
 	//initialize particles by randomly assigning around the initial guess
 	initializeParticles();
-	ROS_INFO("---- Initialization is done---");
+	// ROS_INFO("---- Initialization is done---");
 
-	//initialize needle image, just basic black image ??? how to get the size of the image
+	// initialize needle image, just basic black image ??? how to get the size of the image
 	toolImage_left = cv::Mat::zeros(480, 640, CV_8UC3);
 	toolImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
+
+    //timer = nh_.createTimer(ros::Duration(0.01), &ParticleFilter::timerCallback, this);
 };
 
 ParticleFilter::~ParticleFilter()
@@ -52,6 +56,17 @@ ParticleFilter::~ParticleFilter()
 
 };
 
+ //To show results and debug TODO:
+/* void ParticleFilter::timerCallback(const ros::TimerEvent&)
+ {
+     std::vector<cv::Mat> *trackingimages;
+     trackingimages = &trackingImages;  //copy here
+
+     cv::imshow( "rendered image: LEFT", trackingimages[0]);
+     cv::imshow( "rendered image: RIGHT", trackingimages[1]);
+     cv::waitKey(10);
+
+ };*/
 
 void ParticleFilter::initializeParticles()
 {
@@ -67,18 +82,19 @@ void ParticleFilter::initializeParticles()
 
 };
 
- std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,const cv::Mat &P_left, const cv::Mat &P_right){
+ std::vector<cv::Rect> ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,const cv::Mat &P_left, const cv::Mat &P_right){
+
      cv::Mat segmentedImage_left = segmented_left.clone();
      cv::Mat segmentedImage_right = segmented_right.clone();
 
-     std::vector<cv::Mat> trackedNeedleImages;
-     trackedNeedleImages.resize(2);
+     std::vector<cv::Rect> trackingImages;
+     trackingImages.resize(2);
 
      double maxScore = -1.0; //track the maximum scored particle
      int maxScoreIdx = -1; //maximum scored particle index
      double totalScore = 0.0; //total score
-     double left = 0.0; //matching score for the left image
-     double right = 0.0; //matching score for the right image
+     double left(0.0); //matching score for the left image
+     double right(0.0); //matching score for the right image
 
      /***do the sampling and get the matching score***/
      for (int i = 0; i <numParticles; ++i) {
@@ -88,7 +104,7 @@ void ParticleFilter::initializeParticles()
 
          toolImage_right.setTo(0); //reset needle image
          ROI_right = newToolModel.renderTool(toolImage_right, particles[i], Cam, P_right);
-         right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right,ROI_right);
+         right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right, ROI_right);
 
          matchingScores[i] = sqrt(pow(left,2) + pow(right,2));
 
@@ -100,28 +116,45 @@ void ParticleFilter::initializeParticles()
          totalScore += matchingScores[i];
      }
 
-     /***you may wanna do this in a different stream***/
-     ROS_INFO_STREAM(maxScore);
+     /***you may wanna do this in a different stream, TODO: ***/
+     ROS_INFO_STREAM(maxScore);  //debug
 
-     newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx], Cam, P_left);
-     newToolModel.renderTool(segmentedImage_right, particles[maxScoreIdx], Cam, P_right);
+      cv::Rect left_max = newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx], Cam, P_left);
+      cv::Rect right_max = newToolModel.renderTool(segmentedImage_right, particles[maxScoreIdx], Cam, P_right);
 
-     trackedNeedleImages[0] = segmentedImage_left;
-     trackedNeedleImages[1] = segmentedImage_right;
+     trackingImages[0] = left_max;
+     trackingImages[1] = right_max;
 
      /***calculate weights using matching score and do the resampling***/
      for (int j = 0; j <numParticles; ++j) { // normalize the weights
          particleWeights[j] = (matchingScores[j]/totalScore);
      }
+
      std::vector<ToolModel::toolModel>  oldParticles = particles;
-     resampleLowVariance(oldParticles,particleWeights,particles);
+     resampleLowVariance(oldParticles, particleWeights, particles); //each time will clear the particles and resample them
 
      double dT = 0.1; //sampling rate
 
-     /***update particles, based on the diven body vel and updating rate***/
+     /***update particles, based on the given body vel and updating rate***/
      updateParticles(bodyVel, dT);
 
 
+     //if there is no movement, we need to perturb it
+     if(bodyVel.at<double>(0,0) == 0.0 && bodyVel.at<double>(1,0) == 0.0 && bodyVel.at<double>(5,0) == 0.0)
+     {
+         //TODO: look for matching score, if it is good assign smaller perturbation standard deviation
+         if(maxScore>0.91)
+         {
+             perturbStd = 0.0;
+         }
+
+         for(int i(0); i<particles.size(); i++)
+         {
+             particles[i] = newToolModel.setRandomConfig(particles[i],perturbStd,0.0);
+         }
+     }
+
+     return trackingImages;
  };
 
  void ParticleFilter::updateParticles(const cv::Mat &bodyVel, double &updateRate){ //get particles and update them based on given spatial velocity
@@ -132,6 +165,8 @@ void ParticleFilter::initializeParticles()
 
      cv::Mat spatialVel = cv::Mat::zeros(6,1,CV_64F);
      cv::Mat updatedParticleFrame=cv::Mat::eye(4,4,CV_64F);
+
+     cv::Mat I = cv::Mat::eye(3,3,CV_64F);
 
      for (int k = 0; k < particles.size(); ++k) {
 
@@ -145,12 +180,51 @@ void ParticleFilter::initializeParticles()
 
          //calculate spatial velocity
          spatialVel = adjoint(particleFrame) * bodyVel;
+         cv::Mat v = spatialVel.colRange(0,1).rowRange(0,3); //translation velocity
+         cv::Mat w = spatialVel.colRange(0,1).rowRange(3,6); //rotational velocity
 
+         cv::Mat move = cv::Mat::eye(4,4,CV_64F);
 
+         if(w.at<double>(0,0) == 0.0 && w.at<double>(1,0) == 0.0 && w.at<double>(2,0) == 0.0){  //pure translation
+             cv::Mat vdt = v * updateRate;
+             vdt.copyTo(move.colRange(3,4).rowRange(0,3));
+         } else{
+             cv::Mat vtil = v*updateRate;
+             cv::Mat wtil = w*updateRate;
 
+             double M = cv::norm(wtil);
+             cv::Mat v_bar = vtil/M;  //this is doubtable
+             cv::Mat w_bar = wtil/M;
 
+             cv::Mat w_hat = newToolModel.computeSkew(w_bar);
+             cv::Mat rotation = I+w_hat*sin(M)+(w_hat*w_hat)*(1-cos(M));
+             cv::Mat trans = (I-rotation)*(w_bar.cross(v_bar)+w_bar*w_bar.t()*v_bar*M);
 
+             rotation.copyTo(move.colRange(0,3).rowRange(0,3));
+             trans.copyTo(move.colRange(3,4).rowRange(0,3));
+         }
 
+         /***update the cylinder pose***/
+         updatedParticleFrame = move * particleFrame;
+
+         //convert rotation matrix to Rodrigues
+         cv::Mat tempR =cv::Mat::zeros(3,3,CV_64F);
+         cv::Mat updateR =cv::Mat::zeros(3,1,CV_64F);
+         cv::Mat updateT =cv::Mat::zeros(3,1,CV_64F);
+
+         updateT = updatedParticleFrame.colRange(3,4).rowRange(0,3);
+         tempR = updatedParticleFrame.colRange(0,3).rowRange(0,3);
+         cv::Rodrigues(tempR, updateR);
+
+         particles[k].tvec_cyl(0) = updateT.at<double>(0,0);
+         particles[k].tvec_cyl(1) = updateT.at<double>(1,0);
+         particles[k].tvec_cyl(2) = updateT.at<double>(2,0);
+         particles[k].rvec_cyl(0) = updateR.at<double>(0,0);
+         particles[k].rvec_cyl(1) = updateR.at<double>(1,0);
+         particles[k].rvec_cyl(2) = updateR.at<double>(2,0);
+
+         /***according to the cylinder pose, update ellipse and grippers pose***/
+         newToolModel.computeModelPose(particles[k], 0.0, 0.0, 0.0); // no need to change relative angles
 
      }
  };
