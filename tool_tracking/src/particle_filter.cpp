@@ -44,7 +44,7 @@
 	initializeParticles();
 	// ROS_INFO("---- Initialization is done---");
 
-	// initialize needle image, just basic black image ??? how to get the size of the image
+	// initialization, just basic black image ??? how to get the size of the image
 	toolImage_left = cv::Mat::zeros(480, 640, CV_8UC3);
 	toolImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
 
@@ -82,12 +82,12 @@ void ParticleFilter::initializeParticles()
 
 };
 
- std::vector<cv::Rect> ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,const cv::Mat &P_left, const cv::Mat &P_right){
+ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,const cv::Mat &P_left, const cv::Mat &P_right){
 
      cv::Mat segmentedImage_left = segmented_left.clone();
      cv::Mat segmentedImage_right = segmented_right.clone();
 
-     std::vector<cv::Rect> trackingImages;
+     std::vector<cv::Mat> trackingImages;
      trackingImages.resize(2);
 
      double maxScore = -1.0; //track the maximum scored particle
@@ -98,11 +98,11 @@ void ParticleFilter::initializeParticles()
 
      /***do the sampling and get the matching score***/
      for (int i = 0; i <numParticles; ++i) {
-         toolImage_left.setTo(0); //reset the needle image for every start of an new loop
+         toolImage_left.setTo(0); //reset image for every start of an new loop
          ROI_left = newToolModel.renderTool(toolImage_left, particles[i], Cam, P_left); //first get the rendered image using 3d model of the tool
          left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left, ROI_left);  //get the matching score
 
-         toolImage_right.setTo(0); //reset needle image
+         toolImage_right.setTo(0); //resetimage
          ROI_right = newToolModel.renderTool(toolImage_right, particles[i], Cam, P_right);
          right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right, ROI_right);
 
@@ -119,11 +119,11 @@ void ParticleFilter::initializeParticles()
      /***you may wanna do this in a different stream, TODO: ***/
      ROS_INFO_STREAM(maxScore);  //debug
 
-      cv::Rect left_max = newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx], Cam, P_left);
-      cv::Rect right_max = newToolModel.renderTool(segmentedImage_right, particles[maxScoreIdx], Cam, P_right);
+     newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx], Cam, P_left);  //render in segmented image, no need to get the ROI
+     newToolModel.renderTool(segmentedImage_right, particles[maxScoreIdx], Cam, P_right);
 
-     trackingImages[0] = left_max;
-     trackingImages[1] = right_max;
+     trackingImages[0] = segmentedImage_left;
+     trackingImages[1] = segmentedImage_right;
 
      /***calculate weights using matching score and do the resampling***/
      for (int j = 0; j <numParticles; ++j) { // normalize the weights
@@ -193,7 +193,7 @@ void ParticleFilter::initializeParticles()
              cv::Mat wtil = w*updateRate;
 
              double M = cv::norm(wtil);
-             cv::Mat v_bar = vtil/M;  //this is doubtable
+             cv::Mat v_bar = vtil/M;  //h = w*v//||w||
              cv::Mat w_bar = wtil/M;
 
              cv::Mat w_hat = newToolModel.computeSkew(w_bar);

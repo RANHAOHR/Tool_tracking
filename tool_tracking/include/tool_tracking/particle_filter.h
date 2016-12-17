@@ -116,7 +116,7 @@
     /*
      * This is the main function for tracking the needle. This function is called and it syncs all of the functions
     */
-    std::vector<cv::Rect> trackingTool(const cv::Mat &bodyVel,const cv::Mat &segmented_left, const cv::Mat &segmented_right,const cv::Mat &P_left, const cv::Mat &P_right);
+    std::vector<cv::Mat> trackingTool(const cv::Mat &bodyVel,const cv::Mat &segmented_left, const cv::Mat &segmented_right,const cv::Mat &P_left, const cv::Mat &P_right);
 
     /*
      * resampling method

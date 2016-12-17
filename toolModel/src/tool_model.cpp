@@ -1164,9 +1164,9 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
         //blur imtoolfloat, probably don't need this
         cv::GaussianBlur(toolImFloat, toolImFloatBlured, cv::Size(9,9),1,1);
 
-        imshow("blurred image", toolImFloatBlured);
+        // imshow("blurred image", toolImFloatBlured);
 
-        cv::waitKey(0); //for testing
+        // cv::waitKey(0); //for testing
 
         toolImFloatBlured /= 255; //scale the blurred image
 

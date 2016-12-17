@@ -20,7 +20,9 @@ bool freshVelocity;
 using namespace cv_projective;
 double Arr[6];
 
-std::vector<cv::Mat> trackingimages;
+
+std::vector<cv::Mat> trackingImgs;  ///this should be CV_32F
+
 
 void newImageCallback(const sensor_msgs::ImageConstPtr& msg, cv::Mat* outputImage)
 {
@@ -53,18 +55,25 @@ void arrayCallback(const std_msgs::Float64MultiArray::ConstPtr& array)
 
     freshVelocity = true;
 
-    return;
 }
 
 void timerCB(const ros::TimerEvent&)
 {
 
-//
-//     cv::imshow( "rendered image: LEFT", trackingimages[0]);
-//     cv::imshow( "rendered image: RIGHT", trackingimages[1]);
-//     cv::waitKey(10);
+    std::vector<cv::Mat> disp;
+    disp.resize(2);
 
-};
+   // for (int j(0); j<2; j++)
+   // {
+   //     convertSegmentImageCPUBW(trackingImgs[j],disp[j]);  //what is this?
+   // }
+
+   //  cv::imshow( "Trancking Image: LEFT", disp[0]);
+   //  cv::imshow( "Trancking Image: RIGHT", disp[1]);
+
+   //  cv::waitKey(10);
+
+}
 
 
 cv::Mat segmentation(cv::Mat &InputImg){
@@ -87,6 +96,7 @@ cv::Mat segmentation(cv::Mat &InputImg){
     return grad;
 
 }
+
 int main(int argc, char** argv){
 
     ros::init(argc, argv, "tracking_node");
@@ -99,6 +109,8 @@ int main(int argc, char** argv){
     freshVelocity = false;
 
     cv::Mat bodyVel = cv::Mat::zeros(6,1,CV_64FC1);
+
+    trackingImgs.resize(2);
 
     // Camera intrinsic matrices
     cv::Mat P_l, P_r;
@@ -114,8 +126,9 @@ int main(int argc, char** argv){
     ROS_INFO("---- Connected to camera info -----");
 
     /*** timer set up ***/
-    ros::Rate loop_rate(50);
-    ros::Timer timer = nh.createTimer(ros::Duration(0.01), timerCB);
+    //ros::Rate loop_rate(50);
+
+    ros::Timer timer = nh.createTimer(ros::Duration(0.01), timerCB); //show images
 
     /*** subscribers, velocity, stream images ***/
     ros::Subscriber sub3 = nh.subscribe("/bodyVelocity", 100, arrayCallback);
@@ -153,7 +166,8 @@ int main(int argc, char** argv){
 
 
         }
-    /*** if camera is ready, doing the tracking based on segemented image***/
+
+        /*** if camera is ready, doing the tracking based on segemented image***/
         if(freshImage && freshCameraInfo && freshVelocity)
         {
             //Stage body velocity
@@ -162,16 +176,7 @@ int main(int argc, char** argv){
                 bodyVel.at<double>(i,0) = Arr[i];
             }
 
-            // trackingimages = Particles.trackingTool(bodyVel, seg_left, seg_right, P_l, P_r);
-
-//            for (int lr(0); lr<2; lr++)
-//            {
-//                convertSegmentImageCPUBW(trackingimages[lr],disp[lr]);
-//            }
-//
-//            imshow("Rendered Image: Left", disp[0]);
-//            imshow("Rendered Image: Right", disp[1]);
-//            cv::waitKey(10);
+            trackingImgs = Particles.trackingTool(bodyVel, seg_left, seg_right, P_l, P_r); //with rendered tool and segmented img
 
             freshImage = false;
             freshVelocity = false;
