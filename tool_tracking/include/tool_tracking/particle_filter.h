@@ -78,14 +78,12 @@
     double perturbStd; //standard deviation for perturbing, if we obtain good matching it gets smaller to stay in the region
 
     unsigned int numParticles; //total number of particles
-    cv::Mat toolImage_left; //needleImage
-    cv::Mat toolImage_right; //needleImage
-
-    // cv::Mat segmentedImage; //segmented needle image (retrieved from vessellness)
+    cv::Mat toolImage_left; //left rendered Image
+    cv::Mat toolImage_right; //right rendered Image
 
 
-    cv::Rect ROI_left; //ROI for the left image containing needle geometry
-    cv::Rect ROI_right; //ROI for the right image containing needle geometry
+    cv::Rect ROI_left; //ROI for the left image
+    cv::Rect ROI_right; //ROI for the right image
 
     std::vector<ToolModel::toolModel> particles; // particles
     std::vector<double> matchingScores; // particle scores (matching scores)
@@ -110,6 +108,7 @@
      */
     void initializeParticles();
 
+     /***consider getting a timer to debug***/
     // void timerCallback(const ros::TimerEvent&);
 
 
@@ -132,9 +131,6 @@
      std::vector<ToolModel::toolModel> perturb(const std::vector<ToolModel::toolModel> &particles, double stdev, double mean);
 
      cv::Mat adjoint(cv::Mat& G);
-
-
-
 
 };
 

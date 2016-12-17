@@ -42,14 +42,14 @@ ToolModel::ToolModel(cv::Mat& CamMat){
 
     q_gripper = cv::Mat(3,1,CV_64FC1);
     q_gripper.at<double>(0,0) = 0;
-    q_gripper.at<double>(1,0) = offset_gripper - 0.4522;  //
+    q_gripper.at<double>(1,0) = offset_gripper - 0.4532;  //
     q_gripper.at<double>(2,0) = 0;
 
     /****initialize the vertices fo different part of tools****/
 	load_model_vertices("/home/deeplearning/ros_ws/src/Tool_tracking/toolModel/tool_parts/refine_cylinder_3.obj", body_vertices, body_Vnormal, body_faces, body_neighbors );
     load_model_vertices("/home/deeplearning/ros_ws/src/Tool_tracking/toolModel/tool_parts/refine_ellipse_3.obj", ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors );
-    load_model_vertices("/home/deeplearning/ros_ws/src/Tool_tracking/toolModel/tool_parts/gripper3_1.obj", griper1_vertices, griper1_Vnormal, griper1_faces, griper1_neighbors );
-    load_model_vertices("/home/deeplearning/ros_ws/src/Tool_tracking/toolModel/tool_parts/gripper3_2.obj", griper2_vertices, griper2_Vnormal, griper2_faces, griper2_neighbors );
+    load_model_vertices("/home/deeplearning/ros_ws/src/Tool_tracking/toolModel/tool_parts/gripper2_1.obj", griper1_vertices, griper1_Vnormal, griper1_faces, griper1_neighbors );
+    load_model_vertices("/home/deeplearning/ros_ws/src/Tool_tracking/toolModel/tool_parts/gripper2_2.obj", griper2_vertices, griper2_Vnormal, griper2_faces, griper2_neighbors );
 
     modify_model_(body_vertices, body_Vnormal, body_Vpts, body_Npts, offset_body, body_Vmat, body_Nmat);
     modify_model_(ellipse_vertices, ellipse_Vnormal, ellipse_Vpts, ellipse_Npts, offset_ellipse, ellipse_Vmat, ellipse_Nmat);
@@ -79,6 +79,8 @@ ToolModel::ToolModel(cv::Mat& CamMat){
 
     //ROS_INFO_STREAM("THE ELLIPSE FACES: " << ellipse_faces.size());
 
+    srand((unsigned) time( NULL)); //for the random number generator, use only once
+
 };
 
 double ToolModel::randomNumber(double stdev, double mean){
@@ -93,7 +95,7 @@ double ToolModel::randomNumber(double stdev, double mean){
 /*generate random number in a certain range*/
 double ToolModel::randomNum(double min, double max) {
 
-     srand((unsigned) time( NULL));
+     // srand((unsigned) time( NULL));
      int N = 999;
 
      double randN = rand() % (N + 1) / (double) (N + 1);  // a rand number frm 0 to 1
@@ -836,7 +838,7 @@ cv::Point3d ToolModel::FindFaceNormal(cv::Point3d &input_v1, cv::Point3d &input_
     double outward_normal_1 = dotProduct(res, input_n1);
     double outward_normal_2 = dotProduct(res, input_n2);
     double outward_normal_3 = dotProduct(res, input_n3);
-    if ((outward_normal_1 < 0) || (outward_normal_2 < 0) || (outward_normal_2 < 0) )
+    if ((outward_normal_1 < 0) || (outward_normal_2 < 0) || (outward_normal_3 < 0) )
     {
         res = -res;
     }
@@ -940,14 +942,14 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
 	toolModel newTool = initial;  //BODY part is done here
 
     /******testing section here********/
-    double theta_ellipse = 0.0;
-    double theta_grip_1 = 0.2;
-    double theta_grip_2 = 0.2;
+//    double theta_ellipse = 0.0;
+//    double theta_grip_1 = 0.2;
+//    double theta_grip_2 = -0.2;
 
 	//create normally distributed random number with the given stdev and mean
 
 	//TODO: pertub all translation components
-/*	newTool.tvec_cyl(0) += randomNumber(stdev,mean); 
+/*	newTool.tvec_cyl(0) += randomNumber(stdev,mean);
 	newTool.tvec_cyl(1) += randomNumber(stdev,mean);
 	newTool.tvec_cyl(2) += randomNumber(stdev,mean);
 	
@@ -962,27 +964,16 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
 
 
     /**************smaple the angles of the joints**************/
-	//-90,90//
- //    double angle = randomNumber(stdev,mean);
-	// theta_ellipse += (angle/10.0)*1000.0;
-	// if (theta_ellipse < -M_PI/2 || theta_ellipse > M_PI/2)   //use M_PI HERE
-	// 	theta_ellipse = randomNumber(stdev,mean);
+	//-90,90
+    //set positive as clockwise
+    double theta_ellipse = randomNum(-M_PI/2, M_PI/2);
+    double theta_grip_1 = randomNum(-M_PI/2, M_PI/2);
+    double theta_grip_2 = randomNum(-M_PI/2, M_PI/2);
 
-	// // lets assign the upside one 1, and set positive as clockwise 
-	// angle = randomNumber(stdev,mean);
-	// theta_grip_1 += (angle/10.0)*1000.0;
-	// if (theta_grip_1 < -1.2*M_PI/2 || theta_grip_1 > 1.2*M_PI/2)   //use M_PI HERE
-	// 	theta_grip_1 = randomNumber(stdev,mean);
-	
-	// // lets a assign the udownside one 2, and set positive as clockwise
-	// angle = randomNumber(stdev,mean);
-	// theta_grip_2 += (angle/10.0)*1000.0;
-	// if (theta_grip_1 < -1.2*M_PI/2 || theta_grip_1 > 1.2*M_PI/2)   //use M_PI HERE
-	// 	theta_grip_1 = randomNumber(stdev,mean);
 
-	// /***if the two joints get overflow****/
-	// if (theta_grip_1 > theta_grip_2)
-	// 	theta_grip_1 = theta_grip_2 - randomNumber(stdev,mean);
+	 /**if the two joints get overflow***/
+	 if (theta_grip_1 < theta_grip_2)
+	 	theta_grip_1 = theta_grip_2 + randomNum(0, 0.2);
 
     computeModelPose(newTool, theta_ellipse, theta_grip_1, theta_grip_2 );
 
@@ -1141,8 +1132,6 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nma
 
 double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI)
 {
-            
-
     double matchingScore =0.0;
 
     /*When ROI is an empty rec, the position of tool is simply just not match, return 0 matching score*/
@@ -1150,7 +1139,6 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
     {
         cv::Mat ROI_toolImage = toolImage(ROI); //crop tool image
         cv::Mat ROI_segmentedImage = segmentedImage(ROI); //crop segmented image, notice the size of the sgemented image
-
 
         //cv::Mat product; //elementwise product of images
         cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
@@ -1161,17 +1149,17 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 
         toolImageGrey.convertTo(toolImFloat, CV_32FC1); // convert grey scale to float
 
-        //blur imtoolfloat, probably don't need this
+        //blur float image, probably don't need this
         cv::GaussianBlur(toolImFloat, toolImFloatBlured, cv::Size(9,9),1,1);
 
-        // imshow("blurred image", toolImFloatBlured);
+        imshow("blurred image", toolImFloatBlured);
 
-        // cv::waitKey(0); //for testing
+        cv::waitKey(0); //for testing
 
         toolImFloatBlured /= 255; //scale the blurred image
 
         cv::Mat result(1,1,CV_32FC1);
-        cv::matchTemplate(toolImFloatBlured,toolImFloatBlured,result,CV_TM_CCORR_NORMED);
+        cv::matchTemplate(toolImFloat, toolImFloatBlured, result, CV_TM_CCORR_NORMED); //sge, toolImg
         matchingScore = static_cast<double> (result.at< float >(0));
         
     }

@@ -102,7 +102,7 @@ void ParticleFilter::initializeParticles()
          ROI_left = newToolModel.renderTool(toolImage_left, particles[i], Cam, P_left); //first get the rendered image using 3d model of the tool
          left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left, ROI_left);  //get the matching score
 
-         toolImage_right.setTo(0); //resetimage
+         toolImage_right.setTo(0); //reset image
          ROI_right = newToolModel.renderTool(toolImage_right, particles[i], Cam, P_right);
          right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right, ROI_right);
 
@@ -116,7 +116,7 @@ void ParticleFilter::initializeParticles()
          totalScore += matchingScores[i];
      }
 
-     /***you may wanna do this in a different stream, TODO: ***/
+     /*** you may wanna do this in a different stream, TODO: ***/
      ROS_INFO_STREAM(maxScore);  //debug
 
      newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx], Cam, P_left);  //render in segmented image, no need to get the ROI
@@ -125,7 +125,7 @@ void ParticleFilter::initializeParticles()
      trackingImages[0] = segmentedImage_left;
      trackingImages[1] = segmentedImage_right;
 
-     /***calculate weights using matching score and do the resampling***/
+     /*** calculate weights using matching score and do the resampling ***/
      for (int j = 0; j <numParticles; ++j) { // normalize the weights
          particleWeights[j] = (matchingScores[j]/totalScore);
      }
@@ -135,7 +135,7 @@ void ParticleFilter::initializeParticles()
 
      double dT = 0.1; //sampling rate
 
-     /***update particles, based on the given body vel and updating rate***/
+     /*** UPDATE particles, based on the given body vel and updating rate ***/
      updateParticles(bodyVel, dT);
 
 
@@ -185,7 +185,7 @@ void ParticleFilter::initializeParticles()
 
          cv::Mat move = cv::Mat::eye(4,4,CV_64F);
 
-         if(w.at<double>(0,0) == 0.0 && w.at<double>(1,0) == 0.0 && w.at<double>(2,0) == 0.0){  //pure translation
+         if(w.at<double>(2,0) == 0.0){  //TODO: pure translation ??
              cv::Mat vdt = v * updateRate;
              vdt.copyTo(move.colRange(3,4).rowRange(0,3));
          } else{
@@ -224,7 +224,7 @@ void ParticleFilter::initializeParticles()
          particles[k].rvec_cyl(2) = updateR.at<double>(2,0);
 
          /***according to the cylinder pose, update ellipse and grippers pose***/
-         newToolModel.computeModelPose(particles[k], 0.0, 0.0, 0.0); // no need to change relative angles
+         newToolModel.computeModelPose(particles[k], 0.0, 0.0, 0.0); // no need to change relative angles??? TODO:
 
      }
  };

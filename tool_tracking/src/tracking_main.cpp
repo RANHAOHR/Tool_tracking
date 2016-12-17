@@ -8,10 +8,7 @@
 #include "std_msgs/MultiArrayLayout.h"
 #include "std_msgs/MultiArrayDimension.h"
 #include "std_msgs/Float64MultiArray.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <vector>
-#include <iostream>
+#include "opencv/cv.hpp"
 
 
 bool freshImage;
@@ -20,6 +17,7 @@ bool freshVelocity;
 using namespace cv_projective;
 double Arr[6];
 
+using namespace std;
 
 std::vector<cv::Mat> trackingImgs;  ///this should be CV_32F
 
@@ -60,25 +58,27 @@ void arrayCallback(const std_msgs::Float64MultiArray::ConstPtr& array)
 void timerCB(const ros::TimerEvent&)
 {
 
-    std::vector<cv::Mat> disp;
+/*    std::vector<cv::Mat> disp;
     disp.resize(2);
 
-   // for (int j(0); j<2; j++)
-   // {
-   //     convertSegmentImageCPUBW(trackingImgs[j],disp[j]);  //what is this?
-   // }
+    for (int j(0); j<2; j++)
+    {
+        convertSegmentImageCPUBW(trackingImgs[j],disp[j]);  //what is this?
+    }*/
 
-   //  cv::imshow( "Trancking Image: LEFT", disp[0]);
-   //  cv::imshow( "Trancking Image: RIGHT", disp[1]);
+//    if(freshImage && freshCameraInfo && freshVelocity){
+//        cv::imshow( "Trancking Image: LEFT", disp[0]);
+//        cv::imshow( "Trancking Image: RIGHT", disp[1]);
+//    }
 
-   //  cv::waitKey(10);
+     // cv::waitKey(10);
 
 }
 
 
 cv::Mat segmentation(cv::Mat &InputImg){
 
-    //cout<<"in segmentation"<<endl;
+    ROS_INFO("SEGMENTATION!!!!");
     cv::Mat src, src_gray;
     cv::Mat grad;
 
@@ -87,11 +87,12 @@ cv::Mat segmentation(cv::Mat &InputImg){
     resize(src, src, cv::Size(), 1, 1);
 
     double lowThresh = 43;
+
     cv::cvtColor( src, src_gray, CV_BGR2GRAY );
 
     blur( src_gray, src_gray, cv::Size(3,3) );
 
-    Canny( src_gray, grad, lowThresh, 4*lowThresh, 3 );
+    Canny( src_gray, grad, lowThresh, 4*lowThresh, 3 ); //use Cannu segmentation, or you can choose Sobel
 
     return grad;
 
@@ -102,11 +103,15 @@ int main(int argc, char** argv){
     ros::init(argc, argv, "tracking_node");
 
     ros::NodeHandle nh;
-
     /******  initialization  ******/
     ParticleFilter Particles(&nh);
+
     freshCameraInfo = false;
+    freshImage = false;
     freshVelocity = false;
+
+    cv::Mat seg_left;
+    cv::Mat seg_right;
 
     cv::Mat bodyVel = cv::Mat::zeros(6,1,CV_64FC1);
 
@@ -117,21 +122,43 @@ int main(int argc, char** argv){
     P_l.setTo(0);
     P_r.setTo(0);
 
-    cv::Mat seg_left;
-    cv::Mat seg_right;
+    /****TODO: testing****/
+    cv::Mat P(3,4,CV_64FC1);
+    P.at<double>(0,0) = 1000;
+    P.at<double>(1,0) = 0;
+    P.at<double>(2,0) = 0;
 
-    const std::string leftCameraTopic("/stereo_example/left/camera_info");
-    const std::string rightCameraTopic("/stereo_example/right/camera_info");
-    cameraProjectionMatrices cameraInfoObj(nh, leftCameraTopic, rightCameraTopic);
-    ROS_INFO("---- Connected to camera info -----");
+    P.at<double>(0,1) = 0;
+    P.at<double>(1,1) = 1000;
+    P.at<double>(2,1) = 0;
+
+    P.at<double>(0,2) = 320; //horiz
+    P.at<double>(1,2) = 240; //verticle
+    P.at<double>(2,2) = 1;
+
+    P.at<double>(0,3) = 0;
+    P.at<double>(1,3) = 0;
+    P.at<double>(2,3) = 0;
+
+    clock_t t;
+    double avg_tim = 0.0;
+    int count = 1;
+
 
     /*** timer set up ***/
-    //ros::Rate loop_rate(50);
-
+    ros::Rate loop_rate(50);
     ros::Timer timer = nh.createTimer(ros::Duration(0.01), timerCB); //show images
 
     /*** subscribers, velocity, stream images ***/
     ros::Subscriber sub3 = nh.subscribe("/bodyVelocity", 100, arrayCallback);
+
+
+    // const std::string leftCameraTopic("/davinci_endo/left/image_raw");
+    // const std::string rightCameraTopic("/davinci_endo/right/image_raw");
+    // cameraProjectionMatrices cameraInfoObj(nh, leftCameraTopic, rightCameraTopic);
+    // ROS_INFO("---- Connected to camera info -----");
+
+    //TODO: get image size from camera model, initialize segmented images
 
     cv::Mat rawImage_left = cv::Mat::zeros(640, 920, CV_32FC1);
     cv::Mat rawImage_right = cv::Mat::zeros(640, 920, CV_32FC1);
@@ -144,48 +171,69 @@ int main(int argc, char** argv){
 
     ROS_INFO("---- done subscribe -----");
 
-
-
-    while(nh.ok()){
+    while (nh.ok())
+    {
         ros::spinOnce();
 
-        seg_left = segmentation(rawImage_left);
-        seg_right = segmentation(rawImage_right);
-
         /*** make sure camera information is ready ***/
-        if(freshCameraInfo == false)
+        if(!freshCameraInfo)
         {
+            ROS_INFO("---- inside get cam info -----");
             //retrive camera info
-            P_l = cameraInfoObj.getLeftProjectionMatrix();
-            P_r = cameraInfoObj.getRightProjectionMatrix();
-            if(P_l.at<double>(0,0) != 0 && P_r.at<double>(0,0))
+//            P_l = cameraInfoObj.getLeftProjectionMatrix();
+//            P_r = cameraInfoObj.getRightProjectionMatrix();
+
+            /****testing params**/
+            P_l = P;
+            P_r = P;
+            if(P_l.at<double>(0,0) != 0 && P_r.at<double>(0,0) != 0)
             {
                 ROS_INFO("obtained camera info");
                 freshCameraInfo = true;
             }
 
-
         }
 
         /*** if camera is ready, doing the tracking based on segemented image***/
-        if(freshImage && freshCameraInfo && freshVelocity)
-        {
-            //Stage body velocity
-            for(int i(0);i<6;i++)
-            {
-                bodyVel.at<double>(i,0) = Arr[i];
-            }
+        if (freshImage){
 
-            trackingImgs = Particles.trackingTool(bodyVel, seg_left, seg_right, P_l, P_r); //with rendered tool and segmented img
+            //t = clock();
+            seg_left=segmentation(rawImage_left);
+            seg_right=segmentation(rawImage_right);
+            //t = clock() - t;
+
+            //Stage body velocity
+//            for(int i(0);i<6;i++)
+//            {
+//                bodyVel.at<double>(i,0) = Arr[i];
+//            }
+//
+//            trackingImgs = Particles.trackingTool(bodyVel, seg_left, seg_right, P_l, P_r); //with rendered tool and segmented img
+//
+//            cv::imshow("Rendered Image: Left", trackingImgs[0]);
+//            cv::imshow("Rendered Image: Right", trackingImgs[1]);
+//            cv::waitKey(10);
+
+
+            /****Testing time and image****/
+/*            float sec = (float)t/CLOCKS_PER_SEC;
+            imshow( "left_raw_img", rawImage_left);
+            imshow( "Left_Segmented", seg_left );
+            imshow( "right_raw_img", rawImage_right);
+            imshow( "Right_Segmented", seg_right );
+             cout<<"after imshow"<<endl;
+             cv::waitKey(10);
+             avg_tim += sec;
+             cout<< "avg time is : "<< avg_tim/count<<endl;
+             count += 1;
+             cout<<"each segmentation peroid takes: "<<t<<endl;*/
 
             freshImage = false;
             freshVelocity = false;
-
         }
 
+        loop_rate.sleep();  //or cv::waitKey(10);
 
     }
-
-
 
 }
