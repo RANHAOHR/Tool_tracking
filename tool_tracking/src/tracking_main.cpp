@@ -149,8 +149,8 @@ int main(int argc, char** argv){
     while(nh.ok()){
         ros::spinOnce();
 
-        seg_left=segmentation(rawImage_left);
-        seg_right=segmentation(rawImage_right);
+        seg_left = segmentation(rawImage_left);
+        seg_right = segmentation(rawImage_right);
 
         /*** make sure camera information is ready ***/
         if(freshCameraInfo == false)
