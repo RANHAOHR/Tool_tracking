@@ -92,7 +92,7 @@ cv::Mat segmentation(cv::Mat &InputImg){
 
     blur( src_gray, src_gray, cv::Size(3,3) );
 
-    Canny( src_gray, grad, lowThresh, 4*lowThresh, 3 ); //use Cannu segmentation, or you can choose Sobel
+    Canny( src_gray, grad, lowThresh, 4*lowThresh, 3 ); //use Canny segmentation
 
     return grad;
 
@@ -144,24 +144,27 @@ int main(int argc, char** argv){
     double avg_tim = 0.0;
     int count = 1;
 
+    /****testing P params**/
+    P_l = P;
+    P_r = P;
 
-    /*** timer set up ***/
+    /*** Timer set up ***/
     ros::Rate loop_rate(50);
     ros::Timer timer = nh.createTimer(ros::Duration(0.01), timerCB); //show images
 
-    /*** subscribers, velocity, stream images ***/
+    /*** Subscribers, velocity, stream images ***/
+
     ros::Subscriber sub3 = nh.subscribe("/bodyVelocity", 100, arrayCallback);
 
+    const std::string leftCameraTopic("/stereo_example/left/camera_info");
+    const std::string rightCameraTopic("/stereo_example/right/camera_info");
+    cameraProjectionMatrices cameraInfoObj(nh, leftCameraTopic, rightCameraTopic);
+    ROS_INFO("---- Connected to camera info -----");
 
-    // const std::string leftCameraTopic("/davinci_endo/left/image_raw");
-    // const std::string rightCameraTopic("/davinci_endo/right/image_raw");
-    // cameraProjectionMatrices cameraInfoObj(nh, leftCameraTopic, rightCameraTopic);
-    // ROS_INFO("---- Connected to camera info -----");
+    //TODO: get image size from camera model, or initialize segmented images,
 
-    //TODO: get image size from camera model, initialize segmented images
-
-    cv::Mat rawImage_left = cv::Mat::zeros(640, 920, CV_32FC1);
-    cv::Mat rawImage_right = cv::Mat::zeros(640, 920, CV_32FC1);
+    cv::Mat rawImage_left = cv::Mat::zeros(480, 640, CV_32FC1);
+    cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_32FC1);
 
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber img_sub_l = it.subscribe("/davinci_endo/left/image_raw", 1,
@@ -180,12 +183,9 @@ int main(int argc, char** argv){
         {
             ROS_INFO("---- inside get cam info -----");
             //retrive camera info
-//            P_l = cameraInfoObj.getLeftProjectionMatrix();
-//            P_r = cameraInfoObj.getRightProjectionMatrix();
+            P_l = cameraInfoObj.getLeftProjectionMatrix();
+            P_r = cameraInfoObj.getRightProjectionMatrix();
 
-            /****testing params**/
-            P_l = P;
-            P_r = P;
             if(P_l.at<double>(0,0) != 0 && P_r.at<double>(0,0) != 0)
             {
                 ROS_INFO("obtained camera info");
@@ -195,11 +195,11 @@ int main(int argc, char** argv){
         }
 
         /*** if camera is ready, doing the tracking based on segemented image***/
-        if (freshImage){
+        if (freshImage && freshVelocity && freshCameraInfo){
 
             //t = clock();
-            seg_left=segmentation(rawImage_left);
-            seg_right=segmentation(rawImage_right);
+            seg_left = segmentation(rawImage_left);  //or use image_vessselness
+            seg_right = segmentation(rawImage_right);
             //t = clock() - t;
 
             //Stage body velocity
@@ -216,17 +216,17 @@ int main(int argc, char** argv){
 
 
             /****Testing time and image****/
-/*            float sec = (float)t/CLOCKS_PER_SEC;
+/*          float sec = (float)t/CLOCKS_PER_SEC;
             imshow( "left_raw_img", rawImage_left);
             imshow( "Left_Segmented", seg_left );
             imshow( "right_raw_img", rawImage_right);
             imshow( "Right_Segmented", seg_right );
-             cout<<"after imshow"<<endl;
-             cv::waitKey(10);
-             avg_tim += sec;
-             cout<< "avg time is : "<< avg_tim/count<<endl;
-             count += 1;
-             cout<<"each segmentation peroid takes: "<<t<<endl;*/
+            cout<<"after imshow"<<endl;
+            cv::waitKey(10);
+            avg_tim += sec;
+            cout<< "avg time is : "<< avg_tim/count<<endl;
+            count += 1;
+            cout<<"each segmentation peroid takes: "<<t<<endl;*/
 
             freshImage = false;
             freshVelocity = false;
