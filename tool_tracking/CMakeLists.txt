@@ -6,6 +6,7 @@ find_package(catkin_simple REQUIRED)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(OpenCV REQUIRED)
+find_package(vesselness_image_filter_common REQUIRED)
 
 # find_package(catkin REQUIRED COMPONENTS message_generation std_msgs sensor_msgs cwru_opencv_common toolModel)
 
@@ -35,7 +36,7 @@ cs_add_executable(tracking_main src/tracking_main.cpp)
 # edit the arguments to reference the named node and named library within this package
 # target_link_library(example my_lib)
 target_link_libraries(tool_tracking ${OpenCV_LIBRARIES} ${catkin_LIBRARIES} tool_model_lib)
-target_link_libraries(tracking_main tool_tracking ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} )
+target_link_libraries(tracking_main tool_tracking ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} vesselness_image_filter_common_lib)
 
 
 cs_install()

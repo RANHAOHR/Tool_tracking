@@ -4,7 +4,7 @@
 #include <image_transport/image_transport.h>
 #include <cwru_opencv_common/projective_geometry.h>
 #include <tool_tracking/particle_filter.h>
-// #include <vesselness_image_filter_cpu/vesselness_lib.h>
+#include <vesselness_image_filter_common/vesselness_image_filter_common.h>
 #include "std_msgs/MultiArrayLayout.h"
 #include "std_msgs/MultiArrayDimension.h"
 #include "std_msgs/Float64MultiArray.h"
@@ -41,7 +41,7 @@ void newImageCallback(const sensor_msgs::ImageConstPtr& msg, cv::Mat* outputImag
 }
 
 // receive body velocity
-void arrayCallback(const std_msgs::Float64MultiArray::ConstPtr& array)
+/*void arrayCallback(const std_msgs::Float64MultiArray::ConstPtr& array)
 {
     int i = 0;
     // print all the remaining numbers
@@ -53,18 +53,18 @@ void arrayCallback(const std_msgs::Float64MultiArray::ConstPtr& array)
 
     freshVelocity = true;
 
-}
+}*/
 
 void timerCB(const ros::TimerEvent&)
 {
 
-/*    std::vector<cv::Mat> disp;
-    disp.resize(2);
-
-    for (int j(0); j<2; j++)
-    {
-        convertSegmentImageCPUBW(trackingImgs[j],disp[j]);  //what is this?
-    }*/
+//    std::vector<cv::Mat> disp;
+//    disp.resize(2);
+//
+//    for (int j(0); j<2; j++)
+//    {
+//        convertSegmentImageCPUBW(trackingImgs[j],disp[j]);  //what is this?
+//    }
 
 //    if(freshImage && freshCameraInfo && freshVelocity){
 //        cv::imshow( "Trancking Image: LEFT", disp[0]);
@@ -82,6 +82,7 @@ cv::Mat segmentation(cv::Mat &InputImg){
     cv::Mat src, src_gray;
     cv::Mat grad;
 
+    cv::Mat res;
     src = InputImg;
 
     resize(src, src, cv::Size(), 1, 1);
@@ -94,7 +95,9 @@ cv::Mat segmentation(cv::Mat &InputImg){
 
     Canny( src_gray, grad, lowThresh, 4*lowThresh, 3 ); //use Canny segmentation
 
-    return grad;
+    grad.convertTo(res, CV_32FC1);
+
+    return res;
 
 }
 
@@ -154,7 +157,7 @@ int main(int argc, char** argv){
 
     /*** Subscribers, velocity, stream images ***/
 
-    ros::Subscriber sub3 = nh.subscribe("/bodyVelocity", 100, arrayCallback);
+    // ros::Subscriber sub3 = nh.subscribe("/bodyVelocity", 100, arrayCallback);
 
     const std::string leftCameraTopic("/stereo_example/left/camera_info");
     const std::string rightCameraTopic("/stereo_example/right/camera_info");
@@ -179,23 +182,23 @@ int main(int argc, char** argv){
         ros::spinOnce();
 
         /*** make sure camera information is ready ***/
-        if(!freshCameraInfo)
-        {
-            ROS_INFO("---- inside get cam info -----");
-            //retrive camera info
-            P_l = cameraInfoObj.getLeftProjectionMatrix();
-            P_r = cameraInfoObj.getRightProjectionMatrix();
-
-            if(P_l.at<double>(0,0) != 0 && P_r.at<double>(0,0) != 0)
-            {
-                ROS_INFO("obtained camera info");
-                freshCameraInfo = true;
-            }
-
-        }
+//        if(!freshCameraInfo)
+//        {
+//            ROS_INFO("---- inside get cam info -----");
+//            //retrive camera info
+//            P_l = cameraInfoObj.getLeftProjectionMatrix();
+//            P_r = cameraInfoObj.getRightProjectionMatrix();
+//
+//            if(P_l.at<double>(0,0) != 0 && P_r.at<double>(0,0) != 0)
+//            {
+//                ROS_INFO("obtained camera info");
+//                freshCameraInfo = true;
+//            }
+//
+//        }
 
         /*** if camera is ready, doing the tracking based on segemented image***/
-        if (freshImage && freshVelocity && freshCameraInfo){
+        if (freshImage /*&& freshVelocity && freshCameraInfo*/){
 
             //t = clock();
             seg_left = segmentation(rawImage_left);  //or use image_vessselness
@@ -203,12 +206,12 @@ int main(int argc, char** argv){
             //t = clock() - t;
 
             //Stage body velocity
-//            for(int i(0);i<6;i++)
-//            {
-//                bodyVel.at<double>(i,0) = Arr[i];
-//            }
-//
-//            trackingImgs = Particles.trackingTool(bodyVel, seg_left, seg_right, P_l, P_r); //with rendered tool and segmented img
+            for(int i(0);i<6;i++)
+            {
+                bodyVel.at<double>(i,0) = Arr[i];
+            }
+
+            trackingImgs = Particles.trackingTool(bodyVel, seg_left, seg_right, P_l, P_r); //with rendered tool and segmented img
 //
 //            cv::imshow("Rendered Image: Left", trackingImgs[0]);
 //            cv::imshow("Rendered Image: Right", trackingImgs[1]);

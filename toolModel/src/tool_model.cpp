@@ -1138,7 +1138,7 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
     if (ROI.area() != 0) 
     {
         cv::Mat ROI_toolImage = toolImage(ROI); //crop tool image
-        cv::Mat ROI_segmentedImage = segmentedImage(ROI); //crop segmented image, notice the size of the sgemented image
+        cv::Mat ROI_segmentedImage = segmentedImage(ROI); //crop segmented image, notice the size of the segmented image
 
         //cv::Mat product; //elementwise product of images
         cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
@@ -1154,12 +1154,12 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 
         imshow("blurred image", toolImFloatBlured);
 
-        cv::waitKey(0); //for testing
+        cv::waitKey(10); //for testing
 
         toolImFloatBlured /= 255; //scale the blurred image
 
-        cv::Mat result(1,1,CV_32FC1);
-        cv::matchTemplate(toolImFloat, toolImFloatBlured, result, CV_TM_CCORR_NORMED); //sge, toolImg
+        cv::Mat result(1, 1, CV_32FC1);
+        cv::matchTemplate(ROI_segmentedImage, toolImFloatBlured, result, CV_TM_CCORR_NORMED); //seg, toolImg
         matchingScore = static_cast<double> (result.at< float >(0));
         
     }

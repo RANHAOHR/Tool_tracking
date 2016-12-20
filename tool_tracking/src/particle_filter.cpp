@@ -83,7 +83,7 @@ void ParticleFilter::initializeParticles()
 };
 
  std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,const cv::Mat &P_left, const cv::Mat &P_right){
-
+     ROS_INFO("---- Inside tracking function ---");
      cv::Mat segmentedImage_left = segmented_left.clone();
      cv::Mat segmentedImage_right = segmented_right.clone();
 
@@ -101,6 +101,7 @@ void ParticleFilter::initializeParticles()
          toolImage_left.setTo(0); //reset image for every start of an new loop
          ROI_left = newToolModel.renderTool(toolImage_left, particles[i], Cam, P_left); //first get the rendered image using 3d model of the tool
          left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left, ROI_left);  //get the matching score
+         ROS_INFO("---- Done left render and calculation---");
 
          toolImage_right.setTo(0); //reset image
          ROI_right = newToolModel.renderTool(toolImage_right, particles[i], Cam, P_right);
@@ -117,7 +118,7 @@ void ParticleFilter::initializeParticles()
      }
 
      /*** you may wanna do this in a different stream, TODO: ***/
-     ROS_INFO_STREAM(maxScore);  //debug
+     ROS_INFO_STREAM("Maxscore: " << maxScore);  //debug
 
      newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx], Cam, P_left);  //render in segmented image, no need to get the ROI
      newToolModel.renderTool(segmentedImage_right, particles[maxScoreIdx], Cam, P_right);
@@ -157,6 +158,7 @@ void ParticleFilter::initializeParticles()
      return trackingImages;
  };
 
+ /***** update paritcles to find and reach to the best pose ***/
  void ParticleFilter::updateParticles(const cv::Mat &bodyVel, double &updateRate){ //get particles and update them based on given spatial velocity
 
      cv::Mat Rot = cv::Mat::zeros(3,3,CV_64F);
@@ -193,7 +195,7 @@ void ParticleFilter::initializeParticles()
              cv::Mat wtil = w*updateRate;
 
              double M = cv::norm(wtil);
-             cv::Mat v_bar = vtil/M;  //h = w*v//||w||
+             cv::Mat v_bar = vtil/M;  //h = w*v//||w||^2
              cv::Mat w_bar = wtil/M;
 
              cv::Mat w_hat = newToolModel.computeSkew(w_bar);
