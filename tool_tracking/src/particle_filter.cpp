@@ -77,13 +77,14 @@ void ParticleFilter::initializeParticles()
 	//generate random needle 
 	for(int i(0); i<numParticles; i++)
 	{
-		particles[i] = newToolModel.setRandomConfig(initial, 1, 0);
+		particles[i] = newToolModel.setRandomConfig(initial, Cam, 1, 0);
 	}
 
 };
 
  std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,const cv::Mat &P_left, const cv::Mat &P_right){
-     ROS_INFO("---- Inside tracking function ---");
+
+     // ROS_INFO("---- Inside tracking function ---");
      cv::Mat segmentedImage_left = segmented_left.clone();
      cv::Mat segmentedImage_right = segmented_right.clone();
 
@@ -101,7 +102,6 @@ void ParticleFilter::initializeParticles()
          toolImage_left.setTo(0); //reset image for every start of an new loop
          ROI_left = newToolModel.renderTool(toolImage_left, particles[i], Cam, P_left); //first get the rendered image using 3d model of the tool
          left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left, ROI_left);  //get the matching score
-         ROS_INFO("---- Done left render and calculation---");
 
          toolImage_right.setTo(0); //reset image
          ROI_right = newToolModel.renderTool(toolImage_right, particles[i], Cam, P_right);
@@ -151,7 +151,7 @@ void ParticleFilter::initializeParticles()
 
          for(int i(0); i<particles.size(); i++)
          {
-             particles[i] = newToolModel.setRandomConfig(particles[i],perturbStd,0.0);
+             particles[i] = newToolModel.setRandomConfig(particles[i], Cam, perturbStd,0.0);
          }
      }
 
@@ -282,7 +282,7 @@ void ParticleFilter::initializeParticles()
 
      for(int i(0); i<size; i++)
      {
-         result[i] = newToolModel.setRandomConfig(particles[i], stdev, mean);
+         result[i] = newToolModel.setRandomConfig(particles[i], Cam, stdev, mean);
      }
 
      return result;

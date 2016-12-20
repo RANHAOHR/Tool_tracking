@@ -4,7 +4,7 @@
 *
 *  All rights reserved.
 *
-*  @The functions in this file creat and render the random Tool Model (loaded OBJ files) to Image
+*  @The functions in this file create the random Tool Model (loaded OBJ files) and render tool models to Images
 */
 
 #include <ros/ros.h>
@@ -77,7 +77,7 @@ ToolModel::ToolModel(cv::Mat& CamMat){
 //    cout << "max x:" << maxx.x << " max y:" << maxx.y << " max z:" << maxx.z << endl;
 //    cout << "min x:" << minn.x << " min y:" << minn.y << " min z:" << minn.z << endl;
 
-    //ROS_INFO_STREAM("THE ELLIPSE FACES: " << ellipse_faces.size());
+    // ROS_INFO_STREAM("THE ELLIPSE FACES: " << ellipse_faces.size());
 
     srand((unsigned) time( NULL)); //for the random number generator, use only once
 
@@ -95,7 +95,7 @@ double ToolModel::randomNumber(double stdev, double mean){
 /*generate random number in a certain range*/
 double ToolModel::randomNum(double min, double max) {
 
-     // srand((unsigned) time( NULL));
+     /// srand((unsigned) time( NULL));  //do this in main or constructor
      int N = 999;
 
      double randN = rand() % (N + 1) / (double) (N + 1);  // a rand number frm 0 to 1
@@ -132,9 +132,9 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
 
     std::vector< unsigned int > vertexIndices, uvIndices, normalIndices;
     //std::vector< unsigned int > vertexIndices;
-    std::vector< glm::vec3 > temp_vertices;
+    // std::vector< glm::vec3 > temp_vertices;
     std::vector< glm::vec2 > temp_uvs;
-    std::vector< glm::vec3 > temp_normals;
+    // std::vector< glm::vec3 > temp_normals;
 
     std::vector< int > temp_face;
     temp_face.resize(6);  //need three vertex and corresponding normals
@@ -184,30 +184,30 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
         }
         else if ( strcmp( lineHeader, "f" ) == 0 ){
     
-    unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
-    int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
-    if (matches != 9){
-        ROS_ERROR("File can't be read by our simple parser : ( Try exporting with other options\n");
-    }
-    
-    vertexIndices.push_back(vertexIndex[0]);
-    vertexIndices.push_back(vertexIndex[1]);
-    vertexIndices.push_back(vertexIndex[2]);
-    uvIndices    .push_back(uvIndex[0]);
-    uvIndices    .push_back(uvIndex[1]);
-    uvIndices    .push_back(uvIndex[2]);
-    normalIndices.push_back(normalIndex[0]);
-    normalIndices.push_back(normalIndex[1]);
-    normalIndices.push_back(normalIndex[2]);
+        unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+        int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
+        if (matches != 9){
+            ROS_ERROR("File can't be read by our simple parser : ( Try exporting with other options\n");
+        }
 
-    temp_face[0] = vertexIndex[0]-1;
-    temp_face[1] = vertexIndex[1]-1;
-    temp_face[2] = vertexIndex[2]-1;
-    temp_face[3] = normalIndex[0]-1;
-    temp_face[4] = normalIndex[1]-1;
-    temp_face[5] = normalIndex[2]-1;
+        vertexIndices.push_back(vertexIndex[0]);
+        vertexIndices.push_back(vertexIndex[1]);
+        vertexIndices.push_back(vertexIndex[2]);
+        uvIndices    .push_back(uvIndex[0]);
+        uvIndices    .push_back(uvIndex[1]);
+        uvIndices    .push_back(uvIndex[2]);
+        normalIndices.push_back(normalIndex[0]);
+        normalIndices.push_back(normalIndex[1]);
+        normalIndices.push_back(normalIndex[2]);
 
-    out_faces.push_back(temp_face);
+        temp_face[0] = vertexIndex[0]-1;
+        temp_face[1] = vertexIndex[1]-1;
+        temp_face[2] = vertexIndex[2]-1;
+        temp_face[3] = normalIndex[0]-1;
+        temp_face[4] = normalIndex[1]-1;
+        temp_face[5] = normalIndex[2]-1;
+
+        out_faces.push_back(temp_face);
 
                
         }
@@ -275,9 +275,11 @@ void ToolModel::load_model_vertices(const char * path, std::vector< glm::vec3 > 
 
 /*output a glm to a cv 3d point*/
 void ToolModel::Convert_glTocv_pts(std::vector< glm::vec3 > &input_vertices, std::vector< cv::Point3d > &out_vertices){
-    int vsize = input_vertices.size();
+
+    unsigned int vsize = input_vertices.size();
+
     out_vertices.resize(vsize);
-        for (int i = 0; i < vsize; ++i)
+    for (int i = 0; i < vsize; ++i)
     {
         out_vertices[i].x = input_vertices[i].x;
         out_vertices[i].y = input_vertices[i].y;
@@ -352,7 +354,7 @@ cv::Point3d ToolModel::camTransformVec(cv::Mat &cam_mat, cv::Point3d &input_vec)
     return output_vec;
 };
 
-/***************approach 2: using Vertices Mat and normal Mat*******************/
+/*************** Approach 1: using Vertices Mat and normal Mat *******************/
 void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input_faces, const std::vector< std::vector<int> > &neighbor_faces, 
                                  const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
                                  cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec, 
@@ -360,12 +362,12 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
 {
 
     cv::Mat new_Vertices = transformPoints(input_Vmat, rvec,tvec);
-    new_Vertices = camTransformMats(CamMat, new_Vertices);
+    new_Vertices = camTransformMats(CamMat, new_Vertices); //transform every point under camera frame
 
     cv::Mat new_Normals = transformPoints(input_Nmat, rvec,tvec);
-    new_Normals = camTransformMats(CamMat, new_Normals);
+    new_Normals = camTransformMats(CamMat, new_Normals); //transform every surface normal under camera frame
 
-    int neighbor_num = 0;
+    unsigned long neighbor_num = 0;
     cv::Mat temp(4,1, CV_64FC1);
 
     cv::Mat ept_1(4,1,CV_64FC1);
@@ -450,7 +452,7 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
                 {
                     /*finish finding, drawing the image*/
 
-                    new_Vertices.col(neighbor_faces[i][j+1]).copyTo(ept_1);
+                    new_Vertices.col(neighbor_faces[i][j+1]).copyTo(ept_1);  //under camera frames
                     new_Vertices.col(neighbor_faces[i][j+2]).copyTo(ept_2);             
 
                     cv::Point2d prjpt_1 = reproject(ept_1, P);
@@ -497,9 +499,7 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
     cv::Mat new_Vertices = transformPoints(input_Vmat, rvec,tvec);
     new_Vertices = camTransformMats(CamMat, new_Vertices);
 
-    int face_index;
-
-    int neighbor_num = 0;
+    unsigned int neighbor_num = 0;
 
     cv::Mat temp(4,1, CV_64FC1);
 
@@ -937,9 +937,13 @@ void ToolModel::modify_model_(std::vector< glm::vec3 > &input_vertices, std::vec
 
 /*This function is to generate a tool model, contains the following info:
 traslation, raotion, new z axis, new x axis*/
-ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double stdev, double mean)
+//TODO:
+ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, const cv::Mat &Cam, double stdev, double mean)
 {
 	toolModel newTool = initial;  //BODY part is done here
+
+    double cam_z = Cam.at<double>(2,3);
+    double z_max = Cam.at<double>(2,3); //TODO: you may want to tune this
 
     /******testing section here********/
 //    double theta_ellipse = 0.0;
@@ -949,18 +953,19 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, double
 	//create normally distributed random number with the given stdev and mean
 
 	//TODO: pertub all translation components
-/*	newTool.tvec_cyl(0) += randomNumber(stdev,mean);
-	newTool.tvec_cyl(1) += randomNumber(stdev,mean);
-	newTool.tvec_cyl(2) += randomNumber(stdev,mean);
-	
-	double angle = randomNumber(stdev,mean);
-	newTool.rvec_cyl(0) += (angle/10.0)*1000.0; //rotation on x axis +/-5 degrees
+//	newTool.tvec_cyl(0) = randomNum(stdev,mean);
+//	newTool.tvec_cyl(1) = randomNum(stdev,mean);
 
-	angle = randomNumber(stdev,mean);
-	newTool.rvec_cyl(0) += (angle/10.0)*1000.0; ////rotation on x axis +/-5 degrees
-
-	angle = randomNumber(stdev,mean);
-	newTool.rvec_cyl(2) += (angle/10.0)*1000.0; //rotation on z axis +/-5 degrees*/
+	newTool.tvec_cyl(2) =  randomNum(0.01, 0.03); ////translation on z cannot be random because of the camera transformation
+//
+//	double angle = randomNumber(stdev,mean);
+//	newTool.rvec_cyl(0) += (angle/10.0)*1000.0; //rotation on x axis +/-5 degrees
+//
+//	angle = randomNumber(stdev,mean);
+//	newTool.rvec_cyl(0) += (angle/10.0)*1000.0; //rotation on x axis +/-5 degrees
+//
+//	angle = randomNumber(stdev,mean);
+//	newTool.rvec_cyl(2) += (angle/10.0)*1000.0; ////rotation on z axis +/-5 degrees
 
 
     /**************smaple the angles of the joints**************/
@@ -1098,11 +1103,16 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nma
     int row = image.rows;
     int col = image.cols;
 
-    if (XY_min.x - col >0 || XY_min.y - row >0 )
+    if (XY_min.x - col >0 || XY_min.y - row >0 ) ///the case when the coord of ROI is too far from the camera frame
     {
         ROS_INFO("Tool is NOT in the visible region of the camera, position is not valid !");
-    }
-    else{
+
+    }else if(XY_min.x < 0 || XY_min.y < 0){   ///if the coord of ROI can have partial body under camera frame
+
+        XY_min.x = 0;
+        XY_min.y = 0;
+
+    }else{   ////normal case, if x and y exceed the board of image, crop;
 
         if (XY_max.x - col > 0)
         {
@@ -1113,15 +1123,14 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nma
             XY_max.y = row;
         }
 
-
         //shape the rectangle that captures the rendered needle
         ROI.width = abs(static_cast<int>(XY_max.x-XY_min.x)) + 2*padding;
         ROI.height = abs(static_cast<int>(XY_max.y-XY_min.y));
         ROI.x = XY_min.x - padding;
         ROI.y = XY_min.y - padding;
 
-        // ROS_INFO_STREAM("ROI.X: " << ROI.x);
-        // ROS_INFO_STREAM("ROI.y: " << ROI.y);
+        ROS_INFO_STREAM("ROI.X: " << ROI.x);
+        ROS_INFO_STREAM("ROI.y: " << ROI.y);
         // ROS_INFO_STREAM("ROI.width: " << ROI.width);
         // ROS_INFO_STREAM("ROI.height: " << ROI.height);
     }
@@ -1154,7 +1163,7 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 
         imshow("blurred image", toolImFloatBlured);
 
-        cv::waitKey(10); //for testing
+        cv::waitKey(0); //for testing
 
         toolImFloatBlured /= 255; //scale the blurred image
 
@@ -1162,6 +1171,8 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
         cv::matchTemplate(ROI_segmentedImage, toolImFloatBlured, result, CV_TM_CCORR_NORMED); //seg, toolImg
         matchingScore = static_cast<double> (result.at< float >(0));
         
+    }else{
+        ROS_INFO("EMPTY ROI");
     }
 
 

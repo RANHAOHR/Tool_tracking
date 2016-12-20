@@ -111,7 +111,6 @@
      /***consider getting a timer to debug***/
     // void timerCallback(const ros::TimerEvent&);
 
-
     /*
      * This is the main function for tracking the needle. This function is called and it syncs all of the functions
     */

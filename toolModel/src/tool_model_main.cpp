@@ -140,7 +140,7 @@ int main(int argc, char** argv)
 	clock_t t2;
 
 	t1 = clock();
-	newTool = newToolModel.setRandomConfig(initial, 1, 0);
+	newTool = newToolModel.setRandomConfig(initial, Cam, 1, 0);
 	t1 = clock() - t1;
 
 	t = clock();
@@ -167,12 +167,12 @@ int main(int argc, char** argv)
 	ROS_INFO_STREAM("MATCHING TIME: " << sec2);
 
 
-	// if(!testImg.empty()){
- //        imshow("test", testImg);
- //    }
-	
-
-	// cv::waitKey(0);
+//	 if(!testImg.empty()){   ///need CV_64FC1
+//         imshow("test", testImg);
+//     }
+//
+//
+//	 cv::waitKey(0);
 
 
 
