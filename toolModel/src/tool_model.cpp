@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
-#include <iostream>
 #include <cwru_opencv_common/projective_geometry.h>
 
 #include <tool_model_lib/tool_model.h>
@@ -942,30 +941,29 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, const 
 {
 	toolModel newTool = initial;  //BODY part is done here
 
-    double cam_z = Cam.at<double>(2,3);
-    double z_max = Cam.at<double>(2,3); //TODO: you may want to tune this
+    double max_z = Cam.at<double>(2,3) -0.1;
 
     /******testing section here********/
 //    double theta_ellipse = 0.0;
 //    double theta_grip_1 = 0.2;
 //    double theta_grip_2 = -0.2;
 
-	//create normally distributed random number with the given stdev and mean
+	//create normally distributed random number within a certain range, or use stdev and mean
 
 	//TODO: pertub all translation components
-//	newTool.tvec_cyl(0) = randomNum(stdev,mean);
-//	newTool.tvec_cyl(1) = randomNum(stdev,mean);
+	newTool.tvec_cyl(0) = randomNum(-0.03,0.03);
+	newTool.tvec_cyl(1) = randomNum(-0.03,0.03);
 
-	newTool.tvec_cyl(2) =  randomNum(0.01, 0.03); ////translation on z cannot be random because of the camera transformation
+	newTool.tvec_cyl(2) =  randomNum(-0.2, max_z); ////translation on z cannot be random because of the camera transformation
 //
-//	double angle = randomNumber(stdev,mean);
-//	newTool.rvec_cyl(0) += (angle/10.0)*1000.0; //rotation on x axis +/-5 degrees
-//
-//	angle = randomNumber(stdev,mean);
-//	newTool.rvec_cyl(0) += (angle/10.0)*1000.0; //rotation on x axis +/-5 degrees
-//
-//	angle = randomNumber(stdev,mean);
-//	newTool.rvec_cyl(2) += (angle/10.0)*1000.0; ////rotation on z axis +/-5 degrees
+	double angle = randomNum(-0.1,0.1);
+	newTool.rvec_cyl(0) += angle; //rotation on x axis +/-5 degrees
+
+    angle = randomNum(-0.1,0.1);
+	newTool.rvec_cyl(0) += angle; //rotation on x axis +/-5 degrees
+
+    angle = randomNum(-0.1,0.1);
+	newTool.rvec_cyl(2) += angle; //rotation on z axis +/-5 degrees
 
 
     /**************smaple the angles of the joints**************/
@@ -1095,9 +1093,6 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nma
 // Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat,gripper2Face_normal, gripper2Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
 
 
-    // ROS_INFO_STREAM("XY_max: " << XY_max);
-    // ROS_INFO_STREAM("XY_min: " << XY_min);
-
     /*cannot get all body part fo the tool, decided by the size of the image;
     bound the tool according to the image position*/
     int row = image.rows;
@@ -1129,8 +1124,9 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nma
         ROI.x = XY_min.x - padding;
         ROI.y = XY_min.y - padding;
 
-        ROS_INFO_STREAM("ROI.X: " << ROI.x);
-        ROS_INFO_STREAM("ROI.y: " << ROI.y);
+        /**** DEBUG ****/
+//        ROS_INFO_STREAM("ROI.X: " << ROI.x);
+//        ROS_INFO_STREAM("ROI.y: " << ROI.y);
         // ROS_INFO_STREAM("ROI.width: " << ROI.width);
         // ROS_INFO_STREAM("ROI.height: " << ROI.height);
     }
@@ -1149,7 +1145,6 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
         cv::Mat ROI_toolImage = toolImage(ROI); //crop tool image
         cv::Mat ROI_segmentedImage = segmentedImage(ROI); //crop segmented image, notice the size of the segmented image
 
-        //cv::Mat product; //elementwise product of images
         cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
         cv::Mat toolImFloat; //Float data type of grey scale tool image
         cv::Mat toolImFloatBlured; //Float data type of grey scale blurred toolImage
@@ -1172,7 +1167,7 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
         matchingScore = static_cast<double> (result.at< float >(0));
         
     }else{
-        ROS_INFO("EMPTY ROI");
+        ROS_INFO("EMPTY ROI, ZERO matching score");
     }
 
 
