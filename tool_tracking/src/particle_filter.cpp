@@ -6,7 +6,7 @@
  using namespace std;
 
  ParticleFilter::ParticleFilter(ros::NodeHandle* nodehandle):
-     nh_(*nodehandle), numParticles(2), toolSize(2), perturbStd(0.001), newToolModel(Cam)
+     nh_(*nodehandle), numParticles(10), toolSize(2), perturbStd(0.001), newToolModel(Cam)
 {
 
     /****initial position guess
@@ -151,7 +151,7 @@ void ParticleFilter::initializeParticles()
 
          for(int i(0); i<particles.size(); i++)
          {
-             particles[i] = newToolModel.setRandomConfig(particles[i], Cam, perturbStd,0.0);
+             particles[i] = newToolModel.setRandomConfig(particles[i], Cam, perturbStd, 0.0);
          }
      }
 
@@ -247,6 +247,7 @@ void ParticleFilter::initializeParticles()
      return adjG;
  };
 
+ /**** resampling method ****/
  void ParticleFilter::resampleLowVariance(const std::vector<ToolModel::toolModel> &sampleModel, const std::vector<double> &particleWeight,  std::vector<ToolModel::toolModel> &results)
  {
      int M = sampleModel.size(); //total number of particles
@@ -258,13 +259,14 @@ void ParticleFilter::initializeParticles()
 
      c = particleWeight[0]; //first particle weight
      int idx(0); //index
+
      results.clear(); //final particles (how to clear)
      r = newToolModel.randomNum(min,max); //random number in range [0,1/M]
 
      for(int i(1); i<=M; i++)
      {
-         U = r+((double)(i-1)*max);
-         while(U>c)
+         U = r+((double)(i-1)*max);  ///keep the wieghts under 1/M
+         while(U>c)   ///if the weight of the current particle is bigger than the former one,
          {
              idx +=1;
              c += particleWeight[idx];

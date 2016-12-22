@@ -1,13 +1,14 @@
 <?xml version="1.0"?>
 <package>
-  <name>toolModel</name>
+  <name>tool_tracking</name>
   <version>0.0.0</version>
-  <description>The toolModel package</description>
-  
-  <!-- One maintainer tag required, multiple allowed, one person per tag -->
+  <description>The tool_tracking package</description>
+
+  <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="rxh349@todo.todo">rxh349</maintainer>
+  <maintainer email="rxh349@case.edu">rxh349</maintainer>
+
 
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
@@ -22,8 +23,9 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>cwru_opencv_common</build_depend>
-  <build_depend>vesselness_image_filter_cpu</build_depend>
-  <build_depend>glm</build_depend>
+  <build_depend>vesselness_image_filter_common</build_depend>
+  <build_depend>toolModel</build_depend>
+
   <!--run_depend>cv_bridge</run_depend -->
   <run_depend>image_transport</run_depend>
   <run_depend>roscpp</run_depend>
@@ -31,7 +33,7 @@
   <run_depend>std_msgs</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>cwru_opencv_common</run_depend>
-  <run_depend>vesselness_image_filter_cpu</run_depend>
-  <run_depend>glm</run_depend>
+  <run_depend>vesselness_image_filter_common</run_depend >
+  <run_depend>toolModel</run_depend>
+
 </package>
-    

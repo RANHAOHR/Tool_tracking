@@ -14,7 +14,6 @@
 #include <string>
 #include <cstring>
 
-
 #include <glm/glm.hpp>
 
 #include <glm/vec3.hpp>

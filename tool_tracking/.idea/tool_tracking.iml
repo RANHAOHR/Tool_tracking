@@ -22,7 +22,7 @@
           <root url="file:///usr/include" />
           <root url="file:///usr/local/include" />
           <root url="file:///opt/ros/indigo/include" />
-          <root url="file://$MODULE_DIR$/../toolModel/include" />
+          <root url="file://$MODULE_DIR$/../tool_model/include" />
           <root url="file://$MODULE_DIR$/../../cwru_vision/cwru_opencv_common/include" />
           <root url="file://$MODULE_DIR$/../../vesselness_image_filter_common/include" />
           <root url="file://$MODULE_DIR$/../../../devel/include" />
@@ -33,7 +33,7 @@
           <root url="file:///usr/include" />
           <root url="file:///usr/local/include" />
           <root url="file:///opt/ros/indigo/include" />
-          <root url="file://$MODULE_DIR$/../toolModel/include" />
+          <root url="file://$MODULE_DIR$/../tool_model/include" />
           <root url="file://$MODULE_DIR$/../../cwru_vision/cwru_opencv_common/include" />
           <root url="file://$MODULE_DIR$/../../vesselness_image_filter_common/include" />
           <root url="file://$MODULE_DIR$/../../../devel/include" />

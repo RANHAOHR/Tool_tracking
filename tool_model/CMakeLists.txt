@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(toolModel)
+project(tool_model)
 
 #uncomment next line to use OpenCV library
 find_package(catkin_simple REQUIRED)
