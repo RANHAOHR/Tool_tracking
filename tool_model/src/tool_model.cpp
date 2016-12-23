@@ -931,18 +931,18 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, const 
 //    double theta_grip_2 = -0.2;
 
 	//create normally distributed random number within a certain range, or use stdev and mean
-//    newTool.tvec_cyl(0) = radius * cos(theta);
-//    newTool.tvec_cyl(1) = radius * sin(theta);
-//	newTool.tvec_cyl(2) =  randomNum(-0.2, max_z); ////translation on z cannot be random because of the camera transformation
-//
-//	double angle = randomNum(-2, 2);
-//	newTool.rvec_cyl(0) += angle; //rotation on x axis +/-5 degrees
-//
-//    angle = randomNum(-2, 2);
-//	newTool.rvec_cyl(1) += angle; //rotation on x axis +/-5 degrees
-//
-//    angle = randomNum(-3, 3);
-//	newTool.rvec_cyl(2) += angle; //rotation on z axis +/-5 degrees
+    newTool.tvec_cyl(0) = radius * cos(theta);
+    newTool.tvec_cyl(1) = radius * sin(theta);
+	newTool.tvec_cyl(2) =  randomNum(-0.2, max_z); ////translation on z cannot be random because of the camera transformation
+
+	double angle = randomNum(-2, 2);
+	newTool.rvec_cyl(0) += angle; //rotation on x axis +/-5 degrees
+
+    angle = randomNum(-2, 2);
+	newTool.rvec_cyl(1) += angle; //rotation on x axis +/-5 degrees
+
+    angle = randomNum(-3, 3);
+	newTool.rvec_cyl(2) += angle; //rotation on z axis +/-5 degrees
 
 
     /**************smaple the angles of the joints**************/
@@ -978,49 +978,26 @@ void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_elli
 
    /***********computations for gripper kinematics**********/
 
-//    cv::Mat test_gripper(3,1,CV_64FC1);
-//    test_gripper.at<double>(0,0) = 0;
-//    test_gripper.at<double>(1,0) = offset_gripper - 0.4522;  //
-//    test_gripper.at<double>(2,0) = 0;
-    // q_temp = transformPoints(q_gripper,cv::Mat(initial.rvec_elp),cv::Mat(initial.tvec_cyl));
+    cv::Mat test_gripper(3,1,CV_64FC1);
+    test_gripper.at<double>(0,0) = 0;
+    test_gripper.at<double>(1,0) = offset_gripper - 0.4522;  //
+    test_gripper.at<double>(2,0) = 0;
 
-    cv::Mat w_x(4,1,CV_64FC1);
-    cv::Mat w_y(4,1,CV_64FC1);
-    cv::Mat w_z(4,1,CV_64FC1);
+    cv::Mat rot_elp(3,3,CV_64FC1);
+    cv::Rodrigues(inputModel.rvec_elp, rot_elp);  // get rotation mat of the ellipse
 
-    w_x.at<double>(0) = 1;
-    w_x.at<double>(1) = 0;
-    w_x.at<double>(2) = 0;
+    cv::Mat q_rot(3,1,CV_64FC1);
+    q_rot = rot_elp * test_gripper;
 
-    w_y.at<double>(0) = 0;
-    w_y.at<double>(1) = 1;
-    w_y.at<double>(2) = 0;
-
-    w_z.at<double>(0) = 0;
-    w_z.at<double>(1) = 0;
-    w_z.at<double>(2) = 1;
-
-    cv::Mat skew_x = computeSkew(w_x);
-    cv::Mat skew_y = computeSkew(w_y);
-    cv::Mat skew_z = computeSkew(w_z);
-
-    cv::Mat roll_mat = I + sin(inputModel.rvec_elp(0)) * skew_x + (1-cos(inputModel.rvec_elp(0))) * skew_x * skew_x;
-    cv::Mat pitch_mat = I + sin(inputModel.rvec_elp(1)) * skew_y + (1-cos(inputModel.rvec_elp(1))) * skew_y * skew_y;
-    cv::Mat yaw_mat = I + sin(inputModel.rvec_elp(2)) * skew_z + (1-cos(inputModel.rvec_elp(2))) * skew_z * skew_z;
-    cv::Mat rotation_mat = yaw_mat*pitch_mat*roll_mat;
-
-    cv::Mat q_rotation = rotation_mat * q_gripper;
-
-    inputModel.tvec_grip1(0) = q_rotation.at<double>(0,0) + inputModel.tvec_elp(0);
-    inputModel.tvec_grip1(1) = q_rotation.at<double>(1,0) + inputModel.tvec_elp(1);
-    inputModel.tvec_grip1(2) = q_rotation.at<double>(2,0) + inputModel.tvec_elp(2);
+    inputModel.tvec_grip1(0) = q_rot.at<double>(0,0) + inputModel.tvec_elp(0);
+    inputModel.tvec_grip1(1) = q_rot.at<double>(1,0) + inputModel.tvec_elp(1);
+    inputModel.tvec_grip1(2) = q_rot.at<double>(2,0) + inputModel.tvec_elp(2);
 
     inputModel.rvec_grip1(0) = inputModel.rvec_elp(0) + theta_grip_1;  //roll angle is plus the theta_gripper
     inputModel.rvec_grip1(1) = inputModel.rvec_elp(1);
     inputModel.rvec_grip1(2) = inputModel.rvec_elp(2);
 
     /*gripper 2*/
-
     inputModel.tvec_grip2(0) = inputModel.tvec_grip1(0);
     inputModel.tvec_grip2(1) = inputModel.tvec_grip1(1);
     inputModel.tvec_grip2(2) = inputModel.tvec_grip1(2);
@@ -1059,18 +1036,17 @@ cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &C
     cv::Point2d XY_max(-10000,-10000); //minimum of X and Y
     cv::Point2d XY_min(10000,10000); //maximum of X and Y
 
-/*approach 2: using Vertices mat and normal mat*/
-Compute_Silhouette(body_faces, body_neighbors, body_Vmat, body_Nmat, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min);
-Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac, XY_max, XY_min);
-Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat, gripper1_Nmat, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
-Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
+    /*approach 2: using Vertices mat and normal mat*/
+    Compute_Silhouette(body_faces, body_neighbors, body_Vmat, body_Nmat, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min);
+    Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac, XY_max, XY_min);
+    Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat, gripper1_Nmat, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
+    Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
 
-/*approach 3: using Face info mat*/
-// Compute_Silhouette(body_faces, body_neighbors, body_Vmat,bodyFace_normal, bodyFace_centroid, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min );
-// Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat,ellipseFace_normal, ellipseFace_centroid, CamMat, image, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac, XY_max, XY_min);
-// Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat,gripper1Face_normal, gripper1Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
-// Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat,gripper2Face_normal, gripper2Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
-
+    /*approach 3: using Face info mat*/
+    // Compute_Silhouette(body_faces, body_neighbors, body_Vmat,bodyFace_normal, bodyFace_centroid, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min );
+    // Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat,ellipseFace_normal, ellipseFace_centroid, CamMat, image, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac, XY_max, XY_min);
+    // Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat,gripper1Face_normal, gripper1Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
+    // Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat,gripper2Face_normal, gripper2Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
 
     /*cannot get all body part fo the tool, decided by the size of the image;
     using the intersection of two rectangular*/
@@ -1103,9 +1079,9 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 {
     double matchingScore =0.0;
 
-    /*When ROI is an empty rec, the position of tool is simply just not match, return 0 matching score*/
-//    if (ROI.area() != 0)
-//    {
+    /*** When ROI is an empty rec, the position of tool is simply just not match, return 0 matching score ***/
+    if (ROI.area() != 0)
+    {
         cv::Mat ROI_toolImage = toolImage; // (ROI); //crop tool image
         cv::Mat ROI_segmentedImage = segmentedImage; //(ROI); //crop segmented image, notice the size of the segmented image
 
@@ -1120,9 +1096,8 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
         //blur float image, probably don't need this
         cv::GaussianBlur(toolImFloat, toolImFloatBlured, cv::Size(9,9),1,1);
 
-        imshow("blurred image", toolImFloatBlured);
-
-        cv::waitKey(0); //for testing
+        imshow("blurred image", toolImFloatBlured); ////for testing
+        cv::waitKey(0);
 
         toolImFloatBlured /= 255; //scale the blurred image
 
@@ -1130,18 +1105,16 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
         cv::matchTemplate(ROI_segmentedImage, toolImFloatBlured, result, CV_TM_CCORR_NORMED); //seg, toolImg
         matchingScore = static_cast<double> (result.at< float >(0));
         
-//    }else{
-//        ROS_INFO("EMPTY ROI, ZERO matching score");
-//    }
+    }else{
+        ROS_INFO("EMPTY ROI, ZERO matching score");
+    }
 
     return matchingScore;
 }
 
-/*************reproject a single point without rvec and tvec, and no jac, FOR THE BODY COORD TRNSFORMATION*******************/
+/*********** reproject a single point without rvec and tvec, and no jac, FOR THE BODY COORD TRNSFORMATION ***************/
 cv::Point2d ToolModel::reproject(const cv::Mat &point, const cv::Mat &P)
 {
-
-
     cv::Mat prjPoints(4,1,CV_64FC1);
     cv::Mat results(3,1,CV_64FC1);
     cv::Point2d output;
