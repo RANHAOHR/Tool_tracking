@@ -212,9 +212,6 @@ public:
  		cv::Point3d convert_MattoPts(cv::Mat &input_Mat);
  		cv::Mat convert4to3(const cv::Mat &inputMat);
 
- 		cv::Mat normalizeMat(cv::Mat &inputMat);
-
-
  		/****************Face editing and info**********************/
  		cv::Point3d FindFaceNormal(cv::Point3d &input_v1, cv::Point3d &input_v2, cv::Point3d &input_v3,
                                      cv::Point3d &input_n1, cv::Point3d &input_n2, cv::Point3d &input_n3);

@@ -98,6 +98,8 @@ double ToolModel::randomNum(double min, double max) {
      int N = 999;
 
      double randN = rand() % (N + 1) / (double) (N + 1);  // a rand number frm 0 to 1
+
+     //double randN = (int)randomNumber(1, 0) % (N + 1) / (double) (N + 1);
      double res = randN * (max -  min) + min;
 
      return res;
@@ -459,15 +461,15 @@ void ToolModel::Compute_Silhouette( const std::vector< std::vector<int> > &input
 
                     cv::line(image, prjpt_1, prjpt_2, cv::Scalar(1,1,1), 1, 8, 0);  
                     
-//                    if(prjpt_1.x > XY_max.x) XY_max.x = prjpt_1.x;
-//                    if(prjpt_1.y > XY_max.y) XY_max.y = prjpt_1.y;
-//                    if(prjpt_1.x < XY_min.x) XY_min.x = prjpt_1.x;
-//                    if(prjpt_1.y < XY_min.y) XY_min.y = prjpt_1.y;
-//
-//                    if(prjpt_2.x > XY_max.x) XY_max.x = prjpt_2.x;
-//                    if(prjpt_2.y > XY_max.y) XY_max.y = prjpt_2.y;
-//                    if(prjpt_2.x < XY_min.x) XY_min.x = prjpt_2.x;
-//                    if(prjpt_2.y < XY_min.y) XY_min.y = prjpt_2.y;
+                    if(prjpt_1.x > XY_max.x) XY_max.x = prjpt_1.x;
+                    if(prjpt_1.y > XY_max.y) XY_max.y = prjpt_1.y;
+                    if(prjpt_1.x < XY_min.x) XY_min.x = prjpt_1.x;
+                    if(prjpt_1.y < XY_min.y) XY_min.y = prjpt_1.y;
+
+                    if(prjpt_2.x > XY_max.x) XY_max.x = prjpt_2.x;
+                    if(prjpt_2.y > XY_max.y) XY_max.y = prjpt_2.y;
+                    if(prjpt_2.x < XY_min.x) XY_min.x = prjpt_2.x;
+                    if(prjpt_2.y < XY_min.y) XY_min.y = prjpt_2.y;
 
                 }
 
@@ -604,28 +606,6 @@ cv::Point3d ToolModel::computeFaceCentro(cv::Mat &pt1, cv::Mat &pt2, cv::Mat &pt
 
     return res_centro;
 
-};
-
-cv::Mat ToolModel::normalizeMat(cv::Mat &inputMat){ //give a 3 by 3 mat
-
-    cv::Mat norm_res(3,1,CV_64FC1);
-  
-    double norm = inputMat.at<double>(0,0)*inputMat.at<double>(0,0) + inputMat.at<double>(1,0)*inputMat.at<double>(1,0) + inputMat.at<double>(2,0)*inputMat.at<double>(2,0);
-    if (norm == 0.00000)
-     {
-        //ROS_ERROR("Trying to normalize a zero vector!");
-     }
-     else{
-        norm = pow(norm, 0.5);
-
-        norm_res.at<double>(0,0) = inputMat.at<double>(0,0)/norm;
-
-        norm_res.at<double>(1,0) = inputMat.at<double>(1,0)/norm;
-        norm_res.at<double>(2,0) = inputMat.at<double>(2,0)/norm;
-        
-     }
-
-    return norm_res;
 };
 
 cv::Point3d ToolModel::getFaceNormal(const cv::Mat &pt1,const cv::Mat &pt2,const cv::Mat &pt3,const cv::Mat &vn1,const cv::Mat &vn2,const cv::Mat &vn3 ){ //should be 4 by 6
@@ -942,7 +922,7 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, const 
 	toolModel newTool = initial;  //BODY part is done here
 
     double max_z = Cam.at<double>(2,3) - 0.1;
-    double radius = randomNum(0.04, 0.5);
+    double radius = randomNum(0.08, 0.2);
     double theta = randomNum(0, 2*M_PI);
 
     /******testing section here********/
@@ -951,18 +931,18 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, const 
 //    double theta_grip_2 = -0.2;
 
 	//create normally distributed random number within a certain range, or use stdev and mean
-//	 newTool.tvec_cyl(0) = radius * cos(theta);
-//	 newTool.tvec_cyl(1) = radius * sin(theta);
+//    newTool.tvec_cyl(0) = radius * cos(theta);
+//    newTool.tvec_cyl(1) = radius * sin(theta);
 //	newTool.tvec_cyl(2) =  randomNum(-0.2, max_z); ////translation on z cannot be random because of the camera transformation
 //
 //	double angle = randomNum(-2, 2);
-//	newTool.rvec_cyl(0) = angle; //rotation on x axis +/-5 degrees
+//	newTool.rvec_cyl(0) += angle; //rotation on x axis +/-5 degrees
 //
 //    angle = randomNum(-2, 2);
-//	newTool.rvec_cyl(0) = angle; //rotation on x axis +/-5 degrees
+//	newTool.rvec_cyl(1) += angle; //rotation on x axis +/-5 degrees
 //
 //    angle = randomNum(-3, 3);
-//	newTool.rvec_cyl(2) = angle; //rotation on z axis +/-5 degrees
+//	newTool.rvec_cyl(2) += angle; //rotation on z axis +/-5 degrees
 
 
     /**************smaple the angles of the joints**************/
@@ -1071,9 +1051,11 @@ cv::Mat ToolModel::computeSkew(cv::Mat &w){
 /****render a rectangle contains the tool model*****/
 cv::Rect ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P, cv::OutputArray jac ){
 
-    cv::Rect ROI; // rectangle that contains tool model
+    cv::Rect ROI_tool; // rectangle that contains tool model
+    cv::Rect ROI_img; // rectangle of the image
+    cv::Rect ROI; // final ROI
 
-    int padding = 1; //add 10pixels of padding for cropping
+    // int padding = 2; //add 10pixels of padding for cropping
     cv::Point2d XY_max(-10000,-10000); //minimum of X and Y
     cv::Point2d XY_min(10000,10000); //maximum of X and Y
 
@@ -1090,51 +1072,28 @@ Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nma
 // Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat,gripper2Face_normal, gripper2Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
 
 
-    /////Currently not using any ROI!
     /*cannot get all body part fo the tool, decided by the size of the image;
-    bound the tool according to the image position*/
-/*    int row = image.rows;
+    using the intersection of two rectangular*/
+    int row = image.rows;
     int col = image.cols;
 
-    if (XY_min.x - col >0 || XY_min.y - row >0 ) ///the case when the coord of ROI is too far from the camera frame
-    {
-        ROS_INFO("Tool is NOT in the visible region of the camera, position is not valid !");
+    ROI_img.width = col;
+    ROI_img.height = row;
+    ROI_img.x = 0;
+    ROI_img.y = 0;  ////is the image coordinate start form 0?????
 
-    }else if(XY_min.x < 0 || XY_min.y < 0){   ///if the coord of ROI can have partial body under camera frame
+    ROI_tool.width = abs(static_cast<int>(XY_max.x-XY_min.x));
+    ROI_tool.height = abs(static_cast<int>(XY_max.y-XY_min.y));
+    ROI_tool.x = XY_min.x;
+    ROI_tool.y = XY_min.y;
 
-        XY_min.x = 0;
-        XY_min.y = 0;
+    ROI = ROI_img & ROI_tool;  //intersection of img and tool frame
 
-    }else{   ////normal case, if x and y exceed the board of image, crop;
-
-        if (XY_max.x - col > 0)
-        {
-            XY_max.x = col;
-        }
-        if (XY_max.y - row > 0)
-        {
-            XY_max.y = row;
-        }
-
-        //shape the rectangle that captures the rendered needle
-        ROI.width = abs(static_cast<int>(XY_max.x-XY_min.x));
-        ROI.height = abs(static_cast<int>(XY_max.y-XY_min.y));
-        ROI.x = XY_min.x;
-        ROI.y = XY_min.y;
-
-            ROS_INFO_STREAM("ROI.X: " << ROI.x);
-        ROS_INFO_STREAM("ROI.y: " << ROI.y);
-     ROS_INFO_STREAM("ROI.width: " << ROI.width);
-     ROS_INFO_STREAM("ROI.height: " << ROI.height);
-     }*/
-
-        ROI.width = abs(static_cast<int>(XY_max.x-XY_min.x));
-        ROI.height = abs(static_cast<int>(XY_max.y-XY_min.y));
-        ROI.x = XY_min.x;
-        ROI.y = XY_min.y;
-        /**** DEBUG ****/
-
-
+    /**** DEBUG ****/
+//    ROS_INFO_STREAM("ROI.X: " << ROI.x);
+//    ROS_INFO_STREAM("ROI.y: " << ROI.y);
+//    ROS_INFO_STREAM("ROI.width: " << ROI.width);
+//    ROS_INFO_STREAM("ROI.height: " << ROI.height);
 
     return ROI;
 
@@ -1147,7 +1106,7 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
     /*When ROI is an empty rec, the position of tool is simply just not match, return 0 matching score*/
 //    if (ROI.area() != 0)
 //    {
-        cv::Mat ROI_toolImage = toolImage; //(ROI); //crop tool image
+        cv::Mat ROI_toolImage = toolImage; // (ROI); //crop tool image
         cv::Mat ROI_segmentedImage = segmentedImage; //(ROI); //crop segmented image, notice the size of the segmented image
 
         cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
@@ -1174,7 +1133,6 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 //    }else{
 //        ROS_INFO("EMPTY ROI, ZERO matching score");
 //    }
-
 
     return matchingScore;
 }
