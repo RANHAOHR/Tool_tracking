@@ -2,7 +2,6 @@
  #include <tool_tracking/particle_filter.h>  //everything inside here
  #include <opencv2/calib3d/calib3d.hpp>
 
-
  using namespace std;
 
  ParticleFilter::ParticleFilter(ros::NodeHandle* nodehandle):

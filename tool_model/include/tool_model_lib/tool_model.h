@@ -161,8 +161,10 @@ public:
 
  		ToolModel(cv::Mat& CamMat);  //constructor
 
- 		double randomNumber(double stdev, double mean);
+ 		double randomNumber(double &stdev, double &mean);
+
  		double randomNum(double min, double max);
+        double randomNum(double min, double max, double stdev, double mean);
 
  		void load_model_vertices(const char * path, std::vector< glm::vec3 > &out_vertices, std::vector< glm::vec3 > &vertex_normal, 
                                  std::vector< std::vector<int> > &out_faces,  std::vector< std::vector<int> > &neighbor_faces );
@@ -200,7 +202,7 @@ public:
  		double dotProduct(cv::Point3d &vec1, cv::Point3d &vec2);
 
  		cv::Point3d Normalize(cv::Point3d &vec1);
- 		cv::Point3d ConvertCelitoMeters(cv::Point3d &input_pt);
+
  		void ConvertInchtoMeters(std::vector< cv::Point3d > &input_vertices);
 
 
