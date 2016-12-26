@@ -16,7 +16,6 @@
 #include <cwru_opencv_common/projective_geometry.h>
 
 #include <tool_model_lib/tool_model.h>
-#include <math.h>
 
 using cv_projective::reprojectPoint;
 using cv_projective::transformPoints;
@@ -896,16 +895,13 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, const 
 {
 	toolModel newTool = initial;  //BODY part is done here
 
-    double max_z = Cam.at<double>(2,3) - 0.1;
-    double radius = randomNum(0.08, 0.2);
+    double max_z = Cam.at<double>(2,3) - 0.12;
+    double radius = randomNum(0.05, 0.2);
     double theta = randomNum(0, 2*M_PI);
 
     /****** testing section here *******/
-//    double theta_ellipse = 0.0;
-//    double theta_grip_1 = 0.2;
-//    double theta_grip_2 = -0.2;
 
-    newTool.tvec_cyl(0) = radius * cos(theta);
+/*    newTool.tvec_cyl(0) = radius * cos(theta);
     newTool.tvec_cyl(1) = radius * sin(theta);
     newTool.tvec_cyl(2) =  randomNum(-0.2, max_z); ////translation on z cannot be random because of the camera transformation
 
@@ -916,21 +912,21 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &initial, const 
     newTool.rvec_cyl(1) += angle; //rotation on x axis +/-5 degrees
 
     angle = randomNum(-3, 3);
-    newTool.rvec_cyl(2) += angle; //rotation on z axis +/-5 degrees
+    newTool.rvec_cyl(2) += angle; //rotation on z axis +/-5 degrees*/
 
 	//create normally distributed random number within a certain range, or use stdev and mean
-/*    newTool.tvec_cyl(0) = radius * cos(theta);
+    newTool.tvec_cyl(0) = radius * cos(theta);
     newTool.tvec_cyl(1) = radius * sin(theta);
-    newTool.tvec_cyl(2) =  randomNum(-0.2, max_z, stdev, mean); ////translation on z cannot be random because of the camera transformation
+    newTool.tvec_cyl(2) =  randomNum(-0.2, max_z); ////translation on z cannot be random because of the camera transformation
 
-    double angle = randomNum(-2, 2, stdev, mean);
-    newTool.rvec_cyl(0) += angle; //rotation on x axis +/-5 degrees
+    double angle = randomNumber(stdev, mean);
+    newTool.rvec_cyl(0) -= angle; //rotation on x axis +/-5 degrees
 
-    angle = randomNum(-2, 2, stdev, mean);
-    newTool.rvec_cyl(1) += angle; //rotation on x axis +/-5 degrees
+    angle = randomNumber(stdev, mean);
+    newTool.rvec_cyl(1) -= angle; //rotation on x axis +/-5 degrees
 
-    angle = randomNum(-3, 3, stdev, mean);
-    newTool.rvec_cyl(2) += angle; //rotation on z axis +/-5 degrees*/
+    angle = randomNumber(stdev, mean);
+    newTool.rvec_cyl(2) -= angle; //rotation on z axis +/-5 degrees
 
     /************** smaple the angles of the joints **************/
     //set positive as clockwise
@@ -1092,7 +1088,7 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
         matchingScore = static_cast<double> (result.at< float >(0));
         
     }else{
-        ROS_INFO("EMPTY ROI, ZERO matching score");
+        ROS_INFO("EMPTY ROI, zero matching score");
     }
 
     return matchingScore;

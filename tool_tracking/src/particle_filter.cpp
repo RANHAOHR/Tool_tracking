@@ -5,7 +5,7 @@
  using namespace std;
 
  ParticleFilter::ParticleFilter(ros::NodeHandle* nodehandle):
-     nh_(*nodehandle), numParticles(10), toolSize(2), perturbStd(0.001), newToolModel(Cam)
+     nh_(*nodehandle), numParticles(100), toolSize(2), perturbStd(0.001), newToolModel(Cam)
 {
 
     /****initial position guess
