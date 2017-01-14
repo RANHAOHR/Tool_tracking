@@ -60,6 +60,8 @@
 #include <ros/ros.h>
  #include <cv_bridge/cv_bridge.h>
 
+#include <vesselness_image_filter_cpu/vesselness_lib.h>
+
  class ParticleFilter{
 
  private:
