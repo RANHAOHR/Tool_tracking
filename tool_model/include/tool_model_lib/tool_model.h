@@ -162,7 +162,7 @@ public:
 
  		ToolModel(cv::Mat& CamMat);  //constructor
 
- 		double randomNumber(double &stdev, double &mean);
+ 		double randomNumber(double stdev, double mean);
 
  		double randomNum(double min, double max);
         double randomNum(double min, double max, double stdev, double mean);

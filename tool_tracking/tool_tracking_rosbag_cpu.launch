@@ -1,0 +1,58 @@
+<launch>
+		<node pkg="rosbag" type="play" name="rosbag" args="/home/rxh349/ros_ws/src/subset.bag">
+		</node>
+
+	<node name="vesselness_left" pkg="vesselness_image_filter_cpu" type="vesselness_image_filter_cpu_bw_node">
+         <remap from="image_in" to="/davinci/left/image_rect_color" />  
+         <remap from="image_thin" to="/davinci/left/image_vesselness"/> 
+         <param name="beta" type="double" value="0.5"/>
+            <param name="c" type="double" value="0.0001"/>
+            <param name="side_h" type="int" value="7"/>
+            <param name="side_p" type="int" value="5"/>
+            <param name="variance_h" type="double" value="2.4"/>
+            <param name="variance_p" type="double" value="1.0"/>
+        </node>
+        
+     
+        <node name="vesselness_right" pkg="vesselness_image_filter_cpu" type="vesselness_image_filter_cpu_bw_node">
+         <remap from="image_in" to="/davinci/right/image_rect_color" />  
+         <remap from="image_thin" to="/davinci/right/image_vesselness"/>
+         <param name="beta" type="double" value="0.5"/>
+            <param name="c" type="double" value="0.0001"/>
+            <param name="side_h" type="int" value="7"/>
+            <param name="side_p" type="int" value="5"/>
+            <param name="variance_h" type="double" value="2.4"/>
+            <param name="variance_p" type="double" value="1.0"/> 
+      	</node>
+		
+	<!--
+      	<node name="raw_image_left" pkg="image_view" type="image_view">
+         <remap from="image" to="/stereo/left/image_rect_color" />
+        </node>
+
+        <node name="raw_image_right" pkg="image_view" type="image_view">
+         <remap from="image" to="/stereo/right/image_rect_color" />
+        </node>
+        -->
+      	
+
+
+      	<node name="vesselness_view_left" pkg="vesselness_image_filter_cpu" type="vesselness_image_filter_cpu_viewer_node">
+         <remap from="image_thin" to="/davinci/left/image_vesselness"/>
+        </node>
+
+        <node name="vesselness_view_right" pkg="vesselness_image_filter_cpu" type="vesselness_image_filter_cpu_viewer_node">
+         <remap from="image_thin" to="/davinci/right/image_vesselness"/>
+        </node>
+
+        <!--
+      	#<node name="vesselness_view_left" pkg="image_view" type="image_view">
+        # <remap from="image" to="/stereo/left/image_vessellness"/>  
+        #</node>
+
+        #<node name="vesselness_view_right" pkg="image_view" type="image_view">
+        # <remap from="image" to="/stereo/right/image_vessellness" />  
+        #</node>
+        -->
+
+</launch>

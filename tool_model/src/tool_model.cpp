@@ -78,7 +78,7 @@ ToolModel::ToolModel(cv::Mat& CamMat){
 
 };
 
-double ToolModel::randomNumber(double &stdev, double &mean){
+double ToolModel::randomNumber(double stdev, double mean){
 
 	boost::normal_distribution<> nd(mean, stdev);
 	boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > var_nor(rng, nd);

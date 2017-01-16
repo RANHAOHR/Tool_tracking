@@ -60,6 +60,8 @@
 #include <ros/ros.h>
  #include <cv_bridge/cv_bridge.h>
 
+#include <vesselness_image_filter_cpu/vesselness_lib.h>
+
  class ParticleFilter{
 
  private:
@@ -127,7 +129,7 @@
      /*
       * perturb the particles for more usable poses
       */
-     std::vector<ToolModel::toolModel> perturb(const std::vector<ToolModel::toolModel> &particles, double stdev, double mean);
+     cv::Mat addNoise(cv::Mat& inputMat);
 
      cv::Mat adjoint(cv::Mat& G);
 

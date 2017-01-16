@@ -5,10 +5,11 @@ find_package(catkin_simple REQUIRED)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(OpenCV REQUIRED)
-find_package(vesselness_image_filter_common REQUIRED)
 
-# find_package(catkin REQUIRED COMPONENTS message_generation std_msgs sensor_msgs cwru_opencv_common tool_model)
+
+find_package(catkin REQUIRED COMPONENTS message_generation std_msgs sensor_msgs cwru_opencv_common tool_model vesselness_image_filter )
+
+find_package(OpenCV REQUIRED)
 
 catkin_simple()
 #include_directories(include ${catkin_INCLUDE_DIRS} ${tool_model_INCLUDE_DIRS})

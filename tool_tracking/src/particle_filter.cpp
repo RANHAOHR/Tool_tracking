@@ -17,7 +17,7 @@
 	initial.rvec_cyl(1) = 0.0;   //better make everything zero
 	initial.rvec_cyl(2) = 0.0;
 
-    /****need to subscrib this***/
+    /****need to subscribe this***/
     Cam = cv::Mat(4,4,CV_64FC1);
     Cam.at<double>(0,0) = 1;
     Cam.at<double>(1,0) = 0;
@@ -93,18 +93,16 @@ void ParticleFilter::initializeParticles()
      double maxScore = -1.0; //track the maximum scored particle
      int maxScoreIdx = -1; //maximum scored particle index
      double totalScore = 0.0; //total score
-     double left(0.0); //matching score for the left image
-     double right(0.0); //matching score for the right image
 
      /***do the sampling and get the matching score***/
      for (int i = 0; i <numParticles; ++i) {
          toolImage_left.setTo(0); //reset image for every start of an new loop
          ROI_left = newToolModel.renderTool(toolImage_left, particles[i], Cam, P_left); //first get the rendered image using 3d model of the tool
-         left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left, ROI_left);  //get the matching score
+         double left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left, ROI_left);  //get the matching score
 
          toolImage_right.setTo(0); //reset image
          ROI_right = newToolModel.renderTool(toolImage_right, particles[i], Cam, P_right);
-         right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right, ROI_right);
+         double right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right, ROI_right);
 
          matchingScores[i] = sqrt(pow(left,2) + pow(right,2));
 
@@ -130,14 +128,18 @@ void ParticleFilter::initializeParticles()
          particleWeights[j] = (matchingScores[j]/totalScore);
      }
 
+//     cv::Mat mean(1,1,CV_64F);
+//     cv::Mat stddev(1,1,CV_64F);
+//     cv::meanStdDev(matchingScores,mean,stddev); //return the stddev matchingscore
+
+     //resample using low variance resampling method
      std::vector<ToolModel::toolModel>  oldParticles = particles;
      resampleLowVariance(oldParticles, particleWeights, particles); //each time will clear the particles and resample them
 
-     double dT = 0.1; //sampling rate
+     double dT = 0.02; //sampling rate
 
      /*** UPDATE particles, based on the given body vel and updating rate ***/
      updateParticles(bodyVel, dT);
-
 
      //if there is no movement, we need to perturb it
      if(bodyVel.at<double>(0,0) == 0.0 && bodyVel.at<double>(1,0) == 0.0 && bodyVel.at<double>(5,0) == 0.0)
@@ -181,6 +183,8 @@ void ParticleFilter::initializeParticles()
 
          //calculate spatial velocity
          spatialVel = adjoint(particleFrame) * bodyVel;
+         // spatialVel = addNoise(spatialVel);
+
          cv::Mat v = spatialVel.colRange(0,1).rowRange(0,3); //translation velocity
          cv::Mat w = spatialVel.colRange(0,1).rowRange(3,6); //rotational velocity
 
@@ -249,7 +253,7 @@ void ParticleFilter::initializeParticles()
  /**** resampling method ****/
  void ParticleFilter::resampleLowVariance(const std::vector<ToolModel::toolModel> &sampleModel, const std::vector<double> &particleWeight,  std::vector<ToolModel::toolModel> &results)
  {
-     int M = sampleModel.size(); //total number of particles
+     unsigned long M = sampleModel.size(); //total number of particles
      double max = 1.0/M;
      double min(0.0);
      double U(0.0);
@@ -275,16 +279,17 @@ void ParticleFilter::initializeParticles()
 
  };
 
- std::vector<ToolModel::toolModel> ParticleFilter::perturb(const std::vector<ToolModel::toolModel> &particles, double stdev, double mean){
+ cv::Mat ParticleFilter::addNoise(cv::Mat& inputMat)
+ {
+     cv::Mat noiseAddedSrc = cv::Mat::zeros(6,1,CV_64F);
 
-     std::vector<ToolModel::toolModel> result = particles; //resulting perturbed particles
-     int size = result.size(); //size of the particle
-     result.clear(); //final particles
-
-     for(int i(0); i<size; i++)
+     for(int i(0); i<6; i++)
      {
-         result[i] = newToolModel.setRandomConfig(particles[i], Cam, stdev, mean);
+         double num = inputMat.at<double>(i,0);
+         num = num * 0.001;
+         double rnum = newToolModel.randomNumber(fabs(num), 0.0);
+         noiseAddedSrc.at<double>(i,0) = inputMat.at<double>(i,0) + rnum;
      }
 
-     return result;
- };
+     return noiseAddedSrc;
+ }

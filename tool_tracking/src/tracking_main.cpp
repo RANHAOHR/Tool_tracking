@@ -1,14 +1,10 @@
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
 #include <image_transport/image_transport.h>
 #include <cwru_opencv_common/projective_geometry.h>
 #include <tool_tracking/particle_filter.h>
-#include <vesselness_image_filter_common/vesselness_image_filter_common.h>
 #include "std_msgs/MultiArrayLayout.h"
-#include "std_msgs/MultiArrayDimension.h"
 #include "std_msgs/Float64MultiArray.h"
-#include "opencv/cv.hpp"
 
 
 bool freshImage;
@@ -41,7 +37,7 @@ void newImageCallback(const sensor_msgs::ImageConstPtr& msg, cv::Mat* outputImag
 }
 
 // receive body velocity
-/*void arrayCallback(const std_msgs::Float64MultiArray::ConstPtr& array)
+void arrayCallback(const std_msgs::Float64MultiArray::ConstPtr& array)
 {
     int i = 0;
     // print all the remaining numbers
@@ -53,7 +49,7 @@ void newImageCallback(const sensor_msgs::ImageConstPtr& msg, cv::Mat* outputImag
 
     freshVelocity = true;
 
-}*/
+}
 
 void timerCB(const ros::TimerEvent&)
 {
@@ -157,10 +153,10 @@ int main(int argc, char** argv){
 
     /*** Subscribers, velocity, stream images ***/
 
-    // ros::Subscriber sub3 = nh.subscribe("/bodyVelocity", 100, arrayCallback);
+    ros::Subscriber sub3 = nh.subscribe("/bodyVelocity", 100, arrayCallback);
 
-    const std::string leftCameraTopic("/stereo_example/left/camera_info");
-    const std::string rightCameraTopic("/stereo_example/right/camera_info");
+    const std::string leftCameraTopic("/davinci_endo/left/camera_info");
+    const std::string rightCameraTopic("/davinci_endo/right/camera_info");
     cameraProjectionMatrices cameraInfoObj(nh, leftCameraTopic, rightCameraTopic);
     ROS_INFO("---- Connected to camera info -----");
 
@@ -205,7 +201,7 @@ int main(int argc, char** argv){
             seg_right = segmentation(rawImage_right);
             //t = clock() - t;
 
-            //Stage body velocity
+            // body velocity
             for(int i(0);i<6;i++)
             {
                 bodyVel.at<double>(i,0) = Arr[i];
