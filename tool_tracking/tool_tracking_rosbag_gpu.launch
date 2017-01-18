@@ -1,0 +1,36 @@
+<launch>
+		<node pkg="rosbag" type="play" name="rosbag" args="/home/rxh349/ros_ws/src/subset.bag">
+		</node>
+
+	<node name="vesselness_left" pkg="vesselness_image_filter" type="vesselness_image_filter_gpu_node">
+         <remap from="image_in" to="/davinci_endo/left/image_raw" />  
+         <remap from="image_thin" to="/davinci/left/image_vesselness"/> 
+         <param name="beta" type="double" value="0.1"/>
+            <param name="c" type="double" value="0.01"/>
+            <param name="side_h" type="int" value="10"/>
+            <param name="side_p" type="int" value="10"/>
+            <param name="variance_h" type="double" value="2.8"/>
+            <param name="variance_p" type="double" value="1.0"/>
+        </node>
+           
+        <node name="vesselness_right" pkg="vesselness_image_filter" type="vesselness_image_filter_gpu_node">
+         <remap from="image_in" to="/davinci_endo/right/image_raw" />  
+         <remap from="image_thin" to="/davinci/right/image_vesselness"/>
+         <param name="beta" type="double" value="0.1"/>
+            <param name="c" type="double" value="0.01"/>
+            <param name="side_h" type="int" value="10"/>
+            <param name="side_p" type="int" value="10"/>
+            <param name="variance_h" type="double" value="2.8"/>
+            <param name="variance_p" type="double" value="1.0"/>
+      	</node>
+
+
+      	<node name="vesselness_view_left" pkg="vesselness_image_filter" type="vesselness_viewer_gpu_node">
+         <remap from="image_thin" to="/davinci/left/image_vesselness"/>
+        </node>
+
+        <node name="vesselness_view_right" pkg="vesselness_image_filter" type="vesselness_viewer_gpu_node">
+         <remap from="image_thin" to="/davinci/right/image_vesselness"/>
+        </node>
+
+</launch>
