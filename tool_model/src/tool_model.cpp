@@ -40,6 +40,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <opencv2/opencv.hpp>
+
 #include <boost/random.hpp>
 // #include <boost/random/normal_distribution.hpp>
 #include <cwru_opencv_common/projective_geometry.h>
@@ -135,6 +137,7 @@ double ToolModel::randomNum(double min, double max) {
 };
 
 void ToolModel::ConvertInchtoMeters(std::vector<cv::Point3d> &input_vertices) {
+
     int size = (int) input_vertices.size();
     for (int i = 0; i < size; ++i) {
         input_vertices[i].x = input_vertices[i].x * 0.0254;
@@ -150,10 +153,7 @@ void ToolModel::load_model_vertices(const char *path, std::vector<glm::vec3> &ou
                                     std::vector<std::vector<int> > &neighbor_faces) {
 
     std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
-    //std::vector< unsigned int > vertexIndices;
-    // std::vector< glm::vec3 > temp_vertices;
     std::vector<glm::vec2> temp_uvs;
-    // std::vector< glm::vec3 > temp_normals;
 
     std::vector<int> temp_face;
     temp_face.resize(6);  //need three vertex and corresponding normals
@@ -218,7 +218,6 @@ void ToolModel::load_model_vertices(const char *path, std::vector<glm::vec3> &ou
             temp_face[5] = normalIndex[2] - 1;
 
             out_faces.push_back(temp_face);
-
         }
     }
 
@@ -273,13 +272,12 @@ void ToolModel::load_model_vertices(const char *path, std::vector<glm::vec3> &ou
     //         out_faces.push_back(all_faces[i]);
     //     }
     // }
-
 };
 
 /*output a glm to a cv 3d point*/
 void ToolModel::Convert_glTocv_pts(std::vector<glm::vec3> &input_vertices, std::vector<cv::Point3d> &out_vertices) {
 
-    unsigned int vsize = input_vertices.size();
+    unsigned long vsize = input_vertices.size();
 
     out_vertices.resize(vsize);
     for (int i = 0; i < vsize; ++i) {
@@ -290,20 +288,20 @@ void ToolModel::Convert_glTocv_pts(std::vector<glm::vec3> &input_vertices, std::
 };
 
 cv::Point3d ToolModel::Convert_glTocv_pt(glm::vec3 &input_vertex) {
+
     cv::Point3d out_vertex;
     out_vertex.x = input_vertex.x;
     out_vertex.y = input_vertex.y;
     out_vertex.z = input_vertex.z;
     return out_vertex;
-
 };
 
 /* find the camera view point, should it be (0,0,0), input faces stores the indices of the vertices and normals, 
 which are not related to the pose of the tool object*/
 
-/*camera transformations*/
+/*** TODO: camera transformations ***/
 cv::Mat ToolModel::camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat) {
-    /*cam mat should be a 4x4*/
+    /*cam mat should be a 4x4 extrinsic parameter*/
 
     cv::Mat Inv = cam_mat.inv();
     cv::Mat output_mat = Inv * input_mat; //transform the obj to camera frames
@@ -437,7 +435,6 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                     new_Normals.col(n3_).copyTo(temp.col(0));
                     cv::Point3d vn3_ = convert_MattoPts(temp);
 
-
                     cv::Point3d fnormal_n = FindFaceNormal(pt1_, pt2_, pt3_, vn1_, vn2_, vn3_);
 
                     cv::Point3d face_point_j = pt1_ + pt2_ + pt3_;
@@ -450,7 +447,6 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                     if (isfront_i * isfront_j < 0.0) // one is front, another is back
                     {
                         /*finish finding, drawing the image*/
-
                         new_Vertices.col(neighbor_faces[i][j + 1]).copyTo(ept_1);  //under camera frames
                         new_Vertices.col(neighbor_faces[i][j + 2]).copyTo(ept_2);
 
@@ -634,8 +630,6 @@ cv::Point3d ToolModel::getFaceNormal(const cv::Mat &pt1, const cv::Mat &pt2, con
     res.x = resNorm.at<double>(0, 0);
     res.y = resNorm.at<double>(1, 0);
     res.z = resNorm.at<double>(2, 0);
-
-
     return res;  // knowing the direction  
 
 };
@@ -1101,7 +1095,63 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
     return matchingScore;
 }
 
-/*********** reproject a single point without rvec and tvec, and no jac, FOR THE BODY COORD TRNSFORMATION ***************/
+/*chamfer matching algorithm*/
+double ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI) {
+
+    cv::Mat ROI_toolImage = toolImage; //(ROI); //crop tool image
+    cv::Mat ROI_segmentedImage = segmentedImage; //(ROI); //crop segmented image, notice the size of the segmented image
+
+    cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
+    cv::Mat toolImFloat; //Float data type of grey scale tool image
+
+    cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
+
+    toolImageGrey.convertTo(toolImFloat, CV_32FC1); // get img
+
+
+    for (int i = 0; i < ROI_segmentedImage.rows; i++) {
+        for (int j = 0; j < ROI_segmentedImage.cols; j++) {
+            ROI_segmentedImage.at<cv::Vec3b>(i, j)[0] = 255 - ROI_segmentedImage.at<cv::Vec3b>(i, j)[0];
+            ROI_segmentedImage.at<cv::Vec3b>(i, j)[1] = 255 - ROI_segmentedImage.at<cv::Vec3b>(i, j)[1];
+            ROI_segmentedImage.at<cv::Vec3b>(i, j)[2] = 255 - ROI_segmentedImage.at<cv::Vec3b>(i, j)[2];
+            //cout << contours.at<cv::Vec3b>(i, j) << endl;
+        }
+    }
+
+    cv::Mat distance_img;
+    cv::distanceTransform(ROI_segmentedImage, distance_img, CV_DIST_L2, 3);
+    cv::normalize(distance_img, distance_img, 0.0, 1.0, CV_MINMAX);
+
+    for (int k = 0; k < toolImFloat.rows; ++k) {
+        for (int i = 0; i < toolImFloat.cols; ++i) {
+            float intensity = toolImFloat.at<double>(k, i);
+            if(intensity > 0)
+                toolImFloat.at<double>(k, i) = 1;
+        }
+    }
+
+    double output = 0;
+    for (int k = 0; k < ROI_segmentedImage.rows; ++k) {
+        for (int i = 0; i < ROI_segmentedImage.cols; ++i) {
+
+            float intensity = ROI_segmentedImage.at<double>(k, i);
+            if(intensity > 0)
+                ROI_segmentedImage.at<double>(k, i) = 1;
+
+
+            float mul = ROI_segmentedImage.at<double>(k, i) * toolImFloat.at<double>(k, i);
+            output += mul;
+
+        }
+
+    }
+
+    return output;
+
+}
+
+
+/*********** reproject a single point without rvec and tvec, and no jac, FOR THE BODY COORD TRANSFORMATION ***************/
 cv::Point2d ToolModel::reproject(const cv::Mat &point, const cv::Mat &P) {
     cv::Mat prjPoints(4, 1, CV_64FC1);
     cv::Mat results(3, 1, CV_64FC1);

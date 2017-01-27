@@ -167,6 +167,7 @@ public:
     cv::Point2d reproject(const cv::Mat &point, const cv::Mat &P);
 
     double calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI);
+    double calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI);
 
     /**************compute silhouettes*****************/
 
