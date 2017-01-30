@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     initial.tvec_cyl(1) = 0.15;
     initial.tvec_cyl(2) = 0.0;
     initial.rvec_cyl(0) = 1;
-    initial.rvec_cyl(1) = 0.1;
+    initial.rvec_cyl(1) = 0;
     initial.rvec_cyl(2) = -2;
 
     ToolModel::toolModel newTool;
@@ -99,12 +99,17 @@ int main(int argc, char **argv) {
     ROS_INFO_STREAM("render time is: " << sec);
 
     t2 = clock();
-    cv::Mat segImg = cv::Mat::zeros(480, 640, CV_32FC1);
-    // segImg = cv::imread("/home/deeplearning/ros_ws/src/tooltrack/src/result_img.jpg");
+
+    /********write a test segmentation ********/
+    cv::Mat segImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3;
+    newTool = newToolModel.setRandomConfig(initial, Cam, 1, 0);
+    cv::Rect segROI = newToolModel.renderTool(segImg, newTool, Cam, P);
 
     double result = newToolModel.calculateMatchingScore(testImg, segImg, testROI);
+    double chamfer_result = newToolModel.calculateChamferSocre(testImg, segImg, testROI);
 
     ROS_INFO_STREAM("THE MATCHING SCORE IS: " << result);
+    ROS_INFO_STREAM("THE chamfer SCORE IS: " << chamfer_result);
     t2 = clock() - t2;
 
     float sec2 = (float) t2 / CLOCKS_PER_SEC;

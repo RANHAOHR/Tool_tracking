@@ -453,7 +453,7 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                         cv::Point2d prjpt_1 = reproject(ept_1, P);
                         cv::Point2d prjpt_2 = reproject(ept_2, P);
 
-                        cv::line(image, prjpt_1, prjpt_2, cv::Scalar(1, 1, 1), 1, 8, 0);
+                        cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
 
                         if (prjpt_1.x > XY_max.x) XY_max.x = prjpt_1.x;
                         if (prjpt_1.y > XY_max.y) XY_max.y = prjpt_1.y;
@@ -910,7 +910,7 @@ ToolModel::setRandomConfig(const toolModel &initial, const cv::Mat &Cam, double 
     newTool.rvec_cyl(2) += angle; //rotation on z axis +/-5 degrees*/
 
     //create normally distributed random number within a certain range, or use stdev and mean
-    newTool.tvec_cyl(0) = radius * cos(theta);
+/*    newTool.tvec_cyl(0) = radius * cos(theta);
     newTool.tvec_cyl(1) = radius * sin(theta);
     newTool.tvec_cyl(2) = randomNum(-0.2,
                                     max_z); ////translation on z cannot be random because of the camera transformation
@@ -922,7 +922,7 @@ ToolModel::setRandomConfig(const toolModel &initial, const cv::Mat &Cam, double 
     newTool.rvec_cyl(1) -= angle; //rotation on x axis +/-5 degrees
 
     angle = randomNumber(stdev, mean);
-    newTool.rvec_cyl(2) -= angle; //rotation on z axis +/-5 degrees
+    newTool.rvec_cyl(2) -= angle; //rotation on z axis +/-5 degrees*/
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
@@ -1068,6 +1068,11 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
         cv::Mat ROI_toolImage = toolImage; //(ROI); //crop tool image
         cv::Mat ROI_segmentedImage = segmentedImage; //(ROI); //crop segmented image, notice the size of the segmented image
 
+        cv::Mat segImageGrey;
+        cv::cvtColor(ROI_segmentedImage, segImageGrey, CV_BGR2GRAY);
+        segImageGrey.convertTo(segImageGrey, CV_32FC1);
+
+
         cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
         cv::Mat toolImFloat; //Float data type of grey scale tool image
         cv::Mat toolImFloatBlured; //Float data type of grey scale blurred toolImage
@@ -1077,15 +1082,14 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
         toolImageGrey.convertTo(toolImFloat, CV_32FC1); // convert grey scale to float
 
         //blur float image, probably don't need this
-        cv::GaussianBlur(toolImFloat, toolImFloatBlured, cv::Size(9, 9), 1, 1);
+        // cv::GaussianBlur(toolImFloat, toolImFloatBlured, cv::Size(9, 9), 1, 1);
 
-        imshow("blurred image", toolImFloatBlured); ////for testing
-        cv::waitKey(0);
+        imshow("tool image", toolImFloat); ////for testing
+        cv::waitKey();
 
-        toolImFloatBlured /= 255; //scale the blurred image
 
         cv::Mat result(1, 1, CV_32FC1);
-        cv::matchTemplate(ROI_segmentedImage, toolImFloatBlured, result, CV_TM_CCORR_NORMED); //seg, toolImg
+        cv::matchTemplate(segImageGrey, toolImFloat, result, CV_TM_CCORR_NORMED); //seg, toolImg
         matchingScore = static_cast<double> (result.at<float>(0));
 
     } else {
@@ -1096,60 +1100,85 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 }
 
 /*chamfer matching algorithm*/
-double ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI) {
+float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI) {
 
+    float output = 0;
     cv::Mat ROI_toolImage = toolImage; //(ROI); //crop tool image
     cv::Mat ROI_segmentedImage = segmentedImage; //(ROI); //crop segmented image, notice the size of the segmented image
 
+    /***tool image process TODO: wtf is the order thing**/
     cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
     cv::Mat toolImFloat; //Float data type of grey scale tool image
-
+    cv::imshow("ROI_toolImage img", ROI_toolImage);
     cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
 
-    toolImageGrey.convertTo(toolImFloat, CV_32FC1); // get img
+    toolImageGrey.convertTo(toolImFloat, CV_32FC1); // get float img
+    cv::imshow("toolimage:", toolImFloat);
+    cv::Mat toolbinaryImg; //initialize
 
+    // cv::threshold(toolImFloat, toolbinaryImg, 127, 255, CV_THRESH_BINARY);
+
+    cv::Mat BinaryImg(toolImFloat.size(), toolImFloat.type());
+    BinaryImg= toolImFloat * (1.0/255);
+
+    cv::imshow("binary: ", BinaryImg );
+    cv::waitKey();
+
+
+    /***segmented image process**/
+    cv::Mat segImgGrey;
+    cv::Mat distance_img;
 
     for (int i = 0; i < ROI_segmentedImage.rows; i++) {
         for (int j = 0; j < ROI_segmentedImage.cols; j++) {
-            ROI_segmentedImage.at<cv::Vec3b>(i, j)[0] = 255 - ROI_segmentedImage.at<cv::Vec3b>(i, j)[0];
-            ROI_segmentedImage.at<cv::Vec3b>(i, j)[1] = 255 - ROI_segmentedImage.at<cv::Vec3b>(i, j)[1];
-            ROI_segmentedImage.at<cv::Vec3b>(i, j)[2] = 255 - ROI_segmentedImage.at<cv::Vec3b>(i, j)[2];
-            //cout << contours.at<cv::Vec3b>(i, j) << endl;
+            ROI_segmentedImage.at<cv::Vec3b>(i,j)[0] = 255 - ROI_segmentedImage.at<cv::Vec3b>(i,j)[0];
+            ROI_segmentedImage.at<cv::Vec3b>(i,j)[1] = 255 - ROI_segmentedImage.at<cv::Vec3b>(i,j)[1];
+            ROI_segmentedImage.at<cv::Vec3b>(i,j)[2] = 255 - ROI_segmentedImage.at<cv::Vec3b>(i,j)[2];
+            // ROS_INFO_STREAM("RESULT: " << ROI_segmentedImage.at<cv::Vec3b>(i,j)[0] );
         }
     }
 
-    cv::Mat distance_img;
-    cv::distanceTransform(ROI_segmentedImage, distance_img, CV_DIST_L2, 3);
-    cv::normalize(distance_img, distance_img, 0.0, 1.0, CV_MINMAX);
+    cv::cvtColor(ROI_segmentedImage, segImgGrey, CV_BGR2GRAY); //convert it to grey scale
+    // segImgGrey.convertTo(segImgBinary, CV_32FC1); // get float img
 
-    for (int k = 0; k < toolImFloat.rows; ++k) {
-        for (int i = 0; i < toolImFloat.cols; ++i) {
-            float intensity = toolImFloat.at<double>(k, i);
-            if(intensity > 0)
-                toolImFloat.at<double>(k, i) = 1;
+    //Apply thresholding
+    cv::threshold(segImgGrey, segImgGrey, 127, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
+
+    cv::Mat normDIST;
+    cv::distanceTransform(segImgGrey, distance_img, cv::DIST_L2, cv::DIST_MASK_5, cv::DIST_LABEL_PIXEL);
+    cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
+
+    cv::imshow("Normalized img", normDIST);
+    cv::imshow("distance_img", distance_img);
+    cv::waitKey();
+
+    /***multiplication process**/
+    cv::Mat resultImg; //initialize
+
+    cv::multiply(distance_img, BinaryImg, resultImg, 1.00/255);
+
+    cv::imshow("result: ", resultImg);
+    cv::waitKey();
+
+
+    for (int k = 0; k < resultImg.rows; ++k) {
+        for (int i = 0; i < resultImg.cols; ++i) {
+
+
+            double mul = resultImg.at<float>(k,i);
+            if(mul > 0.01)
+                output += mul;
+//            if(mul != 0.0)
+//                ROS_INFO_STREAM("MUL:" << mul);
+
         }
+
     }
 
-    double output = 0;
-    for (int k = 0; k < ROI_segmentedImage.rows; ++k) {
-        for (int i = 0; i < ROI_segmentedImage.cols; ++i) {
-
-            float intensity = ROI_segmentedImage.at<double>(k, i);
-            if(intensity > 0)
-                ROI_segmentedImage.at<double>(k, i) = 1;
-
-
-            float mul = ROI_segmentedImage.at<double>(k, i) * toolImFloat.at<double>(k, i);
-            output += mul;
-
-        }
-
-    }
-
+    // output = 1 - output;
     return output;
 
 }
-
 
 /*********** reproject a single point without rvec and tvec, and no jac, FOR THE BODY COORD TRANSFORMATION ***************/
 cv::Point2d ToolModel::reproject(const cv::Mat &point, const cv::Mat &P) {
