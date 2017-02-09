@@ -19,7 +19,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "../include"
   "/home/rxh349/ros_ws/devel/include"
   "/home/rxh349/ros_ws/src/cwru_vision/cwru_opencv_common/include"
-  "/home/rxh349/ros_ws/src/vision_opencv/cv_bridge/include"
+  "/home/rxh349/ros_ws/src/ros_libs/vision_opencv/cv_bridge/include"
   "/opt/ros/jade/include"
   "/usr/local/include/opencv"
   "/usr/local/include"

@@ -1106,10 +1106,9 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
     cv::Mat ROI_toolImage = toolImage; //(ROI); //crop tool image
     cv::Mat ROI_segmentedImage = segmentedImage; //(ROI); //crop segmented image, notice the size of the segmented image
 
-    /***tool image process TODO: wtf is the order thing**/
+    /***tool image process**/
     cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
     cv::Mat toolImFloat; //Float data type of grey scale tool image
-    cv::imshow("ROI_toolImage img", ROI_toolImage);
     cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
 
     toolImageGrey.convertTo(toolImFloat, CV_32FC1); // get float img
@@ -1139,9 +1138,7 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
     }
 
     cv::cvtColor(ROI_segmentedImage, segImgGrey, CV_BGR2GRAY); //convert it to grey scale
-    // segImgGrey.convertTo(segImgBinary, CV_32FC1); // get float img
 
-    //Apply thresholding
     cv::threshold(segImgGrey, segImgGrey, 127, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
 
     cv::Mat normDIST;
@@ -1156,6 +1153,15 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
     cv::Mat resultImg; //initialize
 
     cv::multiply(distance_img, BinaryImg, resultImg, 1.00/255);
+    float total = 0;
+    for (int l = 0; l < BinaryImg.rows; ++l) {
+        for (int i = 0; i < BinaryImg.cols; ++i) {
+            float tool_pixel = BinaryImg.at<float>(l,i);
+
+            if(tool_pixel > 0.5)
+                total += tool_pixel;
+        }
+    }
 
     cv::imshow("result: ", resultImg);
     cv::waitKey();
@@ -1164,9 +1170,8 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
     for (int k = 0; k < resultImg.rows; ++k) {
         for (int i = 0; i < resultImg.cols; ++i) {
 
-
             double mul = resultImg.at<float>(k,i);
-            if(mul > 0.01)
+            if(mul > 0.0)
                 output += mul;
 //            if(mul != 0.0)
 //                ROS_INFO_STREAM("MUL:" << mul);
@@ -1175,7 +1180,10 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
 
     }
 
-    // output = 1 - output;
+    if(total != 0.0){
+        output = output/total;
+    }
+
     return output;
 
 }

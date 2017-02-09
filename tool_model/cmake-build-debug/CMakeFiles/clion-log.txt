@@ -23,11 +23,19 @@
 -- Using CATKIN_ENABLE_TESTING: ON
 -- Call enable_testing()
 -- Using CATKIN_TEST_RESULTS_DIR: /home/rxh349/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/test_results
--- Found gtest: gtests will be built
--- Using Python nosetests: /usr/bin/nosetests-2.7
--- catkin 0.6.18
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Looking for pthread_create
+-- Looking for pthread_create - not found
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - found
 -- Found Threads: TRUE  
--- Found CUDA: /usr/local/cuda (found suitable exact version "7.5") 
+-- Found gtest sources under '/usr/src/gtest': gtests will be built
+-- Using Python nosetests: /usr/bin/nosetests-2.7
+-- catkin 0.6.14
+-- Found CUDA: /usr/local/cuda (found suitable exact version "7.0") 
 -- Using these message generators: gencpp;geneus;genlisp;genpy
 -- Marking SHARED_LIBRARY "tool_model_lib" of package "tool_model" for installation
 -- Marking EXECUTABLE "showing_image" of package "tool_model" for installation

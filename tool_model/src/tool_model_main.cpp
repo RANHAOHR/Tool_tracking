@@ -86,7 +86,11 @@ int main(int argc, char **argv) {
 
     t1 = clock();
     newTool = newToolModel.setRandomConfig(initial, Cam, 1, 0);
+
+    newToolModel.computeModelPose(initial, 0, 0, 0.2 );
     t1 = clock() - t1;
+
+
 
     t = clock();
     cv::Rect testROI = newToolModel.renderTool(testImg, newTool, Cam, P);
@@ -95,19 +99,21 @@ int main(int argc, char **argv) {
     float sec1 = (float) t1 / CLOCKS_PER_SEC;
     float sec = (float) t / CLOCKS_PER_SEC;
 
-    ROS_INFO_STREAM("setRandomConfig time is: " << sec1);
-    ROS_INFO_STREAM("render time is: " << sec);
-
-    t2 = clock();
+//    ROS_INFO_STREAM("setRandomConfig time is: " << sec1);
+//    ROS_INFO_STREAM("render time is: " << sec);
 
     /********write a test segmentation ********/
     cv::Mat segImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3;
-    newTool = newToolModel.setRandomConfig(initial, Cam, 1, 0);
-    cv::Rect segROI = newToolModel.renderTool(segImg, newTool, Cam, P);
+    //newTool = newToolModel.setRandomConfig(initial, Cam, 1, 0);
+
+    newToolModel.computeModelPose(initial, 0.1, 0, 0.1 );
+    cv::Rect segROI = newToolModel.renderTool(segImg, initial, Cam, P);
+
 
     double result = newToolModel.calculateMatchingScore(testImg, segImg, testROI);
-    double chamfer_result = newToolModel.calculateChamferSocre(testImg, segImg, testROI);
 
+    t2 = clock();
+    double chamfer_result = newToolModel.calculateChamferSocre(testImg, segImg, testROI);
     ROS_INFO_STREAM("THE MATCHING SCORE IS: " << result);
     ROS_INFO_STREAM("THE chamfer SCORE IS: " << chamfer_result);
     t2 = clock() - t2;

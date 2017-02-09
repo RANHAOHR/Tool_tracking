@@ -54,7 +54,7 @@ CMAKE_BINARY_DIR = /home/rxh349/ros_ws/src/Tool_tracking/tool_model/cmake-build-
 include CMakeFiles/clean_test_results.dir/progress.make
 
 CMakeFiles/clean_test_results:
-	/usr/bin/python /opt/ros/jade/share/catkin/cmake/test/remove_test_results.py /home/rxh349/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/test_results
+	/home/rxh349/Documents/clion-2016.3.2/bin/cmake/bin/cmake -E remove_directory /home/rxh349/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/test_results
 
 clean_test_results: CMakeFiles/clean_test_results
 clean_test_results: CMakeFiles/clean_test_results.dir/build.make
