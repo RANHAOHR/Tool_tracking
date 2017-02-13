@@ -85,15 +85,13 @@ int main(int argc, char **argv) {
     clock_t t2;
 
     t1 = clock();
-    newTool = newToolModel.setRandomConfig(initial, Cam, 1, 0);
-
-    newToolModel.computeModelPose(initial, 0, 0, 0.2 );
+    //newTool = newToolModel.setRandomConfig(initial, Cam, 1, 0);
+    newToolModel.computeModelPose(initial, 0.6, 0.1, 0 );
     t1 = clock() - t1;
 
 
-
     t = clock();
-    cv::Rect testROI = newToolModel.renderTool(testImg, newTool, Cam, P);
+    cv::Rect testROI = newToolModel.renderTool(testImg, initial, Cam, P);
     t = clock() - t;
 
     float sec1 = (float) t1 / CLOCKS_PER_SEC;
@@ -106,7 +104,7 @@ int main(int argc, char **argv) {
     cv::Mat segImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3;
     //newTool = newToolModel.setRandomConfig(initial, Cam, 1, 0);
 
-    newToolModel.computeModelPose(initial, 0.1, 0, 0.1 );
+    newToolModel.computeModelPose(initial, 0.1, 0.1, 0 );
     cv::Rect segROI = newToolModel.renderTool(segImg, initial, Cam, P);
 
 

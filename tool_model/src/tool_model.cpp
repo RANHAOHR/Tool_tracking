@@ -891,9 +891,9 @@ ToolModel::toolModel
 ToolModel::setRandomConfig(const toolModel &initial, const cv::Mat &Cam, double stdev, double mean) {
     toolModel newTool = initial;  //BODY part is done here
 
-    double max_z = Cam.at<double>(2, 3) - 0.12;
-    double radius = randomNum(0.05, 0.2);
-    double theta = randomNum(0, 2 * M_PI);
+//    double max_z = Cam.at<double>(2, 3) - 0.12;
+//    double radius = randomNum(0.05, 0.2);
+//    double theta = randomNum(0, 2 * M_PI);
 
     /****** testing section here *******/
 /*    newTool.tvec_cyl(0) = radius * cos(theta);
@@ -1120,8 +1120,8 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
     cv::Mat BinaryImg(toolImFloat.size(), toolImFloat.type());
     BinaryImg= toolImFloat * (1.0/255);
 
-    cv::imshow("binary: ", BinaryImg );
-    cv::waitKey();
+//    cv::imshow("binary: ", BinaryImg );
+//    cv::waitKey();
 
 
     /***segmented image process**/
@@ -1146,19 +1146,20 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
     cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
 
     cv::imshow("Normalized img", normDIST);
-    cv::imshow("distance_img", distance_img);
+    //cv::imshow("distance_img", distance_img);
     cv::waitKey();
 
     /***multiplication process**/
     cv::Mat resultImg; //initialize
 
-    cv::multiply(distance_img, BinaryImg, resultImg, 1.00/255);
+    cv::multiply(normDIST, BinaryImg, resultImg/*, 1.00/255*/);
     float total = 0;
     for (int l = 0; l < BinaryImg.rows; ++l) {
         for (int i = 0; i < BinaryImg.cols; ++i) {
             float tool_pixel = BinaryImg.at<float>(l,i);
 
             if(tool_pixel > 0.5)
+                //ROS_INFO_STREAM("binary img pixel: " << tool_pixel);
                 total += tool_pixel;
         }
     }
@@ -1172,6 +1173,7 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
 
             double mul = resultImg.at<float>(k,i);
             if(mul > 0.0)
+                ROS_INFO_STREAM("resultImg pixel: " << mul);
                 output += mul;
 //            if(mul != 0.0)
 //                ROS_INFO_STREAM("MUL:" << mul);
@@ -1180,9 +1182,9 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
 
     }
 
-    if(total != 0.0){
-        output = output/total;
-    }
+//    if(total != 0.0){
+//        output = output/total;
+//    }
 
     return output;
 
