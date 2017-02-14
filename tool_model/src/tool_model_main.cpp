@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
     clock_t t2;
 
     t1 = clock();
-    //newTool = newToolModel.setRandomConfig(initial, Cam, 1, 0);
+    //initial = newToolModel.setRandomConfig(initial, Cam, 1, 0);
     newToolModel.computeModelPose(initial, 0.6, 0.1, 0 );
     t1 = clock() - t1;
 
@@ -107,24 +107,16 @@ int main(int argc, char **argv) {
     newToolModel.computeModelPose(initial, 0.1, 0.1, 0 );
     cv::Rect segROI = newToolModel.renderTool(segImg, initial, Cam, P);
 
-
     double result = newToolModel.calculateMatchingScore(testImg, segImg, testROI);
 
     t2 = clock();
     double chamfer_result = newToolModel.calculateChamferSocre(testImg, segImg, testROI);
+    t2 = clock() - t2;
     ROS_INFO_STREAM("THE MATCHING SCORE IS: " << result);
     ROS_INFO_STREAM("THE chamfer SCORE IS: " << chamfer_result);
-    t2 = clock() - t2;
 
     float sec2 = (float) t2 / CLOCKS_PER_SEC;
     ROS_INFO_STREAM("MATCHING TIME: " << sec2);
-
-//	 if(!testImg.empty()){   ///need CV_64FC1
-//         imshow("test", testImg);
-//     }
-//
-//
-//	 cv::waitKey(0);
 
     return 0;
 

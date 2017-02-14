@@ -2,6 +2,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/test_seg.dir/src/test_seg.cpp.o"
   "devel/lib/tool_model/test_seg.pdb"
   "devel/lib/tool_model/test_seg"
+  "devel/lib/tool_model/test_seg.pdb"
+  "CMakeFiles/CMakeRelink.dir/test_seg"
 )
 
 # Per-language clean rules from dependency scanning.

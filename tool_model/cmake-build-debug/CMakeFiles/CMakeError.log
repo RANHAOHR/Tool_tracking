@@ -1,22 +1,22 @@
 Determining if the pthread_create exist failed with the following output:
-Change Dir: /home/rxh349/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp
+Change Dir: /home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_5f739/fast"
-/usr/bin/make -f CMakeFiles/cmTC_5f739.dir/build.make CMakeFiles/cmTC_5f739.dir/build
-make[1]: Entering directory `/home/rxh349/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_5f739.dir/CheckSymbolExists.c.o
-/usr/bin/cc     -o CMakeFiles/cmTC_5f739.dir/CheckSymbolExists.c.o   -c /home/rxh349/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
-Linking C executable cmTC_5f739
-/home/rxh349/Documents/clion-2016.3.2/bin/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5f739.dir/link.txt --verbose=1
-/usr/bin/cc       CMakeFiles/cmTC_5f739.dir/CheckSymbolExists.c.o  -o cmTC_5f739 -rdynamic 
-CMakeFiles/cmTC_5f739.dir/CheckSymbolExists.c.o: In function `main':
+Run Build Command:"/usr/bin/make" "cmTC_c43ee/fast"
+/usr/bin/make -f CMakeFiles/cmTC_c43ee.dir/build.make CMakeFiles/cmTC_c43ee.dir/build
+make[1]: Entering directory `/home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_c43ee.dir/CheckSymbolExists.c.o
+/usr/bin/cc     -o CMakeFiles/cmTC_c43ee.dir/CheckSymbolExists.c.o   -c /home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_c43ee
+/home/ranhao/Documents/clion-2016.3.2/bin/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c43ee.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_c43ee.dir/CheckSymbolExists.c.o  -o cmTC_c43ee -rdynamic 
+CMakeFiles/cmTC_c43ee.dir/CheckSymbolExists.c.o: In function `main':
 CheckSymbolExists.c:(.text+0x16): undefined reference to `pthread_create'
 collect2: error: ld returned 1 exit status
-make[1]: *** [cmTC_5f739] Error 1
-make[1]: Leaving directory `/home/rxh349/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp'
-make: *** [cmTC_5f739/fast] Error 2
+make[1]: *** [cmTC_c43ee] Error 1
+make[1]: Leaving directory `/home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp'
+make: *** [cmTC_c43ee/fast] Error 2
 
-File /home/rxh349/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+File /home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
 /* */
 #include <pthread.h>
 
@@ -32,20 +32,71 @@ int main(int argc, char** argv)
 }
 
 Determining if the function pthread_create exists in the pthreads failed with the following output:
-Change Dir: /home/rxh349/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp
+Change Dir: /home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_9de0b/fast"
-/usr/bin/make -f CMakeFiles/cmTC_9de0b.dir/build.make CMakeFiles/cmTC_9de0b.dir/build
-make[1]: Entering directory `/home/rxh349/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_9de0b.dir/CheckFunctionExists.c.o
-/usr/bin/cc    -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_9de0b.dir/CheckFunctionExists.c.o   -c /home/rxh349/Documents/clion-2016.3.2/bin/cmake/share/cmake-3.6/Modules/CheckFunctionExists.c
-Linking C executable cmTC_9de0b
-/home/rxh349/Documents/clion-2016.3.2/bin/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9de0b.dir/link.txt --verbose=1
-/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_9de0b.dir/CheckFunctionExists.c.o  -o cmTC_9de0b -rdynamic -lpthreads 
+Run Build Command:"/usr/bin/make" "cmTC_4fb54/fast"
+/usr/bin/make -f CMakeFiles/cmTC_4fb54.dir/build.make CMakeFiles/cmTC_4fb54.dir/build
+make[1]: Entering directory `/home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_4fb54.dir/CheckFunctionExists.c.o
+/usr/bin/cc    -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_4fb54.dir/CheckFunctionExists.c.o   -c /home/ranhao/Documents/clion-2016.3.2/bin/cmake/share/cmake-3.6/Modules/CheckFunctionExists.c
+Linking C executable cmTC_4fb54
+/home/ranhao/Documents/clion-2016.3.2/bin/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4fb54.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_4fb54.dir/CheckFunctionExists.c.o  -o cmTC_4fb54 -rdynamic -lpthreads 
 /usr/bin/ld: cannot find -lpthreads
 collect2: error: ld returned 1 exit status
-make[1]: *** [cmTC_9de0b] Error 1
-make[1]: Leaving directory `/home/rxh349/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp'
-make: *** [cmTC_9de0b/fast] Error 2
+make[1]: *** [cmTC_4fb54] Error 1
+make[1]: Leaving directory `/home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp'
+make: *** [cmTC_4fb54/fast] Error 2
+
+
+Determining if the pthread_create exist failed with the following output:
+Change Dir: /home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_51787/fast"
+/usr/bin/make -f CMakeFiles/cmTC_51787.dir/build.make CMakeFiles/cmTC_51787.dir/build
+make[1]: Entering directory `/home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_51787.dir/CheckSymbolExists.c.o
+/usr/bin/cc     -o CMakeFiles/cmTC_51787.dir/CheckSymbolExists.c.o   -c /home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_51787
+/home/ranhao/Documents/clion-2016.3.2/bin/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTC_51787.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_51787.dir/CheckSymbolExists.c.o  -o cmTC_51787 -rdynamic 
+CMakeFiles/cmTC_51787.dir/CheckSymbolExists.c.o: In function `main':
+CheckSymbolExists.c:(.text+0x16): undefined reference to `pthread_create'
+collect2: error: ld returned 1 exit status
+make[1]: *** [cmTC_51787] Error 1
+make[1]: Leaving directory `/home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp'
+make: *** [cmTC_51787/fast] Error 2
+
+File /home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <pthread.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef pthread_create
+  return ((int*)(&pthread_create))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_fed53/fast"
+/usr/bin/make -f CMakeFiles/cmTC_fed53.dir/build.make CMakeFiles/cmTC_fed53.dir/build
+make[1]: Entering directory `/home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_fed53.dir/CheckFunctionExists.c.o
+/usr/bin/cc    -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_fed53.dir/CheckFunctionExists.c.o   -c /home/ranhao/Documents/clion-2016.3.2/bin/cmake/share/cmake-3.6/Modules/CheckFunctionExists.c
+Linking C executable cmTC_fed53
+/home/ranhao/Documents/clion-2016.3.2/bin/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fed53.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_fed53.dir/CheckFunctionExists.c.o  -o cmTC_fed53 -rdynamic -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+make[1]: *** [cmTC_fed53] Error 1
+make[1]: Leaving directory `/home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/CMakeFiles/CMakeTmp'
+make: *** [cmTC_fed53/fast] Error 2
 
 

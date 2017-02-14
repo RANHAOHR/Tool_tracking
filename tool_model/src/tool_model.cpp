@@ -74,13 +74,13 @@ ToolModel::ToolModel() {
     q_gripper.at<double>(2, 0) = 0;
 
     /****initialize the vertices fo different part of tools****/
-    load_model_vertices("/home/rxh349/ros_ws/src/Tool_tracking/tool_model/tool_parts/refine_cylinder_3.obj",
+    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tool_model/tool_parts/refine_cylinder_3.obj",
                         body_vertices, body_Vnormal, body_faces, body_neighbors);
-    load_model_vertices("/home/rxh349/ros_ws/src/Tool_tracking/tool_model/tool_parts/refine_ellipse_3.obj",
+    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tool_model/tool_parts/refine_ellipse_3.obj",
                         ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors);
-    load_model_vertices("/home/rxh349/ros_ws/src/Tool_tracking/tool_model/tool_parts/gripper2_1.obj", griper1_vertices,
+    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tool_model/tool_parts/gripper2_1.obj", griper1_vertices,
                         griper1_Vnormal, griper1_faces, griper1_neighbors);
-    load_model_vertices("/home/rxh349/ros_ws/src/Tool_tracking/tool_model/tool_parts/gripper2_2.obj", griper2_vertices,
+    load_model_vertices("/home/ranhao/ros_ws/src/Tool_tracking/tool_model/tool_parts/gripper2_2.obj", griper2_vertices,
                         griper2_Vnormal, griper2_faces, griper2_neighbors);
 
     modify_model_(body_vertices, body_Vnormal, body_Vpts, body_Npts, offset_body, body_Vmat, body_Nmat);
@@ -1112,18 +1112,12 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
     cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
 
     toolImageGrey.convertTo(toolImFloat, CV_32FC1); // get float img
-    cv::imshow("toolimage:", toolImFloat);
     cv::Mat toolbinaryImg; //initialize
-
-    // cv::threshold(toolImFloat, toolbinaryImg, 127, 255, CV_THRESH_BINARY);
 
     cv::Mat BinaryImg(toolImFloat.size(), toolImFloat.type());
     BinaryImg= toolImFloat * (1.0/255);
 
 //    cv::imshow("binary: ", BinaryImg );
-//    cv::waitKey();
-
-
     /***segmented image process**/
     cv::Mat segImgGrey;
     cv::Mat distance_img;
@@ -1142,7 +1136,7 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
     cv::threshold(segImgGrey, segImgGrey, 127, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
 
     cv::Mat normDIST;
-    cv::distanceTransform(segImgGrey, distance_img, cv::DIST_L2, cv::DIST_MASK_5, cv::DIST_LABEL_PIXEL);
+    cv::distanceTransform(segImgGrey, distance_img, CV_DIST_L2, 3);
     cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
 
     cv::imshow("Normalized img", normDIST);
@@ -1167,25 +1161,17 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
     cv::imshow("result: ", resultImg);
     cv::waitKey();
 
-
     for (int k = 0; k < resultImg.rows; ++k) {
         for (int i = 0; i < resultImg.cols; ++i) {
 
             double mul = resultImg.at<float>(k,i);
             if(mul > 0.0)
-                ROS_INFO_STREAM("resultImg pixel: " << mul);
+//                ROS_INFO_STREAM("resultImg pixel: " << mul);
                 output += mul;
-//            if(mul != 0.0)
-//                ROS_INFO_STREAM("MUL:" << mul);
-
         }
-
     }
-
-//    if(total != 0.0){
-//        output = output/total;
-//    }
-
+    ROS_INFO_STREAM("OUTPUT: " << output);
+    output = exp(-1 * output/80);
     return output;
 
 }
