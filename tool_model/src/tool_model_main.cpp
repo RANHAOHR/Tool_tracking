@@ -85,17 +85,16 @@ int main(int argc, char **argv) {
     clock_t t2;
 
     t1 = clock();
-    //newTool = newToolModel.setRandomConfig(initial, Cam, 1, 0);
-    newToolModel.computeModelPose(initial, 0.6, 0.1, 0 );
+    //initial = newToolModel.setRandomConfig(initial, Cam, 1, 0);
+    newToolModel.computeModelPose(initial, 0.7, 0.1, 0 );
     t1 = clock() - t1;
-
 
     t = clock();
     cv::Rect testROI = newToolModel.renderTool(testImg, initial, Cam, P);
     t = clock() - t;
 
-    float sec1 = (float) t1 / CLOCKS_PER_SEC;
-    float sec = (float) t / CLOCKS_PER_SEC;
+//    float sec1 = (float) t1 / CLOCKS_PER_SEC;
+//    float sec = (float) t / CLOCKS_PER_SEC;
 
 //    ROS_INFO_STREAM("setRandomConfig time is: " << sec1);
 //    ROS_INFO_STREAM("render time is: " << sec);

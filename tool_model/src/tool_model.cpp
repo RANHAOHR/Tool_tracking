@@ -1102,7 +1102,7 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 /*chamfer matching algorithm*/
 float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI) {
 
-    float output = 0;
+    float matchingScore = 0;
     cv::Mat ROI_toolImage = toolImage; //(ROI); //crop tool image
     cv::Mat ROI_segmentedImage = segmentedImage; //(ROI); //crop segmented image, notice the size of the segmented image
 
@@ -1112,17 +1112,10 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
     cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
 
     toolImageGrey.convertTo(toolImFloat, CV_32FC1); // get float img
-    cv::imshow("toolimage:", toolImFloat);
-    cv::Mat toolbinaryImg; //initialize
-
-    // cv::threshold(toolImFloat, toolbinaryImg, 127, 255, CV_THRESH_BINARY);
+    cv::Mat toolbinaryImg;
 
     cv::Mat BinaryImg(toolImFloat.size(), toolImFloat.type());
     BinaryImg= toolImFloat * (1.0/255);
-
-//    cv::imshow("binary: ", BinaryImg );
-//    cv::waitKey();
-
 
     /***segmented image process**/
     cv::Mat segImgGrey;
@@ -1146,11 +1139,11 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
     cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
 
     cv::imshow("Normalized img", normDIST);
-    //cv::imshow("distance_img", distance_img);
+    cv::imshow("distance_img", distance_img);
     cv::waitKey();
 
     /***multiplication process**/
-    cv::Mat resultImg; //initialize
+    cv::Mat resultImg;
 
     cv::multiply(normDIST, BinaryImg, resultImg/*, 1.00/255*/);
     float total = 0;
@@ -1167,26 +1160,19 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
     cv::imshow("result: ", resultImg);
     cv::waitKey();
 
-
     for (int k = 0; k < resultImg.rows; ++k) {
         for (int i = 0; i < resultImg.cols; ++i) {
 
             double mul = resultImg.at<float>(k,i);
             if(mul > 0.0)
-                ROS_INFO_STREAM("resultImg pixel: " << mul);
-                output += mul;
-//            if(mul != 0.0)
-//                ROS_INFO_STREAM("MUL:" << mul);
-
+                // ROS_INFO_STREAM("resultImg pixel: " << mul);
+                matchingScore += mul;
         }
 
     }
 
-//    if(total != 0.0){
-//        output = output/total;
-//    }
-
-    return output;
+    matchingScore = (float)exp(-1.0 * matchingScore/80); //make it particle weights
+    return matchingScore;
 
 }
 
