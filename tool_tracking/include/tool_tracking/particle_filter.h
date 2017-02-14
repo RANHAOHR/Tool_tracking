@@ -58,11 +58,13 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <sensor_msgs/image_encodings.h>
 #include <ros/ros.h>
- #include <cv_bridge/cv_bridge.h>
+#include <cv_bridge/cv_bridge.h>
 
- class ParticleFilter{
+#include <vesselness_image_filter_cpu/vesselness_lib.h>
 
- private:
+class ParticleFilter {
+
+private:
 
     cv::Mat Cam;
     ros::NodeHandle nh_;  //may need this
@@ -90,46 +92,52 @@
     std::vector<double> particleWeights; // particle weights calculated from matching scores
 
 
- public:
+public:
 
-     /*
-     * The default constructor 
-     */
-    ParticleFilter(ros::NodeHandle* nodehandle);
+    /*
+    * The default constructor
+    */
+    ParticleFilter(ros::NodeHandle *nodehandle);
 
     /*
      * The deconstructor 
      */
     ~ParticleFilter();
 
-     /*
-     * The initializeParticles initializes the particles by setting the total number of particles, initial
-     * guess and randomly generating the particles around the initial guess.
-     */
+    /*
+    * The initializeParticles initializes the particles by setting the total number of particles, initial
+    * guess and randomly generating the particles around the initial guess.
+    */
     void initializeParticles();
 
-     /***consider getting a timer to debug***/
+    /***consider getting a timer to debug***/
     // void timerCallback(const ros::TimerEvent&);
 
     /*
      * This is the main function for tracking the needle. This function is called and it syncs all of the functions
     */
-    std::vector<cv::Mat> trackingTool(const cv::Mat &bodyVel,const cv::Mat &segmented_left, const cv::Mat &segmented_right,const cv::Mat &P_left, const cv::Mat &P_right);
+    std::vector<cv::Mat>
+    trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,
+                 const cv::Mat &P_left, const cv::Mat &P_right);
 
     /*
      * resampling method
      */
-     void resampleLowVariance(const std::vector<ToolModel::toolModel> &initial, const std::vector<double> &particleWeight,  std::vector<ToolModel::toolModel> &results);
+    void
+    resampleLowVariance(const std::vector<ToolModel::toolModel> &initial, const std::vector<double> &particleWeight,
+                        std::vector<ToolModel::toolModel> &results);
+
     /*
      * update particles
      */
-     void updateParticles(const cv::Mat &bodyVel, double &updateRate);
-     /*
-      * perturb the particles for more usable poses
-      */
-     std::vector<ToolModel::toolModel> perturb(const std::vector<ToolModel::toolModel> &particles, double stdev, double mean);
+    void updateParticles(const cv::Mat &bodyVel, double &updateRate);
 
-     cv::Mat adjoint(cv::Mat& G);
+    /*
+     * perturb the particles for more usable poses
+     */
+    cv::Mat addNoise(cv::Mat &inputMat);
+
+    cv::Mat adjoint(cv::Mat &G);
 
 };
 
