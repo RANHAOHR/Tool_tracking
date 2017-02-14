@@ -85,12 +85,21 @@ int main(int argc, char **argv) {
     clock_t t2;
 
     t1 = clock();
-    //initial = newToolModel.setRandomConfig(initial, Cam, 1, 0);
-    newToolModel.computeModelPose(initial, 0.7, 0.1, 0 );
+
+    newTool.tvec_cyl(0) = -0.08;
+    newTool.tvec_cyl(1) = 0.15;
+    newTool.tvec_cyl(2) = 0.0;
+    newTool.rvec_cyl(0) = 1;
+    newTool.rvec_cyl(1) = 0;
+    newTool.rvec_cyl(2) = 0;
+
+
+    //newTool = newToolModel.setRandomConfig(initial, Cam, 1, 0);
+    newToolModel.computeModelPose(newTool, 0.7, 0.1, 0 );
     t1 = clock() - t1;
 
     t = clock();
-    cv::Rect testROI = newToolModel.renderTool(testImg, initial, Cam, P);
+    cv::Rect testROI = newToolModel.renderTool(testImg, newTool, Cam, P);
     t = clock() - t;
 
 //    float sec1 = (float) t1 / CLOCKS_PER_SEC;

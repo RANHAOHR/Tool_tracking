@@ -1,7 +1,0 @@
-set(_CATKIN_CURRENT_PACKAGE "tool_model")
-set(tool_model_MAINTAINER "rxh349 <rxh349@todo.todo>")
-set(tool_model_DEPRECATED "")
-set(tool_model_VERSION "0.0.0")
-set(tool_model_BUILD_DEPENDS "image_transport" "roscpp" "sensor_msgs" "std_msgs" "message_generation" "cwru_opencv_common" "vesselness_image_filter_cpu" "glm")
-set(tool_model_RUN_DEPENDS "image_transport" "roscpp" "sensor_msgs" "std_msgs" "message_runtime" "cwru_opencv_common" "vesselness_image_filter_cpu" "glm")
-set(tool_model_BUILDTOOL_DEPENDS "catkin")

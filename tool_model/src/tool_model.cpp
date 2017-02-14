@@ -1065,8 +1065,8 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 
     /*** When ROI is an empty rec, the position of tool is simply just not match, return 0 matching score ***/
     if (ROI.area() != 0) {
-        cv::Mat ROI_toolImage = toolImage; //(ROI); //crop tool image
-        cv::Mat ROI_segmentedImage = segmentedImage; //(ROI); //crop segmented image, notice the size of the segmented image
+        cv::Mat ROI_toolImage = toolImage.clone(); //(ROI); //crop tool image
+        cv::Mat ROI_segmentedImage = segmentedImage.clone(); //(ROI); //crop segmented image, notice the size of the segmented image
 
         cv::Mat segImageGrey;
         cv::cvtColor(ROI_segmentedImage, segImageGrey, CV_BGR2GRAY);
@@ -1087,7 +1087,6 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
         imshow("tool image", toolImFloat); ////for testing
         cv::waitKey();
 
-
         cv::Mat result(1, 1, CV_32FC1);
         cv::matchTemplate(segImageGrey, toolImFloat, result, CV_TM_CCORR_NORMED); //seg, toolImg
         matchingScore = static_cast<double> (result.at<float>(0));
@@ -1103,75 +1102,103 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI) {
 
     float matchingScore = 0;
-    cv::Mat ROI_toolImage = toolImage; //(ROI); //crop tool image
-    cv::Mat ROI_segmentedImage = segmentedImage; //(ROI); //crop segmented image, notice the size of the segmented image
+
+    cv::Mat ROI_toolImage = toolImage.clone(); //(ROI); //crop tool image
+    cv::Mat ROI_segmentedImage = segmentedImage.clone(); //(ROI); //crop segmented image, notice the size of the segmented image
+
+    int segCount = 0;
+    int toolCount = 0;
+    /***segmented image process**/
+    cv::Mat segImageGrey; //grey scale of toolImage since tool image has 3 channels
+    cv::Mat segImFloat; //Float data type of grey scale tool image
+    cv::cvtColor(ROI_segmentedImage, segImageGrey, CV_BGR2GRAY); //convert it to grey scale
+    cv::imshow("ROI_segmentedImage: ", ROI_segmentedImage );
+    segImageGrey.convertTo(segImFloat, CV_32FC1); // get float img
+
+    cv::Mat BinaryImg(segImFloat.size(), segImFloat.type());
+    BinaryImg = segImFloat * (1.0/255);
+
+    for (int i = 0; i < BinaryImg.rows; i++) {
+        for (int j = 0; j < BinaryImg.cols; j++) {
+            if(BinaryImg.at<float>(i,j) > 0.5 )
+                segCount += 1;
+        }
+    }
+    cv::imshow("binary: ", BinaryImg );
 
     /***tool image process**/
-    cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
-    cv::Mat toolImFloat; //Float data type of grey scale tool image
-    cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
-
-    toolImageGrey.convertTo(toolImFloat, CV_32FC1); // get float img
-    cv::Mat toolbinaryImg;
-
-    cv::Mat BinaryImg(toolImFloat.size(), toolImFloat.type());
-    BinaryImg= toolImFloat * (1.0/255);
-
-    /***segmented image process**/
-    cv::Mat segImgGrey;
+    cv::Mat toolImgGrey;
     cv::Mat distance_img;
+    cv::Mat toolFloat; //Float data type of grey scale tool image
+    cv::cvtColor(ROI_toolImage, toolImgGrey, CV_BGR2GRAY); //convert it to grey scale
+    toolImgGrey.convertTo(toolFloat, CV_32FC1); // get float img
 
-    for (int i = 0; i < ROI_segmentedImage.rows; i++) {
-        for (int j = 0; j < ROI_segmentedImage.cols; j++) {
-            ROI_segmentedImage.at<cv::Vec3b>(i,j)[0] = 255 - ROI_segmentedImage.at<cv::Vec3b>(i,j)[0];
-            ROI_segmentedImage.at<cv::Vec3b>(i,j)[1] = 255 - ROI_segmentedImage.at<cv::Vec3b>(i,j)[1];
-            ROI_segmentedImage.at<cv::Vec3b>(i,j)[2] = 255 - ROI_segmentedImage.at<cv::Vec3b>(i,j)[2];
-            // ROS_INFO_STREAM("RESULT: " << ROI_segmentedImage.at<cv::Vec3b>(i,j)[0] );
+    cv::Mat toolBinary(toolFloat.size(), toolFloat.type());
+    toolBinary= toolFloat * (1.0/255);
+
+    for (int i = 0; i < toolBinary.rows; i++) {
+        for (int j = 0; j < toolBinary.cols; j++) {
+            if(toolBinary.at<float>(i,j) > 0.5 )
+                toolCount += 1;
         }
     }
-
-    cv::cvtColor(ROI_segmentedImage, segImgGrey, CV_BGR2GRAY); //convert it to grey scale
-
-    cv::threshold(segImgGrey, segImgGrey, 127, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
-
-    cv::Mat normDIST;
-    cv::distanceTransform(segImgGrey, distance_img, cv::DIST_L2, cv::DIST_MASK_5, cv::DIST_LABEL_PIXEL);
-    cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
-
-    cv::imshow("Normalized img", normDIST);
-    cv::imshow("distance_img", distance_img);
-    cv::waitKey();
-
-    /***multiplication process**/
-    cv::Mat resultImg;
-
-    cv::multiply(normDIST, BinaryImg, resultImg/*, 1.00/255*/);
-    float total = 0;
-    for (int l = 0; l < BinaryImg.rows; ++l) {
-        for (int i = 0; i < BinaryImg.cols; ++i) {
-            float tool_pixel = BinaryImg.at<float>(l,i);
-
-            if(tool_pixel > 0.5)
-                //ROS_INFO_STREAM("binary img pixel: " << tool_pixel);
-                total += tool_pixel;
-        }
-    }
-
-    cv::imshow("result: ", resultImg);
-    cv::waitKey();
-
-    for (int k = 0; k < resultImg.rows; ++k) {
-        for (int i = 0; i < resultImg.cols; ++i) {
-
-            double mul = resultImg.at<float>(k,i);
-            if(mul > 0.0)
-                // ROS_INFO_STREAM("resultImg pixel: " << mul);
-                matchingScore += mul;
+    
+    if( abs(segCount - toolCount) < 100){
+        for (int i = 0; i < ROI_toolImage.rows; i++) {
+            for (int j = 0; j < ROI_toolImage.cols; j++) {
+                ROI_toolImage.at<cv::Vec3b>(i,j)[0] = 255 - ROI_toolImage.at<cv::Vec3b>(i,j)[0];
+                ROI_toolImage.at<cv::Vec3b>(i,j)[1] = 255 - ROI_toolImage.at<cv::Vec3b>(i,j)[1];
+                ROI_toolImage.at<cv::Vec3b>(i,j)[2] = 255 - ROI_toolImage.at<cv::Vec3b>(i,j)[2];
+                // ROS_INFO_STREAM("RESULT: " << ROI_segmentedImage.at<cv::Vec3b>(i,j)[0] );
+            }
         }
 
+        cv::cvtColor(ROI_toolImage, toolImgGrey, CV_BGR2GRAY); //convert it to grey scale
+
+        cv::threshold(toolImgGrey, toolImgGrey, 127, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
+
+        cv::Mat normDIST;
+        cv::distanceTransform(toolImgGrey, distance_img, cv::DIST_L2, cv::DIST_MASK_5, cv::DIST_LABEL_PIXEL);
+        cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
+
+        cv::imshow("Normalized img", normDIST);
+        cv::imshow("distance_img", distance_img);
+        cv::waitKey();
+
+        /***multiplication process**/
+        cv::Mat resultImg;
+
+        cv::multiply(BinaryImg, normDIST, resultImg/*, 1.00/255*/);
+        float total = 0;
+        for (int l = 0; l < BinaryImg.rows; ++l) {
+            for (int i = 0; i < BinaryImg.cols; ++i) {
+                float tool_pixel = BinaryImg.at<float>(l,i);
+
+                if(tool_pixel > 0.5)
+                    //ROS_INFO_STREAM("binary img pixel: " << tool_pixel);
+                    total += tool_pixel;
+            }
+        }
+
+        cv::imshow("result: ", resultImg);
+        cv::waitKey();
+
+
+        for (int k = 0; k < resultImg.rows; ++k) {
+            for (int i = 0; i < resultImg.cols; ++i) {
+
+                double mul = resultImg.at<float>(k,i);
+                if(mul > 0.0)
+                    // ROS_INFO_STREAM("resultImg pixel: " << mul);
+                    matchingScore += mul;
+            }
+
+        }
+
+        ROS_INFO_STREAM("MATCHING CHAMFER: " << matchingScore );
+        matchingScore = (float)exp(-1.0 * matchingScore/80); //make it particle weights
     }
 
-    matchingScore = (float)exp(-1.0 * matchingScore/80); //make it particle weights
     return matchingScore;
 
 }
