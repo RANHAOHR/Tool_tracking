@@ -1,8 +1,0 @@
-prefix=/usr/local
-
-Name: tool_tracking
-Description: Description of tool_tracking
-Version: 0.0.0
-Cflags: -I/usr/local/include
-Libs: -L/usr/local/lib -ltool_tracking
-Requires: cv_bridge image_transport roscpp sensor_msgs std_msgs message_runtime cwru_opencv_common vesselness_image_filter tool_model
