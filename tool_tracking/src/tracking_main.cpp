@@ -67,7 +67,7 @@ void timerCB(const ros::TimerEvent &) {
 
 cv::Mat segmentation(cv::Mat &InputImg) {
 
-    ROS_INFO("SEGMENTATION!!!!");
+    //ROS_INFO("SEGMENTATION!!!!");
     cv::Mat src, src_gray;
     cv::Mat grad;
 
@@ -203,9 +203,9 @@ int main(int argc, char **argv) {
             trackingImgs = Particles.trackingTool(bodyVel, seg_left, seg_right, P_l,
                                                   P_r); //with rendered tool and segmented img
 //
-//            cv::imshow("Rendered Image: Left", trackingImgs[0]);
-//            cv::imshow("Rendered Image: Right", trackingImgs[1]);
-//            cv::waitKey(10);
+            cv::imshow("Rendered Image: Left", trackingImgs[0]);
+            cv::imshow("Rendered Image: Right", trackingImgs[1]);
+            cv::waitKey(10);
 
 
             /****Testing time and image****/

@@ -131,13 +131,13 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
 
     /***do the sampling and get the matching score***/
     for (int i = 0; i < numParticles; ++i) {
-        toolImage_left.setTo(0); //reset image for every start of an new loop
+        //toolImage_left.setTo(0); //reset image for every start of an new loop
         ROI_left = newToolModel.renderTool(toolImage_left, particles[i], Cam,
                                            P_left); //first get the rendered image using 3d model of the tool
         double left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left,
                                                           ROI_left);  //get the matching score
 
-        toolImage_right.setTo(0); //reset image
+        //toolImage_right.setTo(0); //reset image
         ROI_right = newToolModel.renderTool(toolImage_right, particles[i], Cam, P_right);
         double right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right, ROI_right);
 
@@ -148,6 +148,10 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
             maxScoreIdx = i;
         }
         totalScore += matchingScores[i];
+
+        cv::imshow("current left: ", toolImage_left);
+        cv::imshow("current right: ", toolImage_right);
+
     }
 
     /*** you may wanna do this in a different stream, TODO: ***/

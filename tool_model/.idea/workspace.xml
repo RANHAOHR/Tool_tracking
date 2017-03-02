@@ -14,9 +14,9 @@
       <config projectName="tooltrack" targetName="sensor_msgs_generate_messages_lisp" />
       <config projectName="tooltrack" targetName="_catkin_empty_exported_target" />
       <config projectName="toolModel" targetName="tool_model_lib" />
+      <config projectName="tool_model" targetName="sensor_msgs_generate_messages_eus" />
       <config projectName="tooltrack" targetName="tool_tracking_lib" />
       <config projectName="tooltrack" targetName="test_seg" />
-      <config projectName="tool_model" targetName="sensor_msgs_generate_messages_eus" />
       <config projectName="tooltrack" targetName="roscpp_generate_messages_lisp" />
       <config projectName="tool_model" targetName="roscpp_generate_messages_eus" />
       <config projectName="toolModel" targetName="tool_model_main" />
@@ -73,8 +73,8 @@
       <file leaf-file-name="tool_model_main.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/tool_model_main.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2123">
-              <caret line="107" column="62" lean-forward="false" selection-start-line="107" selection-start-column="62" selection-end-line="107" selection-end-column="62" />
+            <state relative-caret-position="323">
+              <caret line="71" column="33" lean-forward="true" selection-start-line="71" selection-start-column="33" selection-end-line="71" selection-end-column="33" />
               <folding>
                 <element signature="e#198#218#0" expanded="true" />
               </folding>
@@ -85,8 +85,8 @@
       <file leaf-file-name="tool_model.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/tool_model.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="981">
-              <caret line="1173" column="33" lean-forward="true" selection-start-line="1173" selection-start-column="33" selection-end-line="1173" selection-end-column="33" />
+            <state relative-caret-position="386">
+              <caret line="900" column="41" lean-forward="true" selection-start-line="900" selection-start-column="41" selection-end-line="900" selection-end-column="41" />
               <folding>
                 <element signature="e#1734#1754#0" expanded="true" />
                 <element signature="e#1944#1995#0" expanded="true" />
@@ -98,8 +98,8 @@
       <file leaf-file-name="tool_model.h" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/include/tool_model_lib/tool_model.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="5868">
-              <caret line="163" column="46" lean-forward="false" selection-start-line="163" selection-start-column="46" selection-end-line="163" selection-end-column="46" />
+            <state relative-caret-position="215">
+              <caret line="139" column="51" lean-forward="true" selection-start-line="139" selection-start-column="51" selection-end-line="139" selection-end-column="51" />
               <folding>
                 <element signature="e#43#60#0" expanded="true" />
               </folding>
@@ -110,7 +110,7 @@
       <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="216">
+            <state relative-caret-position="108">
               <caret line="6" column="0" lean-forward="false" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="0" />
               <folding />
             </state>
@@ -120,7 +120,7 @@
       <file leaf-file-name="package.xml" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/package.xml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="144">
+            <state relative-caret-position="72">
               <caret line="4" column="29" lean-forward="false" selection-start-line="4" selection-start-column="19" selection-end-line="4" selection-end-column="29" />
               <folding />
             </state>
@@ -135,6 +135,10 @@
       <find>CamMat</find>
       <find>image</find>
       <find>toolImage</find>
+      <find>computeFaceCentro</find>
+      <find>getFaceNormal</find>
+      <find>totalFaceInfo</find>
+      <find>Convert_glTocv_pt</find>
     </findStrings>
   </component>
   <component name="IdeDocumentHistory">
@@ -142,8 +146,8 @@
       <list>
         <option value="$PROJECT_DIR$/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/package.xml" />
-        <option value="$PROJECT_DIR$/include/tool_model_lib/tool_model.h" />
         <option value="$PROJECT_DIR$/src/tool_model_main.cpp" />
+        <option value="$PROJECT_DIR$/include/tool_model_lib/tool_model.h" />
         <option value="$PROJECT_DIR$/src/tool_model.cpp" />
       </list>
     </option>
@@ -156,10 +160,10 @@
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
-    <option name="x" value="122" />
-    <option name="y" value="45" />
-    <option name="width" value="2438" />
-    <option name="height" value="1555" />
+    <option name="x" value="65" />
+    <option name="y" value="-4" />
+    <option name="width" value="1855" />
+    <option name="height" value="1084" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -610,11 +614,12 @@
       <workItem from="1487013348098" duration="2720000" />
       <workItem from="1487023718512" duration="551000" />
       <workItem from="1487045236068" duration="367000" />
+      <workItem from="1488480580797" duration="5094000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="145680000" />
+    <option name="totallyTimeSpent" value="150774000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -626,10 +631,10 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="122" y="45" width="2438" height="1555" extended-state="6" />
+    <frame x="65" y="-4" width="1855" height="1084" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.08531583" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.0851752" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916668" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32901832" sideWeight="0.4978166" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="LuaJ" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -1050,7 +1055,7 @@
     <entry file="file://$PROJECT_DIR$/src/result_img.jpg" />
     <entry file="file://$PROJECT_DIR$/package.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="144">
+        <state relative-caret-position="72">
           <caret line="4" column="29" lean-forward="false" selection-start-line="4" selection-start-column="19" selection-end-line="4" selection-end-column="29" />
           <folding />
         </state>
@@ -1058,7 +1063,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="216">
+        <state relative-caret-position="108">
           <caret line="6" column="0" lean-forward="false" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="0" />
           <folding />
         </state>
@@ -1071,30 +1076,30 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/include/tool_model_lib/tool_model.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5868">
-          <caret line="163" column="46" lean-forward="false" selection-start-line="163" selection-start-column="46" selection-end-line="163" selection-end-column="46" />
-          <folding>
-            <element signature="e#43#60#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/tool_model_main.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2123">
-          <caret line="107" column="62" lean-forward="false" selection-start-line="107" selection-start-column="62" selection-end-line="107" selection-end-column="62" />
+        <state relative-caret-position="323">
+          <caret line="71" column="33" lean-forward="true" selection-start-line="71" selection-start-column="33" selection-end-line="71" selection-end-column="33" />
           <folding>
             <element signature="e#198#218#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/include/tool_model_lib/tool_model.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="215">
+          <caret line="139" column="51" lean-forward="true" selection-start-line="139" selection-start-column="51" selection-end-line="139" selection-end-column="51" />
+          <folding>
+            <element signature="e#43#60#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/tool_model.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="981">
-          <caret line="1173" column="33" lean-forward="true" selection-start-line="1173" selection-start-column="33" selection-end-line="1173" selection-end-column="33" />
+        <state relative-caret-position="386">
+          <caret line="900" column="41" lean-forward="true" selection-start-line="900" selection-start-column="41" selection-end-line="900" selection-end-column="41" />
           <folding>
             <element signature="e#1734#1754#0" expanded="true" />
             <element signature="e#1944#1995#0" expanded="true" />

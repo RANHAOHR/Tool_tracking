@@ -96,8 +96,6 @@ ToolModel::ToolModel() {
     getFaceInfo(griper1_faces, griper1_Vpts, griper1_Npts, gripper1Face_normal, gripper1Face_centroid);
     getFaceInfo(griper2_faces, griper2_Vpts, griper2_Npts, gripper2Face_normal, gripper2Face_centroid);
 
-    //totalFaceInfo(body_faces, body_Vpts, body_Npts, body_face_info);
-
     //    cv::Point3d maxx(0.0) , minn(0.0);
     //    for (auto abc: CamBodyPts) {
     //        maxx.x = max(maxx.x, abc.x);
@@ -274,6 +272,16 @@ void ToolModel::load_model_vertices(const char *path, std::vector<glm::vec3> &ou
     // }
 };
 
+void ToolModel::coord_transformation(cv::Mat &input_Vmat, cv::Mat &input_Nmat){
+
+    cv::Mat transform = cv::Mat::eye(4,4, CV_64FC1);
+    transform.at<double>(1, 3) = -1 * q_ellipse.at<double>(1, 0);   //so this will be a pure translation
+
+    input_Vmat = transform * input_Vmat;
+    input_Nmat = transform * transform;
+
+};
+
 /*output a glm to a cv 3d point*/
 void ToolModel::Convert_glTocv_pts(std::vector<glm::vec3> &input_vertices, std::vector<cv::Point3d> &out_vertices) {
 
@@ -287,14 +295,6 @@ void ToolModel::Convert_glTocv_pts(std::vector<glm::vec3> &input_vertices, std::
     }
 };
 
-cv::Point3d ToolModel::Convert_glTocv_pt(glm::vec3 &input_vertex) {
-
-    cv::Point3d out_vertex;
-    out_vertex.x = input_vertex.x;
-    out_vertex.y = input_vertex.y;
-    out_vertex.z = input_vertex.z;
-    return out_vertex;
-};
 
 /* find the camera view point, should it be (0,0,0), input faces stores the indices of the vertices and normals, 
 which are not related to the pose of the tool object*/
@@ -542,7 +542,6 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
 
                     if (isfront_i * isfront_j <= 0.0) // one is front, another is back
                     {
-
                         /*finish finding*/
                         new_Vertices.col(neighbor_faces[i][j + 1]).copyTo(ept_1);
                         new_Vertices.col(neighbor_faces[i][j + 2]).copyTo(ept_2);
@@ -582,19 +581,6 @@ cv::Mat ToolModel::convert4to3(const cv::Mat &inputMat) {
     res_mat.at<double>(2, 0) = inputMat.at<double>(2, 0);
 
     return res_mat;
-
-};
-
-cv::Point3d ToolModel::computeFaceCentro(cv::Mat &pt1, cv::Mat &pt2, cv::Mat &pt3) {
-
-    cv::Point3d res_centro;
-    cv::Mat centro = pt1 + pt2 + pt3;
-
-    res_centro.x = centro.at<double>(0, 0) / 3.000;
-    res_centro.y = centro.at<double>(1, 0) / 3.000;
-    res_centro.z = centro.at<double>(2, 0) / 3.000;
-
-    return res_centro;
 
 };
 
@@ -642,57 +628,6 @@ cv::Point3d ToolModel::convert_MattoPts(cv::Mat &input_Mat) { //should be a 4 by
 
     return output_point;
 
-};
-
-void ToolModel::totalFaceInfo(const std::vector<std::vector<int> > &input_faces,
-                              const std::vector<cv::Point3d> &input_vertices,
-                              const std::vector<cv::Point3d> &input_Vnormal, cv::Mat &outputFaceInfo) {
-
-    int all_face_size = 6 * input_faces.size();
-    outputFaceInfo = cv::Mat(4, all_face_size, CV_64FC1);
-
-    int face_count;
-    for (int i = 0; i < input_faces.size(); ++i) {
-
-        int v1 = input_faces[i][0];
-        int v2 = input_faces[i][1];
-        int v3 = input_faces[i][2];
-        int n1 = input_faces[i][3];
-        int n2 = input_faces[i][4];
-        int n3 = input_faces[i][5];
-
-        face_count = 6 * i;
-
-        outputFaceInfo.at<double>(0, face_count) = input_vertices[v1].x;
-        outputFaceInfo.at<double>(1, face_count) = input_vertices[v1].y;
-        outputFaceInfo.at<double>(2, face_count) = input_vertices[v1].z;
-        outputFaceInfo.at<double>(3, face_count) = 1;
-
-        outputFaceInfo.at<double>(0, face_count + 1) = input_vertices[v2].x;
-        outputFaceInfo.at<double>(1, face_count + 1) = input_vertices[v2].y;
-        outputFaceInfo.at<double>(2, face_count + 1) = input_vertices[v2].z;
-        outputFaceInfo.at<double>(3, face_count + 1) = 1;
-
-        outputFaceInfo.at<double>(0, face_count + 2) = input_vertices[v3].x;
-        outputFaceInfo.at<double>(1, face_count + 2) = input_vertices[v3].y;
-        outputFaceInfo.at<double>(2, face_count + 2) = input_vertices[v3].z;
-        outputFaceInfo.at<double>(3, face_count + 2) = 1;
-
-        outputFaceInfo.at<double>(0, face_count + 3) = input_Vnormal[n1].x;
-        outputFaceInfo.at<double>(1, face_count + 3) = input_Vnormal[n1].y;
-        outputFaceInfo.at<double>(2, face_count + 3) = input_Vnormal[n1].z;
-        outputFaceInfo.at<double>(3, face_count + 3) = 0;
-
-        outputFaceInfo.at<double>(0, face_count + 4) = input_Vnormal[n2].x;
-        outputFaceInfo.at<double>(1, face_count + 4) = input_Vnormal[n2].y;
-        outputFaceInfo.at<double>(2, face_count + 4) = input_Vnormal[n2].z;
-        outputFaceInfo.at<double>(3, face_count + 4) = 0;
-
-        outputFaceInfo.at<double>(0, face_count + 5) = input_Vnormal[n3].x;
-        outputFaceInfo.at<double>(1, face_count + 5) = input_Vnormal[n3].y;
-        outputFaceInfo.at<double>(2, face_count + 5) = input_Vnormal[n3].z;
-        outputFaceInfo.at<double>(3, face_count + 5) = 0;
-    }
 };
 
 void ToolModel::getFaceInfo(const std::vector<std::vector<int> > &input_faces,
@@ -801,8 +736,6 @@ cv::Point3d ToolModel::FindFaceNormal(cv::Point3d &input_v1, cv::Point3d &input_
         res = -res;
     }
 
-    //res = Normalize(res);
-
     return res;  // knowing the direction
 
 };
@@ -894,6 +827,13 @@ ToolModel::setRandomConfig(const toolModel &initial, const cv::Mat &Cam, double 
 //    double max_z = Cam.at<double>(2, 3) - 0.12;
 //    double radius = randomNum(0.05, 0.2);
 //    double theta = randomNum(0, 2 * M_PI);
+///testing: try to get better way of doing this
+    newTool.tvec_cyl(0) = -0.08;
+    newTool.tvec_cyl(1) = 0.15;
+    newTool.tvec_cyl(2) = 0.0;
+    newTool.rvec_cyl(0) = 1;
+    newTool.rvec_cyl(1) = 0;
+    newTool.rvec_cyl(2) = -2;
 
     /****** testing section here *******/
 /*    newTool.tvec_cyl(0) = radius * cos(theta);
@@ -958,7 +898,6 @@ void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_elli
     inputModel.rvec_elp(2) = inputModel.rvec_cyl(2) + theta_ellipse; //yaw angle is plus the theta_ellipse
 
     /*********** computations for gripper kinematics **********/
-
     cv::Mat test_gripper(3, 1, CV_64FC1);
     test_gripper.at<double>(0, 0) = 0;
     test_gripper.at<double>(1, 0) = offset_gripper - 0.4522;  //
@@ -1065,13 +1004,11 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 
     /*** When ROI is an empty rec, the position of tool is simply just not match, return 0 matching score ***/
     if (ROI.area() != 0) {
-        cv::Mat ROI_toolImage = toolImage; //(ROI); //crop tool image
-        cv::Mat ROI_segmentedImage = segmentedImage; //(ROI); //crop segmented image, notice the size of the segmented image
+        cv::Mat ROI_toolImage = toolImage.clone(); //(ROI); //crop tool image
+        cv::Mat segImageGrey = segmentedImage.clone(); //(ROI); //crop segmented image, notice the size of the segmented image
 
-        cv::Mat segImageGrey;
-        cv::cvtColor(ROI_segmentedImage, segImageGrey, CV_BGR2GRAY);
+//        cv::cvtColor(ROI_segmentedImage, segImageGrey, CV_BGR2GRAY);
         segImageGrey.convertTo(segImageGrey, CV_32FC1);
-
 
         cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
         cv::Mat toolImFloat; //Float data type of grey scale tool image
@@ -1084,9 +1021,8 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
         //blur float image, probably don't need this
         // cv::GaussianBlur(toolImFloat, toolImFloatBlured, cv::Size(9, 9), 1, 1);
 
-        imshow("tool image", toolImFloat); ////for testing
-        cv::waitKey();
-
+//        imshow("tool image", toolImFloat); ////for testing
+//        cv::waitKey();
 
         cv::Mat result(1, 1, CV_32FC1);
         cv::matchTemplate(segImageGrey, toolImFloat, result, CV_TM_CCORR_NORMED); //seg, toolImg
@@ -1103,8 +1039,8 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI) {
 
     float output = 0;
-    cv::Mat ROI_toolImage = toolImage; //(ROI); //crop tool image
-    cv::Mat ROI_segmentedImage = segmentedImage; //(ROI); //crop segmented image, notice the size of the segmented image
+    cv::Mat ROI_toolImage = toolImage.clone(); //(ROI); //crop tool image
+    cv::Mat ROI_segmentedImage = segmentedImage.clone(); //(ROI); //crop segmented image, notice the size of the segmented image
 
     /***tool image process**/
     cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
@@ -1139,7 +1075,7 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
     cv::distanceTransform(segImgGrey, distance_img, CV_DIST_L2, 3);
     cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
 
-    cv::imshow("Normalized img", normDIST);
+    //cv::imshow("Normalized img", normDIST);
     //cv::imshow("distance_img", distance_img);
     cv::waitKey();
 

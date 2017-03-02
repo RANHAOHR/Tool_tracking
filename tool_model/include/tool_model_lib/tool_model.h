@@ -139,7 +139,7 @@ public:
     cv::Mat q_ellipse;  //initial point for ellipse
     cv::Mat q_gripper;  //initial point for gripper
 
-    /************** public funcs ****************/
+    /************** basic funcs ****************/
     ToolModel();  //constructor, TODO: we need this to be the camera extrinsic param relative to the tool frame
 
     double randomNumber(double stdev, double mean);
@@ -169,10 +169,10 @@ public:
     double calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI);
     float calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI);
 
+    void coord_transformation(cv::Mat &input_Vmat, cv::Mat &input_Nmat); /////this is supposed to make random rendering easier
 
 
     /**************compute silhouettes*****************/
-
     void Compute_Silhouette(const std::vector<std::vector<int> > &input_faces,
                             const std::vector<std::vector<int> > &neighbor_faces,
                             const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
@@ -198,8 +198,6 @@ public:
 
     void Convert_glTocv_pts(std::vector<glm::vec3> &input_vertices, std::vector<cv::Point3d> &out_vertices);
 
-    cv::Point3d Convert_glTocv_pt(glm::vec3 &input_vertex);
-
     cv::Mat computeSkew(cv::Mat &w);
 
     cv::Point3d convert_MattoPts(cv::Mat &input_Mat);
@@ -214,16 +212,10 @@ public:
     getFaceNormal(const cv::Mat &pt1, const cv::Mat &pt2, const cv::Mat &pt3, const cv::Mat &vn1, const cv::Mat &vn2,
                   const cv::Mat &vn3);
 
-    cv::Point3d computeFaceCentro(cv::Mat &pt1, cv::Mat &pt2, cv::Mat &pt3);
-
     int Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2, std::vector<int> &match_vec);
 
     void getFaceInfo(const std::vector<std::vector<int> > &input_faces, const std::vector<cv::Point3d> &input_vertices,
                      const std::vector<cv::Point3d> &input_Vnormal, cv::Mat &face_normals, cv::Mat &face_centroids);
-
-    void
-    totalFaceInfo(const std::vector<std::vector<int> > &input_faces, const std::vector<cv::Point3d> &input_vertices,
-                  const std::vector<cv::Point3d> &input_Vnormal, cv::Mat &outputFaceInfo);
 
     /*************camera transforms************************/
     cv::Point3d camTransformPoint(cv::Mat &cam_mat, cv::Point3d &input_vertex);
