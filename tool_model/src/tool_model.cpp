@@ -43,7 +43,6 @@
 #include <opencv2/opencv.hpp>
 
 #include <boost/random.hpp>
-// #include <boost/random/normal_distribution.hpp>
 #include <cwru_opencv_common/projective_geometry.h>
 
 #include <tool_model_lib/tool_model.h>
@@ -804,13 +803,13 @@ ToolModel::setRandomConfig(const toolModel &initial, const cv::Mat &Cam, double 
     newTool.tvec_elp(1) = randomNum(-0.06, 0.18);
     newTool.tvec_elp(2) =  randomNum(-0.1, 0.1); ////translation on z cannot be random because of the camera transformation
 
-    double angle = randomNum(-1, 1);
+    double angle = randomNum(-0.5, 0.5);
     newTool.rvec_elp(0) += angle; //rotation on x axis +/-5 degrees
 
-    angle = randomNum(-1, 1);
+    angle = randomNum(-0.5, 0.5);
     newTool.rvec_elp(1) += angle; //rotation on x axis +/-5 degrees
 
-    angle = randomNum(-1, 1);
+    angle = randomNum(-0.5, 0.5);
     newTool.rvec_elp(2) += angle; //rotation on z axis +/-5 degrees
 
     //create normally distributed random number within a certain range, or use stdev and mean

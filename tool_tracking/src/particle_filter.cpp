@@ -36,14 +36,13 @@
  *
  */
 
-#include <ros/ros.h>
 #include <tool_tracking/particle_filter.h>  //everything inside here
 #include <opencv2/calib3d/calib3d.hpp>
 
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-        nh_(*nodehandle), numParticles(150), toolSize(2), perturbStd(0.001) {
+        nh_(*nodehandle), numParticles(300), toolSize(2), perturbStd(0.001) {
     /****initial position guess
 	everything here is in meters*****/
     initial.tvec_elp(0) = 0.0;
@@ -77,13 +76,11 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
 
     //initialize particles by randomly assigning around the initial guess
     initializeParticles();
-    // ROS_INFO("---- Initialization is done---");
 
     // initialization, just basic black image ??? how to get the size of the image
     toolImage_left = cv::Mat::zeros(480, 640, CV_8UC3);
     toolImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
 
-    //timer = nh_.createTimer(ros::Duration(0.01), &ParticleFilter::timerCallback, this);
 };
 
 ParticleFilter::~ParticleFilter() {
@@ -117,16 +114,16 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
     int maxScoreIdx = -1; //maximum scored particle index
     double totalScore = 0.0; //total score
 
-    toolImage_left.setTo(0);
-    toolImage_right.setTo(0);
+
     /***do the sampling and get the matching score***/
     for (int i = 0; i < numParticles; ++i) {
-        //toolImage_left.setTo(0); //reset image for every start of an new loop
+
+        toolImage_left.setTo(0); //reset image for every start of an new loop
         newToolModel.renderTool(toolImage_left, particles[i], Cam,
                                            P_left); //first get the rendered image using 3d model of the tool
         double left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left);  //get the matching score
 
-        //toolImage_right.setTo(0); //reset image
+        toolImage_right.setTo(0); //reset image
         newToolModel.renderTool(toolImage_right, particles[i], Cam, P_right);
         double right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right);
 
@@ -138,10 +135,10 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
         }
         totalScore += matchingScores[i];
 
-        cv::imshow("current left: ", toolImage_left);
-        cv::imshow("current right: ", toolImage_right);
-
     }
+
+//    cv::imshow("current left: ", toolImage_left);
+//    cv::imshow("current right: ", toolImage_right);
 
     /*** you may wanna do this in a different stream, TODO: ***/
     ROS_INFO_STREAM("Maxscore: " << maxScore);  //debug
@@ -158,15 +155,10 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
         particleWeights[j] = (matchingScores[j] / totalScore);
     }
 
-//     cv::Mat mean(1,1,CV_64F);
-//     cv::Mat stddev(1,1,CV_64F);
-//     cv::meanStdDev(matchingScores,mean,stddev); //return the stddev matchingscore
-
     //resample using low variance resampling method
     std::vector<ToolModel::toolModel> oldParticles = particles;
-
-    resampleLowVariance(oldParticles, particleWeights,
-                        particles); //each time will clear the particles and resample them
+    //each time will clear the particles and resample them
+    resampleLowVariance(oldParticles, particleWeights, particles);
 
     /*TODO:testing*/
 /*    for (int k = 0; k < numParticles; ++k) {

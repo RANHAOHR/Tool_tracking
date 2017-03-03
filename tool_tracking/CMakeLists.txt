@@ -7,7 +7,7 @@ find_package(catkin_simple REQUIRED)
 ## is used, also find other catkin packages
 
 
-find_package(catkin REQUIRED COMPONENTS message_generation std_msgs sensor_msgs cwru_opencv_common tool_model vesselness_image_filter )
+find_package(catkin REQUIRED COMPONENTS message_generation std_msgs sensor_msgs geometry_msgs cwru_opencv_common tool_model vesselness_image_filter )
 
 find_package(OpenCV REQUIRED)
 
@@ -15,7 +15,7 @@ catkin_simple()
 #include_directories(include ${catkin_INCLUDE_DIRS} ${tool_model_INCLUDE_DIRS})
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 
-catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs cwru_opencv_common )
+catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs geometry_msgs cwru_opencv_common )
 # example boost usage
 # find_package(Boost REQUIRED COMPONENTS system thread)
 

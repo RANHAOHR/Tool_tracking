@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
     cv::resize(seg_right, seg_right,size );
 
     while (nh.ok()) {
-        ros::spinOnce();
+        //ros::spinOnce();
 
         /*** make sure camera information is ready ***/
 //        if(!freshCameraInfo)
@@ -204,7 +204,7 @@ int main(int argc, char **argv) {
 //        }
 
         /*** if camera is ready, doing the tracking based on segemented image***/
-        if (freshImage /*&& freshVelocity && freshCameraInfo*/) {
+        //if (freshImage /*&& freshVelocity && freshCameraInfo*/) {
 
             //t = clock();
 //            seg_left = segmentation(rawImage_left);  //or use image_vessselness
@@ -240,7 +240,7 @@ int main(int argc, char **argv) {
 
             freshImage = false;
             freshVelocity = false;
-        }
+        //}
 
         loop_rate.sleep();  //or cv::waitKey(10);
     }

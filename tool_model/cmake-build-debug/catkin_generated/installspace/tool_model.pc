@@ -5,4 +5,4 @@ Description: Description of tool_model
 Version: 0.0.0
 Cflags: -I/usr/local/include
 Libs: -L/usr/local/lib -ltool_model_lib
-Requires: image_transport roscpp sensor_msgs std_msgs message_runtime cwru_opencv_common
+Requires: image_transport roscpp sensor_msgs std_msgs message_runtime cwru_opencv_common vesselness_image_filter

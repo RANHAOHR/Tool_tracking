@@ -153,7 +153,7 @@ foreach(t ${tool_model_EXPORTED_TARGETS})
   endif()
 endforeach()
 
-set(depends "image_transport;roscpp;sensor_msgs;std_msgs;message_runtime;cwru_opencv_common")
+set(depends "image_transport;roscpp;sensor_msgs;std_msgs;message_runtime;cwru_opencv_common;vesselness_image_filter")
 foreach(depend ${depends})
   string(REPLACE " " ";" depend_list ${depend})
   # the package name of the dependency must be kept in a unique variable so that it is not overwritten in recursive calls

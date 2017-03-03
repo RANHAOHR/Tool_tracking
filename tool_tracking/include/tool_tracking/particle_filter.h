@@ -61,6 +61,9 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include <vesselness_image_filter_cpu/vesselness_lib.h>
+#include <boost/random/normal_distribution.hpp>
+
+#include <geometry_msgs/Transform.h>
 
 class ParticleFilter {
 
