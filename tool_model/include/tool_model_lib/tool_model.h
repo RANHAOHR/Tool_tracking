@@ -169,9 +169,6 @@ public:
     double calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI);
     float calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI);
 
-    void coord_transformation(cv::Mat &input_Vmat, cv::Mat &input_Nmat); /////this is supposed to make random rendering easier
-
-
     /**************compute silhouettes*****************/
     void Compute_Silhouette(const std::vector<std::vector<int> > &input_faces,
                             const std::vector<std::vector<int> > &neighbor_faces,
