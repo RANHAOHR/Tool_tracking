@@ -161,20 +161,20 @@ public:
                           const double &theta_grip_2);
 
     //cam view need to be modified
-    cv::Rect renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P,
+    void renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P,
                         cv::OutputArray = cv::noArray());
 
     cv::Point2d reproject(const cv::Mat &point, const cv::Mat &P);
 
-    double calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI);
-    float calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmentedImage, cv::Rect &ROI);
+    double calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage);
+    float calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmentedImage);
 
     /**************compute silhouettes*****************/
     void Compute_Silhouette(const std::vector<std::vector<int> > &input_faces,
                             const std::vector<std::vector<int> > &neighbor_faces,
                             const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
                             cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
-                            const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min);
+                            const cv::Mat &P, cv::OutputArray jac);
 
 
     void Compute_Silhouette(const std::vector<std::vector<int> > &input_faces,

@@ -53,16 +53,33 @@ int main(int argc, char **argv) {
 
     /******************magic numbers*************/
     /*GENERAL P CONFIGS for DVRK*/
-    P.at<double>(0, 0) = 1000;
+//    P.at<double>(0, 0) = 1000;
+//    P.at<double>(1, 0) = 0;
+//    P.at<double>(2, 0) = 0;
+//
+//    P.at<double>(0, 1) = 0;
+//    P.at<double>(1, 1) = 1000;
+//    P.at<double>(2, 1) = 0;
+//
+//    P.at<double>(0, 2) = 320; // horiz
+//    P.at<double>(1, 2) = 240; //verticle
+//    P.at<double>(2, 2) = 1;
+//
+//    P.at<double>(0, 3) = 0;
+//    P.at<double>(1, 3) = 0;
+//    P.at<double>(2, 3) = 0;
+
+    /*actual Projection matrix*/
+    P.at<double>(0, 0) = 893.7852590197848;
     P.at<double>(1, 0) = 0;
     P.at<double>(2, 0) = 0;
 
     P.at<double>(0, 1) = 0;
-    P.at<double>(1, 1) = 1000;
+    P.at<double>(1, 1) = 893.7852590197848;
     P.at<double>(2, 1) = 0;
 
-    P.at<double>(0, 2) = 320; // horiz
-    P.at<double>(1, 2) = 240; //verticle
+    P.at<double>(0, 2) = 288.4443244934082; // horiz
+    P.at<double>(1, 2) = 259.7727756500244; //verticle
     P.at<double>(2, 2) = 1;
 
     P.at<double>(0, 3) = 0;
@@ -71,12 +88,12 @@ int main(int argc, char **argv) {
 
     ToolModel::toolModel initial;
 
-    initial.tvec_elp(0) = -0.02;
-    initial.tvec_elp(1) = 0.1;
-    initial.tvec_elp(2) = 0.0;
-    initial.rvec_elp(0) = 0.2;
-    initial.rvec_elp(1) = 1;
-    initial.rvec_elp(2) = 2;
+    initial.tvec_elp(0) = -0.05;  //left and right (image frame)
+    initial.tvec_elp(1) = 0.1;  //up and down
+    initial.tvec_elp(2) = -0.1;
+    initial.rvec_elp(0) = -3.0;
+    initial.rvec_elp(1) = 3.0;
+    initial.rvec_elp(2) = -3;
 
     ToolModel::toolModel newTool;
 
@@ -91,7 +108,7 @@ int main(int argc, char **argv) {
 
 
     t = clock();
-    cv::Rect testROI = newToolModel.renderTool(testImg, initial, Cam, P);
+    newToolModel.renderTool(testImg, initial, Cam, P);
     t = clock() - t;
 
     cv::imshow("tool image: ",testImg );

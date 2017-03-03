@@ -159,12 +159,14 @@ Mat seg_right;
 
     		float sec = (float)t/CLOCKS_PER_SEC;
 
-
-    		
 			imshow( "left_raw_img", rawImage_left);
 	  		imshow( "Left_Segmented", seg_left );
     		imshow( "right_raw_img", rawImage_right);
 	  		imshow( "Right_Segmented", seg_right );
+
+			imwrite("/home/rxh349/ros_ws/src/Tool_tracking/left.png", seg_left);
+			imwrite("/home/rxh349/ros_ws/src/Tool_tracking/right.png", seg_right);
+
 			  //cout<<"after imshow"<<endl;
 			waitKey(10);
     		avg_tim += sec;

@@ -109,36 +109,44 @@ int main(int argc, char **argv) {
 
     trackingImgs.resize(2);
 
-    // Camera intrinsic matrices
-    cv::Mat P_l, P_r;
-    P_l.setTo(0);
-    P_r.setTo(0);
+    /****TODO: Projection matrices****/
+    cv::Mat P_l(3, 4, CV_64FC1);
+    P_l.at<double>(0, 0) = 893.7852590197848;
+    P_l.at<double>(1, 0) = 0;
+    P_l.at<double>(2, 0) = 0;
 
-    /****TODO: testing****/
-    cv::Mat P(3, 4, CV_64FC1);
-    P.at<double>(0, 0) = 1000;
-    P.at<double>(1, 0) = 0;
-    P.at<double>(2, 0) = 0;
+    P_l.at<double>(0, 1) = 0;
+    P_l.at<double>(1, 1) = 893.7852590197848;
+    P_l.at<double>(2, 1) = 0;
 
-    P.at<double>(0, 1) = 0;
-    P.at<double>(1, 1) = 1000;
-    P.at<double>(2, 1) = 0;
+    P_l.at<double>(0, 2) = 288.4443244934082; // horiz
+    P_l.at<double>(1, 2) = 259.7727756500244; //verticle
+    P_l.at<double>(2, 2) = 1;
 
-    P.at<double>(0, 2) = 320; //horiz
-    P.at<double>(1, 2) = 240; //verticle
-    P.at<double>(2, 2) = 1;
+    P_l.at<double>(0, 3) = 0;
+    P_l.at<double>(1, 3) = 0;
+    P_l.at<double>(2, 3) = 0;
 
-    P.at<double>(0, 3) = 0;
-    P.at<double>(1, 3) = 0;
-    P.at<double>(2, 3) = 0;
+    cv::Mat P_r(3, 4, CV_64FC1);
+    P_r.at<double>(0, 0) = 893.7852590197848;
+    P_r.at<double>(1, 0) = 0;
+    P_r.at<double>(2, 0) = 0;
+
+    P_r.at<double>(0, 1) = 0;
+    P_r.at<double>(1, 1) = 893.7852590197848;
+    P_r.at<double>(2, 1) = 0;
+
+    P_r.at<double>(0, 2) = 288.4443244934082; // horiz
+    P_r.at<double>(1, 2) = 259.7727756500244; //verticle
+    P_r.at<double>(2, 2) = 1;
+
+    P_r.at<double>(0, 3) = 4.732953897952732;
+    P_r.at<double>(1, 3) = 0;
+    P_r.at<double>(2, 3) = 0;
 
     clock_t t;
     double avg_tim = 0.0;
     int count = 1;
-
-    /****testing P params**/
-    P_l = P;
-    P_r = P;
 
     /*** Timer set up ***/
     ros::Rate loop_rate(50);
@@ -168,6 +176,14 @@ int main(int argc, char **argv) {
 
     ROS_INFO("---- done subscribe -----");
 
+    /***testing segmentation images***/
+    cv::Size size(640, 480);
+    seg_left = cv::imread("/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/left.png",CV_LOAD_IMAGE_GRAYSCALE );
+    seg_right = cv::imread("/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/right.png",CV_LOAD_IMAGE_GRAYSCALE );
+
+    cv::resize(seg_left, seg_left,size );
+    cv::resize(seg_right, seg_right,size );
+
     while (nh.ok()) {
         ros::spinOnce();
 
@@ -191,9 +207,10 @@ int main(int argc, char **argv) {
         if (freshImage /*&& freshVelocity && freshCameraInfo*/) {
 
             //t = clock();
-            seg_left = segmentation(rawImage_left);  //or use image_vessselness
-            seg_right = segmentation(rawImage_right);
+//            seg_left = segmentation(rawImage_left);  //or use image_vessselness
+//            seg_right = segmentation(rawImage_right);
             //t = clock() - t;
+
 
             // body velocity
             for (int i(0); i < 6; i++) {

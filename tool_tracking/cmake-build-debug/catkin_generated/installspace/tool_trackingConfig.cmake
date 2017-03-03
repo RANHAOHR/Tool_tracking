@@ -67,8 +67,8 @@ set(tool_tracking_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
 if("FALSE" STREQUAL "TRUE")
-  set(tool_tracking_SOURCE_PREFIX /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking)
-  set(tool_tracking_DEVEL_PREFIX /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel)
+  set(tool_tracking_SOURCE_PREFIX /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking)
+  set(tool_tracking_DEVEL_PREFIX /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel)
   set(tool_tracking_INSTALL_PREFIX "")
   set(tool_tracking_PREFIX ${tool_tracking_DEVEL_PREFIX})
 else()
@@ -122,7 +122,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /usr/local/lib;/home/ranhao/ros_ws/devel/lib;/opt/ros/indigo/lib)
+    foreach(path /usr/local/lib;/home/rxh349/ros_ws/devel/lib;/opt/ros/jade/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)

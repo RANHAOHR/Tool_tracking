@@ -6,5 +6,5 @@ CXX_FLAGS = -g
 
 CXX_DEFINES = -DROSCONSOLE_BACKEND_LOG4CXX -DROS_PACKAGE_NAME=\"tool_model\"
 
-CXX_INCLUDES = -isystem /usr/include/opencv -I/home/ranhao/ros_ws/src/Tool_tracking/tool_model/include -I/home/ranhao/ros_ws/devel/include -I/home/ranhao/ros_ws/src/cwru_vision/cwru_opencv_common/include -I/home/ranhao/ros_ws/src/vision_opencv/cv_bridge/include -I/opt/ros/indigo/include 
+CXX_INCLUDES = -I/home/rxh349/ros_ws/src/Tool_tracking/tool_model/include -I/home/rxh349/ros_ws/devel/include -I/home/rxh349/ros_ws/src/cwru_vision/cwru_opencv_common/include -I/home/rxh349/ros_ws/src/ros_libs/vision_opencv/cv_bridge/include -I/opt/ros/jade/include -isystem /usr/local/include/opencv -isystem /usr/local/include 
 
