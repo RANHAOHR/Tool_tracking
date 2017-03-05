@@ -783,14 +783,11 @@ void ToolModel::modify_model_(std::vector<glm::vec3> &input_vertices, std::vecto
 translation, rotation, new z axis, new x axis*/
 //TODO:
 ToolModel::toolModel
-ToolModel::setRandomConfig(const toolModel &initial, const cv::Mat &Cam, double stdev, double mean) {
+ToolModel::setRandomConfig(const toolModel &initial) {
 
     toolModel newTool = initial;  //BODY part is done here
 
-//    double max_z = Cam.at<double>(2, 3) - 0.12;
-//    double radius = randomNum(0.05, 0.2);
-//    double theta = randomNum(0, 2 * M_PI);
-        ///testing: try to get better way of doing this
+    ///testing: this is the working one for current configuration
 //    newTool.tvec_elp(0) = 0.05;
 //    newTool.tvec_elp(1) = 0.1;
 //    newTool.tvec_elp(2) = 0.0;
@@ -812,21 +809,6 @@ ToolModel::setRandomConfig(const toolModel &initial, const cv::Mat &Cam, double 
     angle = randomNum(-0.5, 0.5);
     newTool.rvec_elp(2) += angle; //rotation on z axis +/-5 degrees
 
-    //create normally distributed random number within a certain range, or use stdev and mean
-/*    newTool.tvec_cyl(0) = radius * cos(theta);
-    newTool.tvec_cyl(1) = radius * sin(theta);
-    newTool.tvec_cyl(2) = randomNum(-0.2,
-                                    max_z); ////translation on z cannot be random because of the camera transformation
-
-    double angle = randomNumber(stdev, mean);
-    newTool.rvec_cyl(0) -= angle; //rotation on x axis +/-5 degrees
-
-    angle = randomNumber(stdev, mean);
-    newTool.rvec_cyl(1) -= angle; //rotation on x axis +/-5 degrees
-
-    angle = randomNumber(stdev, mean);
-    newTool.rvec_cyl(2) -= angle; //rotation on z axis +/-5 degrees*/
-
     /************** sample the angles of the joints **************/
     //set positive as clockwise
     double theta_ellipse = randomNum(-M_PI / 2, M_PI / 2);    //-90,90
@@ -840,6 +822,45 @@ ToolModel::setRandomConfig(const toolModel &initial, const cv::Mat &Cam, double 
     computeModelPose(newTool, theta_ellipse, theta_grip_1, theta_grip_2);
 
     return newTool;
+};
+
+ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, double stdev, double mean ){
+
+    toolModel gaussianTool;  //new sample
+
+    //create normally distributed random samples
+    double dev = randomNumber(stdev, mean);
+    gaussianTool.tvec_elp(0) = max_pose.tvec_elp(0) + dev;
+
+    dev = randomNumber(stdev, mean);
+    gaussianTool.tvec_elp(1) = max_pose.tvec_elp(1) + dev;
+
+    dev = randomNumber(stdev, mean);
+    gaussianTool.tvec_elp(2) = max_pose.tvec_elp(2) + dev;
+
+    dev = randomNumber(stdev, mean);
+    gaussianTool.rvec_elp(0) = max_pose.rvec_elp(0) + dev;
+
+    dev = randomNumber(stdev, mean);
+    gaussianTool.rvec_elp(1) = max_pose.rvec_elp(1) + dev;
+
+    dev = randomNumber(stdev, mean);
+    gaussianTool.rvec_elp(2) = max_pose.rvec_elp(2) + dev;
+
+    /************** sample the angles of the joints **************/
+    //set positive as clockwise
+    double theta_ellipse = randomNumber(stdev, mean);    //-90,90
+    double theta_grip_1 = randomNumber(stdev, mean);
+    double theta_grip_2 = randomNumber(stdev, mean);
+
+    /*** if the two joints get overflow ***/
+    if (theta_grip_1 < theta_grip_2)
+        theta_grip_1 = theta_grip_2 + randomNum(0, 0.2);
+
+    computeModelPose(gaussianTool, theta_ellipse, theta_grip_1, theta_grip_2);
+
+    return gaussianTool;
+
 };
 
 void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_ellipse, const double &theta_grip_1,
@@ -933,8 +954,7 @@ ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, co
 //    cv::Point2d XY_max(-10000, -10000); //minimum of X and Y
 //    cv::Point2d XY_min(10000, 10000); //maximum of X and Y
 
-    /*approach 1: using Vertices mat and normal mat*/
-
+    /** approach 1: using Vertices mat and normal mat **/
     Compute_Silhouette(body_faces, body_neighbors, body_Vmat, body_Nmat, CamMat, image, cv::Mat(tool.rvec_cyl),
                        cv::Mat(tool.tvec_cyl), P, jac);
     Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image,
@@ -950,30 +970,6 @@ ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, co
     // Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat,gripper1Face_normal, gripper1Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
     // Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat,gripper2Face_normal, gripper2Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
 
-    /*cannot get all body part fo the tool, decided by the size of the image;
-    using the intersection of two rectangular*/
-//    int row = image.rows;
-//    int col = image.cols;
-//
-//    ROI_img.width = col;
-//    ROI_img.height = row;
-//    ROI_img.x = 0;
-//    ROI_img.y = 0;  ////is the image coordinate start from 0?????
-//
-//    ROI_tool.width = abs(static_cast<int>(XY_max.x - XY_min.x));
-//    ROI_tool.height = abs(static_cast<int>(XY_max.y - XY_min.y));
-//    ROI_tool.x = XY_min.x;
-//    ROI_tool.y = XY_min.y;
-//
-//    ROI = ROI_img & ROI_tool;  //intersection of img and tool frame
-//
-//    /**** DEBUG ****/
-//    ROS_INFO_STREAM("ROI.X: " << ROI.x);
-//    ROS_INFO_STREAM("ROI.y: " << ROI.y);
-//    ROS_INFO_STREAM("ROI.width: " << ROI.width);
-//    ROS_INFO_STREAM("ROI.height: " << ROI.height);
-
-//    return ROI;
 
 };
 

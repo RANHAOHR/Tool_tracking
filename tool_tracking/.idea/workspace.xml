@@ -2,55 +2,55 @@
 <project version="4">
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" buildAllGenerated="true">
     <generated>
-      <config projectName="tool_tracking" targetName="vesselness_image_filter_common_generate_messages_py" />
-      <config projectName="tool_tracking" targetName="dynamic_reconfigure_generate_messages_cpp" />
-      <config projectName="tool_tracking" targetName="vesselness_image_filter_common_gencfg" />
-      <config projectName="tool_tracking" targetName="dynamic_reconfigure_generate_messages_py" />
-      <config projectName="tool_tracking" targetName="tool_tracking" />
-      <config projectName="tool_tracking" targetName="dynamic_reconfigure_gencfg" />
-      <config projectName="tool_tracking" targetName="sensor_msgs_generate_messages_cpp" />
-      <config projectName="tool_tracking" targetName="doxygen" />
-      <config projectName="tool_tracking" targetName="cwru_opencv_common_generate_messages_py" />
-      <config projectName="tool_tracking" targetName="vesselness_image_filter_generate_messages_eus" />
-      <config projectName="tool_tracking" targetName="rosgraph_msgs_generate_messages_eus" />
-      <config projectName="tool_tracking" targetName="vesselness_image_filter_generate_messages_py" />
-      <config projectName="tool_tracking" targetName="vesselness_image_filter_generate_messages_lisp" />
-      <config projectName="tool_tracking" targetName="std_msgs_generate_messages_py" />
-      <config projectName="tool_tracking" targetName="cwru_opencv_common_generate_messages_lisp" />
-      <config projectName="tool_tracking" targetName="dynamic_reconfigure_generate_messages_eus" />
-      <config projectName="tool_tracking" targetName="_catkin_empty_exported_target" />
       <config projectName="tool_tracking" targetName="vesselness_image_filter_common_generate_messages_cpp" />
-      <config projectName="tool_tracking" targetName="cwru_opencv_common_generate_messages_cpp" />
-      <config projectName="tool_tracking" targetName="std_msgs_generate_messages_eus" />
-      <config projectName="tool_tracking" targetName="roscpp_generate_messages_py" />
-      <config projectName="tool_tracking" targetName="dynamic_reconfigure_generate_messages_lisp" />
+      <config projectName="tool_tracking" targetName="roscpp_generate_messages_cpp" />
+      <config projectName="tool_tracking" targetName="geometry_msgs_generate_messages_eus" />
       <config projectName="tool_tracking" targetName="run_tests" />
-      <config projectName="tool_tracking" targetName="vesselness_image_filter_generate_messages_cpp" />
-      <config projectName="tool_tracking" targetName="rosgraph_msgs_generate_messages_py" />
-      <config projectName="tool_tracking" targetName="sensor_msgs_generate_messages_lisp" />
-      <config projectName="tool_tracking" targetName="tracking_main" />
-      <config projectName="tool_tracking" targetName="geometry_msgs_generate_messages_cpp" />
-      <config projectName="tool_tracking" targetName="clean_test_results" />
-      <config projectName="tool_tracking" targetName="roscpp_generate_messages_lisp" />
-      <config projectName="tool_tracking" targetName="roscpp_generate_messages_eus" />
-      <config projectName="tool_tracking" targetName="gtest" />
-      <config projectName="tool_tracking" targetName="cwru_opencv_common_generate_messages_eus" />
       <config projectName="tool_tracking" targetName="std_msgs_generate_messages_cpp" />
       <config projectName="tool_tracking" targetName="tests" />
-      <config projectName="tool_tracking" targetName="gtest_main" />
-      <config projectName="tool_tracking" targetName="vesselness_image_filter_gencfg" />
-      <config projectName="tool_tracking" targetName="geometry_msgs_generate_messages_lisp" />
-      <config projectName="tool_tracking" targetName="geometry_msgs_generate_messages_eus" />
-      <config projectName="tool_tracking" targetName="std_msgs_generate_messages_lisp" />
-      <config projectName="tool_tracking" targetName="roscpp_generate_messages_cpp" />
+      <config projectName="tool_tracking" targetName="rosgraph_msgs_generate_messages_eus" />
+      <config projectName="tool_tracking" targetName="rosgraph_msgs_generate_messages_py" />
+      <config projectName="tool_tracking" targetName="vesselness_image_filter_generate_messages_lisp" />
+      <config projectName="tool_tracking" targetName="tool_tracking_package" />
       <config projectName="tool_tracking" targetName="sensor_msgs_generate_messages_eus" />
       <config projectName="tool_tracking" targetName="download_extra_data" />
-      <config projectName="tool_tracking" targetName="geometry_msgs_generate_messages_py" />
-      <config projectName="tool_tracking" targetName="tool_tracking_package" />
-      <config projectName="tool_tracking" targetName="rosgraph_msgs_generate_messages_cpp" />
-      <config projectName="tool_tracking" targetName="sensor_msgs_generate_messages_py" />
+      <config projectName="tool_tracking" targetName="dynamic_reconfigure_generate_messages_py" />
+      <config projectName="tool_tracking" targetName="std_msgs_generate_messages_lisp" />
+      <config projectName="tool_tracking" targetName="dynamic_reconfigure_generate_messages_eus" />
+      <config projectName="tool_tracking" targetName="vesselness_image_filter_gencfg" />
+      <config projectName="tool_tracking" targetName="dynamic_reconfigure_gencfg" />
+      <config projectName="tool_tracking" targetName="roscpp_generate_messages_lisp" />
+      <config projectName="tool_tracking" targetName="std_msgs_generate_messages_eus" />
       <config projectName="tool_tracking" targetName="rosgraph_msgs_generate_messages_lisp" />
+      <config projectName="tool_tracking" targetName="geometry_msgs_generate_messages_py" />
+      <config projectName="tool_tracking" targetName="dynamic_reconfigure_generate_messages_lisp" />
+      <config projectName="tool_tracking" targetName="geometry_msgs_generate_messages_cpp" />
+      <config projectName="tool_tracking" targetName="cwru_opencv_common_generate_messages_lisp" />
+      <config projectName="tool_tracking" targetName="vesselness_image_filter_generate_messages_cpp" />
+      <config projectName="tool_tracking" targetName="sensor_msgs_generate_messages_cpp" />
+      <config projectName="tool_tracking" targetName="rosgraph_msgs_generate_messages_cpp" />
+      <config projectName="tool_tracking" targetName="sensor_msgs_generate_messages_lisp" />
       <config projectName="tool_tracking" targetName="vesselness_image_filter_common_generate_messages_lisp" />
+      <config projectName="tool_tracking" targetName="cwru_opencv_common_generate_messages_eus" />
+      <config projectName="tool_tracking" targetName="gtest_main" />
+      <config projectName="tool_tracking" targetName="sensor_msgs_generate_messages_py" />
+      <config projectName="tool_tracking" targetName="geometry_msgs_generate_messages_lisp" />
+      <config projectName="tool_tracking" targetName="vesselness_image_filter_generate_messages_eus" />
+      <config projectName="tool_tracking" targetName="dynamic_reconfigure_generate_messages_cpp" />
+      <config projectName="tool_tracking" targetName="vesselness_image_filter_common_generate_messages_py" />
+      <config projectName="tool_tracking" targetName="cwru_opencv_common_generate_messages_cpp" />
+      <config projectName="tool_tracking" targetName="vesselness_image_filter_common_gencfg" />
+      <config projectName="tool_tracking" targetName="tool_tracking" />
+      <config projectName="tool_tracking" targetName="gtest" />
+      <config projectName="tool_tracking" targetName="roscpp_generate_messages_eus" />
+      <config projectName="tool_tracking" targetName="tracking_main" />
+      <config projectName="tool_tracking" targetName="cwru_opencv_common_generate_messages_py" />
+      <config projectName="tool_tracking" targetName="clean_test_results" />
+      <config projectName="tool_tracking" targetName="_catkin_empty_exported_target" />
+      <config projectName="tool_tracking" targetName="roscpp_generate_messages_py" />
+      <config projectName="tool_tracking" targetName="doxygen" />
+      <config projectName="tool_tracking" targetName="vesselness_image_filter_generate_messages_py" />
+      <config projectName="tool_tracking" targetName="std_msgs_generate_messages_py" />
     </generated>
   </component>
   <component name="CMakeSettings">
@@ -82,8 +82,8 @@
       <file leaf-file-name="particle_filter.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/particle_filter.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="468">
-              <caret line="134" column="9" lean-forward="true" selection-start-line="134" selection-start-column="9" selection-end-line="134" selection-end-column="9" />
+            <state relative-caret-position="-1672">
+              <caret line="44" column="92" lean-forward="false" selection-start-line="44" selection-start-column="92" selection-end-line="44" selection-end-column="92" />
               <folding>
                 <element signature="e#1734#1802#0" expanded="true" />
               </folding>
@@ -94,9 +94,11 @@
       <file leaf-file-name="particle_filter.h" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/include/tool_tracking/particle_filter.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="450">
-              <caret line="64" column="0" lean-forward="true" selection-start-line="64" selection-start-column="0" selection-end-line="64" selection-end-column="0" />
-              <folding />
+            <state relative-caret-position="357">
+              <caret line="81" column="33" lean-forward="false" selection-start-line="81" selection-start-column="33" selection-end-line="81" selection-end-column="33" />
+              <folding>
+                <element signature="e#1862#1879#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -104,8 +106,8 @@
       <file leaf-file-name="tracking_main.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/tracking_main.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="573">
-              <caret line="187" column="10" lean-forward="false" selection-start-line="187" selection-start-column="10" selection-end-line="187" selection-end-column="10" />
+            <state relative-caret-position="519">
+              <caret line="218" column="0" lean-forward="true" selection-start-line="218" selection-start-column="0" selection-end-line="218" selection-end-column="0" />
               <folding>
                 <element signature="e#0#20#0" expanded="true" />
               </folding>
@@ -140,7 +142,10 @@
       <find>randomNumber</find>
       <find>trackingImgs</find>
       <find>Cam</find>
+      <find>set</find>
+      <find>setRandomConfig</find>
       <find>resampleLowVariance</find>
+      <find>numParticles</find>
     </findStrings>
   </component>
   <component name="IdeDocumentHistory">
@@ -150,8 +155,8 @@
         <option value="$USER_HOME$/devel/share/catkin_simple/cmake/catkin_simple-extras.cmake" />
         <option value="$PROJECT_DIR$/package.xml" />
         <option value="$PROJECT_DIR$/CMakeLists.txt" />
-        <option value="$PROJECT_DIR$/include/tool_tracking/particle_filter.h" />
         <option value="$PROJECT_DIR$/src/tracking_main.cpp" />
+        <option value="$PROJECT_DIR$/include/tool_tracking/particle_filter.h" />
         <option value="$PROJECT_DIR$/src/particle_filter.cpp" />
       </list>
     </option>
@@ -164,8 +169,8 @@
   </component>
   <component name="OCFindUsagesOptions" text="true" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
-    <option name="x" value="65" />
-    <option name="y" value="24" />
+    <option name="x" value="3265" />
+    <option name="y" value="80" />
     <option name="width" value="1215" />
     <option name="height" value="1000" />
   </component>
@@ -686,14 +691,15 @@
       <workItem from="1488481063970" duration="1829000" />
       <workItem from="1488505004556" duration="12408000" />
       <workItem from="1488570062512" duration="7824000" />
+      <workItem from="1488651866199" duration="19909000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="156783000" />
+    <option name="totallyTimeSpent" value="176692000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="65" y="24" width="1215" height="1000" extended-state="6" />
+    <frame x="3265" y="80" width="1215" height="1000" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1382716" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -768,7 +774,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1494">
           <caret line="83" column="61" lean-forward="false" selection-start-line="83" selection-start-column="61" selection-end-line="83" selection-end-column="61" />
-          <folding />
+          <folding>
+            <element signature="e#1862#1879#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -802,7 +810,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1206">
           <caret line="67" column="0" lean-forward="false" selection-start-line="67" selection-start-column="0" selection-end-line="67" selection-end-column="0" />
-          <folding />
+          <folding>
+            <element signature="e#1862#1879#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -862,7 +872,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="567">
           <caret line="27" column="15" lean-forward="false" selection-start-line="27" selection-start-column="12" selection-end-line="27" selection-end-column="15" />
-          <folding />
+          <folding>
+            <element signature="e#1862#1879#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -884,7 +896,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="379">
           <caret line="118" column="38" lean-forward="false" selection-start-line="118" selection-start-column="26" selection-end-line="118" selection-end-column="38" />
-          <folding />
+          <folding>
+            <element signature="e#1862#1879#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -928,7 +942,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2124">
           <caret line="118" column="58" lean-forward="false" selection-start-line="118" selection-start-column="58" selection-end-line="118" selection-end-column="58" />
-          <folding />
+          <folding>
+            <element signature="e#1862#1879#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -962,7 +978,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1494">
           <caret line="83" column="61" lean-forward="false" selection-start-line="83" selection-start-column="61" selection-end-line="83" selection-end-column="61" />
-          <folding />
+          <folding>
+            <element signature="e#1862#1879#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -996,7 +1014,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1206">
           <caret line="67" column="0" lean-forward="false" selection-start-line="67" selection-start-column="0" selection-end-line="67" selection-end-column="0" />
-          <folding />
+          <folding>
+            <element signature="e#1862#1879#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -1056,7 +1076,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="567">
           <caret line="27" column="15" lean-forward="false" selection-start-line="27" selection-start-column="12" selection-end-line="27" selection-end-column="15" />
-          <folding />
+          <folding>
+            <element signature="e#1862#1879#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -1081,28 +1103,30 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/include/tool_tracking/particle_filter.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="450">
-          <caret line="64" column="0" lean-forward="true" selection-start-line="64" selection-start-column="0" selection-end-line="64" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/tracking_main.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="573">
-          <caret line="187" column="10" lean-forward="false" selection-start-line="187" selection-start-column="10" selection-end-line="187" selection-end-column="10" />
+        <state relative-caret-position="519">
+          <caret line="218" column="0" lean-forward="true" selection-start-line="218" selection-start-column="0" selection-end-line="218" selection-end-column="0" />
           <folding>
             <element signature="e#0#20#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/include/tool_tracking/particle_filter.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="357">
+          <caret line="81" column="33" lean-forward="false" selection-start-line="81" selection-start-column="33" selection-end-line="81" selection-end-column="33" />
+          <folding>
+            <element signature="e#1862#1879#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/particle_filter.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="468">
-          <caret line="134" column="9" lean-forward="true" selection-start-line="134" selection-start-column="9" selection-end-line="134" selection-end-column="9" />
+        <state relative-caret-position="-1672">
+          <caret line="44" column="92" lean-forward="false" selection-start-line="44" selection-start-column="92" selection-end-line="44" selection-end-column="92" />
           <folding>
             <element signature="e#1734#1802#0" expanded="true" />
           </folding>

@@ -154,7 +154,8 @@ public:
                        std::vector<cv::Point3d> &input_Vpts, std::vector<cv::Point3d> &input_Npts, double &offset,
                        cv::Mat &input_Vmat, cv::Mat &input_Nmat);//there are offsets when loading the model convert
 
-    toolModel setRandomConfig(const toolModel &initial, const cv::Mat &Cam, double stdev, double mean);
+    toolModel setRandomConfig(const toolModel &initial);
+    ToolModel::toolModel gaussianSampling(const toolModel &max_pose, double stdev, double mean );
 
     // compute the pose for the tool model based on the cylinder pose, return the pose within inputModel
     void computeModelPose(toolModel &inputmodel, const double &theta_ellipse, const double &theta_grip_1,

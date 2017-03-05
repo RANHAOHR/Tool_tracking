@@ -42,7 +42,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-        nh_(*nodehandle), numParticles(300), toolSize(2), perturbStd(0.001) {
+        nh_(*nodehandle), numParticles(500), Downsample_rate(5), toolSize(2), perturbStd(0.5) {
     /****initial position guess
 	everything here is in meters*****/
     initial.tvec_elp(0) = 0.0;
@@ -81,6 +81,9 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     toolImage_left = cv::Mat::zeros(480, 640, CV_8UC3);
     toolImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
 
+    toolImage_left_temp = cv::Mat::zeros(480, 640, CV_8UC3);
+    toolImage_right_temp = cv::Mat::zeros(480, 640, CV_8UC3);
+
 };
 
 ParticleFilter::~ParticleFilter() {
@@ -94,7 +97,7 @@ void ParticleFilter::initializeParticles() {
     particleWeights.resize(numParticles); //initialize particle weight array
     //generate random needle
     for (int i(0); i < numParticles; i++) {
-        particles[i] = newToolModel.setRandomConfig(initial, Cam, 1, 0);
+        particles[i] = newToolModel.setRandomConfig(initial);
     }
 
 };
@@ -104,9 +107,6 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
                              const cv::Mat &P_left, const cv::Mat &P_right) {
 
     // ROS_INFO("---- Inside tracking function ---");
-    cv::Mat segmentedImage_left = segmented_left.clone();
-    cv::Mat segmentedImage_right = segmented_right.clone();
-
     std::vector<cv::Mat> trackingImages;
     trackingImages.resize(2);
 
@@ -114,74 +114,84 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
     int maxScoreIdx = -1; //maximum scored particle index
     double totalScore = 0.0; //total score
 
+    /***Update according to the max score***/
+    int numDownsample = numParticles;
 
-    /***do the sampling and get the matching score***/
-    for (int i = 0; i < numParticles; ++i) {
+    while(maxScore < 0.11 /*&& numDownsample > Downsample_rate */){
 
-        toolImage_left.setTo(0); //reset image for every start of an new loop
-        newToolModel.renderTool(toolImage_left, particles[i], Cam,
-                                           P_left); //first get the rendered image using 3d model of the tool
-        double left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left);  //get the matching score
+        cv::Mat segmentedImage_left = segmented_left.clone();
+        cv::Mat segmentedImage_right = segmented_right.clone();
 
-        toolImage_right.setTo(0); //reset image
-        newToolModel.renderTool(toolImage_right, particles[i], Cam, P_right);
-        double right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right);
+        toolImage_left_temp.setTo(0);
+        toolImage_right_temp.setTo(0);
 
-        matchingScores[i] = sqrt(pow(left, 2) + pow(right, 2));
+        /***do the sampling and get the matching score***/
+        for (int i = 0; i < numDownsample; ++i) {
 
-        if (matchingScores[i] > maxScore) {
-            maxScore = matchingScores[i];
-            maxScoreIdx = i;
+            toolImage_left.setTo(0); //reset image for every start of an new loop
+            newToolModel.renderTool(toolImage_left, particles[i], Cam,
+                                               P_left); //first get the rendered image using 3d model of the tool
+            double left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left);  //get the matching score
+
+            toolImage_right.setTo(0); //reset image
+            newToolModel.renderTool(toolImage_right, particles[i], Cam, P_right);
+            double right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right);
+
+            /***testing***/
+            newToolModel.renderTool(toolImage_left_temp, particles[i], Cam, P_left);
+            newToolModel.renderTool(toolImage_right_temp, particles[i], Cam, P_right);
+
+            matchingScores[i] = sqrt(pow(left, 2) + pow(right, 2));
+
+            if (matchingScores[i] > maxScore) {
+                maxScore = matchingScores[i];
+                maxScoreIdx = i;
+            }
+            totalScore += matchingScores[i];
         }
-        totalScore += matchingScores[i];
+
+        ROS_INFO_STREAM("Maxscore: " << maxScore);  //debug
+
+        /*** calculate weights using matching score and do the resampling ***/
+        for (int j = 0; j < numDownsample; ++j) { // normalize the weights
+            particleWeights[j] = (matchingScores[j] / totalScore);
+        }
+
+        //render in segmented image, no need to get the ROI
+        newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx], Cam, P_left);
+        newToolModel.renderTool(segmentedImage_right, particles[maxScoreIdx], Cam, P_right);
+
+        trackingImages[0] = segmentedImage_left;
+        trackingImages[1] = segmentedImage_right;
+    //    sort(particleWeights.begin(), particleWeights.end());
+    //    for (int k = 0; k < numParticles; ++k) {
+    //        ROS_INFO_STREAM("particleWeights " << particleWeights[k]);
+    //    }
+
+        //resample using low variance resampling method
+        std::vector<ToolModel::toolModel> oldParticles = particles;
+
+        //each time will clear the particles and resample them
+        resampleLowVariance(oldParticles, particleWeights, particles);
+
+        numDownsample = particles.size();
+
+        for (int k = 0; k < numDownsample; ++k) {
+            particles[k] = newToolModel.gaussianSampling(particles[k], perturbStd,0);
+        }
+
+        cv::imshow("temp left", toolImage_left_temp);
+        cv::imshow("temp right", toolImage_right_temp);
+
+        cv::imshow("trackingImages left",trackingImages[0]);
+        cv::imshow("trackingImages right",trackingImages[1]);
+        cv::waitKey(30);
 
     }
-
-//    cv::imshow("current left: ", toolImage_left);
-//    cv::imshow("current right: ", toolImage_right);
-
-    /*** you may wanna do this in a different stream, TODO: ***/
-    ROS_INFO_STREAM("Maxscore: " << maxScore);  //debug
-
-    newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx], Cam,
-                            P_left);  //render in segmented image, no need to get the ROI
-    newToolModel.renderTool(segmentedImage_right, particles[maxScoreIdx], Cam, P_right);
-
-    trackingImages[0] = segmentedImage_left;
-    trackingImages[1] = segmentedImage_right;
-
-    /*** calculate weights using matching score and do the resampling ***/
-    for (int j = 0; j < numParticles; ++j) { // normalize the weights
-        particleWeights[j] = (matchingScores[j] / totalScore);
-    }
-
-    //resample using low variance resampling method
-    std::vector<ToolModel::toolModel> oldParticles = particles;
-    //each time will clear the particles and resample them
-    resampleLowVariance(oldParticles, particleWeights, particles);
-
-    /*TODO:testing*/
-/*    for (int k = 0; k < numParticles; ++k) {
-        ROS_INFO("-----");
-        ROS_INFO_STREAM("oldParticles:" << oldParticles[k].tvec_elp);
-        ROS_INFO_STREAM("particles:" << particles[k].tvec_elp);
-    }*/
-    double dT = 0.02; //sampling rate
 
     /*** UPDATE particles, based on the given body vel and updating rate ***/
+    double dT = 0.02; //sampling rate
 //    updateParticles(bodyVel, dT);
-//
-    //if there is no movement, we need to perturb it
-    if (bodyVel.at<double>(0, 0) == 0.0 && bodyVel.at<double>(1, 0) == 0.0 && bodyVel.at<double>(5, 0) == 0.0) {
-        //TODO: look for matching score, if it is good assign smaller perturbation standard deviation
-        if (maxScore > 0.91) {
-            perturbStd = 0.0;
-        }
-
-        for (int i(0); i < particles.size(); i++) {
-            particles[i] = newToolModel.setRandomConfig(particles[i], Cam, perturbStd, 0.0);
-        }
-    }
 
     return trackingImages;
 };
@@ -284,23 +294,25 @@ void ParticleFilter::resampleLowVariance(const std::vector<ToolModel::toolModel>
     int M = sampleModel.size(); //total number of particles
     double max = 1.0 / M;
 
-    update_particles.clear();
-    update_particles.resize(sampleModel.size());
     double r = newToolModel.randomNum(0.0, max);
-
     double w = particleWeight[0]; //first particle weight
-
     int idx = 0;
-    int new_idx = 0;
+
+    update_particles.clear(); ///start fresh
+
     for (int i = 0; i < M; ++i) {
+
         double U = r + ((double) (i - 1) * max);
 
         while (U > w){
             idx += 1;
             w = w + particleWeight[idx];
         }
-        update_particles[new_idx] = sampleModel[idx];
-        new_idx += 1;
+
+        update_particles.push_back(sampleModel[idx]);
+//        ///pick certain particles has larger weights, sort the particle before, particleWeight[M-5]
+//        if(particleWeight[idx] > 0.0 ){
+//        }
     }
 
 };

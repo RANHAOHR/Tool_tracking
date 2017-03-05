@@ -56,22 +56,6 @@ int main(int argc, char **argv) {
     cv::resize(segImg, segImg,size );
 
     /******************magic numbers*************/
-    /*GENERAL P CONFIGS for DVRK*/
-//    P.at<double>(0, 0) = 1000;
-//    P.at<double>(1, 0) = 0;
-//    P.at<double>(2, 0) = 0;
-//
-//    P.at<double>(0, 1) = 0;
-//    P.at<double>(1, 1) = 1000;
-//    P.at<double>(2, 1) = 0;
-//
-//    P.at<double>(0, 2) = 320; // horiz
-//    P.at<double>(1, 2) = 240; //verticle
-//    P.at<double>(2, 2) = 1;
-//
-//    P.at<double>(0, 3) = 0;
-//    P.at<double>(1, 3) = 0;
-//    P.at<double>(2, 3) = 0;
 
     /*actual Projection matrix*/
     P.at<double>(0, 0) = 893.7852590197848;
@@ -106,7 +90,7 @@ int main(int argc, char **argv) {
     clock_t t2;
 
     t1 = clock();
-    //initial = newToolModel.setRandomConfig(initial, Cam, 1, 0);
+    //initial = newToolModel.setRandomConfig(initial);
     newToolModel.computeModelPose(initial, -0.6, 0.3, 0.1 );
     t1 = clock() - t1;
 
@@ -124,14 +108,11 @@ int main(int argc, char **argv) {
     float sec1 = (float) t1 / CLOCKS_PER_SEC;
     float sec = (float) t / CLOCKS_PER_SEC;
 
-
-
 //    ROS_INFO_STREAM("setRandomConfig time is: " << sec1);
 //    ROS_INFO_STREAM("render time is: " << sec);
 
     /********write a test segmentation ********/
-    //newTool = newToolModel.setRandomConfig(initial, Cam, 1, 0);
-
+    //newTool = newToolModel.setRandomConfig(initial);
     newToolModel.computeModelPose(initial, 0.1, 0.1, 0 );
 
 

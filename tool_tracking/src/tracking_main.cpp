@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
 
     trackingImgs.resize(2);
 
-    /****TODO: Projection matrices****/
+    /****TODO: Temp Projection matrices****/
     cv::Mat P_l(3, 4, CV_64FC1);
     P_l.at<double>(0, 0) = 893.7852590197848;
     P_l.at<double>(1, 0) = 0;
@@ -222,21 +222,7 @@ int main(int argc, char **argv) {
 //
             cv::imshow("Rendered Image: Left", trackingImgs[0]);
             cv::imshow("Rendered Image: Right", trackingImgs[1]);
-            cv::waitKey(10);
-
-
-            /****Testing time and image****/
-/*          float sec = (float)t/CLOCKS_PER_SEC;
-            imshow( "left_raw_img", rawImage_left);
-            imshow( "Left_Segmented", seg_left );
-            imshow( "right_raw_img", rawImage_right);
-            imshow( "Right_Segmented", seg_right );
-            cout<<"after imshow"<<endl;
-            cv::waitKey(10);
-            avg_tim += sec;
-            cout<< "avg time is : "<< avg_tim/count<<endl;
-            count += 1;
-            cout<<"each segmentation peroid takes: "<<t<<endl;*/
+            cv::waitKey(50);
 
             freshImage = false;
             freshVelocity = false;

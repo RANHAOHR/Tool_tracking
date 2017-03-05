@@ -79,6 +79,7 @@ private:
     ToolModel::toolModel initial; //initial configuration
 
     unsigned int toolSize; //size of the needle to be rendered
+    unsigned int Downsample_rate;
 
     double perturbStd; //standard deviation for perturbing, if we obtain good matching it gets smaller to stay in the region
 
@@ -86,6 +87,8 @@ private:
     cv::Mat toolImage_left; //left rendered Image
     cv::Mat toolImage_right; //right rendered Image
 
+    cv::Mat toolImage_left_temp; //left rendered Image
+    cv::Mat toolImage_right_temp; //right rendered Image
 
     cv::Rect ROI_left; //ROI for the left image
     cv::Rect ROI_right; //ROI for the right image
