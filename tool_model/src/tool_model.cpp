@@ -1005,58 +1005,52 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 }
 
 /*chamfer matching algorithm*/
-float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmentedImage) {
+float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmentedImage) {
 
     float output = 0;
     cv::Mat ROI_toolImage = toolImage.clone(); //CV_8UC3
     cv::Mat segImgGrey = segmentedImage.clone(); //CV_8UC1
 
     /***tool image process**/
-    cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
-    cv::Mat toolImFloat; //Float data type of grey scale tool image
+    cv::Mat toolImageGrey(ROI_toolImage.size(), CV_8UC1); //grey scale of toolImage since tool image has 3 channels
+    cv::Mat toolImFloat(ROI_toolImage.size(), CV_32FC1); //Float data type of grey scale tool image
     cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
 
+
     toolImageGrey.convertTo(toolImFloat, CV_32FC1); // get float img
-    cv::Mat toolbinaryImg; //initialize
+
 
     cv::Mat BinaryImg(toolImFloat.size(), toolImFloat.type());
-    BinaryImg= toolImFloat * (1.0/255);
+    BinaryImg = toolImFloat * (1.0/255);
 
     /***segmented image process**/
-    cv::Mat distance_img;
-    cv::Mat segImFloat;
-
     for (int i = 0; i < segImgGrey.rows; i++) {
         for (int j = 0; j < segImgGrey.cols; j++) {
-
-            segImgGrey.at<cv::Vec3b>(i,j)[0] = 255 - segImgGrey.at<cv::Vec3b>(i,j)[0];
-            segImgGrey.at<cv::Vec3b>(i,j)[1] = 255 - segImgGrey.at<cv::Vec3b>(i,j)[1];
-            segImgGrey.at<cv::Vec3b>(i,j)[2] = 255 - segImgGrey.at<cv::Vec3b>(i,j)[2];
+            segImgGrey.at<uchar>(i,j) = 255 - segImgGrey.at<uchar>(i,j);
             // ROS_INFO_STREAM("segImgGrey: " << segImgGrey.at<float>(i,j) );
         }
     }
 
-    //cv::threshold(segImgGrey, segImgGrey, 200, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
-
-//    cv::imshow("segImgGrey: ", segImgGrey);
-
 
     cv::Mat normDIST;
+    cv::Mat distance_img;
     cv::distanceTransform(segImgGrey, distance_img, CV_DIST_L2, 3);
     cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
+
 
 //    cv::imshow("Normalized img", normDIST);
     // cv::imshow("distance_img", distance_img);
 
-    /***multiplication process**/
+//    /***multiplication process**/
     cv::Mat resultImg; //initialize
 
     cv::multiply(normDIST, BinaryImg, resultImg/*, 1.00/255*/);
+
     float total = 0;
     for (int l = 0; l < BinaryImg.rows; ++l) {
         for (int i = 0; i < BinaryImg.cols; ++i) {
-            float tool_pixel = BinaryImg.at<float>(l,i);
 
+            float tool_pixel = BinaryImg.at<float>(l,i);
             if(tool_pixel > 0.5)
                 //ROS_INFO_STREAM("binary img pixel: " << tool_pixel);
                 total += tool_pixel;
@@ -1071,7 +1065,6 @@ float ToolModel::calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmen
 
             double mul = resultImg.at<float>(k,i);
             if(mul > 0.0)
-//                ROS_INFO_STREAM("resultImg pixel: " << mul);
                 output += mul;
         }
     }

@@ -168,7 +168,7 @@ public:
     cv::Point2d reproject(const cv::Mat &point, const cv::Mat &P);
 
     double calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage);
-    float calculateChamferSocre(cv::Mat &toolImage, const cv::Mat &segmentedImage);
+    float calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmentedImage);
 
     /**************compute silhouettes*****************/
     void Compute_Silhouette(const std::vector<std::vector<int> > &input_faces,
@@ -192,7 +192,6 @@ public:
     cv::Point3d Normalize(cv::Point3d &vec1);
 
     void ConvertInchtoMeters(std::vector<cv::Point3d> &input_vertices);
-
 
     void Convert_glTocv_pts(std::vector<glm::vec3> &input_vertices, std::vector<cv::Point3d> &out_vertices);
 

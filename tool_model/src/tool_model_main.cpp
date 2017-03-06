@@ -121,16 +121,18 @@ int main(int argc, char **argv) {
 //    ROS_INFO_STREAM("setRandomConfig time is: " << sec1);
 //    ROS_INFO_STREAM("render time is: " << sec);
 
-    double result = newToolModel.calculateMatchingScore(testImg, segImg);
+        double result = newToolModel.calculateMatchingScore(testImg, segImg);
 
-    t2 = clock();
-    double chamfer_result = newToolModel.calculateChamferSocre(testImg, segImg);
-    t2 = clock() - t2;
-    ROS_INFO_STREAM("THE MATCHING SCORE IS: " << result);
-    ROS_INFO_STREAM("THE chamfer SCORE IS: " << chamfer_result);
+        t2 = clock();
+        double chamfer_result = newToolModel.calculateChamferScore(testImg, segImg);
+        t2 = clock() - t2;
+        ROS_INFO_STREAM("THE MATCHING SCORE IS: " << result);
+        ROS_INFO_STREAM("THE chamfer SCORE IS: " << chamfer_result);
 
-    float sec2 = (float) t2 / CLOCKS_PER_SEC;
-    ROS_INFO_STREAM("MATCHING TIME: " << sec2);
+
+
+//    float sec2 = (float) t2 / CLOCKS_PER_SEC;
+//    ROS_INFO_STREAM("MATCHING TIME: " << sec2);
 
     return 0;
 

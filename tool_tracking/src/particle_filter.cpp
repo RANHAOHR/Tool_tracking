@@ -134,11 +134,11 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
             toolImage_left.setTo(0); //reset image for every start of an new loop
             newToolModel.renderTool(toolImage_left, particles[i], Cam,
                                                P_left); //first get the rendered image using 3d model of the tool
-            double left = newToolModel.calculateChamferSocre(toolImage_left, segmented_left);  //get the matching score
+            double left = newToolModel.calculateChamferScore(toolImage_left, segmented_left);  //get the matching score
 
             toolImage_right.setTo(0); //reset image
             newToolModel.renderTool(toolImage_right, particles[i], Cam, P_right);
-            double right = newToolModel.calculateChamferSocre(toolImage_right, segmented_right);
+            double right = newToolModel.calculateChamferScore(toolImage_right, segmented_right);
 
             /***testing***/
             newToolModel.renderTool(toolImage_left_temp, particles[i], Cam, P_left);
