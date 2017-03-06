@@ -9,6 +9,9 @@ CMakeFiles/tool_tracking.dir/src/particle_filter.cpp.o
  /home/rxh349/ros_ws/src/vesselness_image_filter_common/include/vesselness_image_filter_cpu/vesselness_lib.h
  /opt/ros/jade/include/XmlRpcDecl.h
  /opt/ros/jade/include/XmlRpcValue.h
+ /opt/ros/jade/include/geometry_msgs/Quaternion.h
+ /opt/ros/jade/include/geometry_msgs/Transform.h
+ /opt/ros/jade/include/geometry_msgs/Vector3.h
  /opt/ros/jade/include/ros/advertise_options.h
  /opt/ros/jade/include/ros/advertise_service_options.h
  /opt/ros/jade/include/ros/assert.h

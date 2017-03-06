@@ -163,8 +163,8 @@ int main(int argc, char **argv) {
 
     //TODO: get image size from camera model, or initialize segmented images,
 
-    cv::Mat rawImage_left = cv::Mat::zeros(480, 640, CV_32FC1);
-    cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_32FC1);
+    cv::Mat rawImage_left = cv::Mat::zeros(475, 640, CV_32FC1);
+    cv::Mat rawImage_right = cv::Mat::zeros(475, 640, CV_32FC1);
 
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber img_sub_l = it.subscribe("/davinci_endo/left/image_raw", 1,
@@ -181,8 +181,12 @@ int main(int argc, char **argv) {
     seg_left = cv::imread("/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/left.png",CV_LOAD_IMAGE_GRAYSCALE );
     seg_right = cv::imread("/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/right.png",CV_LOAD_IMAGE_GRAYSCALE );
 
-    cv::resize(seg_left, seg_left,size );
-    cv::resize(seg_right, seg_right,size );
+    cv::Mat new_seg_left = seg_left.rowRange(5,480);
+    cv::Mat new_seg_right = seg_right.rowRange(5,480);
+
+
+    cv::resize(new_seg_left, new_seg_left,size );
+    cv::resize(new_seg_right, new_seg_right,size );
 
     while (nh.ok()) {
         //ros::spinOnce();
@@ -217,7 +221,7 @@ int main(int argc, char **argv) {
                 bodyVel.at<double>(i, 0) = Arr[i];
             }
 
-            trackingImgs = Particles.trackingTool(bodyVel, seg_left, seg_right, P_l,
+            trackingImgs = Particles.trackingTool(bodyVel, new_seg_left, new_seg_right, P_l,
                                                   P_r); //with rendered tool and segmented img
 //
             cv::imshow("Rendered Image: Left", trackingImgs[0]);

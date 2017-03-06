@@ -51,9 +51,9 @@ int main(int argc, char **argv) {
     cv::Mat testImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3
     cv::Mat P(3, 4, CV_64FC1);
 
-    cv::Size size(640, 480);
-    cv::Mat segImg = cv::imread("/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/left.png",CV_LOAD_IMAGE_GRAYSCALE );
-    cv::resize(segImg, segImg,size );
+//    cv::Size size(640, 480);
+//    cv::Mat segImg = cv::imread("/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/left.png",CV_LOAD_IMAGE_GRAYSCALE );
+//    cv::resize(segImg, segImg,size );
 
     /******************magic numbers*************/
 
@@ -80,8 +80,8 @@ int main(int argc, char **argv) {
     initial.tvec_elp(1) = 0.1;  //up and down
     initial.tvec_elp(2) = 0.0;
     initial.rvec_elp(0) = 0.0;
-    initial.rvec_elp(1) = -1.5;
-    initial.rvec_elp(2) = -1;
+    initial.rvec_elp(1) = 0.0;
+    initial.rvec_elp(2) = -2;
 
     ToolModel::toolModel newTool;
 
@@ -89,32 +89,37 @@ int main(int argc, char **argv) {
     clock_t t1;
     clock_t t2;
 
-    t1 = clock();
     //initial = newToolModel.setRandomConfig(initial);
     newToolModel.computeModelPose(initial, -0.6, 0.3, 0.1 );
-    t1 = clock() - t1;
-
 
     t = clock();
     newToolModel.renderTool(testImg, initial, Cam, P);
     t = clock() - t;
+
+    cv::Mat segImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3
+    /********write a test segmentation ********/
+    ToolModel::toolModel newModel;
+    newModel.tvec_elp(0) = 0.03;  //left and right (image frame)
+    newModel.tvec_elp(1) = 0.1;  //up and down
+    newModel.tvec_elp(2) = 0.0;
+    newModel.rvec_elp(0) = 0.0;
+    newModel.rvec_elp(1) = 0.0;
+    newModel.rvec_elp(2) = -2;
+    newToolModel.computeModelPose(newModel, 0.1, 0.1, 0 );
+    newToolModel.renderTool(segImg, newModel, Cam, P);
+
+    cv::cvtColor(segImg, segImg, CV_BGR2GRAY); //convert it to grey scale
 
     cv::imshow("tool image: ",testImg );
     cv::imshow("segImg : ",segImg );
 
     cv::waitKey(0);
 
-
     float sec1 = (float) t1 / CLOCKS_PER_SEC;
     float sec = (float) t / CLOCKS_PER_SEC;
 
 //    ROS_INFO_STREAM("setRandomConfig time is: " << sec1);
 //    ROS_INFO_STREAM("render time is: " << sec);
-
-    /********write a test segmentation ********/
-    //newTool = newToolModel.setRandomConfig(initial);
-    newToolModel.computeModelPose(initial, 0.1, 0.1, 0 );
-
 
     double result = newToolModel.calculateMatchingScore(testImg, segImg);
 

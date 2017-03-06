@@ -129,15 +129,20 @@ public:
     /*
      * resampling method
      */
-    void
+/*    void
     resampleLowVariance(const std::vector<ToolModel::toolModel> &initial, const std::vector<double> &particleWeight,
-                        std::vector<ToolModel::toolModel> &results);
+                        std::vector<ToolModel::toolModel> &results);*/
+    void resamplingParticles(const std::vector<ToolModel::toolModel> &sampleModel,
+                                             const std::vector<double> &particleWeight,
+                                             std::vector<ToolModel::toolModel> &update_particles,
+                                             std::vector<double> &update_weights);
 
     /*
      * update particles
      */
     void updateParticles(const cv::Mat &bodyVel, double &updateRate);
-
+    void updateSamples(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
+                                         std::vector<ToolModel::toolModel> &updateParticles);
     /*
      * perturb the particles for more usable poses
      */

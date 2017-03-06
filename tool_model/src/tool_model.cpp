@@ -271,7 +271,6 @@ void ToolModel::Convert_glTocv_pts(std::vector<glm::vec3> &input_vertices, std::
 
 /* find the camera view point, should it be (0,0,0), input faces stores the indices of the vertices and normals, 
 which are not related to the pose of the tool object*/
-
 /*** TODO: camera transformations ***/
 cv::Mat ToolModel::camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat) {
     /*cam mat should be a 4x4 extrinsic parameter*/
@@ -800,13 +799,13 @@ ToolModel::setRandomConfig(const toolModel &initial) {
     newTool.tvec_elp(1) = randomNum(-0.06, 0.18);
     newTool.tvec_elp(2) =  randomNum(-0.1, 0.1); ////translation on z cannot be random because of the camera transformation
 
-    double angle = randomNum(-0.5, 0.5);
+    double angle = randomNum(-0.1, 0.1);
     newTool.rvec_elp(0) += angle; //rotation on x axis +/-5 degrees
 
-    angle = randomNum(-0.5, 0.5);
+    angle = randomNum(-0.1, 0.1);
     newTool.rvec_elp(1) += angle; //rotation on x axis +/-5 degrees
 
-    angle = randomNum(-0.5, 0.5);
+    angle = randomNum(-0.1, 0.1);
     newTool.rvec_elp(2) += angle; //rotation on z axis +/-5 degrees
 
     /************** sample the angles of the joints **************/
@@ -828,30 +827,31 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, doub
 
     toolModel gaussianTool;  //new sample
 
+    //gaussianTool = max_pose;
     //create normally distributed random samples
-    double dev = randomNumber(stdev, mean);
+    double dev = randomNumber(0.1, 0);
     gaussianTool.tvec_elp(0) = max_pose.tvec_elp(0) + dev;
 
-    dev = randomNumber(stdev, mean);
+    dev = randomNumber(0.1, 0);
     gaussianTool.tvec_elp(1) = max_pose.tvec_elp(1) + dev;
 
-    dev = randomNumber(stdev, mean);
+    dev = randomNumber(1, 0.5);
     gaussianTool.tvec_elp(2) = max_pose.tvec_elp(2) + dev;
-
-    dev = randomNumber(stdev, mean);
-    gaussianTool.rvec_elp(0) = max_pose.rvec_elp(0) + dev;
-
-    dev = randomNumber(stdev, mean);
-    gaussianTool.rvec_elp(1) = max_pose.rvec_elp(1) + dev;
-
-    dev = randomNumber(stdev, mean);
-    gaussianTool.rvec_elp(2) = max_pose.rvec_elp(2) + dev;
+//
+//    dev = randomNumber(stdev, mean);
+//    gaussianTool.rvec_elp(0) = max_pose.rvec_elp(0) + dev;
+//
+//    dev = randomNumber(stdev, mean);
+//    gaussianTool.rvec_elp(1) = max_pose.rvec_elp(1) + dev;
+//
+//    dev = randomNumber(stdev, mean);
+//    gaussianTool.rvec_elp(2) = max_pose.rvec_elp(2) + dev;
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    double theta_ellipse = randomNumber(stdev, mean);    //-90,90
-    double theta_grip_1 = randomNumber(stdev, mean);
-    double theta_grip_2 = randomNumber(stdev, mean);
+    double theta_ellipse = randomNum(-M_PI / 2, M_PI / 2);    //-90,90
+    double theta_grip_1 = randomNum(-M_PI / 2, M_PI / 2);
+    double theta_grip_2 = randomNum(-M_PI / 2, M_PI / 2);
 
     /*** if the two joints get overflow ***/
     if (theta_grip_1 < theta_grip_2)

@@ -2,19 +2,17 @@
 <project version="4">
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" buildAllGenerated="true">
     <generated>
-      <config projectName="tool_model" targetName="tool_model_main" />
+      <config projectName="tooltrack" targetName="doxygen" />
       <config projectName="tool_model" targetName="sensor_msgs_generate_messages_eus" />
       <config projectName="tooltrack" targetName="geometry_msgs_generate_messages_lisp" />
+      <config projectName="tooltrack" targetName="gtest_main" />
       <config projectName="tool_model" targetName="rosgraph_msgs_generate_messages_eus" />
       <config projectName="tooltrack" targetName="rosgraph_msgs_generate_messages_py" />
-      <config projectName="tool_model" targetName="vesselness_image_filter_gencfg" />
-      <config projectName="tooltrack" targetName="sensor_msgs_generate_messages_py" />
       <config projectName="tooltrack" targetName="cwru_opencv_common_generate_messages_cpp" />
       <config projectName="tooltrack" targetName="tool_model_main" />
       <config projectName="tool_model" targetName="dynamic_reconfigure_generate_messages_py" />
-      <config projectName="tooltrack" targetName="doxygen" />
       <config projectName="tool_model" targetName="dynamic_reconfigure_generate_messages_eus" />
-      <config projectName="tooltrack" targetName="gtest" />
+      <config projectName="tooltrack" targetName="std_msgs_generate_messages_lisp" />
       <config projectName="tooltrack" targetName="_catkin_empty_exported_target" />
       <config projectName="tool_model" targetName="std_msgs_generate_messages_eus" />
       <config projectName="tooltrack" targetName="cwru_opencv_common_generate_messages_py" />
@@ -27,32 +25,34 @@
       <config projectName="tool_model" targetName="vesselness_image_filter_generate_messages_lisp" />
       <config projectName="toolModel" targetName="tool_model_lib" />
       <config projectName="tooltrack" targetName="std_msgs_generate_messages_py" />
-      <config projectName="toolModel" targetName="toolModel_package" />
       <config projectName="tool_model" targetName="dynamic_reconfigure_gencfg" />
       <config projectName="tooltrack" targetName="roscpp_generate_messages_cpp" />
-      <config projectName="tool_model" targetName="vesselness_image_filter_generate_messages_eus" />
+      <config projectName="toolModel" targetName="toolModel_package" />
       <config projectName="tool_model" targetName="dynamic_reconfigure_generate_messages_cpp" />
       <config projectName="tooltrack" targetName="geometry_msgs_generate_messages_py" />
       <config projectName="tool_model" targetName="cwru_opencv_common_generate_messages_eus" />
-      <config projectName="tooltrack" targetName="run_tests" />
-      <config projectName="tooltrack" targetName="gtest_main" />
+      <config projectName="tooltrack" targetName="gtest" />
+      <config projectName="tool_model" targetName="tool_model_main" />
       <config projectName="tool_model" targetName="roscpp_generate_messages_eus" />
-      <config projectName="tooltrack" targetName="std_msgs_generate_messages_cpp" />
+      <config projectName="tool_model" targetName="vesselness_image_filter_generate_messages_eus" />
       <config projectName="tooltrack" targetName="test_seg" />
       <config projectName="tool_model" targetName="tool_model_package" />
-      <config projectName="tooltrack" targetName="tests" />
+      <config projectName="tooltrack" targetName="run_tests" />
       <config projectName="tooltrack" targetName="download_extra_data" />
       <config projectName="tooltrack" targetName="showing_image" />
-      <config projectName="tooltrack" targetName="std_msgs_generate_messages_lisp" />
-      <config projectName="tooltrack" targetName="roscpp_generate_messages_lisp" />
+      <config projectName="tooltrack" targetName="sensor_msgs_generate_messages_lisp" />
+      <config projectName="tool_model" targetName="vesselness_image_filter_gencfg" />
       <config projectName="tool_model" targetName="vesselness_image_filter_generate_messages_cpp" />
       <config projectName="tool_model" targetName="geometry_msgs_generate_messages_eus" />
-      <config projectName="tooltrack" targetName="geometry_msgs_generate_messages_cpp" />
+      <config projectName="tooltrack" targetName="tests" />
+      <config projectName="tooltrack" targetName="std_msgs_generate_messages_cpp" />
       <config projectName="tooltrack" targetName="cwru_opencv_common_generate_messages_lisp" />
+      <config projectName="tooltrack" targetName="geometry_msgs_generate_messages_cpp" />
       <config projectName="tooltrack" targetName="sensor_msgs_generate_messages_cpp" />
       <config projectName="tool_model" targetName="vesselness_image_filter_generate_messages_py" />
+      <config projectName="tooltrack" targetName="roscpp_generate_messages_lisp" />
       <config projectName="tooltrack" targetName="rosgraph_msgs_generate_messages_cpp" />
-      <config projectName="tooltrack" targetName="sensor_msgs_generate_messages_lisp" />
+      <config projectName="tooltrack" targetName="sensor_msgs_generate_messages_py" />
     </generated>
   </component>
   <component name="CMakeSettings">
@@ -81,11 +81,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="tool_model_main.cpp" pinned="false" current-in-tab="false">
+      <file leaf-file-name="tool_model_main.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/tool_model_main.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="411">
-              <caret line="100" column="0" lean-forward="true" selection-start-line="100" selection-start-column="0" selection-end-line="100" selection-end-column="0" />
+            <state relative-caret-position="612">
+              <caret line="106" column="29" lean-forward="false" selection-start-line="106" selection-start-column="29" selection-end-line="106" selection-end-column="29" />
               <folding>
                 <element signature="e#198#218#0" expanded="true" />
               </folding>
@@ -93,11 +93,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="tool_model.cpp" pinned="false" current-in-tab="true">
+      <file leaf-file-name="tool_model.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/tool_model.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="544">
-              <caret line="831" column="43" lean-forward="false" selection-start-line="831" selection-start-column="43" selection-end-line="831" selection-end-column="43" />
+            <state relative-caret-position="438">
+              <caret line="990" column="25" lean-forward="true" selection-start-line="990" selection-start-column="25" selection-end-line="990" selection-end-column="25" />
               <folding>
                 <element signature="e#1734#1754#0" expanded="true" />
               </folding>
@@ -108,7 +108,7 @@
       <file leaf-file-name="tool_model.h" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/include/tool_model_lib/tool_model.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="357">
+            <state relative-caret-position="2826">
               <caret line="157" column="97" lean-forward="false" selection-start-line="157" selection-start-column="97" selection-end-line="157" selection-end-column="97" />
               <folding>
                 <element signature="e#43#60#0" expanded="true" />
@@ -165,6 +165,8 @@
       <find>modify_model_</find>
       <find>Compute_Silhouette</find>
       <find>randomNum</find>
+      <find>norm</find>
+      <find>randomNumber</find>
     </findStrings>
   </component>
   <component name="IdeDocumentHistory">
@@ -173,9 +175,9 @@
         <option value="$PROJECT_DIR$/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/package.xml" />
         <option value="$PROJECT_DIR$/src/test_seg.cpp" />
-        <option value="$PROJECT_DIR$/src/tool_model_main.cpp" />
         <option value="$PROJECT_DIR$/include/tool_model_lib/tool_model.h" />
         <option value="$PROJECT_DIR$/src/tool_model.cpp" />
+        <option value="$PROJECT_DIR$/src/tool_model_main.cpp" />
       </list>
     </option>
   </component>
@@ -187,8 +189,8 @@
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
-    <option name="x" value="65" />
-    <option name="y" value="24" />
+    <option name="x" value="3265" />
+    <option name="y" value="80" />
     <option name="width" value="1215" />
     <option name="height" value="1000" />
   </component>
@@ -715,11 +717,12 @@
       <workItem from="1488503670152" duration="16780000" />
       <workItem from="1488570070692" duration="8393000" />
       <workItem from="1488651848241" duration="8138000" />
+      <workItem from="1488733313662" duration="11835000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="191250000" />
+    <option name="totallyTimeSpent" value="203085000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -731,7 +734,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="65" y="24" width="1215" height="1000" extended-state="6" />
+    <frame x="3265" y="80" width="1215" height="1000" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.09876543" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -1165,19 +1168,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/tool_model_main.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="411">
-          <caret line="100" column="0" lean-forward="true" selection-start-line="100" selection-start-column="0" selection-end-line="100" selection-end-column="0" />
-          <folding>
-            <element signature="e#198#218#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/include/tool_model_lib/tool_model.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="357">
+        <state relative-caret-position="2826">
           <caret line="157" column="97" lean-forward="false" selection-start-line="157" selection-start-column="97" selection-end-line="157" selection-end-column="97" />
           <folding>
             <element signature="e#43#60#0" expanded="true" />
@@ -1187,10 +1180,20 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/tool_model.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="544">
-          <caret line="831" column="43" lean-forward="false" selection-start-line="831" selection-start-column="43" selection-end-line="831" selection-end-column="43" />
+        <state relative-caret-position="438">
+          <caret line="990" column="25" lean-forward="true" selection-start-line="990" selection-start-column="25" selection-end-line="990" selection-end-column="25" />
           <folding>
             <element signature="e#1734#1754#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/tool_model_main.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="612">
+          <caret line="106" column="29" lean-forward="false" selection-start-line="106" selection-start-column="29" selection-end-line="106" selection-end-column="29" />
+          <folding>
+            <element signature="e#198#218#0" expanded="true" />
           </folding>
         </state>
       </provider>
