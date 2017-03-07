@@ -224,9 +224,9 @@ int main(int argc, char **argv) {
             trackingImgs = Particles.trackingTool(bodyVel, new_seg_left, new_seg_right, P_l,
                                                   P_r); //with rendered tool and segmented img
 //
-            cv::imshow("Rendered Image: Left", trackingImgs[0]);
-            cv::imshow("Rendered Image: Right", trackingImgs[1]);
-            cv::waitKey(50);
+//            cv::imshow("Rendered Image: Left", trackingImgs[0]);
+//            cv::imshow("Rendered Image: Right", trackingImgs[1]);
+//            cv::waitKey(50);
 
             freshImage = false;
             freshVelocity = false;

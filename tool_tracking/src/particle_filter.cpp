@@ -42,7 +42,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-        nh_(*nodehandle), numParticles(1000), Downsample_rate(5), toolSize(2), perturbStd(0.5) {
+        nh_(*nodehandle), numParticles(500), Downsample_rate(5), toolSize(2), perturbStd(0.5) {
     /****initial position guess
 	everything here is in meters*****/
     initial.tvec_elp(0) = 0.0;
@@ -53,26 +53,15 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     initial.rvec_elp(2) = 0.0;
 
     /****need to subscribe this***/
-    Cam = cv::Mat(4, 4, CV_64FC1);  ///should be camera extrinsic parameter relative to the tools
-    Cam.at<double>(0, 0) = 1;
-    Cam.at<double>(1, 0) = 0;
-    Cam.at<double>(2, 0) = 0;
-    Cam.at<double>(3, 0) = 0;
+    Cam_left = (cv::Mat_<double>(4,4) << 1, 0, 0, 0,   ///meters or millimeters
+            0, -1, 0, 0,
+            0, 0, -1, 0.2,
+            0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
 
-    Cam.at<double>(0, 1) = 0;
-    Cam.at<double>(1, 1) = -1;
-    Cam.at<double>(2, 1) = 0;
-    Cam.at<double>(3, 1) = 0;
-
-    Cam.at<double>(0, 2) = 0;
-    Cam.at<double>(1, 2) = 0;
-    Cam.at<double>(2, 2) = -1;
-    Cam.at<double>(3, 2) = 0;
-
-    Cam.at<double>(0, 3) = 0.0;   //should be in meters
-    Cam.at<double>(1, 3) = 0.0;
-    Cam.at<double>(2, 3) = 0.2;  // cannot have z = 0 for reprojection, camera_z must be always point to object
-    Cam.at<double>(3, 3) = 1;
+    Cam_right = (cv::Mat_<double>(4,4) << 1, 0, 0, -0.005,   ///meters or millimeters
+            0, -1, 0, 0,
+            0, 0, -1, 0.2,
+            0, 0, 0, 1);
 
     //initialize particles by randomly assigning around the initial guess
     initializeParticles();
@@ -117,7 +106,7 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
     /***Update according to the max score***/
     int numDownsample = numParticles;
 
-    while(maxScore < 0.2 /*&& numDownsample > Downsample_rate */){
+    while(maxScore != 0 /*&& numDownsample > Downsample_rate */){
 
         cv::Mat segmentedImage_left = segmented_left.clone();
         cv::Mat segmentedImage_right = segmented_right.clone();
@@ -132,17 +121,17 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
         for (int i = 0; i < numDownsample; ++i) {
 
             toolImage_left.setTo(0); //reset image for every start of an new loop
-            newToolModel.renderTool(toolImage_left, particles[i], Cam,
+            newToolModel.renderTool(toolImage_left, particles[i], Cam_left,
                                                P_left); //first get the rendered image using 3d model of the tool
-            double left = newToolModel.calculateChamferScore(toolImage_left, segmented_left);  //get the matching score
+            double left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left);  //get the matching score
 
             toolImage_right.setTo(0); //reset image
-            newToolModel.renderTool(toolImage_right, particles[i], Cam, P_right);
-            double right = newToolModel.calculateChamferScore(toolImage_right, segmented_right);
+            newToolModel.renderTool(toolImage_right, particles[i], Cam_right, P_right);
+            double right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right);
 
             /***testing***/
-            newToolModel.renderTool(toolImage_left_temp, particles[i], Cam, P_left);
-            newToolModel.renderTool(toolImage_right_temp, particles[i], Cam, P_right);
+            newToolModel.renderTool(toolImage_left_temp, particles[i], Cam_left, P_left);
+            newToolModel.renderTool(toolImage_right_temp, particles[i], Cam_right, P_right);
 
             matchingScores[i] = sqrt(pow(left, 2) + pow(right, 2));
 
@@ -163,8 +152,8 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
 
         std::vector<double> tempWeights = particleWeights;
         //render in segmented image, no need to get the ROI
-        newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx], Cam, P_left);
-        newToolModel.renderTool(segmentedImage_right, particles[maxScoreIdx], Cam, P_right);
+        newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx], Cam_left, P_left);
+        newToolModel.renderTool(segmentedImage_right, particles[maxScoreIdx], Cam_right, P_right);
 
         trackingImages[0] = segmentedImage_left;
         trackingImages[1] = segmentedImage_right;
@@ -176,7 +165,8 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
         sort(tempWeights.begin(), tempWeights.end());
 
         for (int k = 0; k <numDownsample; ++k) {
-            if(particleWeights[k] > tempWeights[numDownsample - 50] ){
+
+            if(particleWeights[k] >= tempWeights[numDownsample - 50] ){
                 updateParticles.push_back(particles[k]); //correspondingly
                 update_weights.push_back(particleWeights[k]);
             }

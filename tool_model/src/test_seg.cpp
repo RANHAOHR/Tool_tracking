@@ -164,8 +164,8 @@ Mat seg_right;
     		imshow( "right_raw_img", rawImage_right);
 	  		imshow( "Right_Segmented", seg_right );
 
-			imwrite("/home/rxh349/ros_ws/src/Tool_tracking/left.png", seg_left);
-			imwrite("/home/rxh349/ros_ws/src/Tool_tracking/right.png", seg_right);
+			imwrite("/home/rxh349/ros_ws/src/Tool_tracking/raw_left.png", rawImage_left);
+			imwrite("/home/rxh349/ros_ws/src/Tool_tracking/raw_right.png", rawImage_right);
 
 			  //cout<<"after imshow"<<endl;
 			waitKey(10);

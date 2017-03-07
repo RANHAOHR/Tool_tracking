@@ -69,7 +69,9 @@ class ParticleFilter {
 
 private:
 
-    cv::Mat Cam;
+    cv::Mat Cam_left;
+    cv::Mat Cam_right;
+
     ros::NodeHandle nh_;  //may need this
 
     ///ros::Timer timer;

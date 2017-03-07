@@ -836,7 +836,7 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, doub
     gaussianTool.tvec_elp(1) = max_pose.tvec_elp(1) + dev;
 
     dev = randomNumber(1, 0.5);
-    gaussianTool.tvec_elp(2) = max_pose.tvec_elp(2) + dev;
+    gaussianTool.tvec_elp(2) = max_pose.tvec_elp(2);// + dev;
 //
 //    dev = randomNumber(stdev, mean);
 //    gaussianTool.rvec_elp(0) = max_pose.rvec_elp(0) + dev;
@@ -970,7 +970,6 @@ ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, co
     // Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat,gripper1Face_normal, gripper1Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
     // Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat,gripper2Face_normal, gripper2Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
 
-
 };
 
 double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage) {
@@ -994,7 +993,7 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 
         cv::Mat result(1, 1, CV_32FC1);
 
-        cv::matchTemplate(segImageGrey, toolImFloat, result, CV_TM_CCORR_NORMED); //seg, toolImg
+        cv::matchTemplate(segImageGrey, toolImFloat, result, CV_TM_CCORR); //seg, toolImg
         matchingScore = static_cast<double> (result.at<float>(0));
 
 //    } else {
@@ -1030,7 +1029,6 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
             // ROS_INFO_STREAM("segImgGrey: " << segImgGrey.at<float>(i,j) );
         }
     }
-
 
     cv::Mat normDIST;
     cv::Mat distance_img;
@@ -1068,8 +1066,8 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
                 output += mul;
         }
     }
-    // ROS_INFO_STREAM("OUTPUT: " << output);
-    output = exp(-1 * output/80);
+    //ROS_INFO_STREAM("OUTPUT: " << output);
+    //output = exp(-1 * output/80);
 
     return output;
 

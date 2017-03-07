@@ -99,9 +99,9 @@ int main(int argc, char **argv) {
     cv::Mat segImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3
     /********write a test segmentation ********/
     ToolModel::toolModel newModel;
-    newModel.tvec_elp(0) = 0.03;  //left and right (image frame)
+    newModel.tvec_elp(0) = -0.03;  //left and right (image frame)
     newModel.tvec_elp(1) = 0.1;  //up and down
-    newModel.tvec_elp(2) = 0.0;
+    newModel.tvec_elp(2) = -2;
     newModel.rvec_elp(0) = 0.0;
     newModel.rvec_elp(1) = 0.0;
     newModel.rvec_elp(2) = -2;
