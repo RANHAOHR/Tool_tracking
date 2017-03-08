@@ -15,6 +15,8 @@
 #include "std_msgs/MultiArrayLayout.h"
 #include "std_msgs/Float64MultiArray.h"
 
+#include "opencv2/shape.hpp"
+
 using namespace std;
 
 int main(int argc, char **argv) {

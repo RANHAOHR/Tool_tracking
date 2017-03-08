@@ -84,8 +84,13 @@
       <file leaf-file-name="tool_model_main.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/tool_model_main.cpp">
           <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
             <state relative-caret-position="288">
               <caret line="16" column="0" lean-forward="false" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
+=======
+            <state relative-caret-position="216">
+              <caret line="18" column="0" lean-forward="true" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
+>>>>>>> 4b826774d3301d300daee8a131065300c77d0009
               <folding>
                 <element signature="e#198#218#0" expanded="true" />
               </folding>
@@ -93,6 +98,7 @@
           </provider>
         </entry>
       </file>
+<<<<<<< HEAD
       <file leaf-file-name="objdetect.hpp" pinned="false" current-in-tab="false">
         <entry file="file:///usr/include/opencv2/objdetect/objdetect.hpp">
           <provider selected="true" editor-type-id="text-editor">
@@ -103,6 +109,8 @@
           </provider>
         </entry>
       </file>
+=======
+>>>>>>> 4b826774d3301d300daee8a131065300c77d0009
       <file leaf-file-name="tool_model.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/tool_model.cpp">
           <provider selected="true" editor-type-id="text-editor">
@@ -180,7 +188,10 @@
         <option value="$PROJECT_DIR$/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/package.xml" />
         <option value="$PROJECT_DIR$/src/test_seg.cpp" />
+<<<<<<< HEAD
         <option value="$PROJECT_DIR$/include/tool_model_lib/tool_model.h" />
+=======
+>>>>>>> 4b826774d3301d300daee8a131065300c77d0009
         <option value="$PROJECT_DIR$/src/tool_model.cpp" />
         <option value="$PROJECT_DIR$/src/tool_model_main.cpp" />
       </list>
@@ -740,13 +751,21 @@
       <workItem from="1488838250539" duration="4215000" />
       <workItem from="1488851826336" duration="4492000" />
       <workItem from="1488899647697" duration="1878000" />
+<<<<<<< HEAD
       <workItem from="1488901568301" duration="3846000" />
       <workItem from="1488916377108" duration="13755000" />
+=======
+      <workItem from="1488901568301" duration="4207000" />
+>>>>>>> 4b826774d3301d300daee8a131065300c77d0009
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
+<<<<<<< HEAD
     <option name="totallyTimeSpent" value="231935000" />
+=======
+    <option name="totallyTimeSpent" value="218541000" />
+>>>>>>> 4b826774d3301d300daee8a131065300c77d0009
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -1191,6 +1210,7 @@
         </state>
       </provider>
     </entry>
+<<<<<<< HEAD
     <entry file="file://$PROJECT_DIR$/include/tool_model_lib/tool_model.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="60">
@@ -1200,16 +1220,29 @@
             <marker date="1488925967869" expanded="true" signature="425:8717" ph="{...}" />
             <marker date="1488925967869" expanded="true" signature="1221:1759" ph="{...}" />
             <marker date="1488925967869" expanded="true" signature="1842:2248" ph="{...}" />
+=======
+    <entry file="file://$PROJECT_DIR$/src/tool_model.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="299">
+          <caret line="971" column="0" lean-forward="true" selection-start-line="971" selection-start-column="0" selection-end-line="971" selection-end-column="0" />
+          <folding>
+            <element signature="e#1734#1754#0" expanded="true" />
+>>>>>>> 4b826774d3301d300daee8a131065300c77d0009
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/tool_model.cpp">
+    <entry file="file://$PROJECT_DIR$/src/tool_model_main.cpp">
       <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
         <state relative-caret-position="594">
           <caret line="102" column="0" lean-forward="false" selection-start-line="102" selection-start-column="0" selection-end-line="102" selection-end-column="0" />
+=======
+        <state relative-caret-position="216">
+          <caret line="18" column="0" lean-forward="true" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
+>>>>>>> 4b826774d3301d300daee8a131065300c77d0009
           <folding>
-            <element signature="e#1734#1754#0" expanded="true" />
+            <element signature="e#198#218#0" expanded="true" />
           </folding>
         </state>
       </provider>
