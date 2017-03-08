@@ -2,57 +2,57 @@
 <project version="4">
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" buildAllGenerated="true">
     <generated>
-      <config projectName="tooltrack" targetName="doxygen" />
-      <config projectName="tool_model" targetName="sensor_msgs_generate_messages_eus" />
-      <config projectName="tooltrack" targetName="geometry_msgs_generate_messages_lisp" />
-      <config projectName="tooltrack" targetName="roscpp_generate_messages_lisp" />
       <config projectName="tool_model" targetName="rosgraph_msgs_generate_messages_eus" />
-      <config projectName="tooltrack" targetName="rosgraph_msgs_generate_messages_py" />
-      <config projectName="tooltrack" targetName="sensor_msgs_generate_messages_py" />
       <config projectName="tooltrack" targetName="cwru_opencv_common_generate_messages_cpp" />
-      <config projectName="tooltrack" targetName="tool_model_main" />
-      <config projectName="tool_model" targetName="dynamic_reconfigure_generate_messages_py" />
-      <config projectName="tool_model" targetName="dynamic_reconfigure_generate_messages_eus" />
-      <config projectName="tooltrack" targetName="std_msgs_generate_messages_lisp" />
-      <config projectName="tooltrack" targetName="_catkin_empty_exported_target" />
-      <config projectName="tool_model" targetName="std_msgs_generate_messages_eus" />
-      <config projectName="tooltrack" targetName="cwru_opencv_common_generate_messages_py" />
-      <config projectName="tool_model" targetName="dynamic_reconfigure_generate_messages_lisp" />
-      <config projectName="tooltrack" targetName="tool_tracking_lib" />
-      <config projectName="tooltrack" targetName="clean_test_results" />
-      <config projectName="tooltrack" targetName="rosgraph_msgs_generate_messages_lisp" />
-      <config projectName="tooltrack" targetName="roscpp_generate_messages_py" />
-      <config projectName="toolModel" targetName="tool_model_main" />
       <config projectName="tool_model" targetName="vesselness_image_filter_generate_messages_lisp" />
-      <config projectName="toolModel" targetName="tool_model_lib" />
-      <config projectName="tooltrack" targetName="std_msgs_generate_messages_py" />
-      <config projectName="tool_model" targetName="dynamic_reconfigure_gencfg" />
-      <config projectName="tooltrack" targetName="roscpp_generate_messages_cpp" />
-      <config projectName="toolModel" targetName="toolModel_package" />
-      <config projectName="tool_model" targetName="dynamic_reconfigure_generate_messages_cpp" />
-      <config projectName="tooltrack" targetName="geometry_msgs_generate_messages_py" />
-      <config projectName="tool_model" targetName="cwru_opencv_common_generate_messages_eus" />
-      <config projectName="tooltrack" targetName="gtest" />
-      <config projectName="tooltrack" targetName="gtest_main" />
-      <config projectName="tool_model" targetName="roscpp_generate_messages_eus" />
-      <config projectName="tool_model" targetName="vesselness_image_filter_generate_messages_eus" />
-      <config projectName="tooltrack" targetName="test_seg" />
-      <config projectName="tool_model" targetName="tool_model_package" />
-      <config projectName="tool_model" targetName="tool_model_main" />
-      <config projectName="tooltrack" targetName="run_tests" />
       <config projectName="tooltrack" targetName="download_extra_data" />
-      <config projectName="tooltrack" targetName="showing_image" />
-      <config projectName="tool_model" targetName="vesselness_image_filter_gencfg" />
+      <config projectName="tooltrack" targetName="geometry_msgs_generate_messages_py" />
+      <config projectName="tooltrack" targetName="run_tests" />
+      <config projectName="tooltrack" targetName="tool_model_main" />
+      <config projectName="tooltrack" targetName="sensor_msgs_generate_messages_lisp" />
+      <config projectName="tooltrack" targetName="_catkin_empty_exported_target" />
+      <config projectName="toolModel" targetName="tool_model_lib" />
+      <config projectName="tool_model" targetName="vesselness_image_filter_generate_messages_eus" />
+      <config projectName="tool_model" targetName="sensor_msgs_generate_messages_eus" />
+      <config projectName="tooltrack" targetName="tool_tracking_lib" />
+      <config projectName="tooltrack" targetName="test_seg" />
+      <config projectName="tooltrack" targetName="roscpp_generate_messages_cpp" />
+      <config projectName="tool_model" targetName="dynamic_reconfigure_generate_messages_cpp" />
+      <config projectName="tool_model" targetName="tool_model_main" />
+      <config projectName="tooltrack" targetName="sensor_msgs_generate_messages_cpp" />
+      <config projectName="tooltrack" targetName="rosgraph_msgs_generate_messages_py" />
+      <config projectName="tooltrack" targetName="gtest_main" />
+      <config projectName="tooltrack" targetName="geometry_msgs_generate_messages_cpp" />
+      <config projectName="tool_model" targetName="dynamic_reconfigure_generate_messages_lisp" />
+      <config projectName="tool_model" targetName="std_msgs_generate_messages_eus" />
+      <config projectName="tooltrack" targetName="clean_test_results" />
+      <config projectName="tool_model" targetName="cwru_opencv_common_generate_messages_eus" />
       <config projectName="tool_model" targetName="vesselness_image_filter_generate_messages_cpp" />
+      <config projectName="tooltrack" targetName="cwru_opencv_common_generate_messages_lisp" />
+      <config projectName="tool_model" targetName="dynamic_reconfigure_generate_messages_eus" />
+      <config projectName="tooltrack" targetName="cwru_opencv_common_generate_messages_py" />
+      <config projectName="tooltrack" targetName="rosgraph_msgs_generate_messages_lisp" />
+      <config projectName="toolModel" targetName="toolModel_package" />
+      <config projectName="tooltrack" targetName="roscpp_generate_messages_py" />
+      <config projectName="tooltrack" targetName="roscpp_generate_messages_lisp" />
+      <config projectName="toolModel" targetName="tool_model_main" />
+      <config projectName="tool_model" targetName="roscpp_generate_messages_eus" />
+      <config projectName="tooltrack" targetName="gtest" />
+      <config projectName="tool_model" targetName="vesselness_image_filter_gencfg" />
       <config projectName="tool_model" targetName="geometry_msgs_generate_messages_eus" />
       <config projectName="tooltrack" targetName="tests" />
-      <config projectName="tooltrack" targetName="std_msgs_generate_messages_cpp" />
-      <config projectName="tooltrack" targetName="cwru_opencv_common_generate_messages_lisp" />
-      <config projectName="tooltrack" targetName="geometry_msgs_generate_messages_cpp" />
-      <config projectName="tooltrack" targetName="sensor_msgs_generate_messages_cpp" />
       <config projectName="tool_model" targetName="vesselness_image_filter_generate_messages_py" />
+      <config projectName="tooltrack" targetName="geometry_msgs_generate_messages_lisp" />
+      <config projectName="tooltrack" targetName="std_msgs_generate_messages_py" />
+      <config projectName="tooltrack" targetName="sensor_msgs_generate_messages_py" />
       <config projectName="tooltrack" targetName="rosgraph_msgs_generate_messages_cpp" />
-      <config projectName="tooltrack" targetName="sensor_msgs_generate_messages_lisp" />
+      <config projectName="tool_model" targetName="dynamic_reconfigure_gencfg" />
+      <config projectName="tooltrack" targetName="showing_image" />
+      <config projectName="tool_model" targetName="dynamic_reconfigure_generate_messages_py" />
+      <config projectName="tool_model" targetName="tool_model_package" />
+      <config projectName="tooltrack" targetName="doxygen" />
+      <config projectName="tooltrack" targetName="std_msgs_generate_messages_lisp" />
+      <config projectName="tooltrack" targetName="std_msgs_generate_messages_cpp" />
     </generated>
   </component>
   <component name="CMakeSettings">
@@ -81,11 +81,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="tool_model_main.cpp" pinned="false" current-in-tab="false">
+      <file leaf-file-name="tool_model_main.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/tool_model_main.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="537">
-              <caret line="103" column="29" lean-forward="false" selection-start-line="103" selection-start-column="29" selection-end-line="103" selection-end-column="29" />
+            <state relative-caret-position="288">
+              <caret line="16" column="0" lean-forward="false" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
               <folding>
                 <element signature="e#198#218#0" expanded="true" />
               </folding>
@@ -93,11 +93,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="tool_model.cpp" pinned="false" current-in-tab="true">
+      <file leaf-file-name="objdetect.hpp" pinned="false" current-in-tab="false">
+        <entry file="file:///usr/include/opencv2/objdetect/objdetect.hpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="173">
+              <caret line="771" column="1" lean-forward="false" selection-start-line="771" selection-start-column="1" selection-end-line="771" selection-end-column="1" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="tool_model.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/tool_model.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="299">
-              <caret line="971" column="0" lean-forward="true" selection-start-line="971" selection-start-column="0" selection-end-line="971" selection-end-column="0" />
+            <state relative-caret-position="594">
+              <caret line="102" column="0" lean-forward="false" selection-start-line="102" selection-start-column="0" selection-end-line="102" selection-end-column="0" />
               <folding>
                 <element signature="e#1734#1754#0" expanded="true" />
               </folding>
@@ -108,25 +118,14 @@
       <file leaf-file-name="tool_model.h" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/include/tool_model_lib/tool_model.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3060">
-              <caret line="170" column="29" lean-forward="false" selection-start-line="170" selection-start-column="29" selection-end-line="170" selection-end-column="29" />
+            <state relative-caret-position="60">
+              <caret line="29" column="0" lean-forward="false" selection-start-line="29" selection-start-column="0" selection-end-line="29" selection-end-column="0" />
               <folding>
                 <element signature="e#43#60#0" expanded="true" />
-                <marker date="1488840584468" expanded="true" signature="399:8660" ph="{...}" />
-                <marker date="1488840584468" expanded="true" signature="442:2198" ph="{...}" />
-                <marker date="1488840584468" expanded="true" signature="1164:1702" ph="{...}" />
-                <marker date="1488840584468" expanded="true" signature="1785:2191" ph="{...}" />
+                <marker date="1488925967869" expanded="true" signature="425:8717" ph="{...}" />
+                <marker date="1488925967869" expanded="true" signature="1221:1759" ph="{...}" />
+                <marker date="1488925967869" expanded="true" signature="1842:2248" ph="{...}" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="test_seg.cpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/test_seg.cpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2952">
-              <caret line="164" column="51" lean-forward="false" selection-start-line="164" selection-start-column="51" selection-end-line="164" selection-end-column="51" />
-              <folding />
             </state>
           </provider>
         </entry>
@@ -134,18 +133,18 @@
       <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="108">
-              <caret line="6" column="0" lean-forward="false" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="0" />
+            <state relative-caret-position="564">
+              <caret line="64" column="11" lean-forward="false" selection-start-line="64" selection-start-column="11" selection-end-line="64" selection-end-column="11" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="package.xml" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/package.xml">
+      <file leaf-file-name="test_seg.cpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/test_seg.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="72">
-              <caret line="4" column="29" lean-forward="false" selection-start-line="4" selection-start-column="19" selection-end-line="4" selection-end-column="29" />
+            <state relative-caret-position="636">
+              <caret line="164" column="51" lean-forward="false" selection-start-line="164" selection-start-column="51" selection-end-line="164" selection-end-column="51" />
               <folding />
             </state>
           </provider>
@@ -168,9 +167,11 @@
       <find>coord_tran</find>
       <find>modify_model_</find>
       <find>Compute_Silhouette</find>
-      <find>randomNum</find>
       <find>norm</find>
       <find>randomNumber</find>
+      <find>load_model_vertices</find>
+      <find>CV_TM_CCORR</find>
+      <find>randomNum</find>
     </findStrings>
   </component>
   <component name="IdeDocumentHistory">
@@ -178,10 +179,10 @@
       <list>
         <option value="$PROJECT_DIR$/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/package.xml" />
-        <option value="$PROJECT_DIR$/include/tool_model_lib/tool_model.h" />
         <option value="$PROJECT_DIR$/src/test_seg.cpp" />
-        <option value="$PROJECT_DIR$/src/tool_model_main.cpp" />
+        <option value="$PROJECT_DIR$/include/tool_model_lib/tool_model.h" />
         <option value="$PROJECT_DIR$/src/tool_model.cpp" />
+        <option value="$PROJECT_DIR$/src/tool_model_main.cpp" />
       </list>
     </option>
   </component>
@@ -193,10 +194,10 @@
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
-    <option name="x" value="3265" />
-    <option name="y" value="80" />
-    <option name="width" value="1215" />
-    <option name="height" value="1000" />
+    <option name="x" value="65" />
+    <option name="y" value="24" />
+    <option name="width" value="1855" />
+    <option name="height" value="1056" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -215,6 +216,20 @@
     <panes>
       <pane id="ProjectPane">
         <subPane>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="tool_model" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.CidrFilesViewHelper$MyProjectTreeStructure$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="tooltrack" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="tool_model" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
           <PATH>
             <PATH_ELEMENT>
               <option name="myItemId" value="tool_model" />
@@ -726,11 +741,12 @@
       <workItem from="1488851826336" duration="4492000" />
       <workItem from="1488899647697" duration="1878000" />
       <workItem from="1488901568301" duration="3846000" />
+      <workItem from="1488916377108" duration="13755000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="218180000" />
+    <option name="totallyTimeSpent" value="231935000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -742,28 +758,28 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="3265" y="80" width="1215" height="1000" extended-state="6" />
+    <frame x="65" y="24" width="1855" height="1056" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.09876543" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.09865229" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916668" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32858595" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32901832" sideWeight="0.4978166" order="11" side_tool="false" content_ui="tabs" />
+      <window_info id="LuaJ" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.39895833" sideWeight="0.5021834" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32901832" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.328125" sideWeight="0.4978166" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2858596" sideWeight="0.4978166" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32901832" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32901832" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="LuaJ" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.33798283" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2858684" sideWeight="0.4978166" order="3" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -782,41 +798,20 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="31" />
+      <option name="time" value="33" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/tool_model_main.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2574">
-          <caret line="143" column="26" lean-forward="false" selection-start-line="143" selection-start-column="14" selection-end-line="143" selection-end-column="26" />
-          <folding>
-            <element signature="e#198#218#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/tool_model.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#1734#1754#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/include/tool_model_lib/tool_model.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3186">
           <caret line="177" column="0" lean-forward="false" selection-start-line="177" selection-start-column="0" selection-end-line="177" selection-end-column="0" />
           <folding>
             <element signature="e#43#60#0" expanded="true" />
-            <marker date="1488840584468" expanded="true" signature="399:8660" ph="{...}" />
-            <marker date="1488840584468" expanded="true" signature="442:2198" ph="{...}" />
-            <marker date="1488840584468" expanded="true" signature="1164:1702" ph="{...}" />
-            <marker date="1488840584468" expanded="true" signature="1785:2191" ph="{...}" />
+            <marker date="1488925967869" expanded="true" signature="425:8717" ph="{...}" />
+            <marker date="1488925967869" expanded="true" signature="1221:1759" ph="{...}" />
+            <marker date="1488925967869" expanded="true" signature="1842:2248" ph="{...}" />
           </folding>
         </state>
       </provider>
@@ -855,10 +850,9 @@
           <caret line="173" column="0" lean-forward="false" selection-start-line="173" selection-start-column="0" selection-end-line="173" selection-end-column="0" />
           <folding>
             <element signature="e#43#60#0" expanded="true" />
-            <marker date="1488840584468" expanded="true" signature="399:8660" ph="{...}" />
-            <marker date="1488840584468" expanded="true" signature="442:2198" ph="{...}" />
-            <marker date="1488840584468" expanded="true" signature="1164:1702" ph="{...}" />
-            <marker date="1488840584468" expanded="true" signature="1785:2191" ph="{...}" />
+            <marker date="1488925967869" expanded="true" signature="425:8717" ph="{...}" />
+            <marker date="1488925967869" expanded="true" signature="1221:1759" ph="{...}" />
+            <marker date="1488925967869" expanded="true" signature="1842:2248" ph="{...}" />
           </folding>
         </state>
       </provider>
@@ -1017,10 +1011,9 @@
           <caret line="168" column="0" lean-forward="false" selection-start-line="168" selection-start-column="0" selection-end-line="168" selection-end-column="0" />
           <folding>
             <element signature="e#43#60#0" expanded="true" />
-            <marker date="1488840584468" expanded="true" signature="399:8660" ph="{...}" />
-            <marker date="1488840584468" expanded="true" signature="442:2198" ph="{...}" />
-            <marker date="1488840584468" expanded="true" signature="1164:1702" ph="{...}" />
-            <marker date="1488840584468" expanded="true" signature="1785:2191" ph="{...}" />
+            <marker date="1488925967869" expanded="true" signature="425:8717" ph="{...}" />
+            <marker date="1488925967869" expanded="true" signature="1221:1759" ph="{...}" />
+            <marker date="1488925967869" expanded="true" signature="1842:2248" ph="{...}" />
           </folding>
         </state>
       </provider>
@@ -1059,10 +1052,9 @@
           <caret line="168" column="0" lean-forward="false" selection-start-line="168" selection-start-column="0" selection-end-line="168" selection-end-column="0" />
           <folding>
             <element signature="e#43#60#0" expanded="true" />
-            <marker date="1488840584468" expanded="true" signature="399:8660" ph="{...}" />
-            <marker date="1488840584468" expanded="true" signature="442:2198" ph="{...}" />
-            <marker date="1488840584468" expanded="true" signature="1164:1702" ph="{...}" />
-            <marker date="1488840584468" expanded="true" signature="1785:2191" ph="{...}" />
+            <marker date="1488925967869" expanded="true" signature="425:8717" ph="{...}" />
+            <marker date="1488925967869" expanded="true" signature="1221:1759" ph="{...}" />
+            <marker date="1488925967869" expanded="true" signature="1842:2248" ph="{...}" />
           </folding>
         </state>
       </provider>
@@ -1158,6 +1150,15 @@
     <entry file="file://$PROJECT_DIR$/include/tool_tracking_lib/tool_model.h" />
     <entry file="file:///usr/include/opencv2/core/operations.hpp" />
     <entry file="file://$PROJECT_DIR$/src/result_img.jpg" />
+    <entry file="file:///usr/local/include/opencv2/core/mat.inl.hpp" />
+    <entry file="file:///usr/include/opencv2/objdetect/objdetect.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="173">
+          <caret line="771" column="1" lean-forward="false" selection-start-line="771" selection-start-column="1" selection-end-line="771" selection-end-column="1" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/package.xml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="72">
@@ -1166,59 +1167,59 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/test_seg.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="636">
+          <caret line="164" column="51" lean-forward="false" selection-start-line="164" selection-start-column="51" selection-end-line="164" selection-end-column="51" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="108">
-          <caret line="6" column="0" lean-forward="false" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="0" />
+        <state relative-caret-position="564">
+          <caret line="64" column="11" lean-forward="false" selection-start-line="64" selection-start-column="11" selection-end-line="64" selection-end-column="11" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/include/opencv2/imgproc/imgproc.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="116">
+          <caret line="1122" column="80" lean-forward="false" selection-start-line="1122" selection-start-column="71" selection-end-line="1122" selection-end-column="80" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/include/tool_model_lib/tool_model.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3060">
-          <caret line="170" column="29" lean-forward="false" selection-start-line="170" selection-start-column="29" selection-end-line="170" selection-end-column="29" />
+        <state relative-caret-position="60">
+          <caret line="29" column="0" lean-forward="false" selection-start-line="29" selection-start-column="0" selection-end-line="29" selection-end-column="0" />
           <folding>
             <element signature="e#43#60#0" expanded="true" />
-            <marker date="1488840584468" expanded="true" signature="399:8660" ph="{...}" />
-            <marker date="1488840584468" expanded="true" signature="442:2198" ph="{...}" />
-            <marker date="1488840584468" expanded="true" signature="1164:1702" ph="{...}" />
-            <marker date="1488840584468" expanded="true" signature="1785:2191" ph="{...}" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/local/include/opencv2/core/mat.inl.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="18">
-          <caret line="894" column="0" lean-forward="false" selection-start-line="894" selection-start-column="0" selection-end-line="894" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/test_seg.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2952">
-          <caret line="164" column="51" lean-forward="false" selection-start-line="164" selection-start-column="51" selection-end-line="164" selection-end-column="51" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/tool_model_main.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="537">
-          <caret line="103" column="29" lean-forward="false" selection-start-line="103" selection-start-column="29" selection-end-line="103" selection-end-column="29" />
-          <folding>
-            <element signature="e#198#218#0" expanded="true" />
+            <marker date="1488925967869" expanded="true" signature="425:8717" ph="{...}" />
+            <marker date="1488925967869" expanded="true" signature="1221:1759" ph="{...}" />
+            <marker date="1488925967869" expanded="true" signature="1842:2248" ph="{...}" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/tool_model.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="299">
-          <caret line="971" column="0" lean-forward="true" selection-start-line="971" selection-start-column="0" selection-end-line="971" selection-end-column="0" />
+        <state relative-caret-position="594">
+          <caret line="102" column="0" lean-forward="false" selection-start-line="102" selection-start-column="0" selection-end-line="102" selection-end-column="0" />
           <folding>
             <element signature="e#1734#1754#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/tool_model_main.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="288">
+          <caret line="16" column="0" lean-forward="false" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
+          <folding>
+            <element signature="e#198#218#0" expanded="true" />
           </folding>
         </state>
       </provider>

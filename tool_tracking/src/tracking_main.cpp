@@ -178,12 +178,12 @@ int main(int argc, char **argv) {
 
     /***testing segmentation images***/
     cv::Size size(640, 480);
-    seg_left = cv::imread("/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/left.png",CV_LOAD_IMAGE_GRAYSCALE );
-    seg_right = cv::imread("/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/right.png",CV_LOAD_IMAGE_GRAYSCALE );
+    std::string package = ros::package::getPath("tool_tracking");
+    seg_left = cv::imread(package + "/left.png",CV_LOAD_IMAGE_GRAYSCALE );
+    seg_right = cv::imread(package + "/right.png",CV_LOAD_IMAGE_GRAYSCALE );
 
     cv::Mat new_seg_left = seg_left.rowRange(5,480);
     cv::Mat new_seg_right = seg_right.rowRange(5,480);
-
 
     cv::resize(new_seg_left, new_seg_left,size );
     cv::resize(new_seg_right, new_seg_right,size );

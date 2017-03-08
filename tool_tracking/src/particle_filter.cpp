@@ -42,7 +42,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-        nh_(*nodehandle), numParticles(500), Downsample_rate(5), toolSize(2), perturbStd(0.5) {
+        nh_(*nodehandle), numParticles(200), Downsample_rate(5), toolSize(2), perturbStd(0.5) {
     /****initial position guess
 	everything here is in meters*****/
     initial.tvec_elp(0) = 0.0;
@@ -63,7 +63,7 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
             0, 0, -1, 0.2,
             0, 0, 0, 1);
 
-    //initialize particles by randomly assigning around the initial guess
+    //initialize particlescylinder = tool_model_pkg + "/tool_parts/refine_cylinder_3.obj"; by randomly assigning around the initial guess
     initializeParticles();
 
     // initialization, just basic black image ??? how to get the size of the image

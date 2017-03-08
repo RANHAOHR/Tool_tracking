@@ -97,6 +97,7 @@ int main(int argc, char **argv) {
     t = clock() - t;
 
     cv::Mat segImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3
+
     /********write a test segmentation ********/
     ToolModel::toolModel newModel;
     newModel.tvec_elp(0) = -0.03;  //left and right (image frame)
@@ -109,6 +110,7 @@ int main(int argc, char **argv) {
     newToolModel.renderTool(segImg, newModel, Cam, P);
 
     cv::cvtColor(segImg, segImg, CV_BGR2GRAY); //convert it to grey scale
+    cv::cvtColor(testImg, testImg, CV_BGR2GRAY); //convert it to grey scale
 
     cv::imshow("tool image: ",testImg );
     cv::imshow("segImg : ",segImg );

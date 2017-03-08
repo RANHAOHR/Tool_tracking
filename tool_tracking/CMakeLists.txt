@@ -15,7 +15,7 @@ catkin_simple()
 #include_directories(include ${catkin_INCLUDE_DIRS} ${tool_model_INCLUDE_DIRS})
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 
-catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs geometry_msgs cwru_opencv_common )
+catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs geometry_msgs cwru_opencv_common tool_model)
 # example boost usage
 # find_package(Boost REQUIRED COMPONENTS system thread)
 
@@ -36,8 +36,8 @@ cs_add_executable(tracking_main src/tracking_main.cpp)
 #the following is required, if desire to link a node in this package with a library created in this same package
 # edit the arguments to reference the named node and named library within this package
 # target_link_library(example my_lib)
-target_link_libraries(tool_tracking ${OpenCV_LIBRARIES} ${catkin_LIBRARIES} tool_model_lib)
-target_link_libraries(tracking_main tool_tracking ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} vesselness_image_filter_common_lib)
+target_link_libraries(tool_tracking tool_model_lib)
+target_link_libraries(tracking_main tool_tracking vesselness_image_filter_common_lib)
 
 
 cs_install()

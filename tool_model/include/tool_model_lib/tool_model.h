@@ -21,9 +21,13 @@
 #include <glm/vec2.hpp>
 
 
+#include <ros/package.h>
+
 class ToolModel {
 
-//private:
+private:
+    std::string tool_model_pkg;
+
 public:
     struct toolModel {
         cv::Matx<double, 3, 1> tvec_cyl;    //cylinder translation vector

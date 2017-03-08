@@ -47,6 +47,8 @@
 
 #include <tool_model_lib/tool_model.h>
 
+
+
 using cv_projective::reprojectPoint;
 using cv_projective::transformPoints;
 using namespace std;
@@ -73,13 +75,21 @@ ToolModel::ToolModel() {
     q_gripper.at<double>(2, 0) = 0;
 
     /****initialize the vertices fo different part of tools****/
-    load_model_vertices("/home/rxh349/ros_ws/src/Tool_tracking/tool_model/tool_parts/refine_cylinder_3.obj",
+    tool_model_pkg = ros::package::getPath("tool_model");
+
+    std::string cylinder = tool_model_pkg + "/tool_parts/refine_cylinder_3.obj";
+    std::string ellipse = tool_model_pkg + "/tool_parts/refine_ellipse_3.obj";
+    std::string gripper1 = tool_model_pkg + "/tool_parts/gripper2_1.obj";
+    std::string gripper2 = tool_model_pkg + "/tool_parts/gripper2_2.obj";
+    ROS_INFO_STREAM("PATH: " << cylinder.c_str());
+
+    load_model_vertices(cylinder.c_str(),
                         body_vertices, body_Vnormal, body_faces, body_neighbors);
-    load_model_vertices("/home/rxh349/ros_ws/src/Tool_tracking/tool_model/tool_parts/refine_ellipse_3.obj",
+    load_model_vertices(ellipse.c_str(),
                         ellipse_vertices, ellipse_Vnormal, ellipse_faces, ellipse_neighbors);
-    load_model_vertices("/home/rxh349/ros_ws/src/Tool_tracking/tool_model/tool_parts/gripper2_1.obj", griper1_vertices,
+    load_model_vertices(gripper1.c_str(), griper1_vertices,
                         griper1_Vnormal, griper1_faces, griper1_neighbors);
-    load_model_vertices("/home/rxh349/ros_ws/src/Tool_tracking/tool_model/tool_parts/gripper2_2.obj", griper2_vertices,
+    load_model_vertices(gripper2.c_str(), griper2_vertices,
                         griper2_Vnormal, griper2_faces, griper2_neighbors);
 
     modify_model_(body_vertices, body_Vnormal, body_Vpts, body_Npts, offset_body, body_Vmat, body_Nmat);
@@ -787,26 +797,18 @@ ToolModel::setRandomConfig(const toolModel &initial) {
     toolModel newTool = initial;  //BODY part is done here
 
     ///testing: this is the working one for current configuration
-//    newTool.tvec_elp(0) = 0.05;
-//    newTool.tvec_elp(1) = 0.1;
-//    newTool.tvec_elp(2) = 0.0;
-//    newTool.rvec_elp(0) = 0.2;
-//    newTool.rvec_elp(1) = 1.5;
-//    newTool.rvec_elp(2) = 2;
+    newTool.tvec_elp(0) = -0.03;  //left and right (image frame)
+    newTool.tvec_elp(1) = 0.1;  //up and down
+    newTool.tvec_elp(2) = 0.0;
+    newTool.rvec_elp(0) = 0.0;
+    newTool.rvec_elp(1) = 0.0;
+    newTool.rvec_elp(2) = -2;
 
     /****** testing section here *******/
-    newTool.tvec_elp(0) = randomNum(-0.15, 0.15);
-    newTool.tvec_elp(1) = randomNum(-0.06, 0.18);
-    newTool.tvec_elp(2) =  randomNum(-0.1, 0.1); ////translation on z cannot be random because of the camera transformation
+//    newTool.tvec_elp(0) = randomNum(-0.15, 0.15);
+//    newTool.tvec_elp(1) = randomNum(-0.06, 0.18);
+//    newTool.tvec_elp(2) =  randomNum(-0.1, 0.1); ////translation on z cannot be random because of the camera transformation
 
-    double angle = randomNum(-0.1, 0.1);
-    newTool.rvec_elp(0) += angle; //rotation on x axis +/-5 degrees
-
-    angle = randomNum(-0.1, 0.1);
-    newTool.rvec_elp(1) += angle; //rotation on x axis +/-5 degrees
-
-    angle = randomNum(-0.1, 0.1);
-    newTool.rvec_elp(2) += angle; //rotation on z axis +/-5 degrees
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
@@ -835,8 +837,8 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, doub
     dev = randomNumber(0.1, 0);
     gaussianTool.tvec_elp(1) = max_pose.tvec_elp(1) + dev;
 
-    dev = randomNumber(1, 0.5);
-    gaussianTool.tvec_elp(2) = max_pose.tvec_elp(2);// + dev;
+    dev = randomNumber(0.05, 0);
+    gaussianTool.tvec_elp(2) = max_pose.tvec_elp(2) + dev;// + dev;
 //
 //    dev = randomNumber(stdev, mean);
 //    gaussianTool.rvec_elp(0) = max_pose.rvec_elp(0) + dev;
@@ -993,7 +995,7 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 
         cv::Mat result(1, 1, CV_32FC1);
 
-        cv::matchTemplate(segImageGrey, toolImFloat, result, CV_TM_CCORR); //seg, toolImg
+        cv::matchTemplate(segImageGrey, toolImFloat, result, CV_TM_CCORR_NORMED); //seg, toolImg
         matchingScore = static_cast<double> (result.at<float>(0));
 
 //    } else {
