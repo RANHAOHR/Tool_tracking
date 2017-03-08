@@ -15,6 +15,8 @@
 #include "std_msgs/MultiArrayLayout.h"
 #include "std_msgs/Float64MultiArray.h"
 
+#include "opencv2/shape.hpp"
+
 using namespace std;
 
 int main(int argc, char **argv) {
@@ -110,6 +112,8 @@ int main(int argc, char **argv) {
 
     cv::cvtColor(segImg, segImg, CV_BGR2GRAY); //convert it to grey scale
 
+
+    cv::compute
     cv::imshow("tool image: ",testImg );
     cv::imshow("segImg : ",segImg );
 
