@@ -19,6 +19,36 @@
 
 using namespace std;
 
+static vector<cv::Point> simpleContour( const cv::Mat& currentQuery, int n=300 )
+{
+    vector<vector<cv::Point> > _contoursQuery;
+    vector <cv::Point> contoursQuery;
+    findContours(currentQuery, _contoursQuery, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+    for (size_t border=0; border<_contoursQuery.size(); border++)
+    {
+        for (size_t p=0; p<_contoursQuery[border].size(); p++)
+        {
+            contoursQuery.push_back( _contoursQuery[border][p] );
+        }
+    }
+
+    // In case actual number of points is less than n
+    int dummy=0;
+    for (int add=(int)contoursQuery.size()-1; add<n; add++)
+    {
+        contoursQuery.push_back(contoursQuery[dummy++]); //adding dummy values
+    }
+
+    // Uniformly sampling
+    random_shuffle(contoursQuery.begin(), contoursQuery.end());
+    vector<cv::Point> cont;
+    for (int i=0; i<n; i++)
+    {
+        cont.push_back(contoursQuery[i]);
+    }
+    return cont;
+}
+
 int main(int argc, char **argv) {
     ROS_INFO("---- In main node -----");
     ros::init(argc, argv, "tool_tracking");
@@ -114,6 +144,17 @@ int main(int argc, char **argv) {
     cv::cvtColor(segImg, segImg, CV_BGR2GRAY); //convert it to grey scale
     cv::cvtColor(testImg, testImg, CV_BGR2GRAY); //convert it to grey scale
 
+
+    cv::Ptr <cv::ShapeContextDistanceExtractor> shape_finder = cv::createShapeContextDistanceExtractor();
+
+    vector<cv::Point> test_contour = simpleContour(testImg);
+    vector<cv::Point> seg_contour = simpleContour(segImg);
+
+
+    float dist = shape_finder->computeDistance(seg_contour,test_contour );
+
+    ROS_INFO_STREAM("DIST: " << dist);
+    
     cv::imshow("tool image: ",testImg );
     cv::imshow("segImg : ",segImg );
 
@@ -124,14 +165,14 @@ int main(int argc, char **argv) {
 
 //    ROS_INFO_STREAM("setRandomConfig time is: " << sec1);
 //    ROS_INFO_STREAM("render time is: " << sec);
-
-        double result = newToolModel.calculateMatchingScore(testImg, segImg);
-
-        t2 = clock();
-        double chamfer_result = newToolModel.calculateChamferScore(testImg, segImg);
-        t2 = clock() - t2;
-        ROS_INFO_STREAM("THE MATCHING SCORE IS: " << result);
-        ROS_INFO_STREAM("THE chamfer SCORE IS: " << chamfer_result);
+//
+//        double result = newToolModel.calculateMatchingScore(testImg, segImg);
+//
+//        t2 = clock();
+//        double chamfer_result = newToolModel.calculateChamferScore(testImg, segImg);
+//        t2 = clock() - t2;
+//        ROS_INFO_STREAM("THE MATCHING SCORE IS: " << result);
+//        ROS_INFO_STREAM("THE chamfer SCORE IS: " << chamfer_result);
 
 
 

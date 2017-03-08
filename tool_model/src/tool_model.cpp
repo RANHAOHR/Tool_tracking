@@ -81,7 +81,6 @@ ToolModel::ToolModel() {
     std::string ellipse = tool_model_pkg + "/tool_parts/refine_ellipse_3.obj";
     std::string gripper1 = tool_model_pkg + "/tool_parts/gripper2_1.obj";
     std::string gripper2 = tool_model_pkg + "/tool_parts/gripper2_2.obj";
-    ROS_INFO_STREAM("PATH: " << cylinder.c_str());
 
     load_model_vertices(cylinder.c_str(),
                         body_vertices, body_Vnormal, body_faces, body_neighbors);
