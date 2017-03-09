@@ -83,8 +83,6 @@ private:
     unsigned int toolSize; //size of the needle to be rendered
     unsigned int Downsample_rate;
 
-    double perturbStd; //standard deviation for perturbing, if we obtain good matching it gets smaller to stay in the region
-
     unsigned int numParticles; //total number of particles
     cv::Mat toolImage_left; //left rendered Image
     cv::Mat toolImage_right; //right rendered Image
@@ -144,7 +142,7 @@ public:
      */
     void updateParticles(const cv::Mat &bodyVel, double &updateRate);
     void updateSamples(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
-                                         std::vector<ToolModel::toolModel> &updateParticles);
+                                         std::vector<ToolModel::toolModel> &updateParticles,ToolModel::toolModel &bestParticle);
     /*
      * perturb the particles for more usable poses
      */

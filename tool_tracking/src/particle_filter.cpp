@@ -42,7 +42,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-        nh_(*nodehandle), numParticles(200), Downsample_rate(5), toolSize(2), perturbStd(0.5) {
+        nh_(*nodehandle), numParticles(1000), Downsample_rate(5), toolSize(2){
     /****initial position guess
 	everything here is in meters*****/
     initial.tvec_elp(0) = 0.0;
@@ -63,7 +63,6 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
             0, 0, -1, 0.2,
             0, 0, 0, 1);
 
-    //initialize particlescylinder = tool_model_pkg + "/tool_parts/refine_cylinder_3.obj"; by randomly assigning around the initial guess
     initializeParticles();
 
     // initialization, just basic black image ??? how to get the size of the image
@@ -84,8 +83,37 @@ void ParticleFilter::initializeParticles() {
     particles.resize(numParticles); //initialize particle array
     matchingScores.resize(numParticles); //initialize matching score array
     particleWeights.resize(numParticles); //initialize particle weight array
-    //generate random needle
-    for (int i(0); i < numParticles; i++) {
+
+    ///generate random seeds
+    initial.tvec_elp(0) = 0.0;  //left and right (image frame)
+    initial.tvec_elp(1) = 0.0;  //up and down
+    initial.tvec_elp(2) = 0.03;
+    initial.rvec_elp(0) = 0.0;
+    initial.rvec_elp(1) = 0.0;
+    initial.rvec_elp(2) = -2;
+
+    for (int i = 0; i < 300; i++) {
+        particles[i] = newToolModel.setRandomConfig(initial);
+    }
+
+    initial.tvec_elp(0) = 0.0;  //left and right (image frame)
+    initial.tvec_elp(1) = 0.0;  //up and down
+    initial.tvec_elp(2) = 0.1;
+    initial.rvec_elp(0) = 0.0;
+    initial.rvec_elp(1) = 0.0;
+    initial.rvec_elp(2) = -1;
+
+    for (int i = 500 ; i < 700; i++) {
+        particles[i] = newToolModel.setRandomConfig(initial);
+    }
+
+    initial.tvec_elp(0) = 0.1;  //left and right (image frame)
+    initial.tvec_elp(1) = 0.0;  //up and down
+    initial.tvec_elp(2) = 0.03;
+    initial.rvec_elp(0) = 0.0;
+    initial.rvec_elp(1) = 0.0;
+    initial.rvec_elp(2) = -2;
+    for (int i = 700; i < 1000; i++) {
         particles[i] = newToolModel.setRandomConfig(initial);
     }
 
@@ -99,26 +127,22 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
     std::vector<cv::Mat> trackingImages;
     trackingImages.resize(2);
 
-    double maxScore = -1.0; //track the maximum scored particle
+    double maxScore = 0.0; //track the maximum scored particle
     int maxScoreIdx = -1; //maximum scored particle index
     double totalScore = 0.0; //total score
 
     /***Update according to the max score***/
-    int numDownsample = numParticles;
-
-    while(maxScore != 0 /*&& numDownsample > Downsample_rate */){
+    ToolModel::toolModel best_particle;
+    while(maxScore> -1){
 
         cv::Mat segmentedImage_left = segmented_left.clone();
         cv::Mat segmentedImage_right = segmented_right.clone();
-
-//        cv::Mat segmentedImage_left = cv::Mat::zeros(480, 640, CV_8UC3);
-//        cv::Mat segmentedImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
 
         toolImage_left_temp.setTo(0);
         toolImage_right_temp.setTo(0);
 
         /***do the sampling and get the matching score***/
-        for (int i = 0; i < numDownsample; ++i) {
+        for (int i = 0; i < numParticles; ++i) {
 
             toolImage_left.setTo(0); //reset image for every start of an new loop
             newToolModel.renderTool(toolImage_left, particles[i], Cam_left,
@@ -133,11 +157,16 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
             newToolModel.renderTool(toolImage_left_temp, particles[i], Cam_left, P_left);
             newToolModel.renderTool(toolImage_right_temp, particles[i], Cam_right, P_right);
 
-            matchingScores[i] = sqrt(pow(left, 2) + pow(right, 2));
+            //matchingScores[i] = sqrt(pow(left, 2) + pow(right, 2));
+
+            /////what if just for the left tool
+            matchingScores[i] = left;
 
             if (matchingScores[i] > maxScore) {
                 maxScore = matchingScores[i];
                 maxScoreIdx = i;
+
+                best_particle = particles[i];
             }
             totalScore += matchingScores[i];
         }
@@ -145,15 +174,23 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
         ROS_INFO_STREAM("Maxscore: " << maxScore);  //debug
 
         /*** calculate weights using matching score and do the resampling ***/
-        for (int j = 0; j < numDownsample; ++j) { // normalize the weights
+        for (int j = 0; j < numParticles; ++j) { // normalize the weights
             particleWeights[j] = (matchingScores[j] / totalScore);
             //ROS_INFO_STREAM("weights" << particleWeights[j]);
         }
 
         std::vector<double> tempWeights = particleWeights;
         //render in segmented image, no need to get the ROI
+
         newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx], Cam_left, P_left);
         newToolModel.renderTool(segmentedImage_right, particles[maxScoreIdx], Cam_right, P_right);
+
+//        ROS_INFO_STREAM("Best particle tvec(0)" << particles[maxScoreIdx].tvec_elp(0) );
+//        ROS_INFO_STREAM("Best particle tvec(1)" << particles[maxScoreIdx].tvec_elp(1) );
+//        ROS_INFO_STREAM("Best particle tvec(2)" << particles[maxScoreIdx].tvec_elp(2) );
+//        ROS_INFO_STREAM("Best particle rvec(0)" << particles[maxScoreIdx].rvec_elp(0) );
+//        ROS_INFO_STREAM("Best particle rvec(1)" << particles[maxScoreIdx].rvec_elp(1) );
+//        ROS_INFO_STREAM("Best particle rvec(2)" << particles[maxScoreIdx].rvec_elp(2) );
 
         trackingImages[0] = segmentedImage_left;
         trackingImages[1] = segmentedImage_right;
@@ -164,33 +201,32 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
 
         sort(tempWeights.begin(), tempWeights.end());
 
-        for (int k = 0; k <numDownsample; ++k) {
+        for (int k = 0; k <numParticles; ++k) {
 
-            if(particleWeights[k] >= tempWeights[numDownsample - 50] ){
+            if(particleWeights[k] >= tempWeights[numParticles - 1] ){
                 updateParticles.push_back(particles[k]); //correspondingly
                 update_weights.push_back(particleWeights[k]);
             }
 
         }
 
-        updateSamples(updateParticles, update_weights, particles);
-        ROS_INFO_STREAM("particles.SIZE" << particles.size());
+        updateSamples(updateParticles, update_weights, particles, best_particle);
+        ROS_INFO_STREAM("new particles.SIZE" << particles.size());
         //each time will clear the particles and resample them
-        //resamplingParticles(oldParticles, particleWeights, particles, update_weights);
-
-        //numDownsample = particles.size();
+        //resamplingParticles(oldParticles, particleWeights, particles);
 
         cv::imshow("temp left", toolImage_left_temp);
-        cv::imshow("temp right", toolImage_right_temp);
+        //cv::imshow("temp right", toolImage_right_temp);
+
 
         cv::imshow("trackingImages left",trackingImages[0]);
-        cv::imshow("trackingImages right",trackingImages[1]);
+        //cv::imshow("trackingImages right",trackingImages[1]);
         cv::waitKey(30);
 
     }
 
     /*** UPDATE particles, based on the given body vel and updating rate ***/
-    double dT = 0.02; //sampling rate
+    // double dT = 0.02; //sampling rate
 //    updateParticles(bodyVel, dT);
 
     return trackingImages;
@@ -198,7 +234,15 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
 
 /***** update particles to find and reach to the best pose ***/
 void ParticleFilter::updateSamples(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
-                                     std::vector<ToolModel::toolModel> &updateParticles){
+                                     std::vector<ToolModel::toolModel> &updateParticles,
+                                   ToolModel::toolModel &bestParticle){
+
+//    ROS_INFO_STREAM("assume best tvec(0)" << bestParticle.tvec_elp(0) );
+//    ROS_INFO_STREAM("assume best tvec(1)" << bestParticle.tvec_elp(1) );
+//    ROS_INFO_STREAM("assume best tvec(2)" << bestParticle.tvec_elp(2) );
+//    ROS_INFO_STREAM("assume best rvec(0)" << bestParticle.rvec_elp(0) );
+//    ROS_INFO_STREAM("assume best rvec(1)" << bestParticle.rvec_elp(1) );
+//    ROS_INFO_STREAM("assume best rvec(2)" << bestParticle.rvec_elp(2) );
 
     int sampleSize = numParticles;
     double total = 0.0;
@@ -210,21 +254,22 @@ void ParticleFilter::updateSamples(std::vector<ToolModel::toolModel> &oldParticl
         total += update_weights[i];
     }
 
+    //normalized weights
     for (int j = 0; j < update_weights.size() ; ++j) {
         newSamples[j] = (int)(sampleSize * update_weights[j]/total);
+        //ROS_INFO_STREAM("newSamples j: " << newSamples[j]);  //debug
     }
 
     updateParticles.clear();
     for (int k = 0; k <newSamples.size() ; ++k) {
-
         ///every loop should generate different particle from one base particle k
         for (int i = 0; i <newSamples[k] ; ++i) {
-            updateParticles.push_back(newToolModel.gaussianSampling(oldParticles[k], 1, 0));
+            updateParticles.push_back(newToolModel.gaussianSampling(bestParticle, 0.0005));
 
         }
     }
 
-}
+};
 
 void ParticleFilter::updateParticles(const cv::Mat &bodyVel,
                                      double &updateRate) { //get particles and update them based on given spatial velocity
@@ -358,4 +403,4 @@ cv::Mat ParticleFilter::addNoise(cv::Mat &inputMat)   //add noise for the spatia
     }
 
     return noiseAddedSrc;
-}
+};

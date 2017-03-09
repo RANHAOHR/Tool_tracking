@@ -48,7 +48,6 @@
 #include <tool_model_lib/tool_model.h>
 
 
-
 using cv_projective::reprojectPoint;
 using cv_projective::transformPoints;
 using namespace std;
@@ -791,27 +790,25 @@ void ToolModel::modify_model_(std::vector<glm::vec3> &input_vertices, std::vecto
 translation, rotation, new z axis, new x axis*/
 //TODO:
 ToolModel::toolModel
-ToolModel::setRandomConfig(const toolModel &initial) {
+ToolModel::setRandomConfig(const toolModel &seeds) {
 
-    toolModel newTool = initial;  //BODY part is done here
+    toolModel newTool = seeds;  //BODY part is done here
 
     ///testing: this is the working one for current configuration
-    newTool.tvec_elp(0) = -0.03;  //left and right (image frame)
-    newTool.tvec_elp(1) = 0.1;  //up and down
-    newTool.tvec_elp(2) = 0.0;
+
+
+    ///what if generate seeding group TODO: testing
+    newTool.tvec_elp(0) = 0.0;  //left and right (image frame)
+    newTool.tvec_elp(1) = 0.0;  //up and down
+    newTool.tvec_elp(2) = 0.03;
     newTool.rvec_elp(0) = 0.0;
     newTool.rvec_elp(1) = 0.0;
     newTool.rvec_elp(2) = -2;
 
-    /****** testing section here *******/
-//    newTool.tvec_elp(0) = randomNum(-0.15, 0.15);
-//    newTool.tvec_elp(1) = randomNum(-0.06, 0.18);
-//    newTool.tvec_elp(2) =  randomNum(-0.1, 0.1); ////translation on z cannot be random because of the camera transformation
-
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    double theta_ellipse = randomNum(-M_PI / 2, M_PI / 2);    //-90,90
+    double theta_ellipse = randomNumber(0.001, 0);    //-90,90
     double theta_grip_1 = randomNum(-M_PI / 2, M_PI / 2);
     double theta_grip_2 = randomNum(-M_PI / 2, M_PI / 2);
 
@@ -824,33 +821,33 @@ ToolModel::setRandomConfig(const toolModel &initial) {
     return newTool;
 };
 
-ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, double stdev, double mean ){
+ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, double step){
 
     toolModel gaussianTool;  //new sample
 
     //gaussianTool = max_pose;
     //create normally distributed random samples
-    double dev = randomNumber(0.1, 0);
+    double dev = randomNumber(0.001, 0);
     gaussianTool.tvec_elp(0) = max_pose.tvec_elp(0) + dev;
 
-    dev = randomNumber(0.1, 0);
+    dev = randomNumber(0.01, 0);
     gaussianTool.tvec_elp(1) = max_pose.tvec_elp(1) + dev;
 
-    dev = randomNumber(0.05, 0);
+    dev = randomNumber(0.01, 0);
     gaussianTool.tvec_elp(2) = max_pose.tvec_elp(2) + dev;// + dev;
-//
-//    dev = randomNumber(stdev, mean);
-//    gaussianTool.rvec_elp(0) = max_pose.rvec_elp(0) + dev;
-//
-//    dev = randomNumber(stdev, mean);
-//    gaussianTool.rvec_elp(1) = max_pose.rvec_elp(1) + dev;
-//
-//    dev = randomNumber(stdev, mean);
-//    gaussianTool.rvec_elp(2) = max_pose.rvec_elp(2) + dev;
+
+    dev = randomNumber(0.01, 0);
+    gaussianTool.rvec_elp(0) = max_pose.rvec_elp(0) + dev;
+
+    dev = randomNumber(0.01, 0);
+    gaussianTool.rvec_elp(1) = max_pose.rvec_elp(1) + dev;
+
+    dev = randomNumber(0.01, 0);
+    gaussianTool.rvec_elp(2) = max_pose.rvec_elp(2) + dev;
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    double theta_ellipse = randomNum(-M_PI / 2, M_PI / 2);    //-90,90
+    double theta_ellipse = randomNumber(0.008, 0);    //-90,90
     double theta_grip_1 = randomNum(-M_PI / 2, M_PI / 2);
     double theta_grip_2 = randomNum(-M_PI / 2, M_PI / 2);
 
@@ -864,7 +861,7 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, doub
 
 };
 
-void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_ellipse, const double &theta_grip_1,
+void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_ellipse, const double &theta_grip_1,
                                  const double &theta_grip_2) {
 
     cv::Mat I = cv::Mat::eye(3, 3, CV_64FC1);
@@ -875,6 +872,69 @@ void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_elli
     inputModel.rvec_cyl(0) = inputModel.rvec_elp(0); //roll angle should be the same.
     inputModel.rvec_cyl(1) = inputModel.rvec_elp(1); //pitch angle should be the same.
     inputModel.rvec_cyl(2) = inputModel.rvec_elp(2) + theta_ellipse; //yaw angle is plus the theta_ellipse
+
+    q_temp = transformPoints( q_ellipse, cv::Mat(inputModel.rvec_cyl),
+                              cv::Mat(inputModel.tvec_elp)); //transform the ellipse coord according to cylinder pose
+
+    inputModel.tvec_cyl(0) = q_temp.at<double>(0, 0);
+    inputModel.tvec_cyl(1) = q_temp.at<double>(1, 0);
+    inputModel.tvec_cyl(2) = q_temp.at<double>(2, 0);
+
+    ///take cylinder part as the origin
+//    cv::Mat q_temp(4, 1, CV_64FC1);
+//    q_temp = transformPoints(q_ellipse, cv::Mat(inputModel.rvec_cyl),
+//                             cv::Mat(inputModel.tvec_cyl)); //transform the ellipse coord according to cylinder pose
+//
+//    inputModel.tvec_elp(0) = q_temp.at<double>(0, 0);
+//    inputModel.tvec_elp(1) = q_temp.at<double>(1, 0);
+//    inputModel.tvec_elp(2) = q_temp.at<double>(2, 0);
+//
+//    inputModel.rvec_elp(0) = inputModel.rvec_cyl(0); //roll angle should be the same.
+//    inputModel.rvec_elp(1) = inputModel.rvec_cyl(1); //pitch angle should be the same.
+//    inputModel.rvec_elp(2) = inputModel.rvec_cyl(2) + theta_ellipse; //yaw angle is plus the theta_ellipse
+
+    /*********** computations for gripper kinematics **********/
+    cv::Mat test_gripper(3, 1, CV_64FC1);
+    test_gripper.at<double>(0, 0) = 0;
+    test_gripper.at<double>(1, 0) = offset_gripper - 0.4522;  //
+    test_gripper.at<double>(2, 0) = 0;
+
+    cv::Mat rot_elp(3, 3, CV_64FC1);
+    cv::Rodrigues(inputModel.rvec_elp, rot_elp);  // get rotation mat of the ellipse
+
+    cv::Mat q_rot(3, 1, CV_64FC1);
+    q_rot = rot_elp * test_gripper;
+
+    inputModel.tvec_grip1(0) = q_rot.at<double>(0, 0) + inputModel.tvec_elp(0);
+    inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
+    inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
+
+    inputModel.rvec_grip1(0) = inputModel.rvec_elp(0) + theta_grip_1;  //roll angle is plus the theta_gripper
+    inputModel.rvec_grip1(1) = inputModel.rvec_elp(1);
+    inputModel.rvec_grip1(2) = inputModel.rvec_elp(2);
+
+    /*gripper 2*/
+    inputModel.tvec_grip2(0) = inputModel.tvec_grip1(0);
+    inputModel.tvec_grip2(1) = inputModel.tvec_grip1(1);
+    inputModel.tvec_grip2(2) = inputModel.tvec_grip1(2);
+
+    inputModel.rvec_grip2(0) = inputModel.rvec_elp(0) + theta_grip_2;  //roll angle is plus the theta_gripper
+    inputModel.rvec_grip2(1) = inputModel.rvec_elp(1);
+    inputModel.rvec_grip2(2) = inputModel.rvec_elp(2);
+
+};
+
+void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_tool, const double &theta_grip_1,
+                                 const double &theta_grip_2) {
+
+    cv::Mat I = cv::Mat::eye(3, 3, CV_64FC1);
+
+    /*********** computations for ellipse kinematics **********/
+    cv::Mat q_temp(4, 1, CV_64FC1);
+
+    inputModel.rvec_cyl(0) = inputModel.rvec_elp(0); //roll angle should be the same.
+    inputModel.rvec_cyl(1) = inputModel.rvec_elp(1); //pitch angle should be the same.
+    inputModel.rvec_cyl(2) = inputModel.rvec_elp(2) + theta_tool; //yaw angle is plus the theta_ellipse
 
     q_temp = transformPoints( q_ellipse, cv::Mat(inputModel.rvec_cyl),
                               cv::Mat(inputModel.tvec_elp)); //transform the ellipse coord according to cylinder pose
@@ -958,12 +1018,12 @@ ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, co
     /** approach 1: using Vertices mat and normal mat **/
     Compute_Silhouette(body_faces, body_neighbors, body_Vmat, body_Nmat, CamMat, image, cv::Mat(tool.rvec_cyl),
                        cv::Mat(tool.tvec_cyl), P, jac);
-    Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image,
-                       cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac);
-    Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat, gripper1_Nmat, CamMat, image,
-                       cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac);
-    Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image,
-                       cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac);
+//    Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image,
+//                       cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac);
+//    Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat, gripper1_Nmat, CamMat, image,
+//                       cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac);
+//    Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image,
+//                       cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac);
 
     /*approach 2: using Face info mat*/
     // Compute_Silhouette(body_faces, body_neighbors, body_Vmat,bodyFace_normal, bodyFace_centroid, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min );
@@ -986,7 +1046,7 @@ double ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segm
 
         cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
         cv::Mat toolImFloat; //Float data type of grey scale tool image
-        cv::Mat toolImFloatBlured; //Float data type of grey scale blurred toolImage
+
 
         cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
 
@@ -1016,7 +1076,6 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
     cv::Mat toolImFloat(ROI_toolImage.size(), CV_32FC1); //Float data type of grey scale tool image
     cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
 
-
     toolImageGrey.convertTo(toolImFloat, CV_32FC1); // get float img
 
 
@@ -1038,7 +1097,7 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
 
 
 //    cv::imshow("Normalized img", normDIST);
-    // cv::imshow("distance_img", distance_img);
+//     cv::imshow("distance_img", distance_img);
 
 //    /***multiplication process**/
     cv::Mat resultImg; //initialize
@@ -1057,7 +1116,7 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
     }
 
 //    cv::imshow("result: ", resultImg);
-//    cv::waitKey();
+    // cv::waitKey();
 
     for (int k = 0; k < resultImg.rows; ++k) {
         for (int i = 0; i < resultImg.cols; ++i) {
@@ -1068,7 +1127,7 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
         }
     }
     //ROS_INFO_STREAM("OUTPUT: " << output);
-    //output = exp(-1 * output/80);
+    output = exp(-1 * output/80);
 
     return output;
 

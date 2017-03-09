@@ -179,8 +179,10 @@ int main(int argc, char **argv) {
     /***testing segmentation images***/
     cv::Size size(640, 480);
     std::string package = ros::package::getPath("tool_tracking");
-    seg_left = cv::imread(package + "/left.png",CV_LOAD_IMAGE_GRAYSCALE );
-    seg_right = cv::imread(package + "/right.png",CV_LOAD_IMAGE_GRAYSCALE );
+    //seg_left = cv::imread(package + "/left.png", CV_LOAD_IMAGE_GRAYSCALE );
+    seg_left = cv::imread(package + "/particle_test.png", CV_LOAD_IMAGE_GRAYSCALE );
+    seg_right = cv::imread(package + "/right.png", CV_LOAD_IMAGE_GRAYSCALE );
+
 
     cv::Mat new_seg_left = seg_left.rowRange(5,480);
     cv::Mat new_seg_right = seg_right.rowRange(5,480);
@@ -188,9 +190,9 @@ int main(int argc, char **argv) {
     cv::resize(new_seg_left, new_seg_left,size );
     cv::resize(new_seg_right, new_seg_right,size );
 
+
     while (nh.ok()) {
         //ros::spinOnce();
-
         /*** make sure camera information is ready ***/
 //        if(!freshCameraInfo)
 //        {

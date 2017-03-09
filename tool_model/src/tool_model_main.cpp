@@ -15,8 +15,6 @@
 #include "std_msgs/MultiArrayLayout.h"
 #include "std_msgs/Float64MultiArray.h"
 
-#include "opencv2/shape.hpp"
-
 using namespace std;
 
 static vector<cv::Point> simpleContour( const cv::Mat& currentQuery, int n=300 )
@@ -71,7 +69,7 @@ int main(int argc, char **argv) {
     Cam.at<double>(3, 2) = 0;
 
     Cam.at<double>(0, 3) = 0.0;   //should be in meters
-    Cam.at<double>(1, 3) = 0.1;
+    Cam.at<double>(1, 3) = 0.0;
     Cam.at<double>(2, 3) = 0.2;  // cannot have z = 0 for reprojection, camera_z must be always point to object
     Cam.at<double>(3, 3) = 1;
 
@@ -108,9 +106,9 @@ int main(int argc, char **argv) {
 
     ToolModel::toolModel initial;
 
-    initial.tvec_elp(0) = -0.03;  //left and right (image frame)
-    initial.tvec_elp(1) = 0.1;  //up and down
-    initial.tvec_elp(2) = 0.0;
+    initial.tvec_elp(0) = 0.0;  //left and right (image frame)
+    initial.tvec_elp(1) = 0.0;  //up and down
+    initial.tvec_elp(2) = -0.03;
     initial.rvec_elp(0) = 0.0;
     initial.rvec_elp(1) = 0.0;
     initial.rvec_elp(2) = -2;
@@ -121,8 +119,7 @@ int main(int argc, char **argv) {
     clock_t t1;
     clock_t t2;
 
-    //initial = newToolModel.setRandomConfig(initial);
-    newToolModel.computeModelPose(initial, -0.6, 0.3, 0.1 );
+    newToolModel.computeModelPose(initial, 0.1, 0.3, 0.1 );
 
     t = clock();
     newToolModel.renderTool(testImg, initial, Cam, P);
@@ -132,9 +129,9 @@ int main(int argc, char **argv) {
 
     /********write a test segmentation ********/
     ToolModel::toolModel newModel;
-    newModel.tvec_elp(0) = -0.03;  //left and right (image frame)
-    newModel.tvec_elp(1) = 0.1;  //up and down
-    newModel.tvec_elp(2) = -2;
+    newModel.tvec_elp(0) = 0.0;  //left and right (image frame)
+    newModel.tvec_elp(1) = 0.0;  //up and down
+    newModel.tvec_elp(2) = -0.04;
     newModel.rvec_elp(0) = 0.0;
     newModel.rvec_elp(1) = 0.0;
     newModel.rvec_elp(2) = -2;
@@ -144,37 +141,28 @@ int main(int argc, char **argv) {
     cv::cvtColor(segImg, segImg, CV_BGR2GRAY); //convert it to grey scale
     cv::cvtColor(testImg, testImg, CV_BGR2GRAY); //convert it to grey scale
 
-
-    cv::Ptr <cv::ShapeContextDistanceExtractor> shape_finder = cv::createShapeContextDistanceExtractor();
-
-    vector<cv::Point> test_contour = simpleContour(testImg);
-    vector<cv::Point> seg_contour = simpleContour(segImg);
-
-
-    float dist = shape_finder->computeDistance(seg_contour,test_contour );
-
-    ROS_INFO_STREAM("DIST: " << dist);
-    
     cv::imshow("tool image: ",testImg );
-    cv::imshow("segImg : ",segImg );
+    //cv::imshow("segImg : ",segImg );
 
     cv::waitKey(0);
 
     float sec1 = (float) t1 / CLOCKS_PER_SEC;
     float sec = (float) t / CLOCKS_PER_SEC;
 
+/***********testing below***************/
+//    for (int i = 0; i < 20; ++i) {
+//        double genrater = newToolModel.randomNumber(0.01, 0);
+//        ROS_INFO_STREAM("genrater" << genrater);
+//    }
 //    ROS_INFO_STREAM("setRandomConfig time is: " << sec1);
 //    ROS_INFO_STREAM("render time is: " << sec);
-//
-//        double result = newToolModel.calculateMatchingScore(testImg, segImg);
+       //double result = newToolModel.calculateMatchingScore(testImg, segImg);
 //
 //        t2 = clock();
-//        double chamfer_result = newToolModel.calculateChamferScore(testImg, segImg);
+        //double chamfer_result = newToolModel.calculateChamferScore(testImg, segImg);
 //        t2 = clock() - t2;
-//        ROS_INFO_STREAM("THE MATCHING SCORE IS: " << result);
+       //ROS_INFO_STREAM("THE MATCHING SCORE IS: " << result);
 //        ROS_INFO_STREAM("THE chamfer SCORE IS: " << chamfer_result);
-
-
 
 //    float sec2 = (float) t2 / CLOCKS_PER_SEC;
 //    ROS_INFO_STREAM("MATCHING TIME: " << sec2);
