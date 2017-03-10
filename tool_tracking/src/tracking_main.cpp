@@ -67,7 +67,6 @@ void timerCB(const ros::TimerEvent &) {
 
 cv::Mat segmentation(cv::Mat &InputImg) {
 
-    //ROS_INFO("SEGMENTATION!!!!");
     cv::Mat src, src_gray;
     cv::Mat grad;
 
@@ -179,8 +178,8 @@ int main(int argc, char **argv) {
     /***testing segmentation images***/
     cv::Size size(640, 480);
     std::string package = ros::package::getPath("tool_tracking");
-    //seg_left = cv::imread(package + "/left.png", CV_LOAD_IMAGE_GRAYSCALE );
-    seg_left = cv::imread(package + "/particle_test.png", CV_LOAD_IMAGE_GRAYSCALE );
+    seg_left = cv::imread(package + "/left.png", CV_LOAD_IMAGE_GRAYSCALE );
+    //seg_left = cv::imread(package + "/particle_test.png", CV_LOAD_IMAGE_GRAYSCALE );  //testing image
     seg_right = cv::imread(package + "/right.png", CV_LOAD_IMAGE_GRAYSCALE );
 
 

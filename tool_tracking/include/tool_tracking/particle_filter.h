@@ -3,9 +3,9 @@
  *
  *  Copyright (c) 2016 Case Western Reserve University
  *    
- *    Orhan Ozguner <oxo31@case.edu>
- *    Russell Jackson <rcj33@case.edu>
- *    Ran Hao <rxh349@case.edu>
+ *
+ *     Ran Hao <rxh349@case.edu>
+ *     Orhan Ozguner <oxo31@case.edu>
  *
  *  All rights reserved.
  *
@@ -81,7 +81,7 @@ private:
     ToolModel::toolModel initial; //initial configuration
 
     unsigned int toolSize; //size of the needle to be rendered
-    unsigned int Downsample_rate;
+    double Downsample_rate;
 
     unsigned int numParticles; //total number of particles
     cv::Mat toolImage_left; //left rendered Image

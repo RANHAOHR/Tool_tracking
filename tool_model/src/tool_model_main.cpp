@@ -17,36 +17,6 @@
 
 using namespace std;
 
-static vector<cv::Point> simpleContour( const cv::Mat& currentQuery, int n=300 )
-{
-    vector<vector<cv::Point> > _contoursQuery;
-    vector <cv::Point> contoursQuery;
-    findContours(currentQuery, _contoursQuery, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
-    for (size_t border=0; border<_contoursQuery.size(); border++)
-    {
-        for (size_t p=0; p<_contoursQuery[border].size(); p++)
-        {
-            contoursQuery.push_back( _contoursQuery[border][p] );
-        }
-    }
-
-    // In case actual number of points is less than n
-    int dummy=0;
-    for (int add=(int)contoursQuery.size()-1; add<n; add++)
-    {
-        contoursQuery.push_back(contoursQuery[dummy++]); //adding dummy values
-    }
-
-    // Uniformly sampling
-    random_shuffle(contoursQuery.begin(), contoursQuery.end());
-    vector<cv::Point> cont;
-    for (int i=0; i<n; i++)
-    {
-        cont.push_back(contoursQuery[i]);
-    }
-    return cont;
-}
-
 int main(int argc, char **argv) {
     ROS_INFO("---- In main node -----");
     ros::init(argc, argv, "tool_tracking");
@@ -111,8 +81,9 @@ int main(int argc, char **argv) {
     initial.tvec_elp(2) = -0.03;
     initial.rvec_elp(0) = 0.0;
     initial.rvec_elp(1) = 0.0;
-    initial.rvec_elp(2) = -2;
+    initial.rvec_elp(2) = -1;
 
+/*
     ToolModel::toolModel newTool;
 
     clock_t t;
@@ -127,7 +98,9 @@ int main(int argc, char **argv) {
 
     cv::Mat segImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3
 
-    /********write a test segmentation ********/
+    */
+/********write a test segmentation ********//*
+
     ToolModel::toolModel newModel;
     newModel.tvec_elp(0) = 0.0;  //left and right (image frame)
     newModel.tvec_elp(1) = 0.0;  //up and down
@@ -148,6 +121,7 @@ int main(int argc, char **argv) {
 
     float sec1 = (float) t1 / CLOCKS_PER_SEC;
     float sec = (float) t / CLOCKS_PER_SEC;
+*/
 
 /***********testing below***************/
 //    for (int i = 0; i < 20; ++i) {

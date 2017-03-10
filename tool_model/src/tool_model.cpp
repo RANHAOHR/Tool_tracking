@@ -107,6 +107,7 @@ ToolModel::ToolModel() {
     srand((unsigned) time(NULL)); //for the random number generator, use only once
 };
 
+/*Gaussian distribution*/
 double ToolModel::randomNumber(double stdev, double mean) {
 
     boost::normal_distribution<> nd(mean, stdev);
@@ -117,7 +118,7 @@ double ToolModel::randomNumber(double stdev, double mean) {
 
 };
 
-/*generate random number in a certain range*/
+/*generate random number in a certain range, uniform distribution*/
 double ToolModel::randomNum(double min, double max) {
 
     /// srand((unsigned) time( NULL));  //do this in main or constructor
@@ -447,100 +448,6 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
 
 };
 
-/***Although this method will bring inaccuracy pf the final Silhouettes, it's faster in 2 miliseconds than the 1st method****/
-void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_faces,
-                                   const std::vector<std::vector<int> > &neighbor_faces,
-                                   const cv::Mat &input_Vmat, const cv::Mat &face_normals, cv::Mat &face_centro,
-                                   cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
-                                   const cv::Mat &P, cv::OutputArray jac, cv::Point2d &XY_max, cv::Point2d &XY_min) {
-/********************New approach: using body frame for transformation**************************/
-
-    cv::Mat newFaceNorm = transformPoints(face_normals, rvec, tvec);
-    newFaceNorm = camTransformMats(CamMat, newFaceNorm);
-
-    cv::Mat newFaceCentro = transformPoints(face_centro, rvec, tvec);
-    newFaceCentro = camTransformMats(CamMat, newFaceCentro);
-
-    cv::Mat new_Vertices = transformPoints(input_Vmat, rvec, tvec);
-    new_Vertices = camTransformMats(CamMat, new_Vertices);
-
-    unsigned int neighbor_num = 0;
-
-    cv::Mat temp(4, 1, CV_64FC1);
-
-    cv::Mat f_normal(3, 1, CV_64FC1);
-    cv::Mat f_centro(3, 1, CV_64FC1);
-
-    cv::Mat n_normal(3, 1, CV_64FC1);
-    cv::Mat n_centro(3, 1, CV_64FC1);
-
-    cv::Mat ept_1(4, 1, CV_64FC1);
-    cv::Mat ept_2(4, 1, CV_64FC1);
-
-
-    for (int i = 0; i < input_faces.size(); ++i) {
-
-        neighbor_num = (neighbor_faces[i].size()) / 3;  //each neighbor has two vertices
-
-        if (neighbor_num > 0) {
-
-            newFaceNorm.col(i).copyTo(temp);
-            f_normal = convert4to3(temp);
-
-            newFaceCentro.col(i).copyTo(temp);
-            f_centro = convert4to3(temp);
-
-            double isfront_i = f_normal.dot(f_centro);
-
-            if (isfront_i < 0.0) {
-                for (int neighbor_count = 0; neighbor_count <
-                                             neighbor_num; ++neighbor_count) {  //notice: cannot use J here, since the last j will not be counted
-
-                    int j = 3 * neighbor_count;
-
-                    /******transformation for neighbor faces*******/
-                    int n_face_index = neighbor_faces[i][j];
-
-                    newFaceNorm.col(n_face_index).copyTo(temp);
-                    n_normal = convert4to3(temp);
-
-                    newFaceCentro.col(n_face_index).copyTo(temp);
-                    n_centro = convert4to3(temp);
-
-                    double isfront_j = n_normal.dot(n_centro);
-
-                    if (isfront_i * isfront_j <= 0.0) // one is front, another is back
-                    {
-                        /*finish finding*/
-                        new_Vertices.col(neighbor_faces[i][j + 1]).copyTo(ept_1);
-                        new_Vertices.col(neighbor_faces[i][j + 2]).copyTo(ept_2);
-
-                        cv::Point2d prjpt_1 = reproject(ept_1, P);
-                        cv::Point2d prjpt_2 = reproject(ept_2, P);
-
-                        cv::line(image, prjpt_1, prjpt_2, cv::Scalar(1, 1, 1), 1, 8, 0);  /*InputOutputArray img, InputArrayOfArrays pts,const Scalar &color,
-                                                                                     int lineType=LINE_8, int shift=0, Point offset=Point())*/
-                        if (prjpt_1.x > XY_max.x) XY_max.x = prjpt_1.x;
-                        if (prjpt_1.y > XY_max.y) XY_max.y = prjpt_1.y;
-                        if (prjpt_1.x < XY_min.x) XY_min.x = prjpt_1.x;
-                        if (prjpt_1.y < XY_min.y) XY_min.y = prjpt_1.y;
-
-                        if (prjpt_2.x > XY_max.x) XY_max.x = prjpt_2.x;
-                        if (prjpt_2.y > XY_max.y) XY_max.y = prjpt_2.y;
-                        if (prjpt_2.x < XY_min.x) XY_min.x = prjpt_2.x;
-                        if (prjpt_2.y < XY_min.y) XY_min.y = prjpt_2.y;
-
-                    }
-
-                }
-
-            }
-
-        }
-
-    }
-    /**************Second approach done*******************/
-};
 
 cv::Mat ToolModel::convert4to3(const cv::Mat &inputMat) {
 
@@ -794,16 +701,13 @@ ToolModel::setRandomConfig(const toolModel &seeds) {
 
     toolModel newTool = seeds;  //BODY part is done here
 
-    ///testing: this is the working one for current configuration
-
-
     ///what if generate seeding group TODO: testing
-    newTool.tvec_elp(0) = 0.0;  //left and right (image frame)
-    newTool.tvec_elp(1) = 0.0;  //up and down
-    newTool.tvec_elp(2) = 0.03;
-    newTool.rvec_elp(0) = 0.0;
-    newTool.rvec_elp(1) = 0.0;
-    newTool.rvec_elp(2) = -2;
+    newTool.tvec_elp(0) = seeds.tvec_elp(0);  //left and right (image frame)
+    newTool.tvec_elp(1) = seeds.tvec_elp(1);  //up and down
+    newTool.tvec_elp(2) = seeds.tvec_elp(2);
+    newTool.rvec_elp(0) = seeds.rvec_elp(0);
+    newTool.rvec_elp(1) = seeds.rvec_elp(1);
+    newTool.rvec_elp(2) = seeds.rvec_elp(2);
 
 
     /************** sample the angles of the joints **************/
@@ -827,27 +731,27 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, doub
 
     //gaussianTool = max_pose;
     //create normally distributed random samples
-    double dev = randomNumber(0.001, 0);
+    double dev = randomNumber(step, 0);
     gaussianTool.tvec_elp(0) = max_pose.tvec_elp(0) + dev;
 
-    dev = randomNumber(0.01, 0);
+    dev = randomNumber(step, 0);
     gaussianTool.tvec_elp(1) = max_pose.tvec_elp(1) + dev;
 
-    dev = randomNumber(0.01, 0);
+    dev = randomNumber(step, 0);
     gaussianTool.tvec_elp(2) = max_pose.tvec_elp(2) + dev;// + dev;
 
-    dev = randomNumber(0.01, 0);
+    dev = randomNumber(step, 0);
     gaussianTool.rvec_elp(0) = max_pose.rvec_elp(0) + dev;
 
-    dev = randomNumber(0.01, 0);
+    dev = randomNumber(step, 0);
     gaussianTool.rvec_elp(1) = max_pose.rvec_elp(1) + dev;
 
-    dev = randomNumber(0.01, 0);
+    dev = randomNumber(step, 0);
     gaussianTool.rvec_elp(2) = max_pose.rvec_elp(2) + dev;
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    double theta_ellipse = randomNumber(0.008, 0);    //-90,90
+    double theta_ellipse = randomNumber(step, 0);    //-90,90
     double theta_grip_1 = randomNum(-M_PI / 2, M_PI / 2);
     double theta_grip_2 = randomNum(-M_PI / 2, M_PI / 2);
 
@@ -861,37 +765,25 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, doub
 
 };
 
+/*using cylinder pose to compute ellipse pose*/
 void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_ellipse, const double &theta_grip_1,
                                  const double &theta_grip_2) {
 
     cv::Mat I = cv::Mat::eye(3, 3, CV_64FC1);
 
     /*********** computations for ellipse kinematics **********/
-    cv::Mat q_temp(4, 1, CV_64FC1);
-
-    inputModel.rvec_cyl(0) = inputModel.rvec_elp(0); //roll angle should be the same.
-    inputModel.rvec_cyl(1) = inputModel.rvec_elp(1); //pitch angle should be the same.
-    inputModel.rvec_cyl(2) = inputModel.rvec_elp(2) + theta_ellipse; //yaw angle is plus the theta_ellipse
-
-    q_temp = transformPoints( q_ellipse, cv::Mat(inputModel.rvec_cyl),
-                              cv::Mat(inputModel.tvec_elp)); //transform the ellipse coord according to cylinder pose
-
-    inputModel.tvec_cyl(0) = q_temp.at<double>(0, 0);
-    inputModel.tvec_cyl(1) = q_temp.at<double>(1, 0);
-    inputModel.tvec_cyl(2) = q_temp.at<double>(2, 0);
-
     ///take cylinder part as the origin
-//    cv::Mat q_temp(4, 1, CV_64FC1);
-//    q_temp = transformPoints(q_ellipse, cv::Mat(inputModel.rvec_cyl),
-//                             cv::Mat(inputModel.tvec_cyl)); //transform the ellipse coord according to cylinder pose
-//
-//    inputModel.tvec_elp(0) = q_temp.at<double>(0, 0);
-//    inputModel.tvec_elp(1) = q_temp.at<double>(1, 0);
-//    inputModel.tvec_elp(2) = q_temp.at<double>(2, 0);
-//
-//    inputModel.rvec_elp(0) = inputModel.rvec_cyl(0); //roll angle should be the same.
-//    inputModel.rvec_elp(1) = inputModel.rvec_cyl(1); //pitch angle should be the same.
-//    inputModel.rvec_elp(2) = inputModel.rvec_cyl(2) + theta_ellipse; //yaw angle is plus the theta_ellipse
+    cv::Mat q_temp(4, 1, CV_64FC1);
+    q_temp = transformPoints(q_ellipse, cv::Mat(inputModel.rvec_cyl),
+                             cv::Mat(inputModel.tvec_cyl)); //transform the ellipse coord according to cylinder pose
+
+    inputModel.tvec_elp(0) = q_temp.at<double>(0, 0);
+    inputModel.tvec_elp(1) = q_temp.at<double>(1, 0);
+    inputModel.tvec_elp(2) = q_temp.at<double>(2, 0);
+
+    inputModel.rvec_elp(0) = inputModel.rvec_cyl(0); //roll angle should be the same.
+    inputModel.rvec_elp(1) = inputModel.rvec_cyl(1); //pitch angle should be the same.
+    inputModel.rvec_elp(2) = inputModel.rvec_cyl(2) + theta_ellipse; //yaw angle is plus the theta_ellipse
 
     /*********** computations for gripper kinematics **********/
     cv::Mat test_gripper(3, 1, CV_64FC1);
@@ -924,6 +816,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
 
 };
 
+/*using ellipse pose to compute cylinder pose*/
 void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_tool, const double &theta_grip_1,
                                  const double &theta_grip_2) {
 
@@ -942,19 +835,6 @@ void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_tool
     inputModel.tvec_cyl(0) = q_temp.at<double>(0, 0);
     inputModel.tvec_cyl(1) = q_temp.at<double>(1, 0);
     inputModel.tvec_cyl(2) = q_temp.at<double>(2, 0);
-
-    ///take cylinder part as the origin
-//    cv::Mat q_temp(4, 1, CV_64FC1);
-//    q_temp = transformPoints(q_ellipse, cv::Mat(inputModel.rvec_cyl),
-//                             cv::Mat(inputModel.tvec_cyl)); //transform the ellipse coord according to cylinder pose
-//
-//    inputModel.tvec_elp(0) = q_temp.at<double>(0, 0);
-//    inputModel.tvec_elp(1) = q_temp.at<double>(1, 0);
-//    inputModel.tvec_elp(2) = q_temp.at<double>(2, 0);
-//
-//    inputModel.rvec_elp(0) = inputModel.rvec_cyl(0); //roll angle should be the same.
-//    inputModel.rvec_elp(1) = inputModel.rvec_cyl(1); //pitch angle should be the same.
-//    inputModel.rvec_elp(2) = inputModel.rvec_cyl(2) + theta_ellipse; //yaw angle is plus the theta_ellipse
 
     /*********** computations for gripper kinematics **********/
     cv::Mat test_gripper(3, 1, CV_64FC1);

@@ -42,7 +42,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-        nh_(*nodehandle), numParticles(1000), Downsample_rate(5), toolSize(2){
+        nh_(*nodehandle), numParticles(1000), Downsample_rate(0.02), toolSize(2){
     /****initial position guess
 	everything here is in meters*****/
     initial.tvec_elp(0) = 0.0;
@@ -66,11 +66,11 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     initializeParticles();
 
     // initialization, just basic black image ??? how to get the size of the image
-    toolImage_left = cv::Mat::zeros(480, 640, CV_8UC3);
-    toolImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
+    toolImage_left = cv::Mat::zeros(475, 640, CV_8UC3);
+    toolImage_right = cv::Mat::zeros(475, 640, CV_8UC3);
 
-    toolImage_left_temp = cv::Mat::zeros(480, 640, CV_8UC3);
-    toolImage_right_temp = cv::Mat::zeros(480, 640, CV_8UC3);
+    toolImage_left_temp = cv::Mat::zeros(475, 640, CV_8UC3);
+    toolImage_right_temp = cv::Mat::zeros(475, 640, CV_8UC3);
 
 };
 
@@ -84,6 +84,9 @@ void ParticleFilter::initializeParticles() {
     matchingScores.resize(numParticles); //initialize matching score array
     particleWeights.resize(numParticles); //initialize particle weight array
 
+    int batch_1 = 500;
+    int batch_2 = 1000;
+
     ///generate random seeds
     initial.tvec_elp(0) = 0.0;  //left and right (image frame)
     initial.tvec_elp(1) = 0.0;  //up and down
@@ -92,28 +95,19 @@ void ParticleFilter::initializeParticles() {
     initial.rvec_elp(1) = 0.0;
     initial.rvec_elp(2) = -2;
 
-    for (int i = 0; i < 300; i++) {
+    for (int i = 0; i < batch_1; i++) {
         particles[i] = newToolModel.setRandomConfig(initial);
     }
 
     initial.tvec_elp(0) = 0.0;  //left and right (image frame)
     initial.tvec_elp(1) = 0.0;  //up and down
-    initial.tvec_elp(2) = 0.1;
+    initial.tvec_elp(2) = -0.03;
     initial.rvec_elp(0) = 0.0;
     initial.rvec_elp(1) = 0.0;
     initial.rvec_elp(2) = -1;
 
-    for (int i = 500 ; i < 700; i++) {
-        particles[i] = newToolModel.setRandomConfig(initial);
-    }
 
-    initial.tvec_elp(0) = 0.1;  //left and right (image frame)
-    initial.tvec_elp(1) = 0.0;  //up and down
-    initial.tvec_elp(2) = 0.03;
-    initial.rvec_elp(0) = 0.0;
-    initial.rvec_elp(1) = 0.0;
-    initial.rvec_elp(2) = -2;
-    for (int i = 700; i < 1000; i++) {
+    for (int i = batch_1; i < batch_2; i++) {
         particles[i] = newToolModel.setRandomConfig(initial);
     }
 
@@ -171,6 +165,8 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
             totalScore += matchingScores[i];
         }
 
+        cv::imshow("temp left", toolImage_left_temp);
+
         ROS_INFO_STREAM("Maxscore: " << maxScore);  //debug
 
         /*** calculate weights using matching score and do the resampling ***/
@@ -215,9 +211,8 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
         //each time will clear the particles and resample them
         //resamplingParticles(oldParticles, particleWeights, particles);
 
-        cv::imshow("temp left", toolImage_left_temp);
-        //cv::imshow("temp right", toolImage_right_temp);
 
+        //cv::imshow("temp right", toolImage_right_temp);
 
         cv::imshow("trackingImages left",trackingImages[0]);
         //cv::imshow("trackingImages right",trackingImages[1]);
@@ -245,6 +240,11 @@ void ParticleFilter::updateSamples(std::vector<ToolModel::toolModel> &oldParticl
 //    ROS_INFO_STREAM("assume best rvec(2)" << bestParticle.rvec_elp(2) );
 
     int sampleSize = numParticles;
+    int smapleStep = 0.001;
+
+    Downsample_rate -= smapleStep;
+    ROS_INFO_STREAM("Downsample_rate: " << Downsample_rate);
+
     double total = 0.0;
     std::vector<int> newSamples;
 
@@ -264,7 +264,7 @@ void ParticleFilter::updateSamples(std::vector<ToolModel::toolModel> &oldParticl
     for (int k = 0; k <newSamples.size() ; ++k) {
         ///every loop should generate different particle from one base particle k
         for (int i = 0; i <newSamples[k] ; ++i) {
-            updateParticles.push_back(newToolModel.gaussianSampling(bestParticle, 0.0005));
+            updateParticles.push_back(newToolModel.gaussianSampling(bestParticle, Downsample_rate));
 
         }
     }
