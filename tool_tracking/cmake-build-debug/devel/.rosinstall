@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/devel/setup.sh

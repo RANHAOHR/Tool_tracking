@@ -3,9 +3,9 @@
  *
  *  Copyright (c) 2016 Case Western Reserve University
  *    
- *    Orhan Ozguner <oxo31@case.edu>
- *    Russell Jackson <rcj33@case.edu>
- *    Ran Hao <rxh349@case.edu>
+ *
+ *     Ran Hao <rxh349@case.edu>
+ *     Orhan Ozguner <oxo31@case.edu>
  *
  *  All rights reserved.
  *
@@ -61,28 +61,32 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include <vesselness_image_filter_cpu/vesselness_lib.h>
+#include <boost/random/normal_distribution.hpp>
+
+#include <geometry_msgs/Transform.h>
 
 class ParticleFilter {
 
 private:
 
-    cv::Mat Cam;
-    ros::NodeHandle nh_;  //may need this
+    cv::Mat Cam_left;
+    cv::Mat Cam_right;
 
-    ///ros::Timer timer;
+    ros::NodeHandle nh_;  //may need this
 
     ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
 
     ToolModel::toolModel initial; //initial configuration
 
     unsigned int toolSize; //size of the needle to be rendered
-
-    double perturbStd; //standard deviation for perturbing, if we obtain good matching it gets smaller to stay in the region
+    double Downsample_rate;
 
     unsigned int numParticles; //total number of particles
     cv::Mat toolImage_left; //left rendered Image
     cv::Mat toolImage_right; //right rendered Image
 
+    cv::Mat toolImage_left_temp; //left rendered Image
+    cv::Mat toolImage_right_temp; //right rendered Image
 
     cv::Rect ROI_left; //ROI for the left image
     cv::Rect ROI_right; //ROI for the right image
@@ -123,15 +127,20 @@ public:
     /*
      * resampling method
      */
-    void
+/*    void
     resampleLowVariance(const std::vector<ToolModel::toolModel> &initial, const std::vector<double> &particleWeight,
-                        std::vector<ToolModel::toolModel> &results);
+                        std::vector<ToolModel::toolModel> &results);*/
+    void resamplingParticles(const std::vector<ToolModel::toolModel> &sampleModel,
+                                             const std::vector<double> &particleWeight,
+                                             std::vector<ToolModel::toolModel> &update_particles,
+                                             std::vector<double> &update_weights);
 
     /*
      * update particles
      */
     void updateParticles(const cv::Mat &bodyVel, double &updateRate);
-
+    void updateSamples(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
+                                         std::vector<ToolModel::toolModel> &updateParticles,ToolModel::toolModel &bestParticle);
     /*
      * perturb the particles for more usable poses
      */

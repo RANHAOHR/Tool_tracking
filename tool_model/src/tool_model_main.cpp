@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
     Cam.at<double>(3, 2) = 0;
 
     Cam.at<double>(0, 3) = 0.0;   //should be in meters
-    Cam.at<double>(1, 3) = 0.1;
+    Cam.at<double>(1, 3) = 0.0;
     Cam.at<double>(2, 3) = 0.2;  // cannot have z = 0 for reprojection, camera_z must be always point to object
     Cam.at<double>(3, 3) = 1;
 
@@ -51,18 +51,23 @@ int main(int argc, char **argv) {
     cv::Mat testImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3
     cv::Mat P(3, 4, CV_64FC1);
 
+//    cv::Size size(640, 480);
+//    cv::Mat segImg = cv::imread("/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/left.png",CV_LOAD_IMAGE_GRAYSCALE );
+//    cv::resize(segImg, segImg,size );
+
     /******************magic numbers*************/
-    /*GENERAL P CONFIGS for DVRK*/
-    P.at<double>(0, 0) = 1000;
+
+    /*actual Projection matrix*/
+    P.at<double>(0, 0) = 893.7852590197848;
     P.at<double>(1, 0) = 0;
     P.at<double>(2, 0) = 0;
 
     P.at<double>(0, 1) = 0;
-    P.at<double>(1, 1) = 1000;
+    P.at<double>(1, 1) = 893.7852590197848;
     P.at<double>(2, 1) = 0;
 
-    P.at<double>(0, 2) = 320; // horiz
-    P.at<double>(1, 2) = 240; //verticle
+    P.at<double>(0, 2) = 288.4443244934082; // horiz
+    P.at<double>(1, 2) = 259.7727756500244; //verticle
     P.at<double>(2, 2) = 1;
 
     P.at<double>(0, 3) = 0;
@@ -71,68 +76,70 @@ int main(int argc, char **argv) {
 
     ToolModel::toolModel initial;
 
-    initial.tvec_cyl(0) = -0.08;
-    initial.tvec_cyl(1) = 0.15;
-    initial.tvec_cyl(2) = 0.0;
-    initial.rvec_cyl(0) = 1;
-    initial.rvec_cyl(1) = 0;
-    initial.rvec_cyl(2) = -2;
+    initial.tvec_elp(0) = 0.0;  //left and right (image frame)
+    initial.tvec_elp(1) = 0.0;  //up and down
+    initial.tvec_elp(2) = -0.03;
+    initial.rvec_elp(0) = 0.0;
+    initial.rvec_elp(1) = 0.0;
+    initial.rvec_elp(2) = -1;
 
+/*
     ToolModel::toolModel newTool;
 
     clock_t t;
     clock_t t1;
     clock_t t2;
 
-    t1 = clock();
-
-    newTool.tvec_cyl(0) = -0.08;
-    newTool.tvec_cyl(1) = 0.15;
-    newTool.tvec_cyl(2) = 0.0;
-    newTool.rvec_cyl(0) = 1;
-    newTool.rvec_cyl(1) = 0;
-    newTool.rvec_cyl(2) = 0;
-
-
-    //newTool = newToolModel.setRandomConfig(initial, Cam, 1, 0);
-    newToolModel.computeModelPose(newTool, 0.7, 0.1, 0 );
-    t1 = clock() - t1;
+    newToolModel.computeModelPose(initial, 0.1, 0.3, 0.1 );
 
     t = clock();
-    cv::Rect testROI = newToolModel.renderTool(testImg, newTool, Cam, P);
+    newToolModel.renderTool(testImg, initial, Cam, P);
     t = clock() - t;
 
-//    float sec1 = (float) t1 / CLOCKS_PER_SEC;
-//    float sec = (float) t / CLOCKS_PER_SEC;
+    cv::Mat segImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3
 
+    */
+/********write a test segmentation ********//*
+
+    ToolModel::toolModel newModel;
+    newModel.tvec_elp(0) = 0.0;  //left and right (image frame)
+    newModel.tvec_elp(1) = 0.0;  //up and down
+    newModel.tvec_elp(2) = -0.04;
+    newModel.rvec_elp(0) = 0.0;
+    newModel.rvec_elp(1) = 0.0;
+    newModel.rvec_elp(2) = -2;
+    newToolModel.computeModelPose(newModel, 0.1, 0.1, 0 );
+    newToolModel.renderTool(segImg, newModel, Cam, P);
+
+    cv::cvtColor(segImg, segImg, CV_BGR2GRAY); //convert it to grey scale
+    cv::cvtColor(testImg, testImg, CV_BGR2GRAY); //convert it to grey scale
+
+    cv::imshow("tool image: ",testImg );
+    //cv::imshow("segImg : ",segImg );
+
+    cv::waitKey(0);
+
+    float sec1 = (float) t1 / CLOCKS_PER_SEC;
+    float sec = (float) t / CLOCKS_PER_SEC;
+*/
+
+/***********testing below***************/
+//    for (int i = 0; i < 20; ++i) {
+//        double genrater = newToolModel.randomNumber(0.01, 0);
+//        ROS_INFO_STREAM("genrater" << genrater);
+//    }
 //    ROS_INFO_STREAM("setRandomConfig time is: " << sec1);
 //    ROS_INFO_STREAM("render time is: " << sec);
-
-    /********write a test segmentation ********/
-    cv::Mat segImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3;
-    //newTool = newToolModel.setRandomConfig(initial, Cam, 1, 0);
-
-    newToolModel.computeModelPose(initial, 0.1, 0.1, 0 );
-    cv::Rect segROI = newToolModel.renderTool(segImg, initial, Cam, P);
-
-
-    double result = newToolModel.calculateMatchingScore(testImg, segImg, testROI);
-
-    t2 = clock();
-    double chamfer_result = newToolModel.calculateChamferSocre(testImg, segImg, testROI);
-    ROS_INFO_STREAM("THE MATCHING SCORE IS: " << result);
-    ROS_INFO_STREAM("THE chamfer SCORE IS: " << chamfer_result);
-    t2 = clock() - t2;
-
-    float sec2 = (float) t2 / CLOCKS_PER_SEC;
-    ROS_INFO_STREAM("MATCHING TIME: " << sec2);
-
-//	 if(!testImg.empty()){   ///need CV_64FC1
-//         imshow("test", testImg);
-//     }
+       //double result = newToolModel.calculateMatchingScore(testImg, segImg);
 //
-//
-//	 cv::waitKey(0);
+//        t2 = clock();
+        //double chamfer_result = newToolModel.calculateChamferScore(testImg, segImg);
+//        t2 = clock() - t2;
+       //ROS_INFO_STREAM("THE MATCHING SCORE IS: " << result);
+//        ROS_INFO_STREAM("THE chamfer SCORE IS: " << chamfer_result);
+
+//    float sec2 = (float) t2 / CLOCKS_PER_SEC;
+//    ROS_INFO_STREAM("MATCHING TIME: " << sec2);
 
     return 0;
 
