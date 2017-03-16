@@ -2,10 +2,8 @@
  * Software License Agreement (BSD License)
  *
  *  Copyright (c) 2016 Case Western Reserve University
- *    
  *
  *     Ran Hao <rxh349@case.edu>
- *     Orhan Ozguner <oxo31@case.edu>
  *
  *  All rights reserved.
  *
@@ -57,6 +55,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <sensor_msgs/image_encodings.h>
+#include <image_transport/image_transport.h>
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 
@@ -64,6 +63,7 @@
 #include <boost/random/normal_distribution.hpp>
 
 #include <geometry_msgs/Transform.h>
+#include <Eigen/Eigen>
 
 class ParticleFilter {
 
@@ -95,6 +95,13 @@ private:
     std::vector<double> matchingScores; // particle scores (matching scores)
     std::vector<double> particleWeights; // particle weights calculated from matching scores
 
+    void projectionMatRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionMatRight);
+    void projectionMatBLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionMatBLeft);
+
+    ros::Subscriber projectionSubscriber_l;
+    ros::Subscriber projectionSubscriber_r;
+
+
 
 public:
 
@@ -114,7 +121,10 @@ public:
     */
     void initializeParticles();
 
-    /***consider getting a timer to debug***/
+    /***geometry***/
+    cv::Mat  Projection_l;
+    cv::Mat  Projection_r;
+    bool freshCameraInfo;
     // void timerCallback(const ros::TimerEvent&);
 
     /*

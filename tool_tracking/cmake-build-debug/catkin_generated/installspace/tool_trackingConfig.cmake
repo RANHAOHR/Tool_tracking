@@ -67,8 +67,8 @@ set(tool_tracking_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
 if("FALSE" STREQUAL "TRUE")
-  set(tool_tracking_SOURCE_PREFIX /home/ranhao/ros_ws/Tool_tracking/tool_tracking)
-  set(tool_tracking_DEVEL_PREFIX /home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/devel)
+  set(tool_tracking_SOURCE_PREFIX /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking)
+  set(tool_tracking_DEVEL_PREFIX /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel)
   set(tool_tracking_INSTALL_PREFIX "")
   set(tool_tracking_PREFIX ${tool_tracking_DEVEL_PREFIX})
 else()

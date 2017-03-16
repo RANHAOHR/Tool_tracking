@@ -1,4 +1,4 @@
-# Install script for directory: /home/ranhao/ros_ws/Tool_tracking/tool_tracking
+# Install script for directory: /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -51,7 +51,7 @@ if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMP
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-file(INSTALL DESTINATION "/usr/local" TYPE PROGRAM FILES "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/_setup_util.py")
+file(INSTALL DESTINATION "/usr/local" TYPE PROGRAM FILES "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/_setup_util.py")
 endif()
 
 if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
@@ -63,7 +63,7 @@ if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMP
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-file(INSTALL DESTINATION "/usr/local" TYPE PROGRAM FILES "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/env.sh")
+file(INSTALL DESTINATION "/usr/local" TYPE PROGRAM FILES "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/env.sh")
 endif()
 
 if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
@@ -75,7 +75,7 @@ if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMP
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-file(INSTALL DESTINATION "/usr/local" TYPE FILE FILES "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/setup.bash")
+file(INSTALL DESTINATION "/usr/local" TYPE FILE FILES "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/setup.bash")
 endif()
 
 if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
@@ -87,7 +87,7 @@ if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMP
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-file(INSTALL DESTINATION "/usr/local" TYPE FILE FILES "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/setup.sh")
+file(INSTALL DESTINATION "/usr/local" TYPE FILE FILES "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/setup.sh")
 endif()
 
 if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
@@ -99,7 +99,7 @@ if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMP
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-file(INSTALL DESTINATION "/usr/local" TYPE FILE FILES "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/setup.zsh")
+file(INSTALL DESTINATION "/usr/local" TYPE FILE FILES "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/setup.zsh")
 endif()
 
 if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
@@ -111,22 +111,22 @@ if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMP
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-file(INSTALL DESTINATION "/usr/local" TYPE FILE FILES "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/.rosinstall")
+file(INSTALL DESTINATION "/usr/local" TYPE FILE FILES "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/.rosinstall")
 endif()
 
 if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/tool_tracking.pc")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/tool_tracking.pc")
 endif()
 
 if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/tool_tracking/cmake" TYPE FILE FILES
-    "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/tool_trackingConfig.cmake"
-    "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/tool_trackingConfig-version.cmake"
+    "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/tool_trackingConfig.cmake"
+    "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/tool_trackingConfig-version.cmake"
     )
 endif()
 
 if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/tool_tracking" TYPE FILE FILES "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/package.xml")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/tool_tracking" TYPE FILE FILES "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/package.xml")
 endif()
 
 if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
@@ -136,7 +136,7 @@ if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMP
          FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libtool_tracking.so"
          RPATH "")
   endif()
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/libtool_tracking.so")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/libtool_tracking.so")
   if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libtool_tracking.so" AND
      NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libtool_tracking.so")
     file(RPATH_CHANGE
@@ -156,12 +156,12 @@ if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMP
          FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/tool_tracking/tracking_main"
          RPATH "")
   endif()
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/tool_tracking" TYPE EXECUTABLE FILES "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/tool_tracking/tracking_main")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/tool_tracking" TYPE EXECUTABLE FILES "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/tool_tracking/tracking_main")
   if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/tool_tracking/tracking_main" AND
      NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/tool_tracking/tracking_main")
     file(RPATH_CHANGE
          FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/tool_tracking/tracking_main"
-         OLD_RPATH "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib:/home/ranhao/ros_ws/devel/lib:/opt/ros/indigo/lib:"
+         OLD_RPATH "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib:/home/ranhao/ros_ws/devel/lib:/opt/ros/indigo/lib:"
          NEW_RPATH "")
     if(CMAKE_INSTALL_DO_STRIP)
       execute_process(COMMAND "/usr/bin/strip" "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/tool_tracking/tracking_main")
@@ -170,27 +170,27 @@ if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMP
 endif()
 
 if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include" TYPE DIRECTORY FILES "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/include/" FILES_MATCHING REGEX "/[^/]*\\.h$" REGEX "/[^/]*\\.hpp$" REGEX "/\\.svn$" EXCLUDE)
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include" TYPE DIRECTORY FILES "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/include/" FILES_MATCHING REGEX "/[^/]*\\.h$" REGEX "/[^/]*\\.hpp$" REGEX "/\\.svn$" EXCLUDE)
 endif()
 
 if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/tool_tracking.pc")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/tool_tracking.pc")
 endif()
 
 if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/tool_tracking/cmake" TYPE FILE FILES
-    "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/tool_trackingConfig.cmake"
-    "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/tool_trackingConfig-version.cmake"
+    "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/tool_trackingConfig.cmake"
+    "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/catkin_generated/installspace/tool_trackingConfig-version.cmake"
     )
 endif()
 
 if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/tool_tracking" TYPE FILE FILES "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/package.xml")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/tool_tracking" TYPE FILE FILES "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/package.xml")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/gtest/cmake_install.cmake")
+  include("/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/gtest/cmake_install.cmake")
 
 endif()
 
@@ -202,5 +202,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

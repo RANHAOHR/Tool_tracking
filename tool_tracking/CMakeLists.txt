@@ -5,7 +5,9 @@ find_package(catkin_simple REQUIRED)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+add_definitions(${EIGEN_DEFINITIONS})
 
 find_package(catkin REQUIRED COMPONENTS message_generation std_msgs sensor_msgs geometry_msgs cwru_opencv_common tool_model vesselness_image_filter )
 
@@ -19,7 +21,7 @@ catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs geometry_msgs
 # example boost usage
 # find_package(Boost REQUIRED COMPONENTS system thread)
 
-# C++0x support - not quite the same as final C++11!
+# C++0x support - not quite the same as final C++11!, profiler
 # use carefully;  can interfere with point-cloud library
 # SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -pg -Q" )
 # SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg -Q")

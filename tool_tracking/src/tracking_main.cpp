@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
 
     trackingImgs.resize(2);
 
-    /****TODO: Temp Projection matrices****/
+    /****TODO: Temp Projection matrices, for testing****/
     cv::Mat P_l(3, 4, CV_64FC1);
     P_l.at<double>(0, 0) = 893.7852590197848;
     P_l.at<double>(1, 0) = 0;
@@ -129,7 +129,6 @@ int main(int argc, char **argv) {
 
     /*** Timer set up ***/
     ros::Rate loop_rate(50);
-    ros::Timer timer = nh.createTimer(ros::Duration(0.01), timerCB); //show images
 
     /*** Subscribers, velocity, stream images ***/
 

@@ -1,4 +1,4 @@
-/home/ranhao/Documents/clion-2016.3.3/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/ranhao/ros_ws/Tool_tracking/tool_tracking
+/home/ranhao/Documents/clion-2016.3.3/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking
 -- The C compiler identification is GNU 4.8.4
 -- The CXX compiler identification is GNU 4.8.4
 -- Check for working C compiler: /usr/bin/cc
@@ -13,7 +13,7 @@
 -- Detecting CXX compiler ABI info - done
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
--- Using CATKIN_DEVEL_PREFIX: /home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/devel
+-- Using CATKIN_DEVEL_PREFIX: /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel
 -- Using CMAKE_PREFIX_PATH: /home/ranhao/ros_ws/devel;/opt/ros/indigo
 -- This workspace overlays: /home/ranhao/ros_ws/devel;/opt/ros/indigo
 -- Found PythonInterp: /usr/bin/python (found version "2.7.6") 
@@ -22,7 +22,7 @@
 -- Using empy: /usr/bin/empy
 -- Using CATKIN_ENABLE_TESTING: ON
 -- Call enable_testing()
--- Using CATKIN_TEST_RESULTS_DIR: /home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/test_results
+-- Using CATKIN_TEST_RESULTS_DIR: /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/test_results
 -- Looking for pthread.h
 -- Looking for pthread.h - found
 -- Looking for pthread_create
@@ -41,4 +41,4 @@
 -- Marking HEADER FILES in "include" folder of package "tool_tracking" for installation
 -- Configuring done
 -- Generating done
--- Build files have been written to: /home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug
+-- Build files have been written to: /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug

@@ -43,10 +43,10 @@ RM = /home/ranhao/Documents/clion-2016.3.3/bin/cmake/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/ranhao/ros_ws/Tool_tracking/tool_tracking
+CMAKE_SOURCE_DIR = /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug
+CMAKE_BINARY_DIR = /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug
 
 # Utility rule file for vesselness_image_filter_generate_messages_cpp.
 
@@ -67,6 +67,6 @@ CMakeFiles/vesselness_image_filter_generate_messages_cpp.dir/clean:
 .PHONY : CMakeFiles/vesselness_image_filter_generate_messages_cpp.dir/clean
 
 CMakeFiles/vesselness_image_filter_generate_messages_cpp.dir/depend:
-	cd /home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/ranhao/ros_ws/Tool_tracking/tool_tracking /home/ranhao/ros_ws/Tool_tracking/tool_tracking /home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug /home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug /home/ranhao/ros_ws/Tool_tracking/tool_tracking/cmake-build-debug/CMakeFiles/vesselness_image_filter_generate_messages_cpp.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/CMakeFiles/vesselness_image_filter_generate_messages_cpp.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/vesselness_image_filter_generate_messages_cpp.dir/depend
 

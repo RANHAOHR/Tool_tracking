@@ -1,39 +1,7 @@
 /*
  * Software License Agreement (BSD License)
- *
- *  Copyright (c) 2016 Case Western Reserve University
- *
- *    Ran Hao <rxh349@case.edu>
- *
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *   * Neither the name of Case Western Reserve Univeristy, nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- *  POSSIBILITY OF SUCH DAMAGE.
- *
+ * Copyright (c) 2016 Case Western Reserve University
+ * All rights reserved.
  */
 
 #include <tool_tracking/particle_filter.h>  //everything inside here
@@ -71,6 +39,12 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
 
     toolImage_left_temp = cv::Mat::zeros(475, 640, CV_8UC3);
     toolImage_right_temp = cv::Mat::zeros(475, 640, CV_8UC3);
+
+    Projection_r = cv::Mat(3,4,CV_64FC1);
+    Projection_l = cv::Mat(3,4,CV_64FC1);
+
+    projectionSubscriber_r = nh_.subscribe("/davinci_endo/unsynced/right/camera_info", 1, &ParticleFilter::projectionMatRightCB, this);
+    projectionSubscriber_l = nh_.subscribe("/davinci_endo/unsynced/left/camera_info", 1, &ParticleFilter::projectionMatBLeftCB, this);
 
 };
 
@@ -111,6 +85,47 @@ void ParticleFilter::initializeParticles() {
         particles[i] = newToolModel.setRandomConfig(initial);
     }
 
+};
+
+void ParticleFilter::projectionMatRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionMatRight){
+
+    Projection_r.at<double>(0,0) = projectionMatRight->P[0];
+    Projection_r.at<double>(0,1) = projectionMatRight->P[1];
+    Projection_r.at<double>(0,2) = projectionMatRight->P[2];
+    Projection_r.at<double>(0,3) = projectionMatRight->P[3];
+
+    Projection_r.at<double>(1,0) = projectionMatRight->P[4];
+    Projection_r.at<double>(1,1) = projectionMatRight->P[5];
+    Projection_r.at<double>(1,2) = projectionMatRight->P[6];
+    Projection_r.at<double>(1,3) = projectionMatRight->P[7];
+
+    Projection_r.at<double>(2,0) = projectionMatRight->P[8];
+    Projection_r.at<double>(2,1) = projectionMatRight->P[9];
+    Projection_r.at<double>(2,2) = projectionMatRight->P[10];
+    Projection_r.at<double>(2,3) = projectionMatRight->P[11];
+    // ROS_INFO_STREAM(" Projection_r" << Projection_r);
+    freshCameraInfo = true;
+};
+
+void ParticleFilter::projectionMatBLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionMatBLeft){
+
+
+    Projection_l.at<double>(0,0) = projectionMatBLeft->P[0];
+    Projection_l.at<double>(0,1) = projectionMatBLeft->P[1];
+    Projection_l.at<double>(0,2) = projectionMatBLeft->P[2];
+    Projection_l.at<double>(0,3) = projectionMatBLeft->P[3];
+
+    Projection_l.at<double>(1,0) = projectionMatBLeft->P[4];
+    Projection_l.at<double>(1,1) = projectionMatBLeft->P[5];
+    Projection_l.at<double>(1,2) = projectionMatBLeft->P[6];
+    Projection_l.at<double>(1,3) = projectionMatBLeft->P[7];
+
+    Projection_l.at<double>(2,0) = projectionMatBLeft->P[8];
+    Projection_l.at<double>(2,1) = projectionMatBLeft->P[9];
+    Projection_l.at<double>(2,2) = projectionMatBLeft->P[10];
+    Projection_l.at<double>(2,3) = projectionMatBLeft->P[11];
+    // ROS_INFO_STREAM(" Projection_l" << Projection_l);
+    freshCameraInfo = true;
 };
 
 std::vector<cv::Mat>
