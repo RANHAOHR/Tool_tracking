@@ -5,7 +5,6 @@
  *    
  *
  *     Ran Hao <rxh349@case.edu>
- *     Orhan Ozguner <oxo31@case.edu>
  *
  *  All rights reserved.
  *
@@ -64,6 +63,8 @@
 #include <boost/random/normal_distribution.hpp>
 
 #include <geometry_msgs/Transform.h>
+#include <cwru_davinci_interface/davinci_interface.h>
+
 
 class ParticleFilter {
 
@@ -97,6 +98,17 @@ private:
     std::vector<double> matchingScores; // particle scores (matching scores)
     std::vector<double> particleWeights; // particle weights calculated from matching scores
 
+    int L;  ///DOF for one arm.
+
+    ros::Subscriber com_s1;
+    ros::Subscriber com_s2;
+
+    void newCommandCallback1(const sensor_msgs::JointState::ConstPtr &incoming);
+    void newCommandCallback2(const sensor_msgs::JointState::ConstPtr &incoming);
+
+    std::vector<double> cmd_green;
+    std::vector<double> cmd_yellow;
+
 
 public:
 
@@ -126,6 +138,7 @@ public:
     trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,
                  const cv::Mat &P_left, const cv::Mat &P_right);
 
+    void UncentedKalmanFilter(cv::Mat &mu, cv::Mat &sigma);
     /*
      * resampling method
      */

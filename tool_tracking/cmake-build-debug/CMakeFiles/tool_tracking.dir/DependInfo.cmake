@@ -22,6 +22,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "/home/rxh349/ros_ws/src/cwru_vision/cwru_opencv_common/include"
   "/home/rxh349/ros_ws/src/vesselness_image_filter_common/include"
   "/home/rxh349/ros_ws/src/Tool_tracking/tool_model/include"
+  "/home/rxh349/ros_ws/src/cwru_davinci/cwru_davinci_interface/include"
   "/opt/ros/jade/include"
   "/usr/local/include/opencv"
   "/usr/local/include"

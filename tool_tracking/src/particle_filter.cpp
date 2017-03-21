@@ -42,7 +42,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-        nh_(*nodehandle), numParticles(1000), Downsample_rate(0.02), toolSize(2){
+        nh_(*nodehandle), numParticles(100), Downsample_rate(0.02), toolSize(2), L(7) {
     /****initial position guess
 	everything here is in meters*****/
     initial.tvec_elp(0) = 0.0;
@@ -53,12 +53,12 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     initial.rvec_elp(2) = 0.0;
 
     /****need to subscribe this***/
-    Cam_left = (cv::Mat_<double>(4,4) << 1, 0, 0, 0,   ///meters or millimeters
+    Cam_left = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0,   ///meters or millimeters
             0, -1, 0, 0,
             0, 0, -1, 0.2,
             0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
 
-    Cam_right = (cv::Mat_<double>(4,4) << 1, 0, 0, -0.005,   ///meters or millimeters
+    Cam_right = (cv::Mat_<double>(4, 4) << 1, 0, 0, -0.005,   ///meters or millimeters
             0, -1, 0, 0,
             0, 0, -1, 0.2,
             0, 0, 0, 1);
@@ -72,6 +72,15 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     toolImage_left_temp = cv::Mat::zeros(475, 640, CV_8UC3);
     toolImage_right_temp = cv::Mat::zeros(475, 640, CV_8UC3);
 
+
+    /***motion model params***/
+
+    com_s1 = nh_.subscribe("/dvrk/PSM1/set_position_joint", 10, &ParticleFilter::newCommandCallback1, this);
+    com_s2 = nh_.subscribe("/dvrk/PSM2/set_position_joint", 10, &ParticleFilter::newCommandCallback2, this);
+
+    cmd_green.resize(L);
+    cmd_yellow.resize(L);
+
 };
 
 ParticleFilter::~ParticleFilter() {
@@ -84,8 +93,8 @@ void ParticleFilter::initializeParticles() {
     matchingScores.resize(numParticles); //initialize matching score array
     particleWeights.resize(numParticles); //initialize particle weight array
 
-    int batch_1 = 500;
-    int batch_2 = 1000;
+    int batch_1 = 50;
+    int batch_2 = 100;
 
     ///generate random seeds
     initial.tvec_elp(0) = 0.0;  //left and right (image frame)
@@ -106,11 +115,24 @@ void ParticleFilter::initializeParticles() {
     initial.rvec_elp(1) = 0.0;
     initial.rvec_elp(2) = -1;
 
-
     for (int i = batch_1; i < batch_2; i++) {
         particles[i] = newToolModel.setRandomConfig(initial);
     }
 
+};
+
+void ParticleFilter::newCommandCallback1(const sensor_msgs::JointState::ConstPtr& incoming){
+    std::vector<double> positions = incoming->position;
+    for(int i = 0; i < L; i++){
+        cmd_green[i] = positions[i];
+    }
+};
+
+void ParticleFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& incoming){
+    std::vector<double> positions = incoming->position;
+    for(int j = 0; j < L; j++){
+        cmd_yellow[j] = positions[j];
+    }
 };
 
 std::vector<cv::Mat>
@@ -127,7 +149,7 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
 
     /***Update according to the max score***/
     ToolModel::toolModel best_particle;
-    while(maxScore> -1){
+    while (maxScore > -1) {
 
         cv::Mat segmentedImage_left = segmented_left.clone();
         cv::Mat segmentedImage_right = segmented_right.clone();
@@ -140,7 +162,7 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
 
             toolImage_left.setTo(0); //reset image for every start of an new loop
             newToolModel.renderTool(toolImage_left, particles[i], Cam_left,
-                                               P_left); //first get the rendered image using 3d model of the tool
+                                    P_left); //first get the rendered image using 3d model of the tool
             double left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left);  //get the matching score
 
             toolImage_right.setTo(0); //reset image
@@ -197,9 +219,9 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
 
         sort(tempWeights.begin(), tempWeights.end());
 
-        for (int k = 0; k <numParticles; ++k) {
+        for (int k = 0; k < numParticles; ++k) {
 
-            if(particleWeights[k] >= tempWeights[numParticles - 1] ){
+            if (particleWeights[k] >= tempWeights[numParticles - 1]) {
                 updateParticles.push_back(particles[k]); //correspondingly
                 update_weights.push_back(particleWeights[k]);
             }
@@ -214,7 +236,7 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
 
         //cv::imshow("temp right", toolImage_right_temp);
 
-        cv::imshow("trackingImages left",trackingImages[0]);
+        cv::imshow("trackingImages left", trackingImages[0]);
         //cv::imshow("trackingImages right",trackingImages[1]);
         cv::waitKey(30);
 
@@ -229,8 +251,8 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
 
 /***** update particles to find and reach to the best pose ***/
 void ParticleFilter::updateSamples(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
-                                     std::vector<ToolModel::toolModel> &updateParticles,
-                                   ToolModel::toolModel &bestParticle){
+                                   std::vector<ToolModel::toolModel> &updateParticles,
+                                   ToolModel::toolModel &bestParticle) {
 
 //    ROS_INFO_STREAM("assume best tvec(0)" << bestParticle.tvec_elp(0) );
 //    ROS_INFO_STREAM("assume best tvec(1)" << bestParticle.tvec_elp(1) );
@@ -250,20 +272,20 @@ void ParticleFilter::updateSamples(std::vector<ToolModel::toolModel> &oldParticl
 
     newSamples.resize(update_weights.size());
 
-    for (int i = 0; i < update_weights.size() ; ++i) {
+    for (int i = 0; i < update_weights.size(); ++i) {
         total += update_weights[i];
     }
 
     //normalized weights
-    for (int j = 0; j < update_weights.size() ; ++j) {
-        newSamples[j] = (int)(sampleSize * update_weights[j]/total);
+    for (int j = 0; j < update_weights.size(); ++j) {
+        newSamples[j] = (int) (sampleSize * update_weights[j] / total);
         //ROS_INFO_STREAM("newSamples j: " << newSamples[j]);  //debug
     }
 
     updateParticles.clear();
-    for (int k = 0; k <newSamples.size() ; ++k) {
+    for (int k = 0; k < newSamples.size(); ++k) {
         ///every loop should generate different particle from one base particle k
-        for (int i = 0; i <newSamples[k] ; ++i) {
+        for (int i = 0; i < newSamples[k]; ++i) {
             updateParticles.push_back(newToolModel.gaussianSampling(bestParticle, Downsample_rate));
 
         }
@@ -361,6 +383,101 @@ cv::Mat ParticleFilter::adjoint(cv::Mat &G) {
     return adjG;
 };
 
+///TODO: for tracking of the Motion model
+void ParticleFilter::UncentedKalmanFilter(cv::Mat &mu, cv::Mat &sigma){
+
+    //L is the dimension of the joint space for single arm
+    double alpha = 0.005;
+    double k = 0.0; //TODO: how much?
+    double beta = 2;
+
+    double lamda = alpha * alpha * (L + k) - L;
+
+    double gamma = L + lamda;
+    gamma = pow(gamma, 0.5);
+
+    //TODO: not sure if this is the right way to compute square root of sigma
+    cv::Mat temp_sigma = cv::Mat(L, L, CV_64FC1);  //need the square root for sigma
+    for (int i = 0; i <sigma.rows ; ++i) {
+        for (int j = 0; j < sigma.cols; ++j) {
+            double temp = sigma.at<double>(i,j);
+            temp_sigma.at<double>(i,j) = pow(temp, 0.5);
+        }
+    }
+
+    std::vector<cv::Mat> state_vecs;
+    state_vecs.resize(2*L); ///size is 2L
+
+    state_vecs[0] = mu.clone();   //X_nod
+    for (int i = 1; i < L; ++i) {
+        state_vecs[i] = state_vecs[0] + gamma * temp_sigma; //todo: dimension not matching??
+        state_vecs[i + L] = state_vecs[0] - gamma * temp_sigma;
+    }
+
+    double weight_mean = lamda / (L + lamda);
+    double weight_covariance = weight_mean + 1-alpha * alpha + beta;
+
+    std::vector<double> weight_vec_c;
+    std::vector<double> weight_vec_m;
+    weight_vec_c.resize(2*L);
+    weight_vec_m.resize(2*L);
+
+    weight_vec_c[0] = weight_mean;
+    weight_vec_m[0] = weight_covariance;
+
+    for (int l = 1; l < 2*L; ++l) {
+        weight_vec_c[l] = 1/(2 * (L + lamda ));
+        weight_vec_m[l] = 1/(2 * (L + lamda ));
+    }
+
+    /***get the prediction***/
+    cv::Mat current_mu = cv::Mat::zeros(L,1,CV_64FC1);
+    cv::Mat current_sigma = cv::Mat::zeros(L,1, CV_64FC1);
+
+    std::vector<cv::Mat> currentState_vec;
+    currentState_vec.resize(2*L);
+
+    //TODO: missing function to get update state space vector?
+
+    cv::Mat R = cv::Mat::eye(L,L,CV_64FC1);
+    R = R * 0.037;
+
+    for (int m = 0; m < 2*L; ++m) {
+        cv::Mat temp = weight_vec_m[m] * currentState_vec[m];
+        current_mu = current_mu + temp;
+    }
+
+    for (int n = 0; n < 2*L; ++n) {
+        cv::Mat var_mat = currentState_vec[n] - current_mu;
+
+        cv::Mat temp_mat = weight_vec_c[n] * var_mat * var_mat.t() + R;
+        current_sigma = current_sigma + temp_mat;
+    }
+
+    /*****get measurement****/
+    std::vector<cv::Mat> updateState_vec;
+    updateState_vec.resize(2*L);
+
+    //compute new square root for current sigma
+    for (int i = 0; i <current_sigma.rows ; ++i) {
+        for (int j = 0; j < current_sigma.cols; ++j) {
+            double temp = current_sigma.at<double>(i,j);
+            temp_sigma.at<double>(i,j) = pow(temp, 0.5);
+        }
+    }
+
+    updateState_vec[0] = current_mu.clone();   //X_nod
+    for (int i = 1; i < L; ++i) {
+        updateState_vec[i] = updateState_vec[0] + gamma * temp_sigma; //todo: dimension not matching??
+        updateState_vec[i + L] = updateState_vec[0] - gamma * temp_sigma;
+    }
+
+    std::vector<cv::Mat> current_z_vec;
+    current_z_vec.resize(2*L);
+
+
+};
+
 /**** resampling method ****/
 void ParticleFilter::resamplingParticles(const std::vector<ToolModel::toolModel> &sampleModel,
                                          const std::vector<double> &particleWeight,
@@ -381,7 +498,7 @@ void ParticleFilter::resamplingParticles(const std::vector<ToolModel::toolModel>
 
         double U = r + ((double) (i - 1) * max);
 
-        while (U > w){
+        while (U > w) {
             idx += 1;
             w = w + particleWeight[idx];
         }

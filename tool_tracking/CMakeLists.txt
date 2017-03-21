@@ -6,8 +6,7 @@ find_package(catkin_simple REQUIRED)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 
-
-find_package(catkin REQUIRED COMPONENTS message_generation std_msgs sensor_msgs geometry_msgs cwru_opencv_common tool_model vesselness_image_filter )
+find_package(catkin REQUIRED COMPONENTS message_generation std_msgs sensor_msgs geometry_msgs cwru_opencv_common tool_model vesselness_image_filter cwru_davinci_interface)
 
 find_package(OpenCV REQUIRED)
 

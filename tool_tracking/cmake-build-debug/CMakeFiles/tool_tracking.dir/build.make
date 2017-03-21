@@ -158,6 +158,7 @@ devel/lib/libtool_tracking.so: /usr/lib/x86_64-linux-gnu/libboost_system.so
 devel/lib/libtool_tracking.so: /usr/lib/x86_64-linux-gnu/libboost_thread.so
 devel/lib/libtool_tracking.so: /usr/lib/x86_64-linux-gnu/libpthread.so
 devel/lib/libtool_tracking.so: /usr/lib/x86_64-linux-gnu/libconsole_bridge.so
+devel/lib/libtool_tracking.so: /home/rxh349/ros_ws/devel/lib/libdavinci_interface.so
 devel/lib/libtool_tracking.so: CMakeFiles/tool_tracking.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX shared library devel/lib/libtool_tracking.so"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/tool_tracking.dir/link.txt --verbose=$(VERBOSE)

@@ -158,6 +158,7 @@ devel/lib/tool_tracking/tracking_main: /usr/lib/x86_64-linux-gnu/libboost_system
 devel/lib/tool_tracking/tracking_main: /usr/lib/x86_64-linux-gnu/libboost_thread.so
 devel/lib/tool_tracking/tracking_main: /usr/lib/x86_64-linux-gnu/libpthread.so
 devel/lib/tool_tracking/tracking_main: /usr/lib/x86_64-linux-gnu/libconsole_bridge.so
+devel/lib/tool_tracking/tracking_main: /home/rxh349/ros_ws/devel/lib/libdavinci_interface.so
 devel/lib/tool_tracking/tracking_main: devel/lib/libtool_tracking.so
 devel/lib/tool_tracking/tracking_main: /home/rxh349/ros_ws/devel/lib/libtool_model_lib.so
 devel/lib/tool_tracking/tracking_main: /home/rxh349/ros_ws/devel/lib/libopencv_ui_lib.so
@@ -227,6 +228,7 @@ devel/lib/tool_tracking/tracking_main: /usr/lib/x86_64-linux-gnu/libboost_system
 devel/lib/tool_tracking/tracking_main: /usr/lib/x86_64-linux-gnu/libboost_thread.so
 devel/lib/tool_tracking/tracking_main: /usr/lib/x86_64-linux-gnu/libpthread.so
 devel/lib/tool_tracking/tracking_main: /usr/lib/x86_64-linux-gnu/libconsole_bridge.so
+devel/lib/tool_tracking/tracking_main: /home/rxh349/ros_ws/devel/lib/libdavinci_interface.so
 devel/lib/tool_tracking/tracking_main: CMakeFiles/tracking_main.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable devel/lib/tool_tracking/tracking_main"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/tracking_main.dir/link.txt --verbose=$(VERBOSE)
