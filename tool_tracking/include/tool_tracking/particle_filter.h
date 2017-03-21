@@ -103,6 +103,7 @@ private:
     ros::Subscriber com_s2;
 
     void newCommandCallback1(const sensor_msgs::JointState::ConstPtr &incoming);
+
     void newCommandCallback2(const sensor_msgs::JointState::ConstPtr &incoming);
 
     std::vector<double> cmd_green;
@@ -136,8 +137,6 @@ public:
     std::vector<cv::Mat>
     trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,
                  const cv::Mat &P_left, const cv::Mat &P_right);
-
-    void UncentedKalmanFilter(cv::Mat &mu, cv::Mat &sigma);
     /*
      * resampling method
      */
@@ -145,16 +144,22 @@ public:
     resampleLowVariance(const std::vector<ToolModel::toolModel> &initial, const std::vector<double> &particleWeight,
                         std::vector<ToolModel::toolModel> &results);*/
     void resamplingParticles(const std::vector<ToolModel::toolModel> &sampleModel,
-                                             const std::vector<double> &particleWeight,
-                                             std::vector<ToolModel::toolModel> &update_particles,
-                                             std::vector<double> &update_weights);
+                             const std::vector<double> &particleWeight,
+                             std::vector<ToolModel::toolModel> &update_particles,
+                             std::vector<double> &update_weights);
 
     /*
      * update particles
      */
-    void updateParticles(const cv::Mat &bodyVel, double &updateRate);
-    void updateSamples(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
-                                         std::vector<ToolModel::toolModel> &updateParticles,ToolModel::toolModel &bestParticle);
+    void updateSamples(const cv::Mat &bodyVel, double &updateRate);
+
+    void updateParticles(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
+                       std::vector<ToolModel::toolModel> &updateParticles, ToolModel::toolModel &bestParticle);
+    /*
+     * Uncented Kalman filter update
+     */
+    void UncentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma,
+                              cv::Mat &zt, cv::Mat &ut);
 
     cv::Mat adjoint(cv::Mat &G);
 

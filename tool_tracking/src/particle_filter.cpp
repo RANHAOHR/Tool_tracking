@@ -213,7 +213,7 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
         trackingImages[1] = segmentedImage_right;
 
         //resample using low variance resampling method
-        std::vector<ToolModel::toolModel> updateParticles;
+        std::vector<ToolModel::toolModel> updatedParticles;
         std::vector<double> update_weights;
 
         sort(tempWeights.begin(), tempWeights.end());
@@ -221,13 +221,13 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
         for (int k = 0; k < numParticles; ++k) {
 
             if (particleWeights[k] >= tempWeights[numParticles - 1]) {
-                updateParticles.push_back(particles[k]); //correspondingly
+                updatedParticles.push_back(particles[k]); //correspondingly
                 update_weights.push_back(particleWeights[k]);
             }
 
         }
 
-        updateSamples(updateParticles, update_weights, particles, best_particle);
+        updateParticles(updatedParticles, update_weights, particles, best_particle);
         ROS_INFO_STREAM("new particles.SIZE" << particles.size());
         //each time will clear the particles and resample them
         //resamplingParticles(oldParticles, particleWeights, particles);
@@ -242,14 +242,14 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
 
     /*** UPDATE particles, based on the given body vel and updating rate ***/
     // double dT = 0.02; //sampling rate
-//    updateParticles(bodyVel, dT);
+//    updateSamples(bodyVel, dT);
 
     return trackingImages;
 };
 
 /***** update particles to find and reach to the best pose ***/
-void ParticleFilter::updateSamples(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
-                                   std::vector<ToolModel::toolModel> &updateParticles,
+void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
+                                   std::vector<ToolModel::toolModel> &updatedParticles,
                                    ToolModel::toolModel &bestParticle) {
 
 //    ROS_INFO_STREAM("assume best tvec(0)" << bestParticle.tvec_elp(0) );
@@ -260,9 +260,9 @@ void ParticleFilter::updateSamples(std::vector<ToolModel::toolModel> &oldParticl
 //    ROS_INFO_STREAM("assume best rvec(2)" << bestParticle.rvec_elp(2) );
 
     int sampleSize = numParticles;
-    int smapleStep = 0.001;
+    int sampleStep = 0.001;
 
-    Downsample_rate -= smapleStep;
+    Downsample_rate -= sampleStep;
     ROS_INFO_STREAM("Downsample_rate: " << Downsample_rate);
 
     double total = 0.0;
@@ -280,18 +280,18 @@ void ParticleFilter::updateSamples(std::vector<ToolModel::toolModel> &oldParticl
         //ROS_INFO_STREAM("newSamples j: " << newSamples[j]);  //debug
     }
 
-    updateParticles.clear();
+    updatedParticles.clear();
     for (int k = 0; k < newSamples.size(); ++k) {
         ///every loop should generate different particle from one base particle k
         for (int i = 0; i < newSamples[k]; ++i) {
-            updateParticles.push_back(newToolModel.gaussianSampling(bestParticle, Downsample_rate));
+            updatedParticles.push_back(newToolModel.gaussianSampling(bestParticle, Downsample_rate));
 
         }
     }
 
 };
 
-void ParticleFilter::updateParticles(const cv::Mat &bodyVel,
+void ParticleFilter::updateSamples(const cv::Mat &bodyVel,
                                      double &updateRate) { //get particles and update them based on given spatial velocity
 
     cv::Mat Rot = cv::Mat::zeros(3, 3, CV_64F);
@@ -382,7 +382,7 @@ cv::Mat ParticleFilter::adjoint(cv::Mat &G) {
 };
 
 ///TODO: for tracking of the Motion model
-void ParticleFilter::UncentedKalmanFilter(cv::Mat &mu, cv::Mat &sigma){
+void ParticleFilter::UncentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma, cv::Mat &zt, cv::Mat &ut){
 
     //L is the dimension of the joint space for single arm
     double alpha = 0.005;
@@ -394,22 +394,24 @@ void ParticleFilter::UncentedKalmanFilter(cv::Mat &mu, cv::Mat &sigma){
     double gamma = L + lamda;
     gamma = pow(gamma, 0.5);
 
-    //TODO: not sure if this is the right way to compute square root of sigma
-    cv::Mat temp_sigma = cv::Mat(L, L, CV_64FC1);  //need the square root for sigma
-    for (int i = 0; i <sigma.rows ; ++i) {
-        for (int j = 0; j < sigma.cols; ++j) {
-            double temp = sigma.at<double>(i,j);
-            temp_sigma.at<double>(i,j) = pow(temp, 0.5);
-        }
-    }
+    ///get the square root for sigma
+    cv::Mat square_sigma = cv::Mat::zeros(L, 1, CV_64FC1);
+
+    cv::Mat s = cv::Mat(L, 1, CV_64FC1);  //need the square root for sigma
+    cv::Mat vt = cv::Mat(L, L, CV_64FC1);  //need the square root for sigma
+    cv::Mat u = cv::Mat(L, L, CV_64FC1);  //need the square root for sigma
+
+    cv::SVD::compute(sigma, s, u, vt);  //s is supposed to be the one we are asking for, the sigular values
+
+    square_sigma = s.clone(); //safe way to pass values to a cv Mat
 
     std::vector<cv::Mat> state_vecs;
     state_vecs.resize(2*L); ///size is 2L
 
     state_vecs[0] = mu.clone();   //X_nod
     for (int i = 1; i < L; ++i) {
-        state_vecs[i] = state_vecs[0] + gamma * temp_sigma; //todo: dimension not matching??
-        state_vecs[i + L] = state_vecs[0] - gamma * temp_sigma;
+        state_vecs[i] = state_vecs[0] + gamma * square_sigma;
+        state_vecs[i + L] = state_vecs[0] - gamma * square_sigma;
     }
 
     double weight_mean = lamda / (L + lamda);
@@ -430,7 +432,7 @@ void ParticleFilter::UncentedKalmanFilter(cv::Mat &mu, cv::Mat &sigma){
 
     /***get the prediction***/
     cv::Mat current_mu = cv::Mat::zeros(L,1,CV_64FC1);
-    cv::Mat current_sigma = cv::Mat::zeros(L,1, CV_64FC1);
+    cv::Mat current_sigma = cv::Mat::zeros(L,L, CV_64FC1);
 
     std::vector<cv::Mat> currentState_vec;
     currentState_vec.resize(2*L);
@@ -448,31 +450,75 @@ void ParticleFilter::UncentedKalmanFilter(cv::Mat &mu, cv::Mat &sigma){
     for (int n = 0; n < 2*L; ++n) {
         cv::Mat var_mat = currentState_vec[n] - current_mu;
 
-        cv::Mat temp_mat = weight_vec_c[n] * var_mat * var_mat.t() + R;
+        cv::Mat temp_mat = weight_vec_c[n] * var_mat * var_mat.t();
         current_sigma = current_sigma + temp_mat;
     }
+
+    current_sigma = current_sigma + R;
 
     /*****get measurement****/
     std::vector<cv::Mat> updateState_vec;
     updateState_vec.resize(2*L);
 
     //compute new square root for current sigma
-    for (int i = 0; i <current_sigma.rows ; ++i) {
-        for (int j = 0; j < current_sigma.cols; ++j) {
-            double temp = current_sigma.at<double>(i,j);
-            temp_sigma.at<double>(i,j) = pow(temp, 0.5);
-        }
-    }
+    cv::SVD::compute(current_sigma, s, u, vt);  //s is supposed to be the one we are asking for, the sigular values
+
+    square_sigma = s.clone(); //safe way to pass values to a cv Mat
 
     updateState_vec[0] = current_mu.clone();   //X_nod
     for (int i = 1; i < L; ++i) {
-        updateState_vec[i] = updateState_vec[0] + gamma * temp_sigma; //todo: dimension not matching??
-        updateState_vec[i + L] = updateState_vec[0] - gamma * temp_sigma;
+        updateState_vec[i] = updateState_vec[0] + gamma * square_sigma;
+        updateState_vec[i + L] = updateState_vec[0] - gamma * square_sigma;
     }
 
     std::vector<cv::Mat> current_z_vec;
     current_z_vec.resize(2*L);
 
+    //TODO: get measurement function
+
+    cv::Mat weighted_z = cv::Mat::zeros(2*L,1,CV_64FC1);
+
+    for (int j = 0; j < 2*L; ++j) {
+        cv::Mat temp = weight_vec_m[j] * current_z_vec[j];
+        weighted_z = weighted_z + temp;
+    }
+
+    cv::Mat S_t = cv::Mat::zeros(L, L, CV_64FC1);
+
+    for (int i1 = 0; i1 < 2*L; ++i1) {
+        cv::Mat var_z = current_z_vec[i1] - weighted_z;
+
+        cv::Mat temp_mat = weight_vec_c[i1] * var_z * var_z.t();
+        S_t = S_t + temp_mat;
+    }
+
+    cv::Mat Q = cv::Mat::eye(L,L,CV_64FC1);
+    Q = Q * 0.00038;
+
+    S_t = S_t + Q;
+    ////get cross-covariance
+    cv::Mat omega_x_z  = cv::Mat::zeros(2*L, 1, CV_64FC1);
+
+    for (int k1 = 0; k1 < 2*L; ++k1) {
+        cv::Mat var_x = updateState_vec[k1] - current_mu;
+
+        cv::Mat var_z = current_z_vec[k1] - weighted_z;
+
+        cv::Mat temp_mat = weight_vec_c[k1] * var_x * var_z.t();
+
+        omega_x_z = omega_x_z + temp_mat;
+    }
+
+    ///get Kalman factor
+    cv::Mat K_t = cv::Mat::zeros(L,L,CV_64FC1);
+    K_t = omega_x_z * S_t.inv();
+
+    //update mu and sigma
+    update_mu = cv::Mat::zeros(L,1,CV_64FC1);  ////just in case the dimension is not match
+    update_sigma = cv::Mat::zeros(L,L,CV_64FC1);
+
+    update_mu = current_mu + K_t * (zt - weighted_z);
+    update_sigma = current_sigma - K_t * S_t * K_t.t();
 
 };
 

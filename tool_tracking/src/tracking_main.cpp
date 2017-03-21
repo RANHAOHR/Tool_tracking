@@ -168,41 +168,59 @@ int main(int argc, char **argv) {
     cv::resize(new_seg_left, new_seg_left,size );
     cv::resize(new_seg_right, new_seg_right,size );
 
-    while (nh.ok()) {
-        //ros::spinOnce();
-        /*** make sure camera information is ready ***/
-//        if(!freshCameraInfo)
-//        {
-//            ROS_INFO("---- inside get cam info -----");
-//                freshCameraInfo = true;
-//        }
 
-        /*** if camera is ready, doing the tracking based on segemented image***/
-        //if (freshImage /*&& freshVelocity && freshCameraInfo*/) {
+    cv::Mat sigma = (cv::Mat_<double>(4,4) << 0, -1, 0, -0.08,   ///meters or millimeters
+            0, 0, 1, 0,
+            -1, 2, 0, 0,
+            0, 0, 2, 1);
+    cv::Mat temp_sigma = cv::Mat(4, 1, CV_64FC1);  //need the square root for sigma
+    cv::Mat s = cv::Mat(4, 1, CV_64FC1);  //need the square root for sigma
+    cv::Mat vt = cv::Mat(4, 4, CV_64FC1);  //need the square root for sigma
+    cv::Mat u = cv::Mat(4, 4, CV_64FC1);  //need the square root for sigma
 
-            //t = clock();
-//            seg_left = segmentation(rawImage_left);  //or use image_vessselness
-//            seg_right = segmentation(rawImage_right);
-            //t = clock() - t;
+    cv::SVD::compute(sigma, s, u, vt);
+    ROS_INFO_STREAM("S: " << s);
+    ROS_INFO_STREAM("u: " << u);
+    ROS_INFO_STREAM("vt: " << vt);
 
+    temp_sigma = s.clone();
+    ROS_INFO_STREAM("temp_sigma: " << temp_sigma);
 
-            // body velocity
-            for (int i(0); i < 6; i++) {
-                bodyVel.at<double>(i, 0) = Arr[i];
-            }
-
-            trackingImgs = Particles.trackingTool(bodyVel, new_seg_left, new_seg_right, P_l,
-                                                  P_r); //with rendered tool and segmented img
+//    while (nh.ok()) {
+//        //ros::spinOnce();
+//        /*** make sure camera information is ready ***/
+////        if(!freshCameraInfo)
+////        {
+////            ROS_INFO("---- inside get cam info -----");
+////                freshCameraInfo = true;
+////        }
 //
-//            cv::imshow("Rendered Image: Left", trackingImgs[0]);
-//            cv::imshow("Rendered Image: Right", trackingImgs[1]);
-//            cv::waitKey(50);
-
-            freshImage = false;
-            freshVelocity = false;
-        //}
-
-        loop_rate.sleep();  //or cv::waitKey(10);
-    }
+//        /*** if camera is ready, doing the tracking based on segemented image***/
+//        //if (freshImage /*&& freshVelocity && freshCameraInfo*/) {
+//
+//            //t = clock();
+////            seg_left = segmentation(rawImage_left);  //or use image_vessselness
+////            seg_right = segmentation(rawImage_right);
+//            //t = clock() - t;
+//
+//
+//            // body velocity
+//            for (int i(0); i < 6; i++) {
+//                bodyVel.at<double>(i, 0) = Arr[i];
+//            }
+//
+//            trackingImgs = Particles.trackingTool(bodyVel, new_seg_left, new_seg_right, P_l,
+//                                                  P_r); //with rendered tool and segmented img
+////
+////            cv::imshow("Rendered Image: Left", trackingImgs[0]);
+////            cv::imshow("Rendered Image: Right", trackingImgs[1]);
+////            cv::waitKey(50);
+//
+//            freshImage = false;
+//            freshVelocity = false;
+//        //}
+//
+//        loop_rate.sleep();  //or cv::waitKey(10);
+//    }
 
 }
