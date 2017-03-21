@@ -2,7 +2,6 @@
  * Software License Agreement (BSD License)
  *
  *  Copyright (c) 2016 Case Western Reserve University
- *    
  *
  *     Ran Hao <rxh349@case.edu>
  *
@@ -156,10 +155,6 @@ public:
     void updateParticles(const cv::Mat &bodyVel, double &updateRate);
     void updateSamples(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
                                          std::vector<ToolModel::toolModel> &updateParticles,ToolModel::toolModel &bestParticle);
-    /*
-     * perturb the particles for more usable poses
-     */
-    cv::Mat addNoise(cv::Mat &inputMat);
 
     cv::Mat adjoint(cv::Mat &G);
 

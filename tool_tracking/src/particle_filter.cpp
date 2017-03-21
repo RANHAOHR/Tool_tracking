@@ -72,7 +72,6 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     toolImage_left_temp = cv::Mat::zeros(475, 640, CV_8UC3);
     toolImage_right_temp = cv::Mat::zeros(475, 640, CV_8UC3);
 
-
     /***motion model params***/
 
     com_s1 = nh_.subscribe("/dvrk/PSM1/set_position_joint", 10, &ParticleFilter::newCommandCallback1, this);
@@ -93,8 +92,8 @@ void ParticleFilter::initializeParticles() {
     matchingScores.resize(numParticles); //initialize matching score array
     particleWeights.resize(numParticles); //initialize particle weight array
 
-    int batch_1 = 50;
-    int batch_2 = 100;
+    int batch_1 = numParticles/2;
+    int batch_2 = numParticles;
 
     ///generate random seeds
     initial.tvec_elp(0) = 0.0;  //left and right (image frame)
@@ -232,8 +231,7 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
         ROS_INFO_STREAM("new particles.SIZE" << particles.size());
         //each time will clear the particles and resample them
         //resamplingParticles(oldParticles, particleWeights, particles);
-
-
+        
         //cv::imshow("temp right", toolImage_right_temp);
 
         cv::imshow("trackingImages left", trackingImages[0]);
@@ -506,18 +504,4 @@ void ParticleFilter::resamplingParticles(const std::vector<ToolModel::toolModel>
         update_particles.push_back(sampleModel[idx]);
     }
 
-};
-
-cv::Mat ParticleFilter::addNoise(cv::Mat &inputMat)   //add noise for the spatial velocity
-{
-    cv::Mat noiseAddedSrc = cv::Mat::zeros(6, 1, CV_64F);
-
-    for (int i(0); i < 6; i++) {
-        double num = inputMat.at<double>(i, 0);
-        num = num * 0.001;
-        double rnum = newToolModel.randomNumber(fabs(num), 0.0);
-        noiseAddedSrc.at<double>(i, 0) = inputMat.at<double>(i, 0) + rnum;
-    }
-
-    return noiseAddedSrc;
 };

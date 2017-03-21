@@ -45,26 +45,6 @@ void arrayCallback(const std_msgs::Float64MultiArray::ConstPtr &array) {
 
 }
 
-void timerCB(const ros::TimerEvent &) {
-
-//    std::vector<cv::Mat> disp;
-//    disp.resize(2);
-//
-//    for (int j(0); j<2; j++)
-//    {
-//        convertSegmentImageCPUBW(trackingImgs[j],disp[j]);  //what is this?
-//    }
-
-//    if(freshImage && freshCameraInfo && freshVelocity){
-//        cv::imshow( "Trancking Image: LEFT", disp[0]);
-//        cv::imshow( "Trancking Image: RIGHT", disp[1]);
-//    }
-
-    // cv::waitKey(10);
-
-}
-
-
 cv::Mat segmentation(cv::Mat &InputImg) {
 
     cv::Mat src, src_gray;
@@ -149,7 +129,6 @@ int main(int argc, char **argv) {
 
     /*** Timer set up ***/
     ros::Rate loop_rate(50);
-    ros::Timer timer = nh.createTimer(ros::Duration(0.01), timerCB); //show images
 
     /*** Subscribers, velocity, stream images ***/
 
@@ -189,23 +168,13 @@ int main(int argc, char **argv) {
     cv::resize(new_seg_left, new_seg_left,size );
     cv::resize(new_seg_right, new_seg_right,size );
 
-
     while (nh.ok()) {
         //ros::spinOnce();
         /*** make sure camera information is ready ***/
 //        if(!freshCameraInfo)
 //        {
 //            ROS_INFO("---- inside get cam info -----");
-//            //retrive camera info
-//            P_l = cameraInfoObj.getLeftProjectionMatrix();
-//            P_r = cameraInfoObj.getRightProjectionMatrix();
-//
-//            if(P_l.at<double>(0,0) != 0 && P_r.at<double>(0,0) != 0)
-//            {
-//                ROS_INFO("obtained camera info");
 //                freshCameraInfo = true;
-//            }
-//
 //        }
 
         /*** if camera is ready, doing the tracking based on segemented image***/
