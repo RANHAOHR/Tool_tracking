@@ -27,18 +27,24 @@ catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs geometry_msgs
 # Libraries: uncomment the following and edit arguments to create a new library
 # add_library(my_lib src/my_lib.cpp)   
 
-  cs_add_library(tool_tracking
+  cs_add_library(tool_tracking_particle
               src/particle_filter.cpp
   )
+  
+  cs_add_library(tool_tracking_kalman
+              src/kalman_filter.cpp
+  )
 
-cs_add_executable(tracking_main src/tracking_main.cpp)
+cs_add_executable(tracking_particle src/tracking_particle.cpp)
+cs_add_executable(tracking_kalman src/tracking_kalman.cpp)
 #the following is required, if desire to link a node in this package with a library created in this same package
 # edit the arguments to reference the named node and named library within this package
 # target_link_library(example my_lib)
-target_link_libraries(tool_tracking tool_model_lib)
-target_link_libraries(tracking_main tool_tracking vesselness_image_filter_common_lib)
+target_link_libraries(tool_tracking_particle tool_model_lib)
+target_link_libraries(tool_tracking_kalman tool_model_lib)
+target_link_libraries(tracking_particle tool_tracking_particle vesselness_image_filter_common_lib)
+target_link_libraries(tracking_kalman tool_tracking_kalman vesselness_image_filter_common_lib)
 
 
 cs_install()
 cs_export()
-

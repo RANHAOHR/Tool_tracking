@@ -35,8 +35,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PARTICLEFILTER_H
-#define PARTICLEFILTER_H
+#ifndef KALMANFILTER_H
+#define KALMANFILTER_H
 
 #include <vector>
 #include <stdio.h>
