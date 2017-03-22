@@ -41,7 +41,7 @@
 
 using namespace std;
 
-ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
+KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 		nh_(*nodehandle), numParticles(100), Downsample_rate(0.02), toolSize(2), L(7) {
 	/****initial position guess
 	everything here is in meters*****/
@@ -63,7 +63,7 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
 			0, 0, -1, 0.2,
 			0, 0, 0, 1);
 
-	initializeParticles();
+	//initializeParticles(); Where we're going, we don't need particles.
 
 	// initialization, just basic black image ??? how to get the size of the image
 	toolImage_left = cv::Mat::zeros(475, 640, CV_8UC3);
@@ -73,19 +73,21 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
 	toolImage_right_temp = cv::Mat::zeros(475, 640, CV_8UC3);
 
 	/***motion model params***/
-
-	com_s1 = nh_.subscribe("/dvrk/PSM1/set_position_joint", 10, &ParticleFilter::newCommandCallback1, this);
-	com_s2 = nh_.subscribe("/dvrk/PSM2/set_position_joint", 10, &ParticleFilter::newCommandCallback2, this);
+	com_s1 = nh_.subscribe("/dvrk/PSM1/set_position_joint", 10, &KalmanFilter::newCommandCallback1, this);
+	com_s2 = nh_.subscribe("/dvrk/PSM2/set_position_joint", 10, &KalmanFilter::newCommandCallback2, this);
+	
+	//TODO: Similar process for joint position inputs.
 
 	cmd_green.resize(L);
 	cmd_yellow.resize(L);
+	
 };
 
-ParticleFilter::~ParticleFilter() {
+KalmanFilter::~KalmanFilter() {
 
 };
 
-void ParticleFilter::initializeParticles() {
+void KalmanFilter::initializeParticles() {
 	ROS_INFO("---- Initialize particle is called---");
 	particles.resize(numParticles); //initialize particle array
 	matchingScores.resize(numParticles); //initialize matching score array
@@ -119,14 +121,14 @@ void ParticleFilter::initializeParticles() {
 
 };
 
-void ParticleFilter::newCommandCallback1(const sensor_msgs::JointState::ConstPtr& incoming){
+void KalmanFilter::newCommandCallback1(const sensor_msgs::JointState::ConstPtr& incoming){
 	std::vector<double> positions = incoming->position;
 	for(int i = 0; i < L; i++){
 		cmd_green[i] = positions[i];
 	}
 };
 
-void ParticleFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& incoming){
+void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& incoming){
 	std::vector<double> positions = incoming->position;
 	for(int j = 0; j < L; j++){
 		cmd_yellow[j] = positions[j];
@@ -134,10 +136,17 @@ void ParticleFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr
 };
 
 std::vector<cv::Mat>
-ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,
-							 const cv::Mat &P_left, const cv::Mat &P_right) {
+KalmanFilter::trackingTool(
+	const cv::Mat &bodyVel,
+	const cv::Mat &segmented_left,
+	const cv::Mat &segmented_right,
+	const cv::Mat &P_left,
+	const cv::Mat &P_right
+) {
+					 
+	//Looks mostly IP-related; need to resturcture to not be dependant on particles and instead use sigma-points.		
 
-	// ROS_INFO("---- Inside tracking function ---");
+	ROS_INFO("---- Inside tracking function ---");
 	std::vector<cv::Mat> trackingImages;
 	trackingImages.resize(2);
 
@@ -247,7 +256,7 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
 };
 
 /***** update particles to find and reach to the best pose ***/
-void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
+void KalmanFilter::updateParticles(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
 								   std::vector<ToolModel::toolModel> &updatedParticles,
 								   ToolModel::toolModel &bestParticle) {
 
@@ -290,8 +299,7 @@ void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &oldParti
 
 };
 
-void ParticleFilter::updateSamples(const cv::Mat &bodyVel,
-									 double &updateRate) { //get particles and update them based on given spatial velocity
+void KalmanFilter::updateSamples(const cv::Mat &bodyVel, double &updateRate) { //get particles and update them based on given spatial velocity
 
 	cv::Mat Rot = cv::Mat::zeros(3, 3, CV_64F);
 	cv::Mat p = cv::Mat::zeros(3, 1, CV_64F);
@@ -365,7 +373,7 @@ void ParticleFilter::updateSamples(const cv::Mat &bodyVel,
 	}
 };
 
-cv::Mat ParticleFilter::adjoint(cv::Mat &G) {
+cv::Mat KalmanFilter::adjoint(cv::Mat &G) {
 	cv::Mat adjG = cv::Mat::zeros(6, 6, CV_64F);
 
 	cv::Mat Rot = G.colRange(0, 3).rowRange(0, 3);
@@ -381,7 +389,8 @@ cv::Mat ParticleFilter::adjoint(cv::Mat &G) {
 };
 
 ///TODO: for tracking of the Motion model
-void ParticleFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma, cv::Mat &zt, cv::Mat &ut){
+//For our immediate purposes, a magical function that updates a mu and sigma. He kills aleins and doesn't afraid of anything.
+void KalmanFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma, cv::Mat &zt, cv::Mat &ut){
 
 	//L is the dimension of the joint space for single arm
 	double alpha = 0.005;
@@ -522,7 +531,7 @@ void ParticleFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sig
 };
 
 /**** resampling method ****/
-void ParticleFilter::resamplingParticles(const std::vector<ToolModel::toolModel> &sampleModel,
+void KalmanFilter::resamplingParticles(const std::vector<ToolModel::toolModel> &sampleModel,
 										 const std::vector<double> &particleWeight,
 										 std::vector<ToolModel::toolModel> &update_particles,
 										 std::vector<double> &update_weights) {

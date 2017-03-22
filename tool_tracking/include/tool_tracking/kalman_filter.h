@@ -65,7 +65,7 @@
 #include <cwru_davinci_interface/davinci_interface.h>
 
 
-class ParticleFilter {
+class KalmanFilter {
 
 private:
 	cv::Mat Cam_left;
@@ -114,12 +114,12 @@ public:
 	/*
 	* The default constructor
 	*/
-	ParticleFilter(ros::NodeHandle *nodehandle);
+	KalmanFilter(ros::NodeHandle *nodehandle);
 
 	/*
 	 * The deconstructor 
 	 */
-	~ParticleFilter();
+	~KalmanFilter();
 
 	/*
 	* The initializeParticles initializes the particles by setting the total number of particles, initial

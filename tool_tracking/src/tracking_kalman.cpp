@@ -2,7 +2,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 #include <cwru_opencv_common/projective_geometry.h>
-#include <tool_tracking/particle_filter.h>
+#include <tool_tracking/kalman_filter.h>
 #include "std_msgs/MultiArrayLayout.h"
 #include "std_msgs/Float64MultiArray.h"
 
@@ -30,19 +30,6 @@ void newImageCallback(const sensor_msgs::ImageConstPtr &msg, cv::Mat *outputImag
 		ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
 	}
 
-}
-
-// receive body velocity
-// still not sure if this does anything.
-void arrayCallback(const std_msgs::Float64MultiArray::ConstPtr &array) {
-	int i = 0;
-	// print all the remaining numbers
-	for (std::vector<double>::const_iterator it = array->data.begin(); it != array->data.end(); ++it) {
-		Arr[i] = *it;
-		i++;
-	}
-
-	freshVelocity = true;
 }
 
 cv::Mat segmentation(cv::Mat &InputImg) {
@@ -75,16 +62,14 @@ int main(int argc, char **argv) {
 
 	ros::NodeHandle nh;
 	/******  initialization  ******/
-	ParticleFilter Particles(&nh);
+	KalmanFilter Particles(&nh);
 
 	freshCameraInfo = false;
 	freshImage = false;
-	freshVelocity = false;
+	//freshVelocity = false;//Moving all velocity-related things inside of the kalman.
 
 	cv::Mat seg_left;
 	cv::Mat seg_right;
-
-	cv::Mat bodyVel = cv::Mat::zeros(6, 1, CV_64FC1);
 
 	trackingImgs.resize(2);
 
@@ -132,7 +117,8 @@ int main(int argc, char **argv) {
 
 	/*** Subscribers, velocity, stream images ***/
 
-	ros::Subscriber sub3 = nh.subscribe("/bodyVelocity", 100, arrayCallback);
+	//TODO: The program works just fine without this subscription ever actually being called.
+	//ros::Subscriber sub3 = nh.subscribe("/bodyVelocity", 100, arrayCallback);
 
 	const std::string leftCameraTopic("/davinci_endo/left/camera_info");
 	const std::string rightCameraTopic("/davinci_endo/right/camera_info");
@@ -145,12 +131,16 @@ int main(int argc, char **argv) {
 	cv::Mat rawImage_right = cv::Mat::zeros(475, 640, CV_32FC1);
 
 	image_transport::ImageTransport it(nh);
-	image_transport::Subscriber img_sub_l = it.subscribe("/davinci_endo/left/image_raw", 1,
-														 boost::function<void(const sensor_msgs::ImageConstPtr &)>(
-																 boost::bind(newImageCallback, _1, &rawImage_left)));
-	image_transport::Subscriber img_sub_r = it.subscribe("/davinci_endo/right/image_raw", 1,
-														 boost::function<void(const sensor_msgs::ImageConstPtr &)>(
-																 boost::bind(newImageCallback, _1, &rawImage_right)));
+	image_transport::Subscriber img_sub_l = it.subscribe(
+		"/davinci_endo/left/image_raw",
+		1,
+		boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_left))
+	);
+	image_transport::Subscriber img_sub_r = it.subscribe(
+		"/davinci_endo/right/image_raw",
+		1,
+		boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_right))
+	);
 
 	ROS_INFO("---- done subscribe -----");
 
@@ -165,8 +155,8 @@ int main(int argc, char **argv) {
 	cv::Mat new_seg_left = seg_left.rowRange(5,480);
 	cv::Mat new_seg_right = seg_right.rowRange(5,480);
 
-	cv::resize(new_seg_left, new_seg_left,size );
-	cv::resize(new_seg_right, new_seg_right,size );
+	cv::resize(new_seg_left, new_seg_left,size);
+	cv::resize(new_seg_right, new_seg_right,size);
 
 
 	cv::Mat sigma = (cv::Mat_<double>(4,4) << 0, -1, 0, -0.08,   ///meters or millimeters
@@ -177,6 +167,7 @@ int main(int argc, char **argv) {
 	cv::Mat s = cv::Mat(4, 1, CV_64FC1);  //need the square root for sigma
 	cv::Mat vt = cv::Mat(4, 4, CV_64FC1);  //need the square root for sigma
 	cv::Mat u = cv::Mat(4, 4, CV_64FC1);  //need the square root for sigma
+	//Image related?
 
 	cv::SVD::compute(sigma, s, u, vt);
 	ROS_INFO_STREAM("S: " << s);
@@ -204,10 +195,6 @@ int main(int argc, char **argv) {
 //			//t = clock() - t;
 //
 //
-//			// body velocity
-//			for (int i(0); i < 6; i++) {
-//				bodyVel.at<double>(i, 0) = Arr[i];
-//			}
 //
 //			trackingImgs = Particles.trackingTool(bodyVel, new_seg_left, new_seg_right, P_l,
 //												  P_r); //with rendered tool and segmented img
