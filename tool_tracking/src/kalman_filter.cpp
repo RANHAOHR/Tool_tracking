@@ -43,14 +43,6 @@ using namespace std;
 
 KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 		nh_(*nodehandle), numParticles(100), Downsample_rate(0.02), toolSize(2), L(7) {
-	/****initial position guess
-	everything here is in meters*****/
-	initial.tvec_elp(0) = 0.0;
-	initial.tvec_elp(1) = 0.0;
-	initial.tvec_elp(2) = 0.0;
-	initial.rvec_elp(0) = 0.0;
-	initial.rvec_elp(1) = 0.0;   //better make everything zero
-	initial.rvec_elp(2) = 0.0;
 
 	/****need to subscribe this***/
 	Cam_left = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0,   ///meters or millimeters
@@ -81,43 +73,11 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	cmd_green.resize(L);
 	cmd_yellow.resize(L);
 	
+	//TODO: Initialize the sigma and mu values.
+	
 };
 
 KalmanFilter::~KalmanFilter() {
-
-};
-
-void KalmanFilter::initializeParticles() {
-	ROS_INFO("---- Initialize particle is called---");
-	particles.resize(numParticles); //initialize particle array
-	matchingScores.resize(numParticles); //initialize matching score array
-	particleWeights.resize(numParticles); //initialize particle weight array
-
-	int batch_1 = numParticles/2;
-	int batch_2 = numParticles;
-
-	///generate random seeds
-	initial.tvec_elp(0) = 0.0;  //left and right (image frame)
-	initial.tvec_elp(1) = 0.0;  //up and down
-	initial.tvec_elp(2) = 0.03;
-	initial.rvec_elp(0) = 0.0;
-	initial.rvec_elp(1) = 0.0;
-	initial.rvec_elp(2) = -2;
-
-	for (int i = 0; i < batch_1; i++) {
-		particles[i] = newToolModel.setRandomConfig(initial);
-	}
-
-	initial.tvec_elp(0) = 0.0;  //left and right (image frame)
-	initial.tvec_elp(1) = 0.0;  //up and down
-	initial.tvec_elp(2) = -0.03;
-	initial.rvec_elp(0) = 0.0;
-	initial.rvec_elp(1) = 0.0;
-	initial.rvec_elp(2) = -1;
-
-	for (int i = batch_1; i < batch_2; i++) {
-		particles[i] = newToolModel.setRandomConfig(initial);
-	}
 
 };
 
@@ -137,7 +97,7 @@ void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& 
 
 std::vector<cv::Mat>
 KalmanFilter::trackingTool(
-	const cv::Mat &bodyVel,
+	//Got rid of bodyVel as velocity data will now be coming from internal sources. Or something.
 	const cv::Mat &segmented_left,
 	const cv::Mat &segmented_right,
 	const cv::Mat &P_left,
@@ -149,7 +109,17 @@ KalmanFilter::trackingTool(
 	ROS_INFO("---- Inside tracking function ---");
 	std::vector<cv::Mat> trackingImages;
 	trackingImages.resize(2);
-
+	
+	//TODO: Seems to work slightly backwards. I think we will want to update our sigma points/particles, THEN process the image for a single step.
+	//This seems to go "calculate the LAST position, then resample for the current position, then wait for the next cycle to show what we did here."
+	//That certainly works, it's just confusing and makes initialization a pain.
+	
+	//TODO Update our sigma points.
+	
+	
+	//TODO Sigma points come out as angle vectors. Convert them to 
+	
+	//TODO: Convert from particles to sigma points- what will actually need to be changed?
 	double maxScore = 0.0; //track the maximum scored particle
 	int maxScoreIdx = -1; //maximum scored particle index
 	double totalScore = 0.0; //total score
@@ -196,49 +166,11 @@ KalmanFilter::trackingTool(
 
 		cv::imshow("temp left", toolImage_left_temp);
 
-		ROS_INFO_STREAM("Maxscore: " << maxScore);  //debug
-
-		/*** calculate weights using matching score and do the resampling ***/
-		for (int j = 0; j < numParticles; ++j) { // normalize the weights
-			particleWeights[j] = (matchingScores[j] / totalScore);
-			//ROS_INFO_STREAM("weights" << particleWeights[j]);
-		}
-
-		std::vector<double> tempWeights = particleWeights;
-		//render in segmented image, no need to get the ROI
-
 		newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx], Cam_left, P_left);
 		newToolModel.renderTool(segmentedImage_right, particles[maxScoreIdx], Cam_right, P_right);
 
-//		ROS_INFO_STREAM("Best particle tvec(0)" << particles[maxScoreIdx].tvec_elp(0) );
-//		ROS_INFO_STREAM("Best particle tvec(1)" << particles[maxScoreIdx].tvec_elp(1) );
-//		ROS_INFO_STREAM("Best particle tvec(2)" << particles[maxScoreIdx].tvec_elp(2) );
-//		ROS_INFO_STREAM("Best particle rvec(0)" << particles[maxScoreIdx].rvec_elp(0) );
-//		ROS_INFO_STREAM("Best particle rvec(1)" << particles[maxScoreIdx].rvec_elp(1) );
-//		ROS_INFO_STREAM("Best particle rvec(2)" << particles[maxScoreIdx].rvec_elp(2) );
-
 		trackingImages[0] = segmentedImage_left;
 		trackingImages[1] = segmentedImage_right;
-
-		//resample using low variance resampling method
-		std::vector<ToolModel::toolModel> updatedParticles;
-		std::vector<double> update_weights;
-
-		sort(tempWeights.begin(), tempWeights.end());
-
-		for (int k = 0; k < numParticles; ++k) {
-
-			if (particleWeights[k] >= tempWeights[numParticles - 1]) {
-				updatedParticles.push_back(particles[k]); //correspondingly
-				update_weights.push_back(particleWeights[k]);
-			}
-
-		}
-
-		updateParticles(updatedParticles, update_weights, particles, best_particle);
-		ROS_INFO_STREAM("new particles.SIZE" << particles.size());
-		//each time will clear the particles and resample them
-		//resamplingParticles(oldParticles, particleWeights, particles);
 		
 		//cv::imshow("temp right", toolImage_right_temp);
 
@@ -390,7 +322,7 @@ cv::Mat KalmanFilter::adjoint(cv::Mat &G) {
 
 ///TODO: for tracking of the Motion model
 //For our immediate purposes, a magical function that updates a mu and sigma. He kills aleins and doesn't afraid of anything.
-void KalmanFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma, cv::Mat &zt, cv::Mat &ut){
+void KalmanFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma, const cv::Mat &zt, const cv::Mat &ut){
 
 	//L is the dimension of the joint space for single arm
 	double alpha = 0.005;

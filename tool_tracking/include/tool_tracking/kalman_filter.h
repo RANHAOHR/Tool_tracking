@@ -91,7 +91,8 @@ private:
 
 	cv::Rect ROI_left; //ROI for the left image
 	cv::Rect ROI_right; //ROI for the right image
-
+	
+	//Expect this to go away.
 	std::vector<ToolModel::toolModel> particles; // particles
 	std::vector<double> matchingScores; // particle scores (matching scores)
 	std::vector<double> particleWeights; // particle weights calculated from matching scores
@@ -102,11 +103,14 @@ private:
 	ros::Subscriber com_s2;
 
 	void newCommandCallback1(const sensor_msgs::JointState::ConstPtr &incoming);
-
 	void newCommandCallback2(const sensor_msgs::JointState::ConstPtr &incoming);
 
 	std::vector<double> cmd_green;
 	std::vector<double> cmd_yellow;
+	//TODO: Also create sensor-input versions of these.
+	
+	const cv::Mat kalman_mu;
+	const cv::Mat kalman_sigma;
 
 
 public:
@@ -121,12 +125,6 @@ public:
 	 */
 	~KalmanFilter();
 
-	/*
-	* The initializeParticles initializes the particles by setting the total number of particles, initial
-	* guess and randomly generating the particles around the initial guess.
-	*/
-	void initializeParticles();
-
 	/***consider getting a timer to debug***/
 	// void timerCallback(const ros::TimerEvent&);
 
@@ -134,7 +132,7 @@ public:
 	 * This is the main function for tracking the needle. This function is called and it syncs all of the functions
 	*/
 	std::vector<cv::Mat>
-	trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,
+	trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right,
 				 const cv::Mat &P_left, const cv::Mat &P_right);
 	/*
 	 * resampling method
@@ -157,8 +155,14 @@ public:
 	/*
 	 * Uncented Kalman filter update
 	 */
-	void UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma,
-							  cv::Mat &zt, cv::Mat &ut);
+	void UnscentedKalmanFilter(
+		const cv::Mat &mu,
+		const cv::Mat &sigma,
+		cv::Mat &update_mu,
+		cv::Mat &update_sigma,
+		const cv::Mat &zt,
+		const cv::Mat &ut
+	);
 
 	cv::Mat adjoint(cv::Mat &G);
 
