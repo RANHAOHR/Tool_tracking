@@ -38,6 +38,7 @@
 
 #include <tool_tracking/kalman_filter.h>  //everything inside here
 #include <opencv2/calib3d/calib3d.hpp>
+#include <cwru_davinci_interface/davinci_interface.h>
 
 using namespace std;
 
@@ -67,14 +68,13 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	/***motion model params***/
 	com_s1 = nh_.subscribe("/dvrk/PSM1/set_position_joint", 10, &KalmanFilter::newCommandCallback1, this);
 	com_s2 = nh_.subscribe("/dvrk/PSM2/set_position_joint", 10, &KalmanFilter::newCommandCallback2, this);
-	
-	//TODO: Similar process for joint position inputs.
 
 	cmd_green.resize(L);
 	cmd_yellow.resize(L);
 	
-	//TODO: Initialize the sigma and mu values.
+	davinci_interface::init_joint_feedback(nh_);
 	
+	//TODO: Initialize the sigma and mu values.
 };
 
 KalmanFilter::~KalmanFilter() {
@@ -95,8 +95,7 @@ void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& 
 	}
 };
 
-std::vector<cv::Mat>
-KalmanFilter::trackingTool(
+std::vector<cv::Mat> KalmanFilter::trackingTool(
 	//Got rid of bodyVel as velocity data will now be coming from internal sources. Or something.
 	const cv::Mat &segmented_left,
 	const cv::Mat &segmented_right,
@@ -116,17 +115,14 @@ KalmanFilter::trackingTool(
 	
 	//TODO Update our sigma points.
 	
-	
 	//TODO Sigma points come out as angle vectors. Convert them to 
 	
+	//Choose the best sigma point from this batch to run IP on.
 	//TODO: Convert from particles to sigma points- what will actually need to be changed?
-	double maxScore = 0.0; //track the maximum scored particle
-	int maxScoreIdx = -1; //maximum scored particle index
-	double totalScore = 0.0; //total score
-
-	/***Update according to the max score***/
+	double maxScore = 0.0;//track the maximum scored sigma point
+	int maxScoreIdx = -1;//maximum scored SP index
+	double totalScore = 0.0;//total score
 	ToolModel::toolModel best_particle;
-	while (maxScore > -1) {
 
 		cv::Mat segmentedImage_left = segmented_left.clone();
 		cv::Mat segmentedImage_right = segmented_right.clone();
@@ -178,131 +174,7 @@ KalmanFilter::trackingTool(
 		//cv::imshow("trackingImages right",trackingImages[1]);
 		cv::waitKey(30);
 
-	}
-
-	/*** UPDATE particles, based on the given body vel and updating rate ***/
-	// double dT = 0.02; //sampling rate
-//	updateSamples(bodyVel, dT);
-
 	return trackingImages;
-};
-
-/***** update particles to find and reach to the best pose ***/
-void KalmanFilter::updateParticles(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
-								   std::vector<ToolModel::toolModel> &updatedParticles,
-								   ToolModel::toolModel &bestParticle) {
-
-//	ROS_INFO_STREAM("assume best tvec(0)" << bestParticle.tvec_elp(0) );
-//	ROS_INFO_STREAM("assume best tvec(1)" << bestParticle.tvec_elp(1) );
-//	ROS_INFO_STREAM("assume best tvec(2)" << bestParticle.tvec_elp(2) );
-//	ROS_INFO_STREAM("assume best rvec(0)" << bestParticle.rvec_elp(0) );
-//	ROS_INFO_STREAM("assume best rvec(1)" << bestParticle.rvec_elp(1) );
-//	ROS_INFO_STREAM("assume best rvec(2)" << bestParticle.rvec_elp(2) );
-
-	int sampleSize = numParticles;
-	int sampleStep = 0.001;
-
-	Downsample_rate -= sampleStep;
-	ROS_INFO_STREAM("Downsample_rate: " << Downsample_rate);
-
-	double total = 0.0;
-	std::vector<int> newSamples;
-
-	newSamples.resize(update_weights.size());
-
-	for (int i = 0; i < update_weights.size(); ++i) {
-		total += update_weights[i];
-	}
-
-	//normalized weights
-	for (int j = 0; j < update_weights.size(); ++j) {
-		newSamples[j] = (int) (sampleSize * update_weights[j] / total);
-		//ROS_INFO_STREAM("newSamples j: " << newSamples[j]);  //debug
-	}
-
-	updatedParticles.clear();
-	for (int k = 0; k < newSamples.size(); ++k) {
-		///every loop should generate different particle from one base particle k
-		for (int i = 0; i < newSamples[k]; ++i) {
-			updatedParticles.push_back(newToolModel.gaussianSampling(bestParticle, Downsample_rate));
-
-		}
-	}
-
-};
-
-void KalmanFilter::updateSamples(const cv::Mat &bodyVel, double &updateRate) { //get particles and update them based on given spatial velocity
-
-	cv::Mat Rot = cv::Mat::zeros(3, 3, CV_64F);
-	cv::Mat p = cv::Mat::zeros(3, 1, CV_64F);
-	cv::Mat particleFrame = cv::Mat::eye(4, 4, CV_64F);
-
-	cv::Mat spatialVel = cv::Mat::zeros(6, 1, CV_64F);
-	cv::Mat updatedParticleFrame = cv::Mat::eye(4, 4, CV_64F);
-
-	cv::Mat I = cv::Mat::eye(3, 3, CV_64F);
-
-	for (int k = 0; k < particles.size(); ++k) {
-
-		cv::Rodrigues(particles[k].rvec_cyl, Rot); //get rotation mat from cylinder
-		p.at<double>(0, 0) = particles[k].tvec_cyl(0); //get translation vec from cylinder
-		p.at<double>(1, 0) = particles[k].tvec_cyl(1);
-		p.at<double>(2, 0) = particles[k].tvec_cyl(2);
-
-		Rot.copyTo(particleFrame.colRange(0, 3).rowRange(0, 3));
-		p.copyTo(particleFrame.colRange(3, 4).rowRange(0, 3));
-
-		//calculate spatial velocity
-		spatialVel = adjoint(particleFrame) * bodyVel;
-		// spatialVel = addNoise(spatialVel);
-
-		cv::Mat v = spatialVel.colRange(0, 1).rowRange(0, 3); //translation velocity
-		cv::Mat w = spatialVel.colRange(0, 1).rowRange(3, 6); //rotational velocity
-
-		cv::Mat move = cv::Mat::eye(4, 4, CV_64F);
-
-		if (w.at<double>(2, 0) == 0.0) {  //TODO: pure translation ??
-			cv::Mat vdt = v * updateRate;
-			vdt.copyTo(move.colRange(3, 4).rowRange(0, 3));
-		} else {
-			cv::Mat vtil = v * updateRate;
-			cv::Mat wtil = w * updateRate;
-
-			double M = cv::norm(wtil);
-			cv::Mat v_bar = vtil / M;  //h = w*v//||w||^2
-			cv::Mat w_bar = wtil / M;
-
-			cv::Mat w_hat = newToolModel.computeSkew(w_bar);
-			cv::Mat rotation = I + w_hat * sin(M) + (w_hat * w_hat) * (1 - cos(M));
-			cv::Mat trans = (I - rotation) * (w_bar.cross(v_bar) + w_bar * w_bar.t() * v_bar * M);
-
-			rotation.copyTo(move.colRange(0, 3).rowRange(0, 3));
-			trans.copyTo(move.colRange(3, 4).rowRange(0, 3));
-		}
-
-		/***update the cylinder pose***/
-		updatedParticleFrame = move * particleFrame;
-
-		//convert rotation matrix to Rodrigues
-		cv::Mat tempR = cv::Mat::zeros(3, 3, CV_64F);
-		cv::Mat updateR = cv::Mat::zeros(3, 1, CV_64F);
-		cv::Mat updateT = cv::Mat::zeros(3, 1, CV_64F);
-
-		updateT = updatedParticleFrame.colRange(3, 4).rowRange(0, 3);
-		tempR = updatedParticleFrame.colRange(0, 3).rowRange(0, 3);
-		cv::Rodrigues(tempR, updateR);
-
-		particles[k].tvec_cyl(0) = updateT.at<double>(0, 0);
-		particles[k].tvec_cyl(1) = updateT.at<double>(1, 0);
-		particles[k].tvec_cyl(2) = updateT.at<double>(2, 0);
-		particles[k].rvec_cyl(0) = updateR.at<double>(0, 0);
-		particles[k].rvec_cyl(1) = updateR.at<double>(1, 0);
-		particles[k].rvec_cyl(2) = updateR.at<double>(2, 0);
-
-		/***according to the cylinder pose, update ellipse and grippers pose***/
-		newToolModel.computeModelPose(particles[k], 0.0, 0.0, 0.0); // no need to change relative angles??? TODO:
-
-	}
 };
 
 cv::Mat KalmanFilter::adjoint(cv::Mat &G) {
@@ -321,7 +193,7 @@ cv::Mat KalmanFilter::adjoint(cv::Mat &G) {
 };
 
 ///TODO: for tracking of the Motion model
-//For our immediate purposes, a magical function that updates a mu and sigma. He kills aleins and doesn't afraid of anything.
+//For our immediate purposes, a magical function that updates a mu and sigma. He kills aliens and doesn't afraid of anything.
 void KalmanFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma, const cv::Mat &zt, const cv::Mat &ut){
 
 	//L is the dimension of the joint space for single arm
@@ -459,35 +331,5 @@ void KalmanFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma
 
 	update_mu = current_mu + K_t * (zt - weighted_z);
 	update_sigma = current_sigma - K_t * S_t * K_t.t();
-
-};
-
-/**** resampling method ****/
-void KalmanFilter::resamplingParticles(const std::vector<ToolModel::toolModel> &sampleModel,
-										 const std::vector<double> &particleWeight,
-										 std::vector<ToolModel::toolModel> &update_particles,
-										 std::vector<double> &update_weights) {
-
-	int M = sampleModel.size(); //total number of particles
-	double max = 1.0 / M;
-
-	double r = newToolModel.randomNum(0.0, max);
-	double w = particleWeight[0]; //first particle weight
-	int idx = 0;
-
-	update_particles.clear(); ///start fresh
-	update_weights.clear();
-
-	for (int i = 0; i < M; ++i) {
-
-		double U = r + ((double) (i - 1) * max);
-
-		while (U > w) {
-			idx += 1;
-			w = w + particleWeight[idx];
-		}
-
-		update_particles.push_back(sampleModel[idx]);
-	}
 
 };

@@ -107,7 +107,9 @@ private:
 
 	std::vector<double> cmd_green;
 	std::vector<double> cmd_yellow;
-	//TODO: Also create sensor-input versions of these.
+	
+	std::vector<double> sensor_green;
+	std::vector<double> sensor_yellow;
 	
 	const cv::Mat kalman_mu;
 	const cv::Mat kalman_sigma;
@@ -131,27 +133,13 @@ public:
 	/*
 	 * This is the main function for tracking the needle. This function is called and it syncs all of the functions
 	*/
-	std::vector<cv::Mat>
-	trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right,
-				 const cv::Mat &P_left, const cv::Mat &P_right);
-	/*
-	 * resampling method
-	 */
-/*	void
-	resampleLowVariance(const std::vector<ToolModel::toolModel> &initial, const std::vector<double> &particleWeight,
-						std::vector<ToolModel::toolModel> &results);*/
-	void resamplingParticles(const std::vector<ToolModel::toolModel> &sampleModel,
-							 const std::vector<double> &particleWeight,
-							 std::vector<ToolModel::toolModel> &update_particles,
-							 std::vector<double> &update_weights);
-
-	/*
-	 * update particles
-	 */
-	void updateSamples(const cv::Mat &bodyVel, double &updateRate);
-
-	void updateParticles(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
-					   std::vector<ToolModel::toolModel> &updateParticles, ToolModel::toolModel &bestParticle);
+	std::vector<cv::Mat> trackingTool(
+		const cv::Mat &segmented_left,
+		const cv::Mat &segmented_right,
+		const cv::Mat &P_left,
+		const cv::Mat &P_right
+	);
+	
 	/*
 	 * Uncented Kalman filter update
 	 */
@@ -165,7 +153,5 @@ public:
 	);
 
 	cv::Mat adjoint(cv::Mat &G);
-
 };
-
 #endif
