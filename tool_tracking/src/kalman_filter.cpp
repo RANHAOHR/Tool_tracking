@@ -44,6 +44,8 @@ using namespace std;
 
 KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 		nh_(*nodehandle), numParticles(100), Downsample_rate(0.02), toolSize(2), L(7) {
+		
+	ROS_INFO("Initializing UKF...");
 
 	/****need to subscribe this***/
 	Cam_left = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0,   ///meters or millimeters
@@ -74,7 +76,8 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	
 	davinci_interface::init_joint_feedback(nh_);
 	
-	//TODO: Initialize the sigma and mu values.
+	kalman_mu = cv::Mat::zeros(14, 1, CV_32F);
+	kalman_sigma = (cv::Mat::eye(14, 14, CV_32F) * 0.037);
 };
 
 KalmanFilter::~KalmanFilter() {

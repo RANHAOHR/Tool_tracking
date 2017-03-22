@@ -10,8 +10,6 @@ bool freshImage;
 bool freshCameraInfo;
 bool freshVelocity;
 
-double Arr[6];
-
 using namespace std;
 using namespace cv_projective;
 
@@ -62,7 +60,7 @@ int main(int argc, char **argv) {
 
 	ros::NodeHandle nh;
 	/******  initialization  ******/
-	KalmanFilter Particles(&nh);
+	KalmanFilter UKF(&nh);
 
 	freshCameraInfo = false;
 	freshImage = false;
@@ -157,25 +155,6 @@ int main(int argc, char **argv) {
 
 	cv::resize(new_seg_left, new_seg_left,size);
 	cv::resize(new_seg_right, new_seg_right,size);
-
-
-	cv::Mat sigma = (cv::Mat_<double>(4,4) << 0, -1, 0, -0.08,   ///meters or millimeters
-			0, 0, 1, 0,
-			-1, 2, 0, 0,
-			0, 0, 2, 1);
-	cv::Mat temp_sigma = cv::Mat(4, 1, CV_64FC1);  //need the square root for sigma
-	cv::Mat s = cv::Mat(4, 1, CV_64FC1);  //need the square root for sigma
-	cv::Mat vt = cv::Mat(4, 4, CV_64FC1);  //need the square root for sigma
-	cv::Mat u = cv::Mat(4, 4, CV_64FC1);  //need the square root for sigma
-	//Image related?
-
-	cv::SVD::compute(sigma, s, u, vt);
-	ROS_INFO_STREAM("S: " << s);
-	ROS_INFO_STREAM("u: " << u);
-	ROS_INFO_STREAM("vt: " << vt);
-
-	temp_sigma = s.clone();
-	ROS_INFO_STREAM("temp_sigma: " << temp_sigma);
 
 //	while (nh.ok()) {
 //		//ros::spinOnce();

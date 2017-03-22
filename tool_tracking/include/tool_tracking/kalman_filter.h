@@ -111,10 +111,8 @@ private:
 	std::vector<double> sensor_green;
 	std::vector<double> sensor_yellow;
 	
-	const cv::Mat kalman_mu;
-	const cv::Mat kalman_sigma;
-
-
+	cv::Mat kalman_mu;
+	cv::Mat kalman_sigma;
 public:
 
 	/*
