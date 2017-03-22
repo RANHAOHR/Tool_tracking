@@ -75,6 +75,11 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	cmd_yellow.resize(L);
 	
 	davinci_interface::init_joint_feedback(nh_);
+	std::vector<std::vector<double> > tmp;
+	if(davinci_interface::get_fresh_robot_pos(tmp)){
+		sensor_green = tmp[0];
+		sensor_yellow = tmp[1];
+	}
 	
 	kalman_mu = cv::Mat::zeros(14, 1, CV_32F);
 	kalman_sigma = (cv::Mat::eye(14, 14, CV_32F) * 0.037);
@@ -111,9 +116,7 @@ std::vector<cv::Mat> KalmanFilter::trackingTool(
 	std::vector<cv::Mat> trackingImages;
 	trackingImages.resize(2);
 	
-	//TODO Update our sigma points.
-	
-	//TODO Sigma points come out as angle vectors. Convert them to 
+	//TODO Sigma points come out as angle vectors. Convert them to limb positions
 	
 	//Choose the best sigma point from this batch to run IP on.
 	//TODO: Convert from particles to sigma points- what will actually need to be changed?
@@ -189,6 +192,26 @@ cv::Mat KalmanFilter::adjoint(cv::Mat &G) {
 	temp.copyTo(adjG.colRange(3, 6).rowRange(0, 3));
 	return adjG;
 };
+
+void KalmanFilter::update(){
+	ROS_INFO("UPDATING KALMAN FILTER");
+	
+	//Get sensor update.
+	std::vector<std::vector<double> > tmp;
+	if(davinci_interface::get_fresh_robot_pos(tmp)){
+		sensor_green = tmp[0];
+		sensor_yellow = tmp[1];
+	}
+	//Compress it down from 7x2 to 14x1
+	cv::Mat a1 = cv::Mat(sensor_green);
+	cv::Mat a2 = cv::Mat(sensor_yellow);
+	cv::Mat zt;
+	hconcat(a1, a2, zt);
+	
+	//TODO: Figure out how to handle desired positions with respect to our model.
+	
+	//TODO: Actually update the filter.
+}
 
 ///TODO: for tracking of the Motion model
 //For our immediate purposes, a magical function that updates a mu and sigma. He kills aliens and doesn't afraid of anything.

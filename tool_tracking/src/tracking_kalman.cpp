@@ -154,6 +154,8 @@ int main(int argc, char **argv) {
 
 	while (nh.ok()) {
 		ros::spinOnce();
+		//We want to update our filter whenever the robot is doing anything, not just when we are getting images.
+		UKF.update();
 		/*** make sure camera information is ready ***/
 		//This does not seem useful at all.
 		//if(!freshCameraInfo){
@@ -161,9 +163,11 @@ int main(int argc, char **argv) {
 ////				freshCameraInfo = true;
 ////		}
 
+
+
 //		/*** if camera is ready, doing the tracking based on segemented image***/
-		if (freshImage /*&& freshVelocity && freshCameraInfo*/){
-//
+		//if (freshImage /*&& freshVelocity && freshCameraInfo*/){
+/*
 			//The segmentation thingy does something.
 			seg_left = segmentation(rawImage_left);  //or use image_vessselness
 			seg_right = segmentation(rawImage_right);
@@ -181,7 +185,7 @@ int main(int argc, char **argv) {
 //
 			freshImage = false;
 			freshVelocity = false;
-		}
+		}*/
 		loop_rate.sleep();  //or cv::waitKey(10);
 	}
 }

@@ -138,6 +138,8 @@ public:
 		const cv::Mat &P_right
 	);
 	
+	void update();
+	
 	/*
 	 * Uncented Kalman filter update
 	 */
