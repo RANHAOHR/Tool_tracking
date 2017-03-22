@@ -108,13 +108,8 @@ std::vector<cv::Mat> KalmanFilter::trackingTool(
 					 
 	//Looks mostly IP-related; need to resturcture to not be dependant on particles and instead use sigma-points.		
 
-	ROS_INFO("---- Inside tracking function ---");
 	std::vector<cv::Mat> trackingImages;
 	trackingImages.resize(2);
-	
-	//TODO: Seems to work slightly backwards. I think we will want to update our sigma points/particles, THEN process the image for a single step.
-	//This seems to go "calculate the LAST position, then resample for the current position, then wait for the next cycle to show what we did here."
-	//That certainly works, it's just confusing and makes initialization a pain.
 	
 	//TODO Update our sigma points.
 	

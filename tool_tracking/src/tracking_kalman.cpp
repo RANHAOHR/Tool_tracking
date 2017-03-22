@@ -106,16 +106,9 @@ int main(int argc, char **argv) {
 	P_r.at<double>(1, 3) = 0;
 	P_r.at<double>(2, 3) = 0;
 
-	clock_t t;
-	double avg_tim = 0.0;
-	int count = 1;
-
-	/*** Timer set up ***/
-	ros::Rate loop_rate(50);
-
 	/*** Subscribers, velocity, stream images ***/
 
-	//TODO: The program works just fine without this subscription ever actually being called.
+	//The program works just fine without this subscription ever actually being called.
 	//ros::Subscriber sub3 = nh.subscribe("/bodyVelocity", 100, arrayCallback);
 
 	const std::string leftCameraTopic("/davinci_endo/left/camera_info");
@@ -155,38 +148,40 @@ int main(int argc, char **argv) {
 
 	cv::resize(new_seg_left, new_seg_left,size);
 	cv::resize(new_seg_right, new_seg_right,size);
+	
+	/*** Timer set up ***/
+	ros::Rate loop_rate(50);
 
-//	while (nh.ok()) {
-//		//ros::spinOnce();
-//		/*** make sure camera information is ready ***/
-////		if(!freshCameraInfo)
-////		{
+	while (nh.ok()) {
+		ros::spinOnce();
+		/*** make sure camera information is ready ***/
+		//This does not seem useful at all.
+		//if(!freshCameraInfo){
 ////			ROS_INFO("---- inside get cam info -----");
 ////				freshCameraInfo = true;
 ////		}
-//
-//		/*** if camera is ready, doing the tracking based on segemented image***/
-//		//if (freshImage /*&& freshVelocity && freshCameraInfo*/) {
-//
-//			//t = clock();
-////			seg_left = segmentation(rawImage_left);  //or use image_vessselness
-////			seg_right = segmentation(rawImage_right);
-//			//t = clock() - t;
-//
-//
-//
-//			trackingImgs = Particles.trackingTool(bodyVel, new_seg_left, new_seg_right, P_l,
-//												  P_r); //with rendered tool and segmented img
-////
-////			cv::imshow("Rendered Image: Left", trackingImgs[0]);
-////			cv::imshow("Rendered Image: Right", trackingImgs[1]);
-////			cv::waitKey(50);
-//
-//			freshImage = false;
-//			freshVelocity = false;
-//		//}
-//
-//		loop_rate.sleep();  //or cv::waitKey(10);
-//	}
 
+//		/*** if camera is ready, doing the tracking based on segemented image***/
+		if (freshImage /*&& freshVelocity && freshCameraInfo*/){
+//
+			//The segmentation thingy does something.
+			seg_left = segmentation(rawImage_left);  //or use image_vessselness
+			seg_right = segmentation(rawImage_right);
+
+			trackingImgs = UKF.trackingTool(
+				new_seg_left,
+				new_seg_right,
+				P_l,
+				P_r
+			); //with rendered tool and segmented img
+////
+//			cv::imshow("Rendered Image: Left", trackingImgs[0]);
+//			cv::imshow("Rendered Image: Right", trackingImgs[1]);
+//			cv::waitKey(50);
+//
+			freshImage = false;
+			freshVelocity = false;
+		}
+		loop_rate.sleep();  //or cv::waitKey(10);
+	}
 }
