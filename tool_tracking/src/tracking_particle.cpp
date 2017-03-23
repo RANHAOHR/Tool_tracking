@@ -156,11 +156,10 @@ int main(int argc, char **argv) {
 
 	/***testing segmentation images***/
 	cv::Size size(640, 480);
-	std::string package = ros::package::getPath("tool_tracking");
-	seg_left = cv::imread(package + "/left.png", CV_LOAD_IMAGE_GRAYSCALE );
-	//seg_left = cv::imread(package + "/particle_test.png", CV_LOAD_IMAGE_GRAYSCALE );  //testing image
+	std::string package = ros::package::getPath("tool_tracking"); ////warning: do not have one package with the same name
+	//seg_left = cv::imread(package + "/left.png", CV_LOAD_IMAGE_GRAYSCALE );
+	seg_left = cv::imread(package + "/new.png", CV_LOAD_IMAGE_GRAYSCALE );  //testing image
 	seg_right = cv::imread(package + "/right.png", CV_LOAD_IMAGE_GRAYSCALE );
-
 
 	cv::Mat new_seg_left = seg_left.rowRange(5,480);
 	cv::Mat new_seg_right = seg_right.rowRange(5,480);
@@ -169,58 +168,36 @@ int main(int argc, char **argv) {
 	cv::resize(new_seg_right, new_seg_right,size );
 
 
-	cv::Mat sigma = (cv::Mat_<double>(4,4) << 0, -1, 0, -0.08,   ///meters or millimeters
-			0, 0, 1, 0,
-			-1, 2, 0, 0,
-			0, 0, 2, 1);
-	cv::Mat temp_sigma = cv::Mat(4, 1, CV_64FC1);  //need the square root for sigma
-	cv::Mat s = cv::Mat(4, 1, CV_64FC1);  //need the square root for sigma
-	cv::Mat vt = cv::Mat(4, 4, CV_64FC1);  //need the square root for sigma
-	cv::Mat u = cv::Mat(4, 4, CV_64FC1);  //need the square root for sigma
+	while (nh.ok()) {
+		//ros::spinOnce();
+		/*** make sure camera information is ready ***/
 
-	cv::SVD::compute(sigma, s, u, vt);
-	ROS_INFO_STREAM("S: " << s);
-	ROS_INFO_STREAM("u: " << u);
-	ROS_INFO_STREAM("vt: " << vt);
+		/*** if camera is ready, doing the tracking based on segemented image***/
+		//if (freshImage /*&& freshVelocity && freshCameraInfo && !freshCameraInfo*/) {
 
-	temp_sigma = s.clone();
-	ROS_INFO_STREAM("temp_sigma: " << temp_sigma);
+			//t = clock();
+//			seg_left = segmentation(rawImage_left);  //or use image_vessselness
+//			seg_right = segmentation(rawImage_right);
+			//t = clock() - t;
 
-//	while (nh.ok()) {
-//		//ros::spinOnce();
-//		/*** make sure camera information is ready ***/
-////		if(!freshCameraInfo)
-////		{
-////			ROS_INFO("---- inside get cam info -----");
-////				freshCameraInfo = true;
-////		}
+
+			// body velocity
+			for (int i(0); i < 6; i++) {
+				bodyVel.at<double>(i, 0) = Arr[i];
+			}
+
+			trackingImgs = Particles.trackingTool(bodyVel, new_seg_left, new_seg_right, P_l,
+												  P_r); //with rendered tool and segmented img
 //
-//		/*** if camera is ready, doing the tracking based on segemented image***/
-//		//if (freshImage /*&& freshVelocity && freshCameraInfo*/) {
-//
-//			//t = clock();
-////			seg_left = segmentation(rawImage_left);  //or use image_vessselness
-////			seg_right = segmentation(rawImage_right);
-//			//t = clock() - t;
-//
-//
-//			// body velocity
-//			for (int i(0); i < 6; i++) {
-//				bodyVel.at<double>(i, 0) = Arr[i];
-//			}
-//
-//			trackingImgs = Particles.trackingTool(bodyVel, new_seg_left, new_seg_right, P_l,
-//												  P_r); //with rendered tool and segmented img
-////
-////			cv::imshow("Rendered Image: Left", trackingImgs[0]);
-////			cv::imshow("Rendered Image: Right", trackingImgs[1]);
-////			cv::waitKey(50);
-//
-//			freshImage = false;
-//			freshVelocity = false;
-//		//}
-//
-//		loop_rate.sleep();  //or cv::waitKey(10);
-//	}
+//			cv::imshow("Rendered Image: Left", trackingImgs[0]);
+//			cv::imshow("Rendered Image: Right", trackingImgs[1]);
+//			cv::waitKey(50);
+
+			freshImage = false;
+			freshVelocity = false;
+		//}
+
+		loop_rate.sleep();  //or cv::waitKey(10);
+	}
 
 }

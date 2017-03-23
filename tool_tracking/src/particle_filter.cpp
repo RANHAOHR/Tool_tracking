@@ -91,21 +91,7 @@ void ParticleFilter::initializeParticles() {
 	matchingScores.resize(numParticles); //initialize matching score array
 	particleWeights.resize(numParticles); //initialize particle weight array
 
-	int batch_1 = numParticles/2;
-	int batch_2 = numParticles;
-
 	///generate random seeds
-	initial.tvec_elp(0) = 0.0;  //left and right (image frame)
-	initial.tvec_elp(1) = 0.0;  //up and down
-	initial.tvec_elp(2) = 0.03;
-	initial.rvec_elp(0) = 0.0;
-	initial.rvec_elp(1) = 0.0;
-	initial.rvec_elp(2) = -2;
-
-	for (int i = 0; i < batch_1; i++) {
-		particles[i] = newToolModel.setRandomConfig(initial);
-	}
-
 	initial.tvec_elp(0) = 0.0;  //left and right (image frame)
 	initial.tvec_elp(1) = 0.0;  //up and down
 	initial.tvec_elp(2) = -0.03;
@@ -113,7 +99,7 @@ void ParticleFilter::initializeParticles() {
 	initial.rvec_elp(1) = 0.0;
 	initial.rvec_elp(2) = -1;
 
-	for (int i = batch_1; i < batch_2; i++) {
+	for (int i = 0; i < numParticles; i++) {
 		particles[i] = newToolModel.setRandomConfig(initial);
 	}
 
@@ -229,6 +215,7 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
 		updateParticles(updatedParticles, update_weights, particles, best_particle);
 		ROS_INFO_STREAM("new particles.SIZE" << particles.size());
 		//each time will clear the particles and resample them
+		std::vector<ToolModel::toolModel> oldParticles = particles;
 		//resamplingParticles(oldParticles, particleWeights, particles);
 		
 		//cv::imshow("temp right", toolImage_right_temp);
@@ -524,8 +511,7 @@ void ParticleFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sig
 /**** resampling method ****/
 void ParticleFilter::resamplingParticles(const std::vector<ToolModel::toolModel> &sampleModel,
 										 const std::vector<double> &particleWeight,
-										 std::vector<ToolModel::toolModel> &update_particles,
-										 std::vector<double> &update_weights) {
+										 std::vector<ToolModel::toolModel> &update_particles) {
 
 	int M = sampleModel.size(); //total number of particles
 	double max = 1.0 / M;
@@ -535,7 +521,6 @@ void ParticleFilter::resamplingParticles(const std::vector<ToolModel::toolModel>
 	int idx = 0;
 
 	update_particles.clear(); ///start fresh
-	update_weights.clear();
 
 	for (int i = 0; i < M; ++i) {
 
