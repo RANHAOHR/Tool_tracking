@@ -66,14 +66,19 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 
 	toolImage_left_temp = cv::Mat::zeros(475, 640, CV_8UC3);
 	toolImage_right_temp = cv::Mat::zeros(475, 640, CV_8UC3);
+	
+	//Set up forward kinematics.
 
 	/***motion model params***/
 	com_s1 = nh_.subscribe("/dvrk/PSM1/set_position_joint", 10, &KalmanFilter::newCommandCallback1, this);
 	com_s2 = nh_.subscribe("/dvrk/PSM2/set_position_joint", 10, &KalmanFilter::newCommandCallback2, this);
+	
+	kinematics = Davinci_fwd_solver();
 
 	cmd_green.resize(L);
 	cmd_yellow.resize(L);
 	
+	//Pull in our first round of sensor data.
 	davinci_interface::init_joint_feedback(nh_);
 	std::vector<std::vector<double> > tmp;
 	if(davinci_interface::get_fresh_robot_pos(tmp)){
@@ -81,8 +86,20 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 		sensor_yellow = tmp[1];
 	}
 	
-	kalman_mu = cv::Mat::zeros(14, 1, CV_32F);
-	kalman_sigma = (cv::Mat::eye(14, 14, CV_32F) * 0.037);
+	Eigen::Affine3d green_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_green.data()));
+	Eigen::Vector3d green_trans = green_pos.translation();
+	Eigen::Vector3d green_rpy = green_pos.rotation().eulerAngles(0, 1, 2);
+	Eigen::Affine3d yellow_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_yellow.data()));
+	Eigen::Vector3d yellow_trans = yellow_pos.translation();
+	Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
+	kalman_mu = (cv::Mat_<double>(12, 1) <<
+		*green_pos.data(),
+		*green_rpy.data(),
+		*yellow_pos.data(),
+		*yellow_rpy.data()
+	);
+	ROS_INFO("%f, %f, %f", kalman_mu.at<double>(1, 1), kalman_mu.at<double>(5, 1), kalman_mu.at<double>(11, 1));
+	kalman_sigma = (cv::Mat::zeros(12, 12, CV_32F));
 };
 
 KalmanFilter::~KalmanFilter() {
@@ -115,8 +132,6 @@ std::vector<cv::Mat> KalmanFilter::trackingTool(
 
 	std::vector<cv::Mat> trackingImages;
 	trackingImages.resize(2);
-	
-	//TODO Sigma points come out as angle vectors. Convert them to limb positions
 	
 	//Choose the best sigma point from this batch to run IP on.
 	//TODO: Convert from particles to sigma points- what will actually need to be changed?
@@ -203,7 +218,19 @@ void KalmanFilter::update(){
 		sensor_yellow = tmp[1];
 	}
 	
-	//TODO: Convert to cart space using forward kinematics.
+	//Convert into proper format
+	Eigen::Affine3d green_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_green.data()));
+	Eigen::Vector3d green_trans = green_pos.translation();
+	Eigen::Vector3d green_rpy = green_pos.rotation().eulerAngles(0, 1, 2);
+	Eigen::Affine3d yellow_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_yellow.data()));
+	Eigen::Vector3d yellow_trans = yellow_pos.translation();
+	Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
+	cv::Mat z = (cv::Mat_<double>(12, 1) <<
+		*green_pos.data(),
+		*green_rpy.data(),
+		*yellow_pos.data(),
+		*yellow_rpy.data()
+	);
 	
 	//TODO: Figure out how to handle desired positions with respect to our model.
 	

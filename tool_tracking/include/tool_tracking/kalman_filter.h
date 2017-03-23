@@ -63,6 +63,7 @@
 
 #include <geometry_msgs/Transform.h>
 #include <cwru_davinci_interface/davinci_interface.h>
+#include <cwru_davinci_kinematics/davinci_kinematics.h>
 
 
 class KalmanFilter {
@@ -113,6 +114,8 @@ private:
 	
 	cv::Mat kalman_mu;
 	cv::Mat kalman_sigma;
+	
+	Davinci_fwd_solver kinematics;
 public:
 
 	/*
