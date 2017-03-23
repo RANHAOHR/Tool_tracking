@@ -99,6 +99,10 @@ private:
 	std::vector<double> particleWeights; // particle weights calculated from matching scores
 
 	int L;  ///DOF for one arm.
+	
+	const static double alpha = 0.005;
+	const static double k = 0.0; //TODO: how much?
+	const static double beta = 2;
 
 	ros::Subscriber com_s1;
 	ros::Subscriber com_s2;

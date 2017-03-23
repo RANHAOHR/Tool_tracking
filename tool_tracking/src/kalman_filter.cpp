@@ -232,20 +232,111 @@ void KalmanFilter::update(){
 		*yellow_rpy.data()
 	);
 	
-	//TODO: Figure out how to handle desired positions with respect to our model.
+	//TODO: Figure out how to pre-process desired positions
 	
-	//TODO: Actually update the filter.
+	//Generate the sigma points.
+	
+	double lamda = alpha * alpha * (L + k) - L;
+
+	double gamma = L + lamda;
+	gamma = pow(gamma, 0.5);
+	
+	//L is the dimension of the joint space for single arm
+
+	///get the square root for sigma
+	cv::Mat square_sigma = cv::Mat::zeros(L, 1, CV_64FC1);
+
+	cv::Mat s = cv::Mat(L, 1, CV_64FC1);  //need the square root for sigma
+	cv::Mat vt = cv::Mat(L, L, CV_64FC1);  //need the square root for sigma
+	cv::Mat u = cv::Mat(L, L, CV_64FC1);  //need the square root for sigma
+
+	cv::SVD::compute(kalman_sigma, s, u, vt);  //s is supposed to be the one we are asking for, the sigular values
+
+	square_sigma = s.clone(); //safe way to pass values to a cv Mat
+
+	std::vector<cv::Mat> state_vecs;
+	state_vecs.resize(2*L); ///size is 2L
+
+	state_vecs[0] = kalman_mu.clone();   //X_nod
+	for (int i = 1; i < L; ++i) {
+		state_vecs[i] = state_vecs[0] + gamma * square_sigma;
+		state_vecs[i + L] = state_vecs[0] - gamma * square_sigma;
+	}
+
+	double weight_mean = lamda / (L + lamda);
+	double weight_covariance = weight_mean + 1-alpha * alpha + beta;
+
+	std::vector<double> weight_vec_c;
+	std::vector<double> weight_vec_m;
+	weight_vec_c.resize(2*L);
+	weight_vec_m.resize(2*L);
+
+	weight_vec_c[0] = weight_mean;
+	weight_vec_m[0] = weight_covariance;
+
+	for (int l = 1; l < 2*L; ++l) {
+		weight_vec_c[l] = 1/(2 * (L + lamda ));
+		weight_vec_m[l] = 1/(2 * (L + lamda ));
+	}
+
+	/***get the prediction***/
+	cv::Mat current_mu = cv::Mat::zeros(L,1,CV_64FC1);
+	cv::Mat current_sigma = cv::Mat::zeros(L,L, CV_64FC1);
+
+	std::vector<cv::Mat> currentState_vec;
+	currentState_vec.resize(2*L);
+	
+	//TODO: Placeholder motion model.
+	for(int i = 0; i < currentState_vec.size(); i++){
+		currentState_vec[i] = z;
+	}
+	
+	//TODO: Accomodate desired trajectories in a more complex motion model.
+	
+	cv::Mat R = cv::Mat::eye(L,L,CV_64FC1);
+	R = R * 0.037;
+
+	for (int m = 0; m < 2*L; ++m) {
+		cv::Mat temp = weight_vec_m[m] * currentState_vec[m];
+		current_mu = current_mu + temp;
+	}
+
+	for (int n = 0; n < 2*L; ++n) {
+		cv::Mat var_mat = currentState_vec[n] - current_mu;
+
+		cv::Mat temp_mat = weight_vec_c[n] * var_mat * var_mat.t();
+		current_sigma = current_sigma + temp_mat;
+	}
+
+	current_sigma = current_sigma + R;
+
+	/*****get measurement****/
+	std::vector<cv::Mat> updateState_vec;
+	updateState_vec.resize(2*L);
+
+	//compute new square root for current sigma
+	cv::SVD::compute(current_sigma, s, u, vt);  //s is supposed to be the one we are asking for, the sigular values
+
+	square_sigma = s.clone(); //safe way to pass values to a cv Mat
+
+	updateState_vec[0] = current_mu.clone();   //X_nod
+	for (int i = 1; i < L; ++i) {
+		updateState_vec[i] = updateState_vec[0] + gamma * square_sigma;
+		updateState_vec[i + L] = updateState_vec[0] - gamma * square_sigma;
+	}
+
+	std::vector<cv::Mat> current_z_vec;
+	current_z_vec.resize(2*L);
+	
+	//TODO: Process the sigma points based on the image.
 }
 
-///TODO: for tracking of the Motion model
-//In the new paradigm, this will probably need to be split into two functions/steps. One that computes the sigma points, and one that takes those points and the image data and computes error.
+//This has been retained for archival purposes.
+//In the new paradigm, it will probably need to be split into two functions/steps. One that computes the sigma points, and one that takes those points and the image data and computes error.
 //For our immediate purposes, a magical function that updates a mu and sigma. He kills aliens and doesn't afraid of anything.
 void KalmanFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma, const cv::Mat &zt, const cv::Mat &ut){
 
 	//L is the dimension of the joint space for single arm
-	double alpha = 0.005;
-	double k = 0.0; //TODO: how much?
-	double beta = 2;
 
 	double lamda = alpha * alpha * (L + k) - L;
 
