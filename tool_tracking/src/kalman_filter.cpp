@@ -202,11 +202,8 @@ void KalmanFilter::update(){
 		sensor_green = tmp[0];
 		sensor_yellow = tmp[1];
 	}
-	//Compress it down from 7x2 to 14x1
-	cv::Mat a1 = cv::Mat(sensor_green);
-	cv::Mat a2 = cv::Mat(sensor_yellow);
-	cv::Mat zt;
-	hconcat(a1, a2, zt);
+	
+	//TODO: Convert to cart space using forward kinematics.
 	
 	//TODO: Figure out how to handle desired positions with respect to our model.
 	
@@ -214,6 +211,7 @@ void KalmanFilter::update(){
 }
 
 ///TODO: for tracking of the Motion model
+//In the new paradigm, this will probably need to be split into two functions/steps. One that computes the sigma points, and one that takes those points and the image data and computes error.
 //For our immediate purposes, a magical function that updates a mu and sigma. He kills aliens and doesn't afraid of anything.
 void KalmanFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma, const cv::Mat &zt, const cv::Mat &ut){
 
