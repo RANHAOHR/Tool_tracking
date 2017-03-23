@@ -144,8 +144,7 @@ public:
 						std::vector<ToolModel::toolModel> &results);*/
 	void resamplingParticles(const std::vector<ToolModel::toolModel> &sampleModel,
 							 const std::vector<double> &particleWeight,
-							 std::vector<ToolModel::toolModel> &update_particles,
-							 std::vector<double> &update_weights);
+							 std::vector<ToolModel::toolModel> &update_particles);
 
 	/*
 	 * update particles
