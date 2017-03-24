@@ -3,7 +3,7 @@
  *
  *  Copyright (c) 2016 Case Western Reserve University
  *
- *     Ran Hao <rxh349@case.edu>
+ *	 Ran Hao <rxh349@case.edu>
  *
  *  All rights reserved.
  *
@@ -12,14 +12,14 @@
  *  are met:
  *
  *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
+ *	 notice, this list of conditions and the following disclaimer.
  *   * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
+ *	 copyright notice, this list of conditions and the following
+ *	 disclaimer in the documentation and/or other materials provided
+ *	 with the distribution.
  *   * Neither the name of Case Western Reserve University, nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
+ *	 contributors may be used to endorse or promote products derived
+ *	 from this software without specific prior written permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -55,7 +55,6 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <sensor_msgs/image_encodings.h>
-#include <image_transport/image_transport.h>
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 
@@ -63,100 +62,104 @@
 #include <boost/random/normal_distribution.hpp>
 
 #include <geometry_msgs/Transform.h>
-#include <Eigen/Eigen>
+#include <cwru_davinci_interface/davinci_interface.h>
+
 
 class ParticleFilter {
 
 private:
+	cv::Mat Cam_left;
+	cv::Mat Cam_right;
 
-    cv::Mat Cam_left;
-    cv::Mat Cam_right;
+	ros::NodeHandle nh_;  //may need this
 
-    ros::NodeHandle nh_;  //may need this
+	///ros::Timer timer;
 
-    ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
+	ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
 
-    ToolModel::toolModel initial; //initial configuration
+	ToolModel::toolModel initial; //initial configuration
 
-    unsigned int toolSize; //size of the needle to be rendered
-    double Downsample_rate;
+	unsigned int toolSize; //size of the needle to be rendered
+	double Downsample_rate;
 
-    unsigned int numParticles; //total number of particles
-    cv::Mat toolImage_left; //left rendered Image
-    cv::Mat toolImage_right; //right rendered Image
+	unsigned int numParticles; //total number of particles
+	cv::Mat toolImage_left; //left rendered Image
+	cv::Mat toolImage_right; //right rendered Image
 
-    cv::Mat toolImage_left_temp; //left rendered Image
-    cv::Mat toolImage_right_temp; //right rendered Image
+	cv::Mat toolImage_left_temp; //left rendered Image
+	cv::Mat toolImage_right_temp; //right rendered Image
 
-    cv::Rect ROI_left; //ROI for the left image
-    cv::Rect ROI_right; //ROI for the right image
+	cv::Rect ROI_left; //ROI for the left image
+	cv::Rect ROI_right; //ROI for the right image
 
-    std::vector<ToolModel::toolModel> particles; // particles
-    std::vector<double> matchingScores; // particle scores (matching scores)
-    std::vector<double> particleWeights; // particle weights calculated from matching scores
+	std::vector<ToolModel::toolModel> particles; // particles
+	std::vector<double> matchingScores; // particle scores (matching scores)
+	std::vector<double> particleWeights; // particle weights calculated from matching scores
 
-    void projectionMatRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionMatRight);
-    void projectionMatBLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionMatBLeft);
+	int L;  ///DOF for one arm.
 
-    ros::Subscriber projectionSubscriber_l;
-    ros::Subscriber projectionSubscriber_r;
+	ros::Subscriber com_s1;
+	ros::Subscriber com_s2;
 
+	void newCommandCallback1(const sensor_msgs::JointState::ConstPtr &incoming);
+
+	void newCommandCallback2(const sensor_msgs::JointState::ConstPtr &incoming);
+
+	std::vector<double> cmd_green;
+	std::vector<double> cmd_yellow;
 
 
 public:
 
-    /*
-    * The default constructor
-    */
-    ParticleFilter(ros::NodeHandle *nodehandle);
+	/*
+	* The default constructor
+	*/
+	ParticleFilter(ros::NodeHandle *nodehandle);
 
-    /*
-     * The deconstructor 
-     */
-    ~ParticleFilter();
+	/*
+	 * The deconstructor 
+	 */
+	~ParticleFilter();
 
-    /*
-    * The initializeParticles initializes the particles by setting the total number of particles, initial
-    * guess and randomly generating the particles around the initial guess.
-    */
-    void initializeParticles();
+	/*
+	* The initializeParticles initializes the particles by setting the total number of particles, initial
+	* guess and randomly generating the particles around the initial guess.
+	*/
+	void initializeParticles();
 
-    /***geometry***/
-    cv::Mat  Projection_l;
-    cv::Mat  Projection_r;
-    bool freshCameraInfo;
-    // void timerCallback(const ros::TimerEvent&);
+	/***consider getting a timer to debug***/
+	// void timerCallback(const ros::TimerEvent&);
 
-    /*
-     * This is the main function for tracking the needle. This function is called and it syncs all of the functions
-    */
-    std::vector<cv::Mat>
-    trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,
-                 const cv::Mat &P_left, const cv::Mat &P_right);
+	/*
+	 * This is the main function for tracking the needle. This function is called and it syncs all of the functions
+	*/
+	std::vector<cv::Mat>
+	trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,
+				 const cv::Mat &P_left, const cv::Mat &P_right);
+	/*
+	 * resampling method
+	 */
+/*	void
+	resampleLowVariance(const std::vector<ToolModel::toolModel> &initial, const std::vector<double> &particleWeight,
+						std::vector<ToolModel::toolModel> &results);*/
+	void resamplingParticles(const std::vector<ToolModel::toolModel> &sampleModel,
+							 const std::vector<double> &particleWeight,
+							 std::vector<ToolModel::toolModel> &update_particles);
 
-    /*
-     * resampling method
-     */
-/*    void
-    resampleLowVariance(const std::vector<ToolModel::toolModel> &initial, const std::vector<double> &particleWeight,
-                        std::vector<ToolModel::toolModel> &results);*/
-    void resamplingParticles(const std::vector<ToolModel::toolModel> &sampleModel,
-                                             const std::vector<double> &particleWeight,
-                                             std::vector<ToolModel::toolModel> &update_particles,
-                                             std::vector<double> &update_weights);
+	/*
+	 * update particles
+	 */
+	void updateSamples(const cv::Mat &bodyVel, double &updateRate);
 
-    /*
-     * update particles
-     */
-    void updateParticles(const cv::Mat &bodyVel, double &updateRate);
-    void updateSamples(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
-                                         std::vector<ToolModel::toolModel> &updateParticles,ToolModel::toolModel &bestParticle);
-    /*
-     * perturb the particles for more usable poses
-     */
-    cv::Mat addNoise(cv::Mat &inputMat);
+	void updateParticles(std::vector<ToolModel::toolModel> &oldParticles,
+					   std::vector<ToolModel::toolModel> &updateParticles, ToolModel::toolModel &bestParticle);
+	/*
+	 * Uncented Kalman filter update
+	 */
+	void UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma,
+							  cv::Mat &zt, cv::Mat &ut);
 
-    cv::Mat adjoint(cv::Mat &G);
+	cv::Mat adjoint(cv::Mat &G);
 
 };
 

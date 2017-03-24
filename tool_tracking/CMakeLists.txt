@@ -5,11 +5,8 @@ find_package(catkin_simple REQUIRED)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(Eigen3 REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIR})
-add_definitions(${EIGEN_DEFINITIONS})
 
-find_package(catkin REQUIRED COMPONENTS message_generation std_msgs sensor_msgs geometry_msgs cwru_opencv_common tool_model vesselness_image_filter )
+find_package(catkin REQUIRED COMPONENTS message_generation std_msgs sensor_msgs geometry_msgs cwru_opencv_common tool_model vesselness_image_filter cwru_davinci_interface )
 
 find_package(OpenCV REQUIRED)
 
@@ -34,12 +31,12 @@ catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs geometry_msgs
               src/particle_filter.cpp
   )
 
-cs_add_executable(tracking_main src/tracking_main.cpp)
+cs_add_executable(tracking_particle src/tracking_particle.cpp)
 #the following is required, if desire to link a node in this package with a library created in this same package
 # edit the arguments to reference the named node and named library within this package
 # target_link_library(example my_lib)
 target_link_libraries(tool_tracking tool_model_lib)
-target_link_libraries(tracking_main tool_tracking vesselness_image_filter_common_lib)
+target_link_libraries(tracking_particle tool_tracking vesselness_image_filter_common_lib)
 
 
 cs_install()

@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     ROS_INFO("After Loading Model and Initialization, please press ENTER to go on");
     cin.ignore();
 
-    cv::Mat testImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3
+    cv::Mat testImg = cv::Mat::zeros(480, 640, CV_64FC1); //CV_8UC3
     cv::Mat P(3, 4, CV_64FC1);
 
 //    cv::Size size(640, 480);
@@ -83,22 +83,13 @@ int main(int argc, char **argv) {
     initial.rvec_elp(1) = 0.0;
     initial.rvec_elp(2) = -1;
 
-/*
     ToolModel::toolModel newTool;
 
-    clock_t t;
-    clock_t t1;
-    clock_t t2;
-
     newToolModel.computeModelPose(initial, 0.1, 0.3, 0.1 );
-
-    t = clock();
     newToolModel.renderTool(testImg, initial, Cam, P);
-    t = clock() - t;
 
-    cv::Mat segImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3
+    //cv::imwrite("/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/new.png", testImg);
 
-    */
 /********write a test segmentation ********//*
 
     ToolModel::toolModel newModel;

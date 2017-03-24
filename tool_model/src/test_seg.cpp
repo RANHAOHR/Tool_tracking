@@ -27,7 +27,6 @@ bool freshImage;
 bool freshCameraInfo;
 // bool freshVelocity;
 // using namespace cv_projective;
-// double Arr[6];
 using namespace std;
 
 // updates the local image.
@@ -163,9 +162,6 @@ Mat seg_right;
 	  		imshow( "Left_Segmented", seg_left );
     		imshow( "right_raw_img", rawImage_right);
 	  		imshow( "Right_Segmented", seg_right );
-
-			imwrite("/home/rxh349/ros_ws/src/Tool_tracking/raw_left.png", rawImage_left);
-			imwrite("/home/rxh349/ros_ws/src/Tool_tracking/raw_right.png", rawImage_right);
 
 			  //cout<<"after imshow"<<endl;
 			waitKey(10);
