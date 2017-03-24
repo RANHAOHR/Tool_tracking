@@ -110,10 +110,6 @@ devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libtinyxml.
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libclass_loader.so
 devel/lib/tool_tracking/tracking_particle: /usr/lib/libPocoFoundation.so
 devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libdl.so
-devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libroscpp.so
-devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_signals.so
-devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_filesystem.so
-devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libxmlrpcpp.so
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libroslib.so
 devel/lib/tool_tracking/tracking_particle: /home/rxh349/ros_ws/devel/lib/libcv_bridge.so
 devel/lib/tool_tracking/tracking_particle: /usr/local/lib/libopencv_videostab.so.3.0.0
@@ -145,6 +141,11 @@ devel/lib/tool_tracking/tracking_particle: /usr/local/lib/libopencv_cudabgsegm.s
 devel/lib/tool_tracking/tracking_particle: /usr/local/lib/libopencv_cudaarithm.so.3.0.0
 devel/lib/tool_tracking/tracking_particle: /usr/local/lib/libopencv_core.so.3.0.0
 devel/lib/tool_tracking/tracking_particle: /usr/local/lib/libopencv_calib3d.so.3.0.0
+devel/lib/tool_tracking/tracking_particle: /home/rxh349/ros_ws/devel/lib/libdavinci_interface.so
+devel/lib/tool_tracking/tracking_particle: /home/rxh349/ros_ws/devel/lib/libdavinci_kinematics.so
+devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libroscpp.so
+devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_signals.so
+devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_filesystem.so
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/librosconsole.so
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/librosconsole_log4cxx.so
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/librosconsole_backend_interface.so
@@ -153,12 +154,12 @@ devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_re
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libroscpp_serialization.so
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/librostime.so
 devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_date_time.so
+devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libxmlrpcpp.so
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libcpp_common.so
 devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_system.so
 devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_thread.so
 devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libpthread.so
 devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libconsole_bridge.so
-devel/lib/tool_tracking/tracking_particle: /home/rxh349/ros_ws/devel/lib/libdavinci_interface.so
 devel/lib/tool_tracking/tracking_particle: devel/lib/libtool_tracking_particle.so
 devel/lib/tool_tracking/tracking_particle: /home/rxh349/ros_ws/devel/lib/libtool_model_lib.so
 devel/lib/tool_tracking/tracking_particle: /home/rxh349/ros_ws/devel/lib/libopencv_ui_lib.so
@@ -180,10 +181,6 @@ devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libtinyxml.
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libclass_loader.so
 devel/lib/tool_tracking/tracking_particle: /usr/lib/libPocoFoundation.so
 devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libdl.so
-devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libroscpp.so
-devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_signals.so
-devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_filesystem.so
-devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libxmlrpcpp.so
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libroslib.so
 devel/lib/tool_tracking/tracking_particle: /home/rxh349/ros_ws/devel/lib/libcv_bridge.so
 devel/lib/tool_tracking/tracking_particle: /usr/local/lib/libopencv_videostab.so.3.0.0
@@ -215,6 +212,11 @@ devel/lib/tool_tracking/tracking_particle: /usr/local/lib/libopencv_cudabgsegm.s
 devel/lib/tool_tracking/tracking_particle: /usr/local/lib/libopencv_cudaarithm.so.3.0.0
 devel/lib/tool_tracking/tracking_particle: /usr/local/lib/libopencv_core.so.3.0.0
 devel/lib/tool_tracking/tracking_particle: /usr/local/lib/libopencv_calib3d.so.3.0.0
+devel/lib/tool_tracking/tracking_particle: /home/rxh349/ros_ws/devel/lib/libdavinci_interface.so
+devel/lib/tool_tracking/tracking_particle: /home/rxh349/ros_ws/devel/lib/libdavinci_kinematics.so
+devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libroscpp.so
+devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_signals.so
+devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_filesystem.so
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/librosconsole.so
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/librosconsole_log4cxx.so
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/librosconsole_backend_interface.so
@@ -223,12 +225,12 @@ devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_re
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libroscpp_serialization.so
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/librostime.so
 devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_date_time.so
+devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libxmlrpcpp.so
 devel/lib/tool_tracking/tracking_particle: /opt/ros/jade/lib/libcpp_common.so
 devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_system.so
 devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libboost_thread.so
 devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libpthread.so
 devel/lib/tool_tracking/tracking_particle: /usr/lib/x86_64-linux-gnu/libconsole_bridge.so
-devel/lib/tool_tracking/tracking_particle: /home/rxh349/ros_ws/devel/lib/libdavinci_interface.so
 devel/lib/tool_tracking/tracking_particle: CMakeFiles/tracking_particle.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable devel/lib/tool_tracking/tracking_particle"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/tracking_particle.dir/link.txt --verbose=$(VERBOSE)

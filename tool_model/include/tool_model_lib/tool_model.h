@@ -156,7 +156,7 @@ public:
                        std::vector<cv::Point3d> &input_Vpts, std::vector<cv::Point3d> &input_Npts, double &offset,
                        cv::Mat &input_Vmat, cv::Mat &input_Nmat);//there are offsets when loading the model convert
 
-    toolModel setRandomConfig(const toolModel &seeds);
+    toolModel setRandomConfig(const toolModel &seeds, const double &theta);
     ToolModel::toolModel gaussianSampling(const toolModel &max_pose, double step);
 
 
@@ -168,6 +168,9 @@ public:
     void computeEllipsePose(toolModel &inputmodel, const double &theta_ellipse, const double &theta_grip_1,
                           const double &theta_grip_2);
 
+    void computeRandomPose(const toolModel &seed_pose, toolModel &inputModel, const double &theta_tool, const double &theta_grip_1,
+                                      const double &theta_grip_2);
+
     //cam view need to be modified
     void renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P,
                         cv::OutputArray = cv::noArray());
@@ -175,7 +178,7 @@ public:
     cv::Point2d reproject(const cv::Mat &point, const cv::Mat &P);
 
     ///measurement for perception model
-    double calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage);
+    float calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage);
     float calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmentedImage);
 
     /**************compute silhouettes*****************/

@@ -4,5 +4,5 @@ Name: tool_tracking
 Description: Description of tool_tracking
 Version: 0.0.0
 Cflags: -I/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/include
-Libs: -L/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib -ltool_tracking
-Requires: cv_bridge image_transport roscpp sensor_msgs std_msgs message_runtime cwru_opencv_common vesselness_image_filter tool_model geometry_msgs cwru_davinci_interface
+Libs: -L/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib -ltool_tracking_particle -ltool_tracking_kalman
+Requires: cv_bridge image_transport roscpp sensor_msgs std_msgs message_runtime cwru_opencv_common vesselness_image_filter tool_model geometry_msgs cwru_davinci_interface cwru_davinci_kinematics

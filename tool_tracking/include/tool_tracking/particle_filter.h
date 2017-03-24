@@ -151,7 +151,7 @@ public:
 	 */
 	void updateSamples(const cv::Mat &bodyVel, double &updateRate);
 
-	void updateParticles(std::vector<ToolModel::toolModel> &oldParticles, std::vector<double> &update_weights,
+	void updateParticles(std::vector<ToolModel::toolModel> &oldParticles,
 					   std::vector<ToolModel::toolModel> &updateParticles, ToolModel::toolModel &bestParticle);
 	/*
 	 * Uncented Kalman filter update

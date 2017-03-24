@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
 	ROS_INFO("---- done subscribe -----");
 
 	/***testing segmentation images***/
-	cv::Size size(640, 480);
+	cv::Size size(640, 475);
 	std::string package = ros::package::getPath("tool_tracking"); ////warning: do not have one package with the same name
 	//seg_left = cv::imread(package + "/left.png", CV_LOAD_IMAGE_GRAYSCALE );
 	seg_left = cv::imread(package + "/new.png", CV_LOAD_IMAGE_GRAYSCALE );  //testing image
