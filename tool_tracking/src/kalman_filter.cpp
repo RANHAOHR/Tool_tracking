@@ -43,7 +43,7 @@
 using namespace std;
 
 KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
-		nh_(*nodehandle), numParticles(100), Downsample_rate(0.02), toolSize(2), L(7) {
+		nh_(*nodehandle), numParticles(100), Downsample_rate(0.02), toolSize(2), L(12) {
 		
 	ROS_INFO("Initializing UKF...");
 
@@ -120,6 +120,7 @@ void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& 
 	}
 };
 
+//Deprecated by KalmanFilter::update(). Archival code only. 
 std::vector<cv::Mat> KalmanFilter::trackingTool(
 	//Got rid of bodyVel as velocity data will now be coming from internal sources. Or something.
 	const cv::Mat &segmented_left,
@@ -209,8 +210,6 @@ cv::Mat KalmanFilter::adjoint(cv::Mat &G) {
 };
 
 void KalmanFilter::update(){
-	ROS_INFO("UPDATING KALMAN FILTER");
-	
 	//Get sensor update.
 	std::vector<std::vector<double> > tmp;
 	if(davinci_interface::get_fresh_robot_pos(tmp)){
@@ -232,16 +231,20 @@ void KalmanFilter::update(){
 		*yellow_rpy.data()
 	);
 	
+	ROS_INFO("GREEN LIMB TRANS (%f, %f, %f); RPY (%f, %f, %f)", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
+	ROS_INFO("YELLOW LIMB TRANS (%f, %f, %f); RPY (%f, %f, %f)", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
+	
 	//TODO: Figure out how to pre-process desired positions
 	
 	//Generate the sigma points.
 	
-	double lamda = alpha * alpha * (L + k) - L;
+	double lambda = alpha * alpha * (L + k) - L;
 
-	double gamma = L + lamda;
+	double gamma = L + lambda;
 	gamma = pow(gamma, 0.5);
 	
 	//L is the dimension of the joint space for single arm
+	//TODO: SINGLE arm??
 
 	///get the square root for sigma
 	cv::Mat square_sigma = cv::Mat::zeros(L, 1, CV_64FC1);
@@ -253,18 +256,37 @@ void KalmanFilter::update(){
 	cv::SVD::compute(kalman_sigma, s, u, vt);  //s is supposed to be the one we are asking for, the sigular values
 
 	square_sigma = s.clone(); //safe way to pass values to a cv Mat
+	ROS_INFO_STREAM("square_sigma," << square_sigma.type());
+	
+	ROS_INFO("PAST SQRT STUFF");
 
-	std::vector<cv::Mat> state_vecs;
+	std::vector<cv::Mat_<double> > state_vecs;
 	state_vecs.resize(2*L); ///size is 2L
+	
+	ROS_INFO("PAST ALLOCATE");
 
 	state_vecs[0] = kalman_mu.clone();   //X_nod
+	
+	ROS_INFO("PAST CLONE.");
+	
+	ROS_INFO("MU: %d, %d", state_vecs[0].rows, state_vecs[0].cols);
+	ROS_INFO("SQ: %d, %d", square_sigma.rows, square_sigma.cols);
+	cv::Mat_<double> sq_sum = gamma * square_sigma;
+	
+	ROS_INFO("SQ_SUM: %d, %d", sq_sum.rows, sq_sum.cols);
+	//TODO
+	ROS_INFO_STREAM("sq_sum: " << sq_sum.type());
+	
+	ROS_INFO("READY FOR LOOP: %d %d", sq_sum.rows, sq_sum.cols);
 	for (int i = 1; i < L; ++i) {
-		state_vecs[i] = state_vecs[0] + gamma * square_sigma;
-		state_vecs[i + L] = state_vecs[0] - gamma * square_sigma;
+		state_vecs[i] = state_vecs[0] + sq_sum;
+		state_vecs[i + L] = state_vecs[0] - sq_sum;
 	}
 
-	double weight_mean = lamda / (L + lamda);
+	double weight_mean = lambda / (L + lambda);
 	double weight_covariance = weight_mean + 1-alpha * alpha + beta;
+	
+	ROS_INFO("PAST WEIGHTS");
 
 	std::vector<double> weight_vec_c;
 	std::vector<double> weight_vec_m;
@@ -275,8 +297,8 @@ void KalmanFilter::update(){
 	weight_vec_m[0] = weight_covariance;
 
 	for (int l = 1; l < 2*L; ++l) {
-		weight_vec_c[l] = 1/(2 * (L + lamda ));
-		weight_vec_m[l] = 1/(2 * (L + lamda ));
+		weight_vec_c[l] = 1/(2 * (L + lambda ));
+		weight_vec_m[l] = 1/(2 * (L + lambda ));
 	}
 
 	/***get the prediction***/
@@ -293,13 +315,22 @@ void KalmanFilter::update(){
 	
 	//TODO: Accomodate desired trajectories in a more complex motion model.
 	
+	ROS_INFO("PAST MODEL FINDING");
+	
 	cv::Mat R = cv::Mat::eye(L,L,CV_64FC1);
 	R = R * 0.037;
+	
+	ROS_INFO("generated r");
 
 	for (int m = 0; m < 2*L; ++m) {
+		ROS_INFO("CSV: %d, %d.", currentState_vec[m].rows, currentState_vec[m].cols);
 		cv::Mat temp = weight_vec_m[m] * currentState_vec[m];
+		ROS_INFO("LINE 2");
+		ROS_INFO("CM: %d, %d.",  current_mu.rows,  current_mu.cols);
 		current_mu = current_mu + temp;
 	}
+	
+	ROS_INFO("generated loop 1");
 
 	for (int n = 0; n < 2*L; ++n) {
 		cv::Mat var_mat = currentState_vec[n] - current_mu;
@@ -307,6 +338,9 @@ void KalmanFilter::update(){
 		cv::Mat temp_mat = weight_vec_c[n] * var_mat * var_mat.t();
 		current_sigma = current_sigma + temp_mat;
 	}
+	
+	
+	ROS_INFO("Past secondary loop;s..");
 
 	current_sigma = current_sigma + R;
 
@@ -318,6 +352,8 @@ void KalmanFilter::update(){
 	cv::SVD::compute(current_sigma, s, u, vt);  //s is supposed to be the one we are asking for, the sigular values
 
 	square_sigma = s.clone(); //safe way to pass values to a cv Mat
+	
+	ROS_INFO("PREPATING FOR FINAL LOOP.");
 
 	updateState_vec[0] = current_mu.clone();   //X_nod
 	for (int i = 1; i < L; ++i) {
@@ -329,6 +365,9 @@ void KalmanFilter::update(){
 	current_z_vec.resize(2*L);
 	
 	//TODO: Process the sigma points based on the image.
+	//Render our own version of the arm.
+	//Pull in the image version.
+	//Compute the matching score.
 }
 
 //This has been retained for archival purposes.
@@ -338,9 +377,9 @@ void KalmanFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma
 
 	//L is the dimension of the joint space for single arm
 
-	double lamda = alpha * alpha * (L + k) - L;
+	double lambda = alpha * alpha * (L + k) - L;
 
-	double gamma = L + lamda;
+	double gamma = L + lambda;
 	gamma = pow(gamma, 0.5);
 
 	///get the square root for sigma
@@ -363,7 +402,7 @@ void KalmanFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma
 		state_vecs[i + L] = state_vecs[0] - gamma * square_sigma;
 	}
 
-	double weight_mean = lamda / (L + lamda);
+	double weight_mean = lambda / (L + lambda);
 	double weight_covariance = weight_mean + 1-alpha * alpha + beta;
 
 	std::vector<double> weight_vec_c;
@@ -375,8 +414,8 @@ void KalmanFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma
 	weight_vec_m[0] = weight_covariance;
 
 	for (int l = 1; l < 2*L; ++l) {
-		weight_vec_c[l] = 1/(2 * (L + lamda ));
-		weight_vec_m[l] = 1/(2 * (L + lamda ));
+		weight_vec_c[l] = 1/(2 * (L + lambda ));
+		weight_vec_m[l] = 1/(2 * (L + lambda ));
 	}
 
 	/***get the prediction***/
