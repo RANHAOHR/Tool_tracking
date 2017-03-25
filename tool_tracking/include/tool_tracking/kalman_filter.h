@@ -131,6 +131,8 @@ private:
 
     cv::Mat P_left;
     cv::Mat P_right;
+    
+    double matching_score(const cv::Mat & stat);
 
 public:
 
@@ -154,7 +156,7 @@ public:
 
     void update(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
-    void convertToolModel(std::vector<cv::Mat> &toolMat, std::vector<ToolModel::toolModel> &toolModel);
+    void convertToolModel(const cv::Mat &toolMat, ToolModel::toolModel &toolModel, int arm);
 	/*
 	 * Uncented Kalman filter update
 	 */

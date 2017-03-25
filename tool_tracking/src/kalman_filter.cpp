@@ -98,7 +98,6 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 		*yellow_pos.data(),
 		*yellow_rpy.data()
 	);
-	ROS_INFO("%f, %f, %f", kalman_mu.at<double>(1, 1), kalman_mu.at<double>(5, 1), kalman_mu.at<double>(11, 1));
 	kalman_sigma = (cv::Mat::zeros(12, 12, CV_32F));
 
 	freshCameraInfo = false; //should be left and right
@@ -264,9 +263,6 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 		*yellow_rpy.data()
 	);
 	
-	ROS_INFO("GREEN LIMB TRANS (%f, %f, %f); RPY (%f, %f, %f)", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
-	ROS_INFO("YELLOW LIMB TRANS (%f, %f, %f); RPY (%f, %f, %f)", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
-	
 	//TODO: Figure out how to pre-process desired positions
 	
 	//Generate the sigma points.
@@ -289,28 +285,13 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	cv::SVD::compute(kalman_sigma, s, u, vt);  //s is supposed to be the one we are asking for, the sigular values
 
 	square_sigma = s.clone(); //safe way to pass values to a cv Mat
-	ROS_INFO_STREAM("square_sigma," << square_sigma.type());
-	
-	ROS_INFO("PAST SQRT STUFF");
 
 	std::vector<cv::Mat_<double> > state_vecs;
 	state_vecs.resize(2*L); ///size is 2L
-	
-	ROS_INFO("PAST ALLOCATE");
 
 	state_vecs[0] = kalman_mu.clone();   //X_nod
 	
-	ROS_INFO("PAST CLONE.");
-	
-	ROS_INFO("MU: %d, %d", state_vecs[0].rows, state_vecs[0].cols);
-	ROS_INFO("SQ: %d, %d", square_sigma.rows, square_sigma.cols);
 	cv::Mat_<double> sq_sum = gamma * square_sigma;
-	
-	ROS_INFO("SQ_SUM: %d, %d", sq_sum.rows, sq_sum.cols);
-	//TODO
-	ROS_INFO_STREAM("sq_sum: " << sq_sum.type());
-	
-	ROS_INFO("READY FOR LOOP: %d %d", sq_sum.rows, sq_sum.cols);
 	for (int i = 1; i < L; ++i) {
 		state_vecs[i] = state_vecs[0] + sq_sum;
 		state_vecs[i + L] = state_vecs[0] - sq_sum;
@@ -318,8 +299,6 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 
 	double weight_mean = lambda / (L + lambda);
 	double weight_covariance = weight_mean + 1-alpha * alpha + beta;
-	
-	ROS_INFO("PAST WEIGHTS");
 
 	std::vector<double> weight_vec_c;
 	std::vector<double> weight_vec_m;
@@ -348,22 +327,13 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	
 	//TODO: Accomodate desired trajectories in a more complex motion model.
 	
-	ROS_INFO("PAST MODEL FINDING");
-	
 	cv::Mat R = cv::Mat::eye(L,L,CV_64FC1);
 	R = R * 0.037;
-	
-	ROS_INFO("generated r");
 
 	for (int m = 0; m < 2*L; ++m) {
-		ROS_INFO("CSV: %d, %d.", currentState_vec[m].rows, currentState_vec[m].cols);
 		cv::Mat temp = weight_vec_m[m] * currentState_vec[m];
-		ROS_INFO("LINE 2");
-		ROS_INFO("CM: %d, %d.",  current_mu.rows,  current_mu.cols);
 		current_mu = current_mu + temp;
 	}
-	
-	ROS_INFO("generated loop 1");
 
 	for (int n = 0; n < 2*L; ++n) {
 		cv::Mat var_mat = currentState_vec[n] - current_mu;
@@ -371,9 +341,6 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 		cv::Mat temp_mat = weight_vec_c[n] * var_mat * var_mat.t();
 		current_sigma = current_sigma + temp_mat;
 	}
-	
-	
-	ROS_INFO("Past secondary loop;s..");
 
 	current_sigma = current_sigma + R;
 
@@ -386,33 +353,61 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 
 	square_sigma = s.clone(); //safe way to pass values to a cv Mat
 	
-	ROS_INFO("PREPATING FOR FINAL LOOP.");
-
 	updateState_vec[0] = current_mu.clone();   //X_nod
 	for (int i = 1; i < L; ++i) {
 		updateState_vec[i] = updateState_vec[0] + gamma * square_sigma;
 		updateState_vec[i + L] = updateState_vec[0] - gamma * square_sigma;
 	}
+	
+	std::vector<double> mscores;
+	mscores.resize(2*L);
+	for(int i = 0; i < 2*L; i++){
+		mscores[i] = matching_score(currentState_vec[i]);
+	}
 
 //	std::vector<cv::Mat> current_z_vec;
 //	current_z_vec.resize(2*L);
 
-	std::vector<double> current_z_vec;
-	current_z_vec.resize(2*L);
+	//std::vector<double> current_z_vec;
+	//current_z_vec.resize(2*L);
 
-	std::vector<ToolModel::toolModel> currentTool;
-	currentTool.resize(2*L);
+	//std::vector<ToolModel::toolModel> currentTool;
+	//currentTool.resize(2*L);
+
 
 
 	//TODO: Process the sigma points based on the image.
-	convertToolModel(updateState_vec,currentTool);  ////from cv::Mat to
-	measureFunc(currentTool, segmented_left, segmented_right, current_z_vec );
+	//convertToolModel(updateState_vec,currentTool);  ////from cv::Mat to
+	//measureFunc(currentTool, segmented_left, segmented_right, current_z_vec );
 	//Render our own version of the arm.
 	//Pull in the image version.
 	//Compute the matching score.
 };
 
-void KalmanFilter::convertToolModel(std::vector<cv::Mat> &toolMat, std::vector<ToolModel::toolModel> &toolModel){
+double KalmanFilter::matching_score(const cv::Mat & stat){
+
+	//Render the tool.
+	ToolModel::toolModel a1;
+	ToolModel::toolModel a2;
+	convertToolModel(stat, a1, 1);
+	convertToolModel(stat, a2, 2);
+	
+	
+
+	return -1.0;
+}
+
+void KalmanFilter::convertToolModel(const cv::Mat &toolMat, ToolModel::toolModel &toolModel, int arm){
+
+	int offset = (arm - 1) * 6;
+
+	toolModel.tvec_elp(0) = toolMat.at<double>(1 + offset, 1);  //left and right (image frame)
+	toolModel.tvec_elp(1) = toolMat.at<double>(2 + offset, 1); //up and down
+	toolModel.tvec_elp(2) = toolMat.at<double>(3 + offset, 1);
+	toolModel.rvec_elp(0) = toolMat.at<double>(4 + offset, 1);
+	toolModel.rvec_elp(1) = toolMat.at<double>(5 + offset, 1);
+	toolModel.rvec_elp(2) = toolMat.at<double>(6 + offset, 1);
+
 
 };
 //This has been retained for archival purposes.
@@ -529,7 +524,7 @@ void KalmanFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma
 	Q = Q * 0.00038;
 
 	S_t = S_t + Q;
-	////get cross-covariance
+	//get cross-covariance
 	cv::Mat omega_x_z  = cv::Mat::zeros(2*L, 1, CV_64FC1);
 
 	for (int k1 = 0; k1 < 2*L; ++k1) {
