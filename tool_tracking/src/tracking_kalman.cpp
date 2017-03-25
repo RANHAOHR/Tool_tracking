@@ -138,9 +138,9 @@ int main(int argc, char **argv) {
 	/***testing segmentation images***/
 	cv::Size size(640, 480);
 	std::string package = ros::package::getPath("tool_tracking");
-	seg_left = cv::imread(package + "/left.png", CV_LOAD_IMAGE_GRAYSCALE );
+	seg_left = cv::imread(package + "/left.png", CV_LOAD_IMAGE_GRAYSCALE);
 	//seg_left = cv::imread(package + "/particle_test.png", CV_LOAD_IMAGE_GRAYSCALE );  //testing image
-	seg_right = cv::imread(package + "/right.png", CV_LOAD_IMAGE_GRAYSCALE );
+	seg_right = cv::imread(package + "/right.png", CV_LOAD_IMAGE_GRAYSCALE);
 
 
 	cv::Mat new_seg_left = seg_left.rowRange(5,480);
@@ -154,7 +154,25 @@ int main(int argc, char **argv) {
 
 	while (nh.ok()) {
 		ros::spinOnce();
+		
+		if (freshImage){
+
+			seg_left = segmentation(rawImage_left);  //or use image_vessselness
+			seg_right = segmentation(rawImage_right);
+////
+			cv::imshow("Cam L", rawImage_left);
+			cv::imshow("Cam R", rawImage_right);
+			cv::imshow("Seg L", seg_left);
+			cv::imshow("Seg R", seg_right);
+			cv::waitKey(50);
+//
+			freshImage = false;
+			freshVelocity = false;
+		}
+		
 		//We want to update our filter whenever the robot is doing anything, not just when we are getting images.
+
+		UKF.update(seg_left, seg_right);
 
 		/*** make sure camera information is ready ***/
 		//This does not seem useful at all.
@@ -168,7 +186,6 @@ int main(int argc, char **argv) {
 //		/*** if camera is ready, doing the tracking based on segemented image***/
 		//if (freshImage /*&& freshVelocity && freshCameraInfo*/){
 /*
-			//The segmentation thingy does something.
 			seg_left = segmentation(rawImage_left);  //or use image_vessselness
 			seg_right = segmentation(rawImage_right);
 		UKF.update(seg_left, seg_right );
