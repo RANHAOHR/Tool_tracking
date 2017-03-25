@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
 	while (nh.ok()) {
 		ros::spinOnce();
 		//We want to update our filter whenever the robot is doing anything, not just when we are getting images.
-		UKF.update();
+
 		/*** make sure camera information is ready ***/
 		//This does not seem useful at all.
 		//if(!freshCameraInfo){
@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
 			//The segmentation thingy does something.
 			seg_left = segmentation(rawImage_left);  //or use image_vessselness
 			seg_right = segmentation(rawImage_right);
-
+		UKF.update(seg_left, seg_right );
 			trackingImgs = UKF.trackingTool(
 				new_seg_left,
 				new_seg_right,

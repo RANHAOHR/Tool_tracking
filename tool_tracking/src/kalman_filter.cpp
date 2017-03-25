@@ -371,8 +371,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 		cv::Mat temp_mat = weight_vec_c[n] * var_mat * var_mat.t();
 		current_sigma = current_sigma + temp_mat;
 	}
-	
-	
+
 	ROS_INFO("Past secondary loop;s..");
 
 	current_sigma = current_sigma + R;
@@ -382,7 +381,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	updateState_vec.resize(2*L);
 
 	//compute new square root for current sigma
-	cv::SVD::compute(current_sigma, s, u, vt);  //s is supposed to be the one we are asking for, the sigular values
+	cv::SVD::compute(current_sigma, s, u, vt);  //s is supposed to be the one we are asking for, the singular values
 
 	square_sigma = s.clone(); //safe way to pass values to a cv Mat
 	
@@ -402,7 +401,6 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 
 	std::vector<ToolModel::toolModel> currentTool;
 	currentTool.resize(2*L);
-
 
 	//TODO: Process the sigma points based on the image.
 	convertToolModel(updateState_vec,currentTool);  ////from cv::Mat to
