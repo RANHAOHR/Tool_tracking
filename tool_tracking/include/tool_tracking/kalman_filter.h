@@ -54,7 +54,7 @@
 #include <tool_model_lib/tool_model.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <sensor_msgs/image_encodings.h>
+
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 
@@ -64,7 +64,8 @@
 #include <geometry_msgs/Transform.h>
 #include <cwru_davinci_interface/davinci_interface.h>
 #include <cwru_davinci_kinematics/davinci_kinematics.h>
-
+#include <sensor_msgs/image_encodings.h>
+#include <cwru_opencv_common/projective_geometry.h>
 
 class KalmanFilter {
 
@@ -83,7 +84,6 @@ private:
 	unsigned int toolSize; //size of the needle to be rendered
 	double Downsample_rate;
 
-	unsigned int numParticles; //total number of particles
 	cv::Mat toolImage_left; //left rendered Image
 	cv::Mat toolImage_right; //right rendered Image
 
@@ -120,6 +120,18 @@ private:
 	cv::Mat kalman_sigma;
 	
 	Davinci_fwd_solver kinematics;
+
+    bool freshCameraInfo;
+
+    ros::Subscriber projectionMat_subscriber_r;
+    ros::Subscriber projectionMat_subscriber_l;
+
+    void projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight);
+    void projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft);
+
+    cv::Mat P_left;
+    cv::Mat P_right;
+
 public:
 
 	/*
@@ -138,15 +150,11 @@ public:
 	/*
 	 * This is the main function for tracking the needle. This function is called and it syncs all of the functions
 	*/
-	std::vector<cv::Mat> trackingTool(
-		const cv::Mat &segmented_left,
-		const cv::Mat &segmented_right,
-		const cv::Mat &P_left,
-		const cv::Mat &P_right
-	);
-	
-	void update();
-	
+    void measureFunc(std::vector<ToolModel::toolModel> &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, std::vector<double> &matchingScore);
+
+    void update(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+
+    void convertToolModel(std::vector<cv::Mat> &toolMat, std::vector<ToolModel::toolModel> &toolModel);
 	/*
 	 * Uncented Kalman filter update
 	 */

@@ -43,7 +43,7 @@
 using namespace std;
 
 KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
-		nh_(*nodehandle), numParticles(100), Downsample_rate(0.02), toolSize(2), L(12) {
+		nh_(*nodehandle), Downsample_rate(0.02), toolSize(2), L(12) {
 		
 	ROS_INFO("Initializing UKF...");
 
@@ -100,8 +100,57 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	);
 	ROS_INFO("%f, %f, %f", kalman_mu.at<double>(1, 1), kalman_mu.at<double>(5, 1), kalman_mu.at<double>(11, 1));
 	kalman_sigma = (cv::Mat::zeros(12, 12, CV_32F));
+
+	freshCameraInfo = false; //should be left and right
+	projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/unsynced/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
+	projectionMat_subscriber_l = nh_.subscribe("/davinci_endo/unsynced/left/camera_info", 1, &KalmanFilter::projectionLeftCB, this);
+
+	P_left = cv::Mat::zeros(3,4,CV_64FC1);
+	P_right = cv::Mat::zeros(3,4,CV_64FC1);
+
 };
 
+void KalmanFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight){
+
+	P_right.at<double>(0,0) = projectionRight->P[0];
+	P_right.at<double>(0,1) = projectionRight->P[1];
+	P_right.at<double>(0,2) = projectionRight->P[2];
+	P_right.at<double>(0,3) = projectionRight->P[3];
+
+	P_right.at<double>(1,0) = projectionRight->P[4];
+	P_right.at<double>(1,1) = projectionRight->P[5];
+	P_right.at<double>(1,2) = projectionRight->P[6];
+	P_right.at<double>(1,3) = projectionRight->P[7];
+
+	P_right.at<double>(2,0) = projectionRight->P[8];
+	P_right.at<double>(2,1) = projectionRight->P[9];
+	P_right.at<double>(2,2) = projectionRight->P[10];
+	P_right.at<double>(2,3) = projectionRight->P[11];
+
+	ROS_INFO_STREAM("right: " << P_right);
+	freshCameraInfo = true;
+};
+
+void KalmanFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft){
+
+	P_left.at<double>(0,0) = projectionLeft->P[0];
+	P_left.at<double>(0,1) = projectionLeft->P[1];
+	P_left.at<double>(0,2) = projectionLeft->P[2];
+	P_left.at<double>(0,3) = projectionLeft->P[3];
+
+	P_left.at<double>(1,0) = projectionLeft->P[4];
+	P_left.at<double>(1,1) = projectionLeft->P[5];
+	P_left.at<double>(1,2) = projectionLeft->P[6];
+	P_left.at<double>(1,3) = projectionLeft->P[7];
+
+	P_left.at<double>(2,0) = projectionLeft->P[8];
+	P_left.at<double>(2,1) = projectionLeft->P[9];
+	P_left.at<double>(2,2) = projectionLeft->P[10];
+	P_left.at<double>(2,3) = projectionLeft->P[11];
+
+	ROS_INFO_STREAM("left: " << P_left);
+	freshCameraInfo = true;
+};
 KalmanFilter::~KalmanFilter() {
 
 };
@@ -121,15 +170,9 @@ void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& 
 };
 
 //Deprecated by KalmanFilter::update(). Archival code only. 
-std::vector<cv::Mat> KalmanFilter::trackingTool(
-	//Got rid of bodyVel as velocity data will now be coming from internal sources. Or something.
-	const cv::Mat &segmented_left,
-	const cv::Mat &segmented_right,
-	const cv::Mat &P_left,
-	const cv::Mat &P_right
-) {
+void KalmanFilter::measureFunc(std::vector<ToolModel::toolModel> &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, std::vector<double> &matchingScore) {
 					 
-	//Looks mostly IP-related; need to resturcture to not be dependant on particles and instead use sigma-points.		
+	//Looks mostly IP-related; need to resturcture to not be dependant on particles and instead use sigma-points.
 
 	std::vector<cv::Mat> trackingImages;
 	trackingImages.resize(2);
@@ -139,46 +182,37 @@ std::vector<cv::Mat> KalmanFilter::trackingTool(
 	double maxScore = 0.0;//track the maximum scored sigma point
 	int maxScoreIdx = -1;//maximum scored SP index
 	double totalScore = 0.0;//total score
-	ToolModel::toolModel best_particle;
 
-		cv::Mat segmentedImage_left = segmented_left.clone();
-		cv::Mat segmentedImage_right = segmented_right.clone();
+	matchingScore.resize(toolPose.size());
 
-		toolImage_left_temp.setTo(0);
-		toolImage_right_temp.setTo(0);
+	cv::Mat segmentedImage_left = segmented_left.clone();
+	cv::Mat segmentedImage_right = segmented_right.clone();
 
+	toolImage_left_temp.setTo(0);
+	toolImage_right_temp.setTo(0);
+
+	for (int i = 0; i < toolPose.size(); ++i) {
 		/***do the sampling and get the matching score***/
-		for (int i = 0; i < numParticles; ++i) {
 
-			toolImage_left.setTo(0); //reset image for every start of an new loop
-			newToolModel.renderTool(toolImage_left, particles[i], Cam_left,
-									P_left); //first get the rendered image using 3d model of the tool
-			double left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left);  //get the matching score
+		toolImage_left.setTo(0); //reset image for every start of an new loop
+		newToolModel.renderTool(toolImage_left, toolPose[i], Cam_left,
+								P_left); //first get the rendered image using 3d model of the tool
+		double left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left);  //get the matching score
 
-			toolImage_right.setTo(0); //reset image
-			newToolModel.renderTool(toolImage_right, particles[i], Cam_right, P_right);
-			double right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right);
+		toolImage_right.setTo(0); //reset image
+		newToolModel.renderTool(toolImage_right, toolPose[i], Cam_right, P_right);
+		double right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right);
 
-			/***testing***/
-			newToolModel.renderTool(toolImage_left_temp, particles[i], Cam_left, P_left);
-			newToolModel.renderTool(toolImage_right_temp, particles[i], Cam_right, P_right);
+		/***testing***/
+		newToolModel.renderTool(toolImage_left_temp, toolPose[i], Cam_left, P_left);
+		newToolModel.renderTool(toolImage_right_temp, toolPose[i], Cam_right, P_right);
 
-			//matchingScores[i] = sqrt(pow(left, 2) + pow(right, 2));
+		matchingScores[i] = sqrt(pow(left, 2) + pow(right, 2));
+	}
 
-			/////what if just for the left tool
-			matchingScores[i] = left;
+		//cv::imshow("temp left", toolImage_left_temp);
 
-			if (matchingScores[i] > maxScore) {
-				maxScore = matchingScores[i];
-				maxScoreIdx = i;
-
-				best_particle = particles[i];
-			}
-			totalScore += matchingScores[i];
-		}
-
-		cv::imshow("temp left", toolImage_left_temp);
-
+		//show the best tool pose
 		newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx], Cam_left, P_left);
 		newToolModel.renderTool(segmentedImage_right, particles[maxScoreIdx], Cam_right, P_right);
 
@@ -189,9 +223,8 @@ std::vector<cv::Mat> KalmanFilter::trackingTool(
 
 		cv::imshow("trackingImages left", trackingImages[0]);
 		//cv::imshow("trackingImages right",trackingImages[1]);
-		cv::waitKey(30);
+		cv::waitKey(10);
 
-	return trackingImages;
 };
 
 cv::Mat KalmanFilter::adjoint(cv::Mat &G) {
@@ -209,7 +242,7 @@ cv::Mat KalmanFilter::adjoint(cv::Mat &G) {
 	return adjG;
 };
 
-void KalmanFilter::update(){
+void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmented_right){
 	//Get sensor update.
 	std::vector<std::vector<double> > tmp;
 	if(davinci_interface::get_fresh_robot_pos(tmp)){
@@ -361,15 +394,27 @@ void KalmanFilter::update(){
 		updateState_vec[i + L] = updateState_vec[0] - gamma * square_sigma;
 	}
 
-	std::vector<cv::Mat> current_z_vec;
+//	std::vector<cv::Mat> current_z_vec;
+//	current_z_vec.resize(2*L);
+
+	std::vector<double> current_z_vec;
 	current_z_vec.resize(2*L);
-	
+
+	std::vector<ToolModel::toolModel> currentTool;
+	currentTool.resize(2*L);
+
+
 	//TODO: Process the sigma points based on the image.
+	convertToolModel(updateState_vec,currentTool);  ////from cv::Mat to
+	measureFunc(currentTool, segmented_left, segmented_right, current_z_vec );
 	//Render our own version of the arm.
 	//Pull in the image version.
 	//Compute the matching score.
-}
+};
 
+void KalmanFilter::convertToolModel(std::vector<cv::Mat> &toolMat, std::vector<ToolModel::toolModel> &toolModel){
+
+};
 //This has been retained for archival purposes.
 //In the new paradigm, it will probably need to be split into two functions/steps. One that computes the sigma points, and one that takes those points and the image data and computes error.
 //For our immediate purposes, a magical function that updates a mu and sigma. He kills aliens and doesn't afraid of anything.
