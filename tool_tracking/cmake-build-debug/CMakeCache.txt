@@ -184,6 +184,124 @@ CMAKE_STRIP:FILEPATH=/usr/bin/strip
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
+//Compile device code in 64 bit mode
+CUDA_64_BIT_DEVICE_CODE:BOOL=ON
+
+//Attach the build rule to the CUDA source file.  Enable only when
+// the CUDA source file is added to at most one target.
+CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE:BOOL=ON
+
+//Generate and parse .cubin files in Device mode.
+CUDA_BUILD_CUBIN:BOOL=OFF
+
+//Build in Emulation mode
+CUDA_BUILD_EMULATION:BOOL=OFF
+
+//"cudart" library
+CUDA_CUDART_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcudart.so
+
+//"cuda" library (older versions only).
+CUDA_CUDA_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libcuda.so
+
+//Directory to put all the output files.  If blank it will default
+// to the CMAKE_CURRENT_BINARY_DIR
+CUDA_GENERATED_OUTPUT_DIR:PATH=
+
+//Generated file extension
+CUDA_HOST_COMPILATION_CPP:BOOL=ON
+
+//Host side compiler used by NVCC
+CUDA_HOST_COMPILER:FILEPATH=/usr/bin/cc
+
+//Path to a program.
+CUDA_NVCC_EXECUTABLE:FILEPATH=/usr/local/cuda/bin/nvcc
+
+//Semi-colon delimit multiple arguments.
+CUDA_NVCC_FLAGS:STRING=
+
+//Semi-colon delimit multiple arguments.
+CUDA_NVCC_FLAGS_DEBUG:STRING=
+
+//Semi-colon delimit multiple arguments.
+CUDA_NVCC_FLAGS_MINSIZEREL:STRING=
+
+//Semi-colon delimit multiple arguments.
+CUDA_NVCC_FLAGS_RELEASE:STRING=
+
+//Semi-colon delimit multiple arguments.
+CUDA_NVCC_FLAGS_RELWITHDEBINFO:STRING=
+
+//Propage C/CXX_FLAGS and friends to the host compiler via -Xcompile
+CUDA_PROPAGATE_HOST_FLAGS:BOOL=ON
+
+//Path to a file.
+CUDA_SDK_ROOT_DIR:PATH=CUDA_SDK_ROOT_DIR-NOTFOUND
+
+//Compile CUDA objects with separable compilation enabled.  Requires
+// CUDA 5.0+
+CUDA_SEPARABLE_COMPILATION:BOOL=OFF
+
+//Specify the name of the class of CPU architecture for which the
+// input files must be compiled.
+CUDA_TARGET_CPU_ARCH:STRING=
+
+//Path to a file.
+CUDA_TOOLKIT_INCLUDE:PATH=/usr/local/cuda/include
+
+//Toolkit location.
+CUDA_TOOLKIT_ROOT_DIR:PATH=/usr/local/cuda
+
+//Toolkit target location.
+CUDA_TOOLKIT_TARGET_DIR:PATH=/usr/local/cuda
+
+//Use the static version of the CUDA runtime library if available
+CUDA_USE_STATIC_CUDA_RUNTIME:BOOL=ON
+
+//Print out the commands run while compiling the CUDA source file.
+//  With the Makefile generator this defaults to VERBOSE variable
+// specified on the command line, but can be forced on with this
+// option.
+CUDA_VERBOSE_BUILD:BOOL=OFF
+
+//Version of CUDA as computed from nvcc.
+CUDA_VERSION:STRING=7.0
+
+//"cublas" library
+CUDA_cublas_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcublas.so
+
+//"cublas_device" library
+CUDA_cublas_device_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcublas_device.a
+
+//static CUDA runtime library
+CUDA_cudart_static_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcudart_static.a
+
+//"cufft" library
+CUDA_cufft_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcufft.so
+
+//"cupti" library
+CUDA_cupti_LIBRARY:FILEPATH=/usr/local/cuda/extras/CUPTI/lib64/libcupti.so
+
+//"curand" library
+CUDA_curand_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcurand.so
+
+//"cusolver" library
+CUDA_cusolver_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcusolver.so
+
+//"cusparse" library
+CUDA_cusparse_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libcusparse.so
+
+//"nppc" library
+CUDA_nppc_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppc.so
+
+//"nppi" library
+CUDA_nppi_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnppi.so
+
+//"npps" library
+CUDA_npps_LIBRARY:FILEPATH=/usr/local/cuda/lib64/libnpps.so
+
+//Path to a library.
+CUDA_rt_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/librt.so
+
 //Path to a program.
 DOXYGEN_EXECUTABLE:FILEPATH=DOXYGEN_EXECUTABLE-NOTFOUND
 
@@ -219,6 +337,23 @@ LSB_RELEASE_EXECUTABLE:FILEPATH=/usr/bin/lsb_release
 
 //Path to a program.
 NOSETESTS:FILEPATH=/usr/bin/nosetests-2.7
+
+//Path where debug 3rdparty OpenCV dependencies are located
+OpenCV_3RDPARTY_LIB_DIR_DBG:PATH=/usr/local/share/OpenCV/3rdparty/lib
+
+//Path where release 3rdparty OpenCV dependencies are located
+OpenCV_3RDPARTY_LIB_DIR_OPT:PATH=/usr/local/share/OpenCV/3rdparty/lib
+
+OpenCV_CONFIG_PATH:FILEPATH=/usr/local/share/OpenCV
+
+//The directory containing a CMake configuration file for OpenCV.
+OpenCV_DIR:PATH=/usr/local/share/OpenCV
+
+//Path where debug OpenCV libraries are located
+OpenCV_LIB_DIR_DBG:PATH=
+
+//Path where release OpenCV libraries are located
+OpenCV_LIB_DIR_OPT:PATH=
 
 //Path to a program.
 PYTHON_EXECUTABLE:FILEPATH=/usr/bin/python
@@ -256,6 +391,42 @@ catkin_DIR:PATH=/opt/ros/jade/share/catkin/cmake
 //The directory containing a CMake configuration file for catkin_simple.
 catkin_simple_DIR:PATH=/home/rxh349/ros_ws/devel/share/catkin_simple/cmake
 
+//The directory containing a CMake configuration file for class_loader.
+class_loader_DIR:PATH=/opt/ros/jade/share/class_loader/cmake
+
+//The directory containing a CMake configuration file for cpp_common.
+cpp_common_DIR:PATH=/opt/ros/jade/share/cpp_common/cmake
+
+//The directory containing a CMake configuration file for cv_bridge.
+cv_bridge_DIR:PATH=/home/rxh349/ros_ws/devel/share/cv_bridge/cmake
+
+//The directory containing a CMake configuration file for cwru_davinci_interface.
+cwru_davinci_interface_DIR:PATH=/home/rxh349/ros_ws/devel/share/cwru_davinci_interface/cmake
+
+//The directory containing a CMake configuration file for cwru_opencv_common.
+cwru_opencv_common_DIR:PATH=/home/rxh349/ros_ws/devel/share/cwru_opencv_common/cmake
+
+//The directory containing a CMake configuration file for dynamic_reconfigure.
+dynamic_reconfigure_DIR:PATH=/opt/ros/jade/share/dynamic_reconfigure/cmake
+
+//The directory containing a CMake configuration file for gencpp.
+gencpp_DIR:PATH=/opt/ros/jade/share/gencpp/cmake
+
+//The directory containing a CMake configuration file for geneus.
+geneus_DIR:PATH=/opt/ros/jade/share/geneus/cmake
+
+//The directory containing a CMake configuration file for genlisp.
+genlisp_DIR:PATH=/opt/ros/jade/share/genlisp/cmake
+
+//The directory containing a CMake configuration file for genmsg.
+genmsg_DIR:PATH=/opt/ros/jade/share/genmsg/cmake
+
+//The directory containing a CMake configuration file for genpy.
+genpy_DIR:PATH=/opt/ros/jade/share/genpy/cmake
+
+//The directory containing a CMake configuration file for geometry_msgs.
+geometry_msgs_DIR:PATH=/opt/ros/jade/share/geometry_msgs/cmake
+
 //Value Computed by CMake
 gtest_BINARY_DIR:STATIC=/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/gtest
 
@@ -281,11 +452,71 @@ gtest_force_shared_crt:BOOL=OFF
 //Dependencies for the target
 gtest_main_LIB_DEPENDS:STATIC=general;-lpthread;general;gtest;
 
+//The directory containing a CMake configuration file for image_geometry.
+image_geometry_DIR:PATH=/home/rxh349/ros_ws/devel/share/image_geometry/cmake
+
+//The directory containing a CMake configuration file for image_transport.
+image_transport_DIR:PATH=/opt/ros/jade/share/image_transport/cmake
+
+//Path to a library.
+lib:FILEPATH=/home/rxh349/ros_ws/devel/lib/libimage_geometry.so
+
+//The directory containing a CMake configuration file for message_filters.
+message_filters_DIR:PATH=/opt/ros/jade/share/message_filters/cmake
+
+//The directory containing a CMake configuration file for message_generation.
+message_generation_DIR:PATH=/opt/ros/jade/share/message_generation/cmake
+
+//The directory containing a CMake configuration file for message_runtime.
+message_runtime_DIR:PATH=/opt/ros/jade/share/message_runtime/cmake
+
+//The directory containing a CMake configuration file for pluginlib.
+pluginlib_DIR:PATH=/opt/ros/jade/share/pluginlib/cmake
+
+//The directory containing a CMake configuration file for rosconsole.
+rosconsole_DIR:PATH=/opt/ros/jade/share/rosconsole/cmake
+
+//The directory containing a CMake configuration file for roscpp.
+roscpp_DIR:PATH=/opt/ros/jade/share/roscpp/cmake
+
+//The directory containing a CMake configuration file for roscpp_serialization.
+roscpp_serialization_DIR:PATH=/opt/ros/jade/share/roscpp_serialization/cmake
+
+//The directory containing a CMake configuration file for roscpp_traits.
+roscpp_traits_DIR:PATH=/opt/ros/jade/share/roscpp_traits/cmake
+
+//The directory containing a CMake configuration file for rosgraph_msgs.
+rosgraph_msgs_DIR:PATH=/opt/ros/jade/share/rosgraph_msgs/cmake
+
+//The directory containing a CMake configuration file for roslib.
+roslib_DIR:PATH=/opt/ros/jade/share/roslib/cmake
+
+//The directory containing a CMake configuration file for rostime.
+rostime_DIR:PATH=/opt/ros/jade/share/rostime/cmake
+
+//The directory containing a CMake configuration file for sensor_msgs.
+sensor_msgs_DIR:PATH=/opt/ros/jade/share/sensor_msgs/cmake
+
+//The directory containing a CMake configuration file for std_msgs.
+std_msgs_DIR:PATH=/opt/ros/jade/share/std_msgs/cmake
+
+//The directory containing a CMake configuration file for tool_model.
+tool_model_DIR:PATH=/home/rxh349/ros_ws/devel/share/tool_model/cmake
+
 //Value Computed by CMake
 tool_tracking_BINARY_DIR:STATIC=/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug
 
+//Dependencies for the target
+tool_tracking_LIB_DEPENDS:STATIC=general;/home/rxh349/ros_ws/devel/lib/libtool_model_lib.so;general;/home/rxh349/ros_ws/devel/lib/libopencv_ui_lib.so;general;/home/rxh349/ros_ws/devel/lib/libcircle_detection_lib.so;general;/home/rxh349/ros_ws/devel/lib/libblock_detection_lib.so;general;/home/rxh349/ros_ws/devel/lib/libgrab_cut_lib.so;general;/home/rxh349/ros_ws/devel/lib/libprojective_lib.so;general;/home/rxh349/ros_ws/devel/lib/libopencv_3d_lib.so;general;/home/rxh349/ros_ws/devel/lib/libopencv_2d_lib.so;general;/home/rxh349/ros_ws/devel/lib/libopencv_local_lib.so;general;/home/rxh349/ros_ws/devel/lib/libopencv_rot_lib.so;general;/home/rxh349/ros_ws/devel/lib/libcolor_model_lib.so;general;/home/rxh349/ros_ws/devel/lib/libellipse_modeling_lib.so;general;/home/rxh349/ros_ws/devel/lib/libvesselness_lib.so;general;/opt/ros/jade/lib/libdynamic_reconfigure_config_init_mutex.so;general;/opt/ros/jade/lib/libimage_transport.so;general;/opt/ros/jade/lib/libmessage_filters.so;general;/usr/lib/x86_64-linux-gnu/libtinyxml.so;general;/opt/ros/jade/lib/libclass_loader.so;general;/usr/lib/libPocoFoundation.so;general;/usr/lib/x86_64-linux-gnu/libdl.so;general;/opt/ros/jade/lib/libroscpp.so;general;/usr/lib/x86_64-linux-gnu/libboost_signals.so;general;/usr/lib/x86_64-linux-gnu/libboost_filesystem.so;general;/opt/ros/jade/lib/libxmlrpcpp.so;general;/opt/ros/jade/lib/libroslib.so;general;/home/rxh349/ros_ws/devel/lib/libcv_bridge.so;general;/usr/local/lib/libopencv_videostab.so.3.0.0;general;/usr/local/lib/libopencv_videoio.so.3.0.0;general;/usr/local/lib/libopencv_video.so.3.0.0;general;/usr/local/lib/libopencv_superres.so.3.0.0;general;/usr/local/lib/libopencv_stitching.so.3.0.0;general;/usr/local/lib/libopencv_shape.so.3.0.0;general;/usr/local/lib/libopencv_photo.so.3.0.0;general;/usr/local/lib/libopencv_objdetect.so.3.0.0;general;/usr/local/lib/libopencv_ml.so.3.0.0;general;/usr/local/lib/libopencv_imgproc.so.3.0.0;general;/usr/local/lib/libopencv_imgcodecs.so.3.0.0;general;/usr/local/lib/libopencv_highgui.so.3.0.0;general;/usr/local/lib/libopencv_hal.a;general;/usr/local/lib/libopencv_flann.so.3.0.0;general;/usr/local/lib/libopencv_features2d.so.3.0.0;general;/usr/local/lib/libopencv_cudev.so.3.0.0;general;/usr/local/lib/libopencv_cudawarping.so.3.0.0;general;/usr/local/lib/libopencv_cudastereo.so.3.0.0;general;/usr/local/lib/libopencv_cudaoptflow.so.3.0.0;general;/usr/local/lib/libopencv_cudaobjdetect.so.3.0.0;general;/usr/local/lib/libopencv_cudalegacy.so.3.0.0;general;/usr/local/lib/libopencv_cudaimgproc.so.3.0.0;general;/usr/local/lib/libopencv_cudafilters.so.3.0.0;general;/usr/local/lib/libopencv_cudafeatures2d.so.3.0.0;general;/usr/local/lib/libopencv_cudacodec.so.3.0.0;general;/usr/local/lib/libopencv_cudabgsegm.so.3.0.0;general;/usr/local/lib/libopencv_cudaarithm.so.3.0.0;general;/usr/local/lib/libopencv_core.so.3.0.0;general;/usr/local/lib/libopencv_calib3d.so.3.0.0;general;/opt/ros/jade/lib/librosconsole.so;general;/opt/ros/jade/lib/librosconsole_log4cxx.so;general;/opt/ros/jade/lib/librosconsole_backend_interface.so;general;/usr/lib/liblog4cxx.so;general;/usr/lib/x86_64-linux-gnu/libboost_regex.so;general;/opt/ros/jade/lib/libroscpp_serialization.so;general;/opt/ros/jade/lib/librostime.so;general;/usr/lib/x86_64-linux-gnu/libboost_date_time.so;general;/opt/ros/jade/lib/libcpp_common.so;general;/usr/lib/x86_64-linux-gnu/libboost_system.so;general;/usr/lib/x86_64-linux-gnu/libboost_thread.so;general;/usr/lib/x86_64-linux-gnu/libpthread.so;general;/usr/lib/x86_64-linux-gnu/libconsole_bridge.so;general;/home/rxh349/ros_ws/devel/lib/libdavinci_interface.so;general;tool_model_lib;
+
 //Value Computed by CMake
 tool_tracking_SOURCE_DIR:STATIC=/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking
+
+//The directory containing a CMake configuration file for vesselness_image_filter.
+vesselness_image_filter_DIR:PATH=/home/rxh349/ros_ws/devel/share/vesselness_image_filter/cmake
+
+//The directory containing a CMake configuration file for xmlrpcpp.
+xmlrpcpp_DIR:PATH=/opt/ros/jade/share/xmlrpcpp/cmake
 
 
 ########################
@@ -436,6 +667,87 @@ CMAKE_STRIP-ADVANCED:INTERNAL=1
 CMAKE_UNAME:INTERNAL=/bin/uname
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_64_BIT_DEVICE_CODE
+CUDA_64_BIT_DEVICE_CODE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE
+CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_BUILD_CUBIN
+CUDA_BUILD_CUBIN-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_BUILD_EMULATION
+CUDA_BUILD_EMULATION-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_CUDART_LIBRARY
+CUDA_CUDART_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_CUDA_LIBRARY
+CUDA_CUDA_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_GENERATED_OUTPUT_DIR
+CUDA_GENERATED_OUTPUT_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_HOST_COMPILATION_CPP
+CUDA_HOST_COMPILATION_CPP-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_NVCC_EXECUTABLE
+CUDA_NVCC_EXECUTABLE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_NVCC_FLAGS
+CUDA_NVCC_FLAGS-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_NVCC_FLAGS_DEBUG
+CUDA_NVCC_FLAGS_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_NVCC_FLAGS_MINSIZEREL
+CUDA_NVCC_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_NVCC_FLAGS_RELEASE
+CUDA_NVCC_FLAGS_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_NVCC_FLAGS_RELWITHDEBINFO
+CUDA_NVCC_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_PROPAGATE_HOST_FLAGS
+CUDA_PROPAGATE_HOST_FLAGS-ADVANCED:INTERNAL=1
+//This is the value of the last time CUDA_SDK_ROOT_DIR was set
+// successfully.
+CUDA_SDK_ROOT_DIR_INTERNAL:INTERNAL=CUDA_SDK_ROOT_DIR-NOTFOUND
+//ADVANCED property for variable: CUDA_SEPARABLE_COMPILATION
+CUDA_SEPARABLE_COMPILATION-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_TARGET_CPU_ARCH
+CUDA_TARGET_CPU_ARCH-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_TOOLKIT_INCLUDE
+CUDA_TOOLKIT_INCLUDE-ADVANCED:INTERNAL=1
+//This is the value of the last time CUDA_TOOLKIT_ROOT_DIR was
+// set successfully.
+CUDA_TOOLKIT_ROOT_DIR_INTERNAL:INTERNAL=/usr/local/cuda
+//ADVANCED property for variable: CUDA_TOOLKIT_TARGET_DIR
+CUDA_TOOLKIT_TARGET_DIR-ADVANCED:INTERNAL=1
+//This is the value of the last time CUDA_TOOLKIT_TARGET_DIR was
+// set successfully.
+CUDA_TOOLKIT_TARGET_DIR_INTERNAL:INTERNAL=/usr/local/cuda
+//ADVANCED property for variable: CUDA_VERBOSE_BUILD
+CUDA_VERBOSE_BUILD-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_VERSION
+CUDA_VERSION-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_cublas_LIBRARY
+CUDA_cublas_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_cublas_device_LIBRARY
+CUDA_cublas_device_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_cudart_static_LIBRARY
+CUDA_cudart_static_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_cufft_LIBRARY
+CUDA_cufft_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_cupti_LIBRARY
+CUDA_cupti_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_curand_LIBRARY
+CUDA_curand_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_cusolver_LIBRARY
+CUDA_cusolver_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_cusparse_LIBRARY
+CUDA_cusparse_LIBRARY-ADVANCED:INTERNAL=1
+//Location of make2cmake.cmake
+CUDA_make2cmake:INTERNAL=/home/rxh349/Documents/clion-2016.3.2/bin/cmake/share/cmake-3.6/Modules/FindCUDA/make2cmake.cmake
+//ADVANCED property for variable: CUDA_nppc_LIBRARY
+CUDA_nppc_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_nppi_LIBRARY
+CUDA_nppi_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_npps_LIBRARY
+CUDA_npps_LIBRARY-ADVANCED:INTERNAL=1
+//Location of parse_cubin.cmake
+CUDA_parse_cubin:INTERNAL=/home/rxh349/Documents/clion-2016.3.2/bin/cmake/share/cmake-3.6/Modules/FindCUDA/parse_cubin.cmake
+//Location of run_nvcc.cmake
+CUDA_run_nvcc:INTERNAL=/home/rxh349/Documents/clion-2016.3.2/bin/cmake/share/cmake-3.6/Modules/FindCUDA/run_nvcc.cmake
+//Details about finding CUDA
+FIND_PACKAGE_MESSAGE_DETAILS_CUDA:INTERNAL=[/usr/local/cuda][/usr/local/cuda/bin/nvcc][/usr/local/cuda/include][/usr/local/cuda/lib64/libcudart.so][v7.0(7.0)]
 //Details about finding PythonInterp
 FIND_PACKAGE_MESSAGE_DETAILS_PythonInterp:INTERNAL=[/usr/bin/python][v2.7.6()]
 //Details about finding Threads
@@ -455,6 +767,16 @@ GTEST_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
 GTEST_MAIN_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: GTEST_MAIN_LIBRARY_DEBUG
 GTEST_MAIN_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OpenCV_3RDPARTY_LIB_DIR_DBG
+OpenCV_3RDPARTY_LIB_DIR_DBG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OpenCV_3RDPARTY_LIB_DIR_OPT
+OpenCV_3RDPARTY_LIB_DIR_OPT-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OpenCV_CONFIG_PATH
+OpenCV_CONFIG_PATH-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OpenCV_LIB_DIR_DBG
+OpenCV_LIB_DIR_DBG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OpenCV_LIB_DIR_OPT
+OpenCV_LIB_DIR_OPT-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: PYTHON_EXECUTABLE
 PYTHON_EXECUTABLE-ADVANCED:INTERNAL=1
 //This needs to be in PYTHONPATH when 'setup.py install' is called.
