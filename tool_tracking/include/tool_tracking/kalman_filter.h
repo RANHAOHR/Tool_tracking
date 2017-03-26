@@ -72,9 +72,11 @@
 class KalmanFilter {
 
 private:
-    cv::Mat Cam_left;
-    cv::Mat Cam_right;
 
+    cv::Mat Cam_left_arm_1;
+    cv::Mat Cam_right_arm_1;
+    cv::Mat Cam_left_arm_2;
+    cv::Mat Cam_right_arm_2;
     ros::NodeHandle nh_;  //may need this
 
     ///ros::Timer timer;
@@ -183,7 +185,9 @@ public:
             const cv::Mat &zt,
             const cv::Mat &ut
     );
-    void measureFunc(ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, double &matchingScore);
+    void measureFunc(ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, const cv::Mat &Cam_left, const cv::Mat &Cam_right, double &matchingScore);
+
+    void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 
     cv::Mat adjoint(cv::Mat &G);
 };

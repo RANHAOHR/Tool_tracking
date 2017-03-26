@@ -47,17 +47,6 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 
     ROS_INFO("Initializing UKF...");
 
-    /****need to subscribe this***/
-    Cam_left = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0,   ///meters or millimeters
-            0, -1, 0, 0,
-            0, 0, -1, 0.2,
-            0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
-
-    Cam_right = (cv::Mat_<double>(4, 4) << 1, 0, 0, -0.005,   ///meters or millimeters
-            0, -1, 0, 0,
-            0, 0, -1, 0.2,
-            0, 0, 0, 1);
-
     //initializeParticles(); Where we're going, we don't need particles.
 
     // initialization, just basic black image ??? how to get the size of the image
@@ -142,10 +131,18 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     }
     //Convert to Affine3ds for storage, which is the format they will be used in for rendering.
     XformUtils xfu;
+
+    /////arm_l is arm_1???
     arm_l__cam_l = xfu.transformTFToAffine3d(arm_l__cam_l_st);
     arm_l__cam_r = xfu.transformTFToAffine3d(arm_l__cam_r_st);
     arm_r__cam_l = xfu.transformTFToAffine3d(arm_r__cam_l_st);
     arm_r__cam_r = xfu.transformTFToAffine3d(arm_r__cam_r_st);
+
+    convertEigenToMat(arm_l__cam_l, Cam_left_arm_1);
+    convertEigenToMat(arm_l__cam_r, Cam_right_arm_1);
+    convertEigenToMat(arm_r__cam_l, Cam_left_arm_2);
+    convertEigenToMat(arm_r__cam_r, Cam_right_arm_2);
+
 };
 
 void KalmanFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight){
@@ -208,7 +205,7 @@ void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& 
 };
 
 //Deprecated by KalmanFilter::update(). Archival code only.
-void KalmanFilter::measureFunc(ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, double &matchingScore) {
+void KalmanFilter::measureFunc(ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, const cv::Mat &Cam_left, const cv::Mat &Cam_right, double &matchingScore) {
 
     //Looks mostly IP-related; need to resturcture to not be dependant on particles and instead use sigma-points.
 
@@ -426,17 +423,11 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
             *
             Eigen::AngleAxisd(stat.at<double>(11, 1), Eigen::Vector3d::UnitZ());
 
-    //Transform into four affine3ds, one for each arm and one for each camera.
-    Eigen::Affine3d arm1cr = arm1 * arm_l__cam_r;
-    Eigen::Affine3d arm1cl = arm1 * arm_l__cam_l;
-    Eigen::Affine3d arm2cr = arm2 * arm_r__cam_r;
-    Eigen::Affine3d arm2cl = arm2 * arm_r__cam_l;
-
     //Convert them into tool models
     ToolModel::toolModel arm_1;
     ToolModel::toolModel arm_2;
-    convertToolModel(arm1cr, arm_1);
-    convertToolModel(arm1cl, arm_2);
+    convertToolModel(arm1, arm_1);
+    convertToolModel(arm2, arm_2);
 
     //Render the tools.
     toolImage_left_arm_1.setTo(0); //left rendered Image for ARM 1
@@ -445,10 +436,12 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
     toolImage_left_arm_2.setTo(0); //left rendered Image for ARM 2
     toolImage_right_arm_2.setTo(0); //right rendered Image for ARM 2
 
-    newToolModel.renderTool(toolImage_left_arm_1, arm_1, Cam_left, P_left);
-    newToolModel.renderTool(toolImage_right_arm_1, arm_1, Cam_right, P_right);
-    newToolModel.renderTool(toolImage_left_arm_2, arm_2, Cam_left, P_left);
-    newToolModel.renderTool(toolImage_right_arm_2, arm_2, Cam_right, P_right);
+
+    //measureFunc(arm_1, )
+    newToolModel.renderTool(toolImage_left_arm_1, arm_1, Cam_left_arm_1, P_left);
+    newToolModel.renderTool(toolImage_right_arm_1, arm_1, Cam_right_arm_1, P_right);
+    newToolModel.renderTool(toolImage_left_arm_2, arm_2, Cam_left_arm_2, P_left);
+    newToolModel.renderTool(toolImage_right_arm_2, arm_2, Cam_right_arm_2, P_right);
 
     cv::imshow("Ren arm_1 left", toolImage_left_arm_1);
     cv::imshow("Ren arm_1 right", toolImage_right_arm_1);
@@ -468,7 +461,7 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
 
     double matchingScore_arm_2 = sqrt(pow(left, 2) + pow(right, 2));
 
-    double result = (matchingScore_arm_1 + matchingScore_arm_1) / 2;
+    double result = (matchingScore_arm_1 + matchingScore_arm_2) / 2;
 
     return result;
 };
@@ -476,6 +469,40 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
 void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in){
 	//TODO: Very stupid placeholder model that assumes an absolutely perfect sensor.
 	sigma_point_out = sigma_point_in.clone();
+};
+
+/******from eigen to opencv matrix****/
+void KalmanFilter::convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix){
+
+    outputMatrix = cv::Mat::eye(4,4,CV_64FC1);
+
+    Eigen::Vector3d pos = trans.translation();
+    Eigen::Matrix3d rot = trans.rotation();
+
+    //this is the last col, translation
+    outputMatrix.at<double>(0,3) = pos(0);
+    outputMatrix.at<double>(1,3) = pos(1);
+    outputMatrix.at<double>(2,3) = pos(2);
+
+    Eigen::Vector3d col_0, col_1, col_2;
+    //this is the first col, rotation x
+    col_0 = rot.col(0);
+    outputMatrix.at<double>(0,0) = col_0(0);
+    outputMatrix.at<double>(1,0) = col_0(1);
+    outputMatrix.at<double>(2,0) = col_0(2);
+
+    //this is the second col, rotation y
+    col_1 = rot.col(1);
+    outputMatrix.at<double>(0,1) = col_0(0);
+    outputMatrix.at<double>(1,1) = col_0(1);
+    outputMatrix.at<double>(2,1) = col_0(2);
+
+    //this is the third col, rotation z
+    col_2 = rot.col(2);
+    outputMatrix.at<double>(0,2) = col_0(0);
+    outputMatrix.at<double>(1,2) = col_0(1);
+    outputMatrix.at<double>(2,2) = col_0(2);
+
 };
 
 void KalmanFilter::convertToolModel(const Eigen::Affine3d & trans, ToolModel::toolModel &toolModel){
