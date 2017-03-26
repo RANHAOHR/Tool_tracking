@@ -146,11 +146,6 @@ private:
 
     double matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
-    void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u);
-
-	cv::Mat P_left;
-	cv::Mat P_right;
-	
 	double matching_score(const cv::Mat & stat);
 	
 	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u);
