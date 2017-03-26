@@ -142,6 +142,7 @@ private:
 	double matching_score(const cv::Mat & stat);
 	
 	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u);
+	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
 
 public:
 

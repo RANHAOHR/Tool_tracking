@@ -254,10 +254,7 @@ cv::Mat KalmanFilter::adjoint(cv::Mat &G) {
 	return adjG;
 };
 
-void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmented_right){
-
-	//TODO: Oh my LORD....	
-	
+void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmented_right){	
 	/******Find and convert our various params and inputs******/
 	
 	//Get sensor update.
@@ -315,6 +312,8 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 		sigma_pts_last[i + L] = sigma_pts_last[0] - (gamma * root_sigma_t_last);
 	}
 	
+	//TODO: Incorporate a second set of weights based on the matching score, to influence the effect of the sigma points.
+	
 	//Compute their weights:
 	std::vector<double> w_m;
 	w_m.resize(2*L + 1);
@@ -343,91 +342,45 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	for(int i = 0; i < 2 * L + 1; i++){
 		sigma_bar = sigma_bar + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((sigma_pts_bar[i] - mu_bar).t());
 	}
-
-	/*****get measurement****/
-	/*std::vector<cv::Mat> updateState_vec;
-	updateState_vec.resize(2*L);
-
-	//compute new square root for current sigma
-	cv::SVD::compute(current_sigma, s, u, vt);  //s is supposed to be the one we are asking for, the singular values
-
-	square_sigma = s.clone(); //safe way to pass values to a cv Mat
 	
-	updateState_vec[0] = current_mu.clone();   //X_nod
-	for (int i = 1; i < L; ++i) {
-		updateState_vec[i] = updateState_vec[0] + gamma * square_sigma;
-		updateState_vec[i + L] = updateState_vec[0] - gamma * square_sigma;
+	/*****Correction Step: Move the sigma points through the measurement function.*****/
+	std::vector<cv::Mat_<double> > Z_bar;
+	Z_bar.resize(2 * L + 1);
+	for(int i = 0; i < 2 * L + 1; i++){
+		h(Z_bar[i], sigma_pts_bar[i]);
 	}
 	
-	std::vector<double> mscores;
-	mscores.resize(2*L);
-	//ROS_ERROR("P: %f %f %f %f %f %f %f %f %f %f %f %f", currentState_vec[0].at<double>(1, 1), currentState_vec[0].at<double>(1, 2), currentState_vec[0].at<double>(1, 3), currentState_vec[0].at<double>(1, 4), currentState_vec[0].at<double>(1, 5), currentState_vec[0].at<double>(1, 6), currentState_vec[0].at<double>(1, 7), currentState_vec[0].at<double>(1, 8), currentState_vec[0].at<double>(1, 9), currentState_vec[0].at<double>(1, 10), currentState_vec[0].at<double>(1, 11), currentState_vec[0].at<double>(1, 12));
-	for(int i = 0; i < 2*L; i++){
-		mscores[i] = matching_score(currentState_vec[i]);
-	}
-
-	/********************measuerment function comes in here:*************************/
-	/*std::vector<cv::Mat> current_z_vec;
-	current_z_vec.resize(2*L);
-	
-	//TODO Placeholder
-	for(int i = 0; i < 2*L; i++){
-		current_z_vec[i] = z.clone();
+	/*****Calculate derived variance statistics.*****/
+	cv::Mat z_caret = cv::Mat_<double>::zeros(12, 1);
+	for(int i = 0; i < 2 * L + 1; i++){
+		z_caret = z_caret + w_m[i] * Z_bar[i];
 	}
 	
-	ROS_ERROR("MARKER 1");
-
-	//TODO: get measurement function
-
-	cv::Mat weighted_z = cv::Mat::zeros(12,1,CV_64FC1);
-
-	for (int j = 0; j < 2*L; ++j) {
-		cv::Mat temp = weight_vec_m[j] * current_z_vec[j];
-		weighted_z = weighted_z + temp;
+	cv::Mat S = cv::Mat_<double>::zeros(12, 12);
+	for(int i = 0; i < 2 * L + 1; i++){
+		S = S + w_c[i] * (Z_bar[i] - z_caret) * ((Z_bar[i] - z_caret).t());
 	}
 	
-	ROS_WARN("Calulcated wated z");
-
-	cv::Mat S_t = cv::Mat::zeros(L, L, CV_64FC1);
-
-	for (int i1 = 0; i1 < 2*L; ++i1) {
-		cv::Mat var_z = current_z_vec[i1] - weighted_z;
-
-		cv::Mat temp_mat = weight_vec_c[i1] * var_z * var_z.t();
-		S_t = S_t + temp_mat;
+	cv::Mat sigma_xz = cv::Mat_<double>::zeros(12, 12);
+	for(int i = 0; i < 2 * L + 1; i++){
+		sigma_xz = w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((Z_bar[i] - z_caret).t());
 	}
-
-	cv::Mat Q = cv::Mat::eye(L,L,CV_64FC1);
-	Q = Q * 0.00038;
 	
-	ROS_ERROR("Maekr 2");
-
-	S_t = S_t + Q;
-	//get cross-covariance
-	cv::Mat omega_x_z  = cv::Mat::zeros(2 * L, 1, CV_64FC1);
-
-	for (int k1 = 0; k1 < 2*L; ++k1) {
-		cv::Mat var_x = updateState_vec[k1] - current_mu;
-
-		cv::Mat var_z = current_z_vec[k1] - weighted_z;
-
-		cv::Mat temp_mat = weight_vec_c[k1] * var_x * var_z.t();
-
-		omega_x_z = omega_x_z + temp_mat;
-	}
-
-	///get Kalman factor
-	cv::Mat K_t = cv::Mat::zeros(L,L,CV_64FC1);
-	K_t = omega_x_z * S_t.inv();
-
-	//update mu and sigma
-	kalman_mu = current_mu + K_t * (z - weighted_z);
-	kalman_sigma = current_sigma - K_t * S_t * K_t.t();*/
+	cv::Mat K = sigma_xz * S.inv();
+	
+	/*****Update our mu and sigma.*****/
+	kalman_mu = mu_bar + K * (zt - z_caret);
+	kalman_sigma = sigma_bar - K * S * K.t();
 };
 
 void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u){
 	//TODO: Very stupid placeholder model that squashes all of the sigma points into the last recorded position with zero variance.
 	sigma_point_out = u.clone();
+};
+
+void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in){
+	//TODO: Very stupid placeholder model that assumes an absolutely perfect sensor.
+	sigma_point_out = sigma_point_in.clone();
 };
 
 double KalmanFilter::matching_score(const cv::Mat & stat){
