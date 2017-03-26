@@ -180,7 +180,6 @@ int main(int argc, char **argv) {
 //			seg_right = segmentation(rawImage_right);
 			//t = clock() - t;
 
-
 			// body velocity
 			for (int i(0); i < 6; i++) {
 				bodyVel.at<double>(i, 0) = Arr[i];

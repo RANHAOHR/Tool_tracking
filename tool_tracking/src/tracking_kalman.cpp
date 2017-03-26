@@ -121,9 +121,8 @@ int main(int argc, char **argv) {
             cv::resize(new_seg_left, new_seg_left,size);
             cv::resize(new_seg_right, new_seg_right,size);
 
-            double zt = 0.0;
             //matching_score
-            UKF.update(new_seg_left, new_seg_right, zt);
+            UKF.update(new_seg_left, new_seg_right);
 
 			freshImage = false;
 			freshVelocity = false;
