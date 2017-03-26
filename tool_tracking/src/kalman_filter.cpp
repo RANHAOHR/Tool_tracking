@@ -95,16 +95,23 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     Eigen::Affine3d yellow_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_yellow.data()));
     Eigen::Vector3d yellow_trans = yellow_pos.translation();
     Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
-    kalman_mu = (cv::Mat_<double>(12, 1) <<
-                                         *green_pos.data(),
-            *green_rpy.data(),
-            *yellow_pos.data(),
-            *yellow_rpy.data()
-    );
+    kalman_mu = cv::Mat_<double>(12, 1);
+	kalman_mu.at<double>(1, 1) = green_trans[0];
+	kalman_mu.at<double>(2, 1) = green_trans[1];
+	kalman_mu.at<double>(3, 1) = green_trans[2];
+	kalman_mu.at<double>(4, 1) = green_rpy[0];
+	kalman_mu.at<double>(5, 1) = green_rpy[1];
+	kalman_mu.at<double>(6, 1) = green_rpy[2];
+	kalman_mu.at<double>(7, 1) = yellow_trans[0];
+	kalman_mu.at<double>(8, 1) = yellow_trans[1];
+	kalman_mu.at<double>(9, 1) = yellow_trans[2];
+	kalman_mu.at<double>(10, 1) = yellow_rpy[0];
+	kalman_mu.at<double>(11, 1) = yellow_rpy[1];
+	kalman_mu.at<double>(12, 1) = yellow_rpy[2];
     kalman_sigma = (cv::Mat_<double>::zeros(12, 12));
 
-    ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
-    ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
+    //ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
+    //ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
 
     freshCameraInfo = false; //should be left and right
     projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/unsynced/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
@@ -276,17 +283,17 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
 	cv::Mat zt = cv::Mat_<double>(12, 1);
 	zt.at<double>(1, 1) = green_trans[0];
-	zt.at<double>(1, 2) = green_trans[1];
-	zt.at<double>(1, 3) = green_trans[2];
-	zt.at<double>(1, 4) = green_rpy[0];
-	zt.at<double>(1, 5) = green_rpy[1];
-	zt.at<double>(1, 6) = green_rpy[2];
-	zt.at<double>(1, 7) = yellow_trans[0];
-	zt.at<double>(1, 8) = yellow_trans[1];
-	zt.at<double>(1, 9) = yellow_trans[2];
-	zt.at<double>(1, 10) = yellow_rpy[0];
-	zt.at<double>(1, 11) = yellow_rpy[1];
-	zt.at<double>(1, 12) = yellow_rpy[2];
+	zt.at<double>(2, 1) = green_trans[1];
+	zt.at<double>(3, 1) = green_trans[2];
+	zt.at<double>(4, 1) = green_rpy[0];
+	zt.at<double>(5, 1) = green_rpy[1];
+	zt.at<double>(6, 1) = green_rpy[2];
+	zt.at<double>(7, 1) = yellow_trans[0];
+	zt.at<double>(8, 1) = yellow_trans[1];
+	zt.at<double>(9, 1) = yellow_trans[2];
+	zt.at<double>(10, 1) = yellow_rpy[0];
+	zt.at<double>(11, 1) = yellow_rpy[1];
+	zt.at<double>(12, 1) = yellow_rpy[2];
 	
 	ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
 	ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
@@ -294,7 +301,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	//Get command update.
 	//TODO: At the moment, the command is just the sensor update. We will need to get and preprocess the desired positions.
 	cv::Mat ut = zt.clone();
-	ROS_ERROR("%f %f %f %f %f %f", zt.at<double>(1, 1),zt.at<double>(2, 1),zt.at<double>(3, 1),zt.at<double>(4, 1),zt.at<double>(5, 1),zt.at<double>(6, 1));
+	//ROS_ERROR("%f %f %f %f %f %f", zt.at<double>(1, 1),zt.at<double>(2, 1),zt.at<double>(3, 1),zt.at<double>(4, 1),zt.at<double>(5, 1),zt.at<double>(6, 1));
 	
 	cv::Mat sigma_t_last = kalman_sigma.clone();
 	cv::Mat mu_t_last = kalman_mu.clone();
@@ -315,6 +322,8 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	cv::SVD::compute(kalman_sigma, s, u, vt);//The actual square root gets saved into s
 
 	root_sigma_t_last = s.clone(); //store that back into the designated square root term
+	
+	ROS_ERROR("MARKER 1");
 	
 	//Populate the sigma points:
 	std::vector<cv::Mat_<double> > sigma_pts_last;
@@ -345,8 +354,10 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	sigma_pts_bar.resize(2*L + 1);
 	for(int i = 0; i < 2 * L + 1; i++){
 		g(sigma_pts_bar[i], sigma_pts_last[i], ut);
-		ROS_ERROR("%f %f %f %f %f %f", sigma_pts_bar[i].at<double>(1, 1),sigma_pts_bar[i].at<double>(2, 1),sigma_pts_bar[i].at<double>(3, 1),sigma_pts_bar[i].at<double>(4, 1),sigma_pts_bar[i].at<double>(5, 1),sigma_pts_bar[i].at<double>(6, 1));
+		//ROS_ERROR("%f %f %f %f %f %f", sigma_pts_bar[i].at<double>(1, 1),sigma_pts_bar[i].at<double>(2, 1),sigma_pts_bar[i].at<double>(3, 1),sigma_pts_bar[i].at<double>(4, 1),sigma_pts_bar[i].at<double>(5, 1),sigma_pts_bar[i].at<double>(6, 1));
 	}
+	
+	ROS_ERROR("MARKER 2");
 	
 	/*****Create the predicted mus and sigmas.*****/
 	cv::Mat mu_bar = cv::Mat_<double>::zeros(12, 1);
