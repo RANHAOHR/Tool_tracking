@@ -272,15 +272,19 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	Eigen::Vector3d yellow_trans = yellow_pos.translation();
 	Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
 	cv::Mat zt = (cv::Mat_<double>(12, 1) <<
-		*green_pos.data(),
+		*green_trans.data(),
 		*green_rpy.data(),
-		*yellow_pos.data(),
+		*yellow_trans.data(),
 		*yellow_rpy.data()
 	);
+	
+	ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
+	ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
 	
 	//Get command update.
 	//TODO: At the moment, the command is just the sensor update. We will need to get and preprocess the desired positions.
 	cv::Mat ut = zt.clone();
+	ROS_ERROR("%f %f %f %f %f %f", zt.at<double>(1, 1),zt.at<double>(2, 1),zt.at<double>(3, 1),zt.at<double>(4, 1),zt.at<double>(5, 1),zt.at<double>(6, 1));
 	
 	cv::Mat sigma_t_last = kalman_sigma.clone();
 	cv::Mat mu_t_last = kalman_mu.clone();
@@ -331,6 +335,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	sigma_pts_bar.resize(2*L + 1);
 	for(int i = 0; i < 2 * L + 1; i++){
 		g(sigma_pts_bar[i], sigma_pts_last[i], ut);
+		ROS_ERROR("%f %f %f %f %f %f", sigma_pts_bar[i].at<double>(1, 1),sigma_pts_bar[i].at<double>(2, 1),sigma_pts_bar[i].at<double>(3, 1),sigma_pts_bar[i].at<double>(4, 1),sigma_pts_bar[i].at<double>(5, 1),sigma_pts_bar[i].at<double>(6, 1));
 	}
 	
 	/*****Create the predicted mus and sigmas.*****/
@@ -371,6 +376,9 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	/*****Update our mu and sigma.*****/
 	kalman_mu = mu_bar + K * (zt - z_caret);
 	kalman_sigma = sigma_bar - K * S * K.t();
+	
+	ROS_WARN("GREEN ARM AT (%f %f %f): %f %f %f", kalman_mu.at<double>(1, 1), kalman_mu.at<double>(2, 1),kalman_mu.at<double>(3, 1),kalman_mu.at<double>(4, 1),kalman_mu.at<double>(5, 1), kalman_mu.at<double>(6, 1));
+	ROS_WARN("YELLOW ARM AT (%f %f %f): %f %f %f", kalman_mu.at<double>(7, 1), kalman_mu.at<double>(8, 1),kalman_mu.at<double>(9, 1),kalman_mu.at<double>(10, 1),kalman_mu.at<double>(11, 1), kalman_mu.at<double>(12, 1));
 };
 
 void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u){
