@@ -274,12 +274,19 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	Eigen::Affine3d yellow_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_yellow.data()));
 	Eigen::Vector3d yellow_trans = yellow_pos.translation();
 	Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
-	cv::Mat zt = (cv::Mat_<double>(12, 1) <<
-		*green_trans.data(),
-		*green_rpy.data(),
-		*yellow_trans.data(),
-		*yellow_rpy.data()
-	);
+	cv::Mat zt = cv::Mat_<double>(12, 1);
+	zt.at<double>(1, 1) = green_trans[0];
+	zt.at<double>(1, 2) = green_trans[1];
+	zt.at<double>(1, 3) = green_trans[2];
+	zt.at<double>(1, 4) = green_rpy[0];
+	zt.at<double>(1, 5) = green_rpy[1];
+	zt.at<double>(1, 6) = green_rpy[2];
+	zt.at<double>(1, 7) = yellow_trans[0];
+	zt.at<double>(1, 8) = yellow_trans[1];
+	zt.at<double>(1, 9) = yellow_trans[2];
+	zt.at<double>(1, 10) = yellow_rpy[0];
+	zt.at<double>(1, 11) = yellow_rpy[1];
+	zt.at<double>(1, 12) = yellow_rpy[2];
 	
 	ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
 	ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
