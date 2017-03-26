@@ -76,17 +76,22 @@ int main(int argc, char **argv) {
 
     ToolModel::toolModel initial;
 
-    initial.tvec_elp(0) = 0.0;  //left and right (image frame)
-    initial.tvec_elp(1) = 0.0;  //up and down
+    initial.tvec_elp(0) = 0.025;  //left and right (image frame)
+    initial.tvec_elp(1) = -0.01;  //up and down
     initial.tvec_elp(2) = -0.03;
     initial.rvec_elp(0) = 0.0;
     initial.rvec_elp(1) = 0.0;
-    initial.rvec_elp(2) = -1;
+    initial.rvec_elp(2) = -1.4;
 
     ToolModel::toolModel newTool;
 
     newToolModel.computeModelPose(initial, 0.1, 0.3, 0.1 );
     newToolModel.renderTool(testImg, initial, Cam, P);
+
+    cv::imshow("tool image: ",testImg );
+    //cv::imshow("segImg : ",segImg );
+
+    cv::waitKey(0);
 
     //cv::imwrite("/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/new.png", testImg);
 
@@ -95,10 +100,10 @@ int main(int argc, char **argv) {
     ToolModel::toolModel newModel;
     newModel.tvec_elp(0) = 0.0;  //left and right (image frame)
     newModel.tvec_elp(1) = 0.0;  //up and down
-    newModel.tvec_elp(2) = -0.04;
+    newModel.tvec_elp(2) = -0.03;
     newModel.rvec_elp(0) = 0.0;
     newModel.rvec_elp(1) = 0.0;
-    newModel.rvec_elp(2) = -2;
+    newModel.rvec_elp(2) = -1;
     newToolModel.computeModelPose(newModel, 0.1, 0.1, 0 );
     newToolModel.renderTool(segImg, newModel, Cam, P);
 

@@ -266,7 +266,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	cv::Mat vt = cv::Mat(L, L, CV_64FC1);  //need the square root for sigma
 	cv::Mat u = cv::Mat(L, L, CV_64FC1);  //need the square root for sigma
 
-	cv::SVD::compute(kalman_sigma, s, u, vt);  //s is supposed to be the one we are asking for, the sigular values
+	cv::SVD::compute(kalman_sigma, s, u, vt);  //s is supposed to be the one we are asking for, the singular values
 
 	square_sigma = s.clone(); //safe way to pass values to a cv Mat
 
@@ -358,7 +358,6 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	std::vector<ToolModel::toolModel> currentTool;
 	currentTool.resize(2*L);
 
-
 	//TODO: Process the sigma points based on the image.
 //	convertToolModel(updateState_vec, currentTool ,7);  ////from cv::Mat to 9 DOF tool model
 //	measureFunc(currentTool, segmented_left, segmented_right, current_z_vec );
@@ -397,13 +396,6 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	kalman_mu = cv::Mat::zeros(L,1,CV_64FC1);  ////just in case the dimension is not match
 	kalman_sigma = cv::Mat::zeros(L,L,CV_64FC1);
 
-
-	//TODO: how to get a current zt????? temp solution: use current mu
-//	double zt = 0.0;
-//	ToolModel::toolModel currentToolModel;
-//	convertToolModel(current_mu, currentToolModel,1);
-//	measureFunc(currentToolModel, segmented_left, segmented_right, zt);
-
 	kalman_mu = current_mu + K_t * (zt - z_hat);
 	kalman_sigma = current_sigma - K_t * S_t * K_t.t();
 	//Render our own version of the arm.
@@ -424,6 +416,7 @@ double KalmanFilter::matching_score(const cv::Mat & stat){
 	return -1.0;
 }
 
+//
 void KalmanFilter::convertToolModel(const cv::Mat &toolMat, ToolModel::toolModel &toolModel, int arm){
 
 	int offset = (arm - 1) * 6;

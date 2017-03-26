@@ -42,15 +42,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-		nh_(*nodehandle), numParticles(100), Downsample_rate(0.02), toolSize(2), L(7) {
-	/****initial position guess
-	everything here is in meters*****/
-	initial.tvec_elp(0) = 0.0;
-	initial.tvec_elp(1) = 0.0;
-	initial.tvec_elp(2) = 0.0;
-	initial.rvec_elp(0) = 0.0;
-	initial.rvec_elp(1) = 0.0;   //better make everything zero
-	initial.rvec_elp(2) = 0.0;
+		nh_(*nodehandle), numParticles(500), Downsample_rate(0.02), toolSize(2), L(7) {
 
 	/****need to subscribe this***/
 	Cam_left = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0,   ///meters or millimeters
@@ -92,14 +84,21 @@ void ParticleFilter::initializeParticles() {
 	particleWeights.resize(numParticles); //initialize particle weight array
 
 	///generate random seeds
-	initial.tvec_elp(0) = 0.0;  //left and right (image frame)
-	initial.tvec_elp(1) = 0.0;  //up and down
+//	initial.tvec_elp(0) = 0.0;  //left and right (image frame)
+//	initial.tvec_elp(1) = 0.0;  //up and down
+//	initial.tvec_elp(2) = -0.03;
+//	initial.rvec_elp(0) = 0.0;
+//	initial.rvec_elp(1) = 0.0;
+//	initial.rvec_elp(2) = -1;
+
+	initial.tvec_elp(0) = 0.027;  //left and right (image frame)
+	initial.tvec_elp(1) = -0.01;  //up and down
 	initial.tvec_elp(2) = -0.03;
 	initial.rvec_elp(0) = 0.0;
 	initial.rvec_elp(1) = 0.0;
-	initial.rvec_elp(2) = -1;
+	initial.rvec_elp(2) = -1.4;
 
-    double theta = 0.1;
+    double theta = 0.1; //initial guess
 
 	for (int i = 0; i < numParticles; i++) {
 		particles[i] = newToolModel.setRandomConfig(initial, theta);
@@ -159,7 +158,7 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
 			newToolModel.renderTool(toolImage_left, particles[i], Cam_left,
 									P_left); //first get the rendered image using 3d model of the tool
 
-			float left = newToolModel.calculateChamferScore(toolImage_left, segmented_left);  //get the matching score
+			float left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left);  //get the matching score
 
 			toolImage_right.setTo(0); //reset image
 			newToolModel.renderTool(toolImage_right, particles[i], Cam_right, P_right);
@@ -262,7 +261,8 @@ void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedP
 	updatedParticles.clear();
     updatedParticles.resize(numParticles);
     ///every loop should generate different particle from one base particle k
-    for (int i = 0; i < numParticles; ++i) {
+	updatedParticles[0] = bestParticle;
+    for (int i = 1; i < numParticles; ++i) {
         updatedParticles[i] = newToolModel.gaussianSampling(bestParticle, Downsample_rate);
 
     }
