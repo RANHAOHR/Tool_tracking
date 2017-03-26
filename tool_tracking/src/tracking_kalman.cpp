@@ -120,7 +120,6 @@ int main(int argc, char **argv) {
 
             cv::resize(new_seg_left, new_seg_left,size);
             cv::resize(new_seg_right, new_seg_right,size);
-
             //matching_score
             UKF.update(new_seg_left, new_seg_right);
 

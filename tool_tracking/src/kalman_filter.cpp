@@ -50,9 +50,6 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     //initializeParticles(); Where we're going, we don't need particles.
 
     // initialization, just basic black image ??? how to get the size of the image
-    toolImage_left = cv::Mat::zeros(475, 640, CV_8UC3);
-    toolImage_right = cv::Mat::zeros(475, 640, CV_8UC3);
-
     toolImage_left_arm_1 = cv::Mat::zeros(475, 640, CV_8UC3);
     toolImage_right_arm_1 = cv::Mat::zeros(475, 640, CV_8UC3);
 
@@ -60,7 +57,6 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     toolImage_right_arm_2 = cv::Mat::zeros(475, 640, CV_8UC3);
 
     //Set up forward kinematics.
-
     /***motion model params***/
     com_s1 = nh_.subscribe("/dvrk/PSM1/set_position_joint", 10, &KalmanFilter::newCommandCallback1, this);
     com_s2 = nh_.subscribe("/dvrk/PSM2/set_position_joint", 10, &KalmanFilter::newCommandCallback2, this);
@@ -143,6 +139,12 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     convertEigenToMat(arm_r__cam_l, Cam_left_arm_2);
     convertEigenToMat(arm_r__cam_r, Cam_right_arm_2);
 
+    //DEBUG:
+    ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
+    ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
+    ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
+    ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
+
 };
 
 void KalmanFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight){
@@ -205,43 +207,23 @@ void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& 
 };
 
 //Deprecated by KalmanFilter::update(). Archival code only.
-void KalmanFilter::measureFunc(ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right, double &matchingScore) {
+double KalmanFilter::measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right) {
 
     //Looks mostly IP-related; need to resturcture to not be dependant on particles and instead use sigma-points.
-
-    std::vector<cv::Mat> trackingImages;
-    trackingImages.resize(2);
-
-    //Choose the best sigma point from this batch to run IP on.
-    //TODO: Convert from particles to sigma points- what will actually need to be changed?
-    double maxScore = 0.0;//track the maximum scored sigma point
-    int maxScoreIdx = -1;//maximum scored SP index
-    double totalScore = 0.0;//total score
-
-    //matchingScore.resize(toolPose.size());
-
-    cv::Mat segmentedImage_left = segmented_left.clone();
-    cv::Mat segmentedImage_right = segmented_right.clone();
-
     toolImage_left.setTo(0);
     toolImage_right.setTo(0);
 
     /***do the sampling and get the matching score***/
-    newToolModel.renderTool(toolImage_left, toolPose, Cam_left, P_left); //first get the rendered image using 3d model of the tool
+    //first get the rendered image using 3d model of the tool
+    newToolModel.renderTool(toolImage_left, toolPose, Cam_left, P_left);
     double left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left);  //get the matching score
 
     newToolModel.renderTool(toolImage_right, toolPose, Cam_right, P_right);
     double right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right);
 
-    matchingScore = sqrt(pow(left, 2) + pow(right, 2));
+    double matchingScore = sqrt(pow(left, 2) + pow(right, 2));
 
-    //trackingImages[0] = toolImage_left_temp.clone();
-    //trackingImages[1] = toolImage_right_temp.clone();
-
-    //do not do this for each tool model
-    cv::imshow("trackingImages left", toolImage_left);
-    cv::imshow("trackingImages right",toolImage_right);
-    cv::waitKey(10);
+    return matchingScore;
 
 };
 
@@ -412,6 +394,20 @@ void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, 
     sigma_point_out = u.clone();
 };
 
+/***this function should compute the matching score for each sigma points: for future use****/
+void KalmanFilter::computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat> & sigma_point_in, const cv::Mat &segmented_left, const cv::Mat &segmented_right){
+    //TODO:
+    double total = 0.0;
+    for (int i = 0; i < sigma_point_in.size() ; ++i) {
+        measureWeights[i] = matching_score(sigma_point_in[i], segmented_left, segmented_right );
+        total += measureWeights[i];
+    }
+    for (int j = 0; j < sigma_point_in.size(); ++j) {
+        measureWeights[j] = measureWeights[j] / total;
+    }
+
+};
+
 double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right) {
     //Convert our state into Eigen::Affine3ds; one for each arm
     Eigen::Affine3d arm1 =
@@ -437,37 +433,15 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
     convertToolModel(arm1, arm_1);
     convertToolModel(arm2, arm_2);
 
-    //Render the tools.
-    toolImage_left_arm_1.setTo(0); //left rendered Image for ARM 1
-    toolImage_right_arm_1.setTo(0); //right rendered Image for ARM 1
+    //Render the tools and compute the matching score
+    double matchingScore_arm_1 = measureFunc(toolImage_left_arm_1, toolImage_right_arm_1, arm_1, segmented_left, segmented_right, Cam_left_arm_1, Cam_right_arm_1);
+    double matchingScore_arm_2 = measureFunc(toolImage_left_arm_2, toolImage_right_arm_2, arm_2, segmented_left, segmented_right, Cam_left_arm_2, Cam_right_arm_2);
 
-    toolImage_left_arm_2.setTo(0); //left rendered Image for ARM 2
-    toolImage_right_arm_2.setTo(0); //right rendered Image for ARM 2
-
-
-    //measureFunc(arm_1, )
-    newToolModel.renderTool(toolImage_left_arm_1, arm_1, Cam_left_arm_1, P_left);
-    newToolModel.renderTool(toolImage_right_arm_1, arm_1, Cam_right_arm_1, P_right);
-    newToolModel.renderTool(toolImage_left_arm_2, arm_2, Cam_left_arm_2, P_left);
-    newToolModel.renderTool(toolImage_right_arm_2, arm_2, Cam_right_arm_2, P_right);
-
-    cv::imshow("Ren arm_1 left", toolImage_left_arm_1);
-    cv::imshow("Ren arm_1 right", toolImage_right_arm_1);
-    cv::imshow("Ren arm_2 left", toolImage_left_arm_2);
-    cv::imshow("Ren arm_2 right", toolImage_right_arm_2);
+    cv::imshow("Render arm 1 Left cam" ,toolImage_left_arm_1 );
+    cv::imshow("Render arm 1 Right cam" ,toolImage_right_arm_1 );
+    cv::imshow("Render arm 2 Left cam" ,toolImage_left_arm_2 );
+    cv::imshow("Render arm 2 Right cam" ,toolImage_right_arm_2 );
     cv::waitKey(10);
-
-    //calculate matching score for arm 1 TODO: if there are better ways
-    double left = newToolModel.calculateMatchingScore(toolImage_left_arm_1, segmented_left);  //get the matching score
-    double right = newToolModel.calculateMatchingScore(toolImage_right_arm_1, segmented_right);
-
-    double matchingScore_arm_1 = sqrt(pow(left, 2) + pow(right, 2));
-
-    //get matching score for arm 2
-    left = newToolModel.calculateMatchingScore(toolImage_left_arm_2, segmented_left);  //get the matching score
-    right = newToolModel.calculateMatchingScore(toolImage_right_arm_2, segmented_right);
-
-    double matchingScore_arm_2 = sqrt(pow(left, 2) + pow(right, 2));
 
     double result = (matchingScore_arm_1 + matchingScore_arm_2) / 2;
 

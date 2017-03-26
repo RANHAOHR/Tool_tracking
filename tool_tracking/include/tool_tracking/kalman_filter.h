@@ -88,9 +88,6 @@ private:
     unsigned int toolSize; //size of the needle to be rendered
     double Downsample_rate;
 
-    cv::Mat toolImage_left; //left rendered Image
-    cv::Mat toolImage_right; //right rendered Image
-
     cv::Mat toolImage_left_arm_1; //left rendered Image for ARM 1
     cv::Mat toolImage_right_arm_1; //right rendered Image for ARM 1
 
@@ -150,7 +147,7 @@ private:
 	
 	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u);
 	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
-
+    void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat> & sigma_point_in, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
 public:
 
@@ -185,7 +182,7 @@ public:
             const cv::Mat &zt,
             const cv::Mat &ut
     );
-    void measureFunc(ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right, double &matchingScore);
+    double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right);
 
     void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 
