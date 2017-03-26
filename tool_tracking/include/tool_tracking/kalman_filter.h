@@ -154,7 +154,7 @@ public:
 	*/
     void measureFunc(std::vector<ToolModel::toolModel> &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, std::vector<double> &matchingScore);
 
-    void update(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+    void update(const cv::Mat &segmented_left, const cv::Mat &segmented_right, const double &zt);
 
     void convertToolModel(const cv::Mat &toolMat, ToolModel::toolModel &toolModel, int arm);
 	/*

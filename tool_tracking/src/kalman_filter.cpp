@@ -225,7 +225,7 @@ cv::Mat KalmanFilter::adjoint(cv::Mat &G) {
 	return adjG;
 };
 
-void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmented_right){
+void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmented_right, const double &zt){
 	//Get sensor update.
 	std::vector<std::vector<double> > tmp;
 	if(davinci_interface::get_fresh_robot_pos(tmp)){
@@ -399,11 +399,11 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 
 
 	//TODO: how to get a current zt????? temp solution: use current mu
-	double zt = 0.0;
-	ToolModel::toolModel currentToolModel;
-	convertToolModel(current_mu, currentToolModel,1);
-	measureFunc(currentToolModel, segmented_left, segmented_right, zt);
-	
+//	double zt = 0.0;
+//	ToolModel::toolModel currentToolModel;
+//	convertToolModel(current_mu, currentToolModel,1);
+//	measureFunc(currentToolModel, segmented_left, segmented_right, zt);
+
 	kalman_mu = current_mu + K_t * (zt - z_hat);
 	kalman_sigma = current_sigma - K_t * S_t * K_t.t();
 	//Render our own version of the arm.
