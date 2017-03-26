@@ -257,157 +257,123 @@ cv::Mat KalmanFilter::adjoint(cv::Mat &G) {
     return adjG;
 };
 
-void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmented_right){
+void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmented_right){	
+	/******Find and convert our various params and inputs******/
+	
+	//Get sensor update.
+	std::vector<std::vector<double> > tmp;
+	if(davinci_interface::get_fresh_robot_pos(tmp)){
+		sensor_green = tmp[0];
+		sensor_yellow = tmp[1];
+	}
+	
+	//Convert into proper format
+	Eigen::Affine3d green_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_green.data()));
+	Eigen::Vector3d green_trans = green_pos.translation();
+	Eigen::Vector3d green_rpy = green_pos.rotation().eulerAngles(0, 1, 2);
+	Eigen::Affine3d yellow_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_yellow.data()));
+	Eigen::Vector3d yellow_trans = yellow_pos.translation();
+	Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
+	cv::Mat zt = (cv::Mat_<double>(12, 1) <<
+		*green_pos.data(),
+		*green_rpy.data(),
+		*yellow_pos.data(),
+		*yellow_rpy.data()
+	);
+	
+	//Get command update.
+	//TODO: At the moment, the command is just the sensor update. We will need to get and preprocess the desired positions.
+	cv::Mat ut = zt.clone();
+	
+	cv::Mat sigma_t_last = kalman_sigma.clone();
+	cv::Mat mu_t_last = kalman_mu.clone();
+	
+	//ROS_ERROR("O: %f %f %f %f %f %f %f %f %f %f %f %f", z.at<double>(1, 1), z.at<double>(1, 2), z.at<double>(1, 3), z.at<double>(1, 4), z.at<double>(1, 5), z.at<double>(1, 6), z.at<double>(1, 7), z.at<double>(1, 8), z.at<double>(1, 9), z.at<double>(1, 10), z.at<double>(1, 11), z.at<double>(1, 12));
+	
+	//****Generate the sigma points.****
+	double lambda = alpha * alpha * (L + k) - L;
+	double gamma = sqrt(L + lambda);
 
-    //TODO: Oh my LORD....
+	///get the square root for sigma point generation using SVD decomposition
+	cv::Mat root_sigma_t_last = cv::Mat_<double>::zeros(L, 1);
 
-    /******Find and convert our various params and inputs******/
+	cv::Mat s = cv::Mat_<double>(L, 1);  //allocate space for SVD
+	cv::Mat vt = cv::Mat_<double>(L, L);  //allocate space for SVD
+	cv::Mat u = cv::Mat_<double>(L, L);  //allocate space for SVD
 
-    //Get sensor update.
-    std::vector<std::vector<double> > tmp;
-    if(davinci_interface::get_fresh_robot_pos(tmp)){
-        sensor_green = tmp[0];
-        sensor_yellow = tmp[1];
-    }
+	cv::SVD::compute(kalman_sigma, s, u, vt);//The actual square root gets saved into s
 
-    //Convert into proper format
-    Eigen::Affine3d green_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_green.data()));
-    Eigen::Vector3d green_trans = green_pos.translation();
-    Eigen::Vector3d green_rpy = green_pos.rotation().eulerAngles(0, 1, 2);
-    Eigen::Affine3d yellow_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_yellow.data()));
-    Eigen::Vector3d yellow_trans = yellow_pos.translation();
-    Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
-    cv::Mat zt = (cv::Mat_<double>(12, 1) <<*green_pos.data(),
-            *green_rpy.data(),
-            *yellow_pos.data(),
-            *yellow_rpy.data()
-    );
-
-    //Get command update.
-    //TODO: At the moment, the command is just the sensor update. We will need to get and preprocess the desired positions.
-    cv::Mat ut = zt.clone();
-
-    cv::Mat sigma_t_last = kalman_sigma.clone();
-    cv::Mat mu_t_last = kalman_mu.clone();
-
-    //ROS_ERROR("O: %f %f %f %f %f %f %f %f %f %f %f %f", z.at<double>(1, 1), z.at<double>(1, 2), z.at<double>(1, 3), z.at<double>(1, 4), z.at<double>(1, 5), z.at<double>(1, 6), z.at<double>(1, 7), z.at<double>(1, 8), z.at<double>(1, 9), z.at<double>(1, 10), z.at<double>(1, 11), z.at<double>(1, 12));
-
-    //****Generate the sigma points.****//
-    double lambda = alpha * alpha * (L + k) - L;
-    double gamma = sqrt(L + lambda);
-
-    ///get the square root for sigma point generation using SVD decomposition
-    cv::Mat root_sigma_t_last = cv::Mat_<double>::zeros(L, 1);
-
-    cv::Mat s = cv::Mat_<double>(L, 1);  //allocate space for SVD
-    cv::Mat vt = cv::Mat_<double>(L, L);  //allocate space for SVD
-    cv::Mat u = cv::Mat_<double>(L, L);  //allocate space for SVD
-
-    cv::SVD::compute(kalman_sigma, s, u, vt);//The actual square root gets saved into s
-
-    root_sigma_t_last = s.clone(); //store that back into the designated square root term
-
-    //Populate the sigma points:
-    std::vector<cv::Mat_<double> > sigma_pts_last;
-    sigma_pts_last.resize(2*L + 1);
-
-    sigma_pts_last[0] = mu_t_last.clone();//X_0
-    for (int i = 1; i <= L; i++) {
-        sigma_pts_last[i] = sigma_pts_last[0] + (gamma * root_sigma_t_last);
-        sigma_pts_last[i + L] = sigma_pts_last[0] - (gamma * root_sigma_t_last);
-    }
-
-    //Compute their weights:
-    std::vector<double> w_m;
-    w_m.resize(2*L + 1);
-    std::vector<double> w_c;
-    w_c.resize(2*L + 1);
-    w_m[0] = lambda / (L + lambda);
-    w_c[0] = lambda / (L + lambda) + (1.0 - (alpha * alpha) + beta);
-    for(int i = 1; i < 2 * L + 1; i++){
-        w_m[i] = 1.0 / (2.0 * (L + lambda));
-        w_c[i] = 1.0 / (2.0 * (L + lambda));
-    }
-
-    /*****Update sigma points based on motion model******/
-    std::vector<cv::Mat_<double> > sigma_pts_bar;
-    sigma_pts_bar.resize(2*L + 1);
-    for(int i = 0; i < 2 * L + 1; i++){
-        g(sigma_pts_bar[i], sigma_pts_last[i], ut);
-    }
-
-    /*****Create the predicted mus and sigmas.*****/
-    cv::Mat mu_bar = cv::Mat_<double>::zeros(12, 1);
-    for(int i = 0; i < 2 * L + 1; i++){
-        mu_bar = mu_bar + w_m[i] * sigma_pts_bar[i];
-    }
-    cv::Mat sigma_bar = cv::Mat_<double>::zeros(12, 12);
-    for(int i = 0; i < 2 * L + 1; i++){
-        sigma_bar = sigma_bar + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((sigma_pts_bar[i] - mu_bar).t());
-    }
-
-    /*****get measurement****/
-    /*std::vector<cv::Mat> updateState_vec;
-    updateState_vec.resize(2*L);
-    //compute new square root for current sigma
-    cv::SVD::compute(current_sigma, s, u, vt);  //s is supposed to be the one we are asking for, the singular values
-    square_sigma = s.clone(); //safe way to pass values to a cv Mat
-
-    updateState_vec[0] = current_mu.clone();   //X_nod
-    for (int i = 1; i < L; ++i) {
-        updateState_vec[i] = updateState_vec[0] + gamma * square_sigma;
-        updateState_vec[i + L] = updateState_vec[0] - gamma * square_sigma;
-    }
-
-    std::vector<double> mscores;
-    mscores.resize(2*L);
-    //ROS_ERROR("P: %f %f %f %f %f %f %f %f %f %f %f %f", currentState_vec[0].at<double>(1, 1), currentState_vec[0].at<double>(1, 2), currentState_vec[0].at<double>(1, 3), currentState_vec[0].at<double>(1, 4), currentState_vec[0].at<double>(1, 5), currentState_vec[0].at<double>(1, 6), currentState_vec[0].at<double>(1, 7), currentState_vec[0].at<double>(1, 8), currentState_vec[0].at<double>(1, 9), currentState_vec[0].at<double>(1, 10), currentState_vec[0].at<double>(1, 11), currentState_vec[0].at<double>(1, 12));
-    for(int i = 0; i < 2*L; i++){
-        mscores[i] = matching_score(currentState_vec[i]);
-    }
-    /********************measuerment function comes in here:*************************/
-    /*std::vector<cv::Mat> current_z_vec;
-    current_z_vec.resize(2*L);
-
-    //TODO Placeholder
-    for(int i = 0; i < 2*L; i++){
-        current_z_vec[i] = z.clone();
-    }
-
-    ROS_ERROR("MARKER 1");
-    //TODO: get measurement function
-    cv::Mat weighted_z = cv::Mat::zeros(12,1,CV_64FC1);
-    for (int j = 0; j < 2*L; ++j) {
-        cv::Mat temp = weight_vec_m[j] * current_z_vec[j];
-        weighted_z = weighted_z + temp;
-    }
-
-    ROS_WARN("Calulcated wated z");
-    cv::Mat S_t = cv::Mat::zeros(L, L, CV_64FC1);
-    for (int i1 = 0; i1 < 2*L; ++i1) {
-        cv::Mat var_z = current_z_vec[i1] - weighted_z;
-        cv::Mat temp_mat = weight_vec_c[i1] * var_z * var_z.t();
-        S_t = S_t + temp_mat;
-    }
-    cv::Mat Q = cv::Mat::eye(L,L,CV_64FC1);
-    Q = Q * 0.00038;
-
-    ROS_ERROR("Maekr 2");
-    S_t = S_t + Q;
-    //get cross-covariance
-    cv::Mat omega_x_z  = cv::Mat::zeros(2 * L, 1, CV_64FC1);
-    for (int k1 = 0; k1 < 2*L; ++k1) {
-        cv::Mat var_x = updateState_vec[k1] - current_mu;
-        cv::Mat var_z = current_z_vec[k1] - weighted_z;
-        cv::Mat temp_mat = weight_vec_c[k1] * var_x * var_z.t();
-        omega_x_z = omega_x_z + temp_mat;
-    }
-    ///get Kalman factor
-    cv::Mat K_t = cv::Mat::zeros(L,L,CV_64FC1);
-    K_t = omega_x_z * S_t.inv();
-    //update mu and sigma
-    kalman_mu = current_mu + K_t * (z - weighted_z);
-    kalman_sigma = current_sigma - K_t * S_t * K_t.t();*/
+	root_sigma_t_last = s.clone(); //store that back into the designated square root term
+	
+	//Populate the sigma points:
+	std::vector<cv::Mat_<double> > sigma_pts_last;
+	sigma_pts_last.resize(2*L + 1);
+	
+	sigma_pts_last[0] = mu_t_last.clone();//X_0
+	for (int i = 1; i <= L; i++) {
+		sigma_pts_last[i] = sigma_pts_last[0] + (gamma * root_sigma_t_last);
+		sigma_pts_last[i + L] = sigma_pts_last[0] - (gamma * root_sigma_t_last);
+	}
+	
+	//TODO: Incorporate a second set of weights based on the matching score, to influence the effect of the sigma points.
+	
+	//Compute their weights:
+	std::vector<double> w_m;
+	w_m.resize(2*L + 1);
+	std::vector<double> w_c;
+	w_c.resize(2*L + 1);
+	w_m[0] = lambda / (L + lambda);
+	w_c[0] = lambda / (L + lambda) + (1.0 - (alpha * alpha) + beta);
+	for(int i = 1; i < 2 * L + 1; i++){
+		w_m[i] = 1.0 / (2.0 * (L + lambda));
+		w_c[i] = 1.0 / (2.0 * (L + lambda));
+	}
+	
+	/*****Update sigma points based on motion model******/
+	std::vector<cv::Mat_<double> > sigma_pts_bar;
+	sigma_pts_bar.resize(2*L + 1);
+	for(int i = 0; i < 2 * L + 1; i++){
+		g(sigma_pts_bar[i], sigma_pts_last[i], ut);
+	}
+	
+	/*****Create the predicted mus and sigmas.*****/
+	cv::Mat mu_bar = cv::Mat_<double>::zeros(12, 1);
+	for(int i = 0; i < 2 * L + 1; i++){
+		mu_bar = mu_bar + w_m[i] * sigma_pts_bar[i];
+	}
+	cv::Mat sigma_bar = cv::Mat_<double>::zeros(12, 12);
+	for(int i = 0; i < 2 * L + 1; i++){
+		sigma_bar = sigma_bar + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((sigma_pts_bar[i] - mu_bar).t());
+	}
+	
+	/*****Correction Step: Move the sigma points through the measurement function.*****/
+	std::vector<cv::Mat_<double> > Z_bar;
+	Z_bar.resize(2 * L + 1);
+	for(int i = 0; i < 2 * L + 1; i++){
+		h(Z_bar[i], sigma_pts_bar[i]);
+	}
+	
+	/*****Calculate derived variance statistics.*****/
+	cv::Mat z_caret = cv::Mat_<double>::zeros(12, 1);
+	for(int i = 0; i < 2 * L + 1; i++){
+		z_caret = z_caret + w_m[i] * Z_bar[i];
+	}
+	
+	cv::Mat S = cv::Mat_<double>::zeros(12, 12);
+	for(int i = 0; i < 2 * L + 1; i++){
+		S = S + w_c[i] * (Z_bar[i] - z_caret) * ((Z_bar[i] - z_caret).t());
+	}
+	
+	cv::Mat sigma_xz = cv::Mat_<double>::zeros(12, 12);
+	for(int i = 0; i < 2 * L + 1; i++){
+		sigma_xz = w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((Z_bar[i] - z_caret).t());
+	}
+	
+	cv::Mat K = sigma_xz * S.inv();
+	
+	/*****Update our mu and sigma.*****/
+	kalman_mu = mu_bar + K * (zt - z_caret);
+	kalman_sigma = sigma_bar - K * S * K.t();
 };
 
 void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u){
@@ -415,7 +381,7 @@ void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, 
     sigma_point_out = u.clone();
 };
 
-double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right){
+double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right) {
     //Convert our state into Eigen::Affine3ds; one for each arm
     Eigen::Affine3d arm1 =
             Eigen::Translation3d(stat.at<double>(1, 1), stat.at<double>(2, 1), stat.at<double>(3, 1))
@@ -424,8 +390,7 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
             *
             Eigen::AngleAxisd(stat.at<double>(4, 1), Eigen::Vector3d::UnitY())
             *
-            Eigen::AngleAxisd(stat.at<double>(5, 1), Eigen::Vector3d::UnitZ())
-    ;
+            Eigen::AngleAxisd(stat.at<double>(5, 1), Eigen::Vector3d::UnitZ());
     Eigen::Affine3d arm2 =
             Eigen::Translation3d(stat.at<double>(6, 1), stat.at<double>(7, 1), stat.at<double>(8, 1))
             *
@@ -433,8 +398,7 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
             *
             Eigen::AngleAxisd(stat.at<double>(10, 1), Eigen::Vector3d::UnitY())
             *
-            Eigen::AngleAxisd(stat.at<double>(11, 1), Eigen::Vector3d::UnitZ())
-    ;
+            Eigen::AngleAxisd(stat.at<double>(11, 1), Eigen::Vector3d::UnitZ());
 
     //Transform into four affine3ds, one for each arm and one for each camera.
     Eigen::Affine3d arm1cr = arm1 * arm_l__cam_r;
@@ -478,9 +442,14 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
 
     double matchingScore_arm_2 = sqrt(pow(left, 2) + pow(right, 2));
 
-    double result = (matchingScore_arm_1 + matchingScore_arm_1)/2;
+    double result = (matchingScore_arm_1 + matchingScore_arm_1) / 2;
 
     return result;
+};
+
+void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in){
+	//TODO: Very stupid placeholder model that assumes an absolutely perfect sensor.
+	sigma_point_out = sigma_point_in.clone();
 };
 
 void KalmanFilter::convertToolModel(const Eigen::Affine3d & trans, ToolModel::toolModel &toolModel){
