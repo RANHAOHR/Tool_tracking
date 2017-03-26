@@ -705,22 +705,22 @@ ToolModel::setRandomConfig(const toolModel &seeds, const double &theta) {
     double step = 0.0002;
     double dev = randomNumber(step, 0);
 
-    newTool.tvec_elp(0) = seeds.tvec_elp(0);
+    newTool.tvec_elp(0) = seeds.tvec_elp(0) + dev;
 
     dev = randomNumber(step, 0);
-    newTool.tvec_elp(1) = seeds.tvec_elp(1);
+    newTool.tvec_elp(1) = seeds.tvec_elp(1) + dev;
 
     dev = randomNumber(step, 0);
-    newTool.tvec_elp(2) = seeds.tvec_elp(2);// + dev;
+    newTool.tvec_elp(2) = seeds.tvec_elp(2)+ dev;// + dev;
 
     dev = randomNumber(step, 0);
-    newTool.rvec_elp(0) = seeds.rvec_elp(0);
+    newTool.rvec_elp(0) = seeds.rvec_elp(0)+ dev;
 
     dev = randomNumber(step, 0);
-    newTool.rvec_elp(1) = seeds.rvec_elp(1);
+    newTool.rvec_elp(1) = seeds.rvec_elp(1)+ dev;
 
     dev = randomNumber(step, 0);
-    newTool.rvec_elp(2) = seeds.rvec_elp(2);
+    newTool.rvec_elp(2) = seeds.rvec_elp(2)+ dev;
 
 
     /************** sample the angles of the joints **************/
@@ -744,28 +744,28 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, doub
 
     //gaussianTool = max_pose;
     //create normally distributed random samples
-    step = 0.0002;
+    step = 0.0006;  ////currently make it stable
     double dev = randomNumber(step, 0);
-    gaussianTool.tvec_elp(0) = max_pose.tvec_elp(0) + dev;
+    gaussianTool.tvec_elp(0) = max_pose.tvec_elp(0)+ dev;
 
     dev = randomNumber(step, 0);
-    gaussianTool.tvec_elp(1) = max_pose.tvec_elp(1) + dev;
+    gaussianTool.tvec_elp(1) = max_pose.tvec_elp(1)+ dev;
 
     dev = randomNumber(step, 0);
-    gaussianTool.tvec_elp(2) = max_pose.tvec_elp(2) + dev;// + dev;
+    gaussianTool.tvec_elp(2) = max_pose.tvec_elp(2)+ dev;// + dev;
 
     dev = randomNumber(step, 0);
-    gaussianTool.rvec_elp(0) = max_pose.rvec_elp(0) + dev;
+    gaussianTool.rvec_elp(0) = max_pose.rvec_elp(0)+ dev;
 
     dev = randomNumber(step, 0);
-    gaussianTool.rvec_elp(1) = max_pose.rvec_elp(1) + dev;
+    gaussianTool.rvec_elp(1) = max_pose.rvec_elp(1)+ dev;
 
     dev = randomNumber(step, 0);
-    gaussianTool.rvec_elp(2) = max_pose.rvec_elp(2) + dev;
+    gaussianTool.rvec_elp(2) = max_pose.rvec_elp(2)+ dev;
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    double theta_ellipse = randomNumber(step, 0);    //-90,90
+    double theta_ = randomNumber(step, 0);    //-90,90
     double theta_grip_1 = randomNum(-M_PI / 2, M_PI / 2);
     double theta_grip_2 = randomNum(-M_PI / 2, M_PI / 2);
 
@@ -773,8 +773,8 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, doub
     if (theta_grip_1 < theta_grip_2)
         theta_grip_1 = theta_grip_2 + randomNum(0, 0.2);
 
-    computeRandomPose(max_pose, gaussianTool, theta_ellipse, theta_grip_1, theta_grip_2);
-
+    computeRandomPose(max_pose, gaussianTool, theta_, theta_grip_1, theta_grip_2);
+    //computeModelPose(gaussianTool, theta_, theta_grip_1, theta_grip_2);
     return gaussianTool;
 
 };
@@ -790,7 +790,8 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
 
     inputModel.rvec_cyl(0) = inputModel.rvec_elp(0); //roll angle should be the same.
     inputModel.rvec_cyl(1) = inputModel.rvec_elp(1); //pitch angle should be the same.
-    inputModel.rvec_cyl(2) = seed_pose.rvec_elp(2) + theta_tool; //yaw angle is plus the theta_ellipse
+
+    inputModel.rvec_cyl(2) = seed_pose.rvec_cyl(2)+ theta_tool; //yaw angle is plus the theta_ellipse
 
     q_temp = transformPoints( q_ellipse, cv::Mat(inputModel.rvec_cyl),
                               cv::Mat(inputModel.tvec_elp)); //transform the ellipse coord according to cylinder pose
@@ -988,7 +989,6 @@ float ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segme
 //    cv::waitKey(0);
         cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
         cv::Mat toolImFloat; //Float data type of grey scale tool image
-
 
         cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
 

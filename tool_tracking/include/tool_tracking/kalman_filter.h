@@ -140,6 +140,8 @@ private:
 	cv::Mat P_right;
 	
 	double matching_score(const cv::Mat & stat);
+	
+	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u);
 
 public:
 
@@ -175,7 +177,8 @@ public:
 		const cv::Mat &zt,
 		const cv::Mat &ut
 	);
+    void measureFunc(ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, double &matchingScore);
 
-	cv::Mat adjoint(cv::Mat &G);
+    cv::Mat adjoint(cv::Mat &G);
 };
 #endif

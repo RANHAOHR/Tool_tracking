@@ -71,46 +71,6 @@ int main(int argc, char **argv) {
 
 	trackingImgs.resize(2);
 
-	/****TODO: Temp Projection matrices****/
-	cv::Mat P_l(3, 4, CV_64FC1);
-	P_l.at<double>(0, 0) = 893.7852590197848;
-	P_l.at<double>(1, 0) = 0;
-	P_l.at<double>(2, 0) = 0;
-
-	P_l.at<double>(0, 1) = 0;
-	P_l.at<double>(1, 1) = 893.7852590197848;
-	P_l.at<double>(2, 1) = 0;
-
-	P_l.at<double>(0, 2) = 288.4443244934082; // horiz
-	P_l.at<double>(1, 2) = 259.7727756500244; //verticle
-	P_l.at<double>(2, 2) = 1;
-
-	P_l.at<double>(0, 3) = 0;
-	P_l.at<double>(1, 3) = 0;
-	P_l.at<double>(2, 3) = 0;
-
-	cv::Mat P_r(3, 4, CV_64FC1);
-	P_r.at<double>(0, 0) = 893.7852590197848;
-	P_r.at<double>(1, 0) = 0;
-	P_r.at<double>(2, 0) = 0;
-
-	P_r.at<double>(0, 1) = 0;
-	P_r.at<double>(1, 1) = 893.7852590197848;
-	P_r.at<double>(2, 1) = 0;
-
-	P_r.at<double>(0, 2) = 288.4443244934082; // horiz
-	P_r.at<double>(1, 2) = 259.7727756500244; //verticle
-	P_r.at<double>(2, 2) = 1;
-
-	P_r.at<double>(0, 3) = 4.732953897952732;
-	P_r.at<double>(1, 3) = 0;
-	P_r.at<double>(2, 3) = 0;
-
-	/*** Subscribers, velocity, stream images ***/
-
-	//The program works just fine without this subscription ever actually being called.
-	//ros::Subscriber sub3 = nh.subscribe("/bodyVelocity", 100, arrayCallback);
-
 	const std::string leftCameraTopic("/davinci_endo/left/camera_info");
 	const std::string rightCameraTopic("/davinci_endo/right/camera_info");
 	cameraProjectionMatrices cameraInfoObj(nh, leftCameraTopic, rightCameraTopic);
@@ -159,7 +119,7 @@ int main(int argc, char **argv) {
 
 			seg_left = segmentation(rawImage_left);  //or use image_vessselness
 			seg_right = segmentation(rawImage_right);
-////
+
 			cv::imshow("Cam L", rawImage_left);
 			cv::imshow("Cam R", rawImage_right);
 			cv::imshow("Seg L", seg_left);
@@ -171,7 +131,11 @@ int main(int argc, char **argv) {
 		}
 		
 		//We want to update our filter whenever the robot is doing anything, not just when we are getting images.
+        //	ToolModel::toolModel currentToolModel;
+        //	convertToolModel(current_mu, currentToolModel,1);
+        //	measureFunc(currentToolModel, segmented_left, segmented_right, zt);
 		UKF.update(seg_left, seg_right);
+
 		/*** make sure camera information is ready ***/
 		//This does not seem useful at all.
 		//if(!freshCameraInfo){
@@ -184,15 +148,6 @@ int main(int argc, char **argv) {
 //		/*** if camera is ready, doing the tracking based on segemented image***/
 		//if (freshImage /*&& freshVelocity && freshCameraInfo*/){
 /*
-			seg_left = segmentation(rawImage_left);  //or use image_vessselness
-			seg_right = segmentation(rawImage_right);
-
-			trackingImgs = UKF.trackingTool(
-				new_seg_left,
-				new_seg_right,
-				P_l,
-				P_r
-			); //with rendered tool and segmented img
 ////
 //			cv::imshow("Rendered Image: Left", trackingImgs[0]);
 //			cv::imshow("Rendered Image: Right", trackingImgs[1]);
