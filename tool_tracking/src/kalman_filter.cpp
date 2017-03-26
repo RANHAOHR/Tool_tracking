@@ -385,6 +385,20 @@ void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, 
     sigma_point_out = u.clone();
 };
 
+/***this function should compute the matching score for each sigma points: for future use****/
+void KalmanFilter::computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat> & sigma_point_in, const cv::Mat &segmented_left, const cv::Mat &segmented_right){
+    //TODO:
+    double total = 0.0;
+    for (int i = 0; i < sigma_point_in.size() ; ++i) {
+        measureWeights[i] = matching_score(sigma_point_in[i], segmented_left, segmented_right );
+        total += measureWeights[i];
+    }
+    for (int j = 0; j < sigma_point_in.size(); ++j) {
+        measureWeights[j] = measureWeights[j] / total;
+    }
+
+};
+
 double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right) {
     //Convert our state into Eigen::Affine3ds; one for each arm
     Eigen::Affine3d arm1 =
