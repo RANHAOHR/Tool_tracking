@@ -72,69 +72,80 @@
 class KalmanFilter {
 
 private:
-	cv::Mat Cam_left;
-	cv::Mat Cam_right;
+    cv::Mat Cam_left;
+    cv::Mat Cam_right;
 
-	ros::NodeHandle nh_;  //may need this
+    ros::NodeHandle nh_;  //may need this
 
-	///ros::Timer timer;
+    ///ros::Timer timer;
 
-	ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
+    ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
 
-	ToolModel::toolModel initial; //initial configuration
+    ToolModel::toolModel initial; //initial configuration
 
-	unsigned int toolSize; //size of the needle to be rendered
-	double Downsample_rate;
+    unsigned int toolSize; //size of the needle to be rendered
+    double Downsample_rate;
 
-	cv::Mat toolImage_left; //left rendered Image
-	cv::Mat toolImage_right; //right rendered Image
+    cv::Mat toolImage_left; //left rendered Image
+    cv::Mat toolImage_right; //right rendered Image
 
-	cv::Mat toolImage_left_temp; //left rendered Image
-	cv::Mat toolImage_right_temp; //right rendered Image
+    cv::Mat toolImage_left_arm_1; //left rendered Image for ARM 1
+    cv::Mat toolImage_right_arm_1; //right rendered Image for ARM 1
 
-	cv::Rect ROI_left; //ROI for the left image
-	cv::Rect ROI_right; //ROI for the right image
-	
-	//Expect this to go away.
-	std::vector<ToolModel::toolModel> particles; // particles
-	std::vector<double> matchingScores; // particle scores (matching scores)
-	std::vector<double> particleWeights; // particle weights calculated from matching scores
+    cv::Mat toolImage_left_arm_2; //left rendered Image for ARM 2
+    cv::Mat toolImage_right_arm_2; //right rendered Image for ARM 2
 
-	int L;  ///DOF for one arm.
-	
-	const static double alpha = 0.005;
-	const static double k = 0.0; //TODO: how much?
-	const static double beta = 2;
+    cv::Rect ROI_left; //ROI for the left image
+    cv::Rect ROI_right; //ROI for the right image
 
-	ros::Subscriber com_s1;
-	ros::Subscriber com_s2;
+    //Expect this to go away.
+    std::vector<ToolModel::toolModel> particles; // particles
+    std::vector<double> matchingScores; // particle scores (matching scores)
+    std::vector<double> particleWeights; // particle weights calculated from matching scores
 
-	void newCommandCallback1(const sensor_msgs::JointState::ConstPtr &incoming);
-	void newCommandCallback2(const sensor_msgs::JointState::ConstPtr &incoming);
+    int L;  ///DOF for one arm.
 
-	std::vector<double> cmd_green;
-	std::vector<double> cmd_yellow;
-	
-	std::vector<double> sensor_green;
-	std::vector<double> sensor_yellow;
-	
-	cv::Mat kalman_mu;
-	cv::Mat kalman_sigma;
-	
-	Davinci_fwd_solver kinematics;
-	
-	Eigen::Affine3d arm_l__cam_l;
-	Eigen::Affine3d arm_r__cam_l;
-	Eigen::Affine3d arm_l__cam_r;
-	Eigen::Affine3d arm_r__cam_r;
+    const static double alpha = 0.005;
+    const static double k = 0.0; //TODO: how much?
+    const static double beta = 2;
 
-	bool freshCameraInfo;
+    ros::Subscriber com_s1;
+    ros::Subscriber com_s2;
 
-	ros::Subscriber projectionMat_subscriber_r;
-	ros::Subscriber projectionMat_subscriber_l;
+    void newCommandCallback1(const sensor_msgs::JointState::ConstPtr &incoming);
+    void newCommandCallback2(const sensor_msgs::JointState::ConstPtr &incoming);
 
-	void projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight);
-	void projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft);
+    std::vector<double> cmd_green;
+    std::vector<double> cmd_yellow;
+
+<<<<<<< HEAD
+    std::vector<double> sensor_green;
+    std::vector<double> sensor_yellow;
+
+    cv::Mat kalman_mu;
+    cv::Mat kalman_sigma;
+
+    Davinci_fwd_solver kinematics;
+
+    Eigen::Affine3d arm_l__cam_l;
+    Eigen::Affine3d arm_r__cam_l;
+    Eigen::Affine3d arm_l__cam_r;
+    Eigen::Affine3d arm_r__cam_r;
+
+    bool freshCameraInfo;
+
+    ros::Subscriber projectionMat_subscriber_r;
+    ros::Subscriber projectionMat_subscriber_l;
+
+    void projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight);
+    void projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft);
+
+    cv::Mat P_left;
+    cv::Mat P_right;
+
+    double matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+
+    void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u);
 
 	cv::Mat P_left;
 	cv::Mat P_right;
@@ -144,40 +155,40 @@ private:
 	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u);
 	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
 
+
 public:
 
-	/*
-	* The default constructor
-	*/
-	KalmanFilter(ros::NodeHandle *nodehandle);
+    /*
+    * The default constructor
+    */
+    KalmanFilter(ros::NodeHandle *nodehandle);
 
-	/*
-	 * The deconstructor 
-	 */
-	~KalmanFilter();
+    /*
+     * The deconstructor
+     */
+    ~KalmanFilter();
 
-	/***consider getting a timer to debug***/
-	// void timerCallback(const ros::TimerEvent&);
+    /***consider getting a timer to debug***/
+    // void timerCallback(const ros::TimerEvent&);
 
-	/*
-	 * This is the main function for tracking the needle. This function is called and it syncs all of the functions
-	*/
-	void measureFunc(std::vector<ToolModel::toolModel> &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, std::vector<double> &matchingScore);
+    /*
+     * This is the main function for tracking the needle. This function is called and it syncs all of the functions
+    */
 
-	void update(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+    void update(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
-	void convertToolModel(const Eigen::Affine3d & trans, ToolModel::toolModel &toolModel);
-	/*
-	 * Uncented Kalman filter update
-	 */
-	void UnscentedKalmanFilter(
-		const cv::Mat &mu,
-		const cv::Mat &sigma,
-		cv::Mat &update_mu,
-		cv::Mat &update_sigma,
-		const cv::Mat &zt,
-		const cv::Mat &ut
-	);
+    void convertToolModel(const Eigen::Affine3d & trans, ToolModel::toolModel &toolModel);
+    /*
+     * Uncented Kalman filter update
+     */
+    void UnscentedKalmanFilter(
+            const cv::Mat &mu,
+            const cv::Mat &sigma,
+            cv::Mat &update_mu,
+            cv::Mat &update_sigma,
+            const cv::Mat &zt,
+            const cv::Mat &ut
+    );
     void measureFunc(ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, double &matchingScore);
 
     cv::Mat adjoint(cv::Mat &G);
