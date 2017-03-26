@@ -62,10 +62,12 @@
 #include <boost/random/normal_distribution.hpp>
 
 #include <geometry_msgs/Transform.h>
+#include <tf/transform_listener.h>
 #include <cwru_davinci_interface/davinci_interface.h>
 #include <cwru_davinci_kinematics/davinci_kinematics.h>
 #include <sensor_msgs/image_encodings.h>
 #include <cwru_opencv_common/projective_geometry.h>
+#include <xform_utils/xform_utils.h>
 
 class KalmanFilter {
 
@@ -120,19 +122,24 @@ private:
 	cv::Mat kalman_sigma;
 	
 	Davinci_fwd_solver kinematics;
+	
+	Eigen::Affine3d arm_l__cam_l;
+	Eigen::Affine3d arm_r__cam_l;
+	Eigen::Affine3d arm_l__cam_r;
+	Eigen::Affine3d arm_r__cam_r;
 
-    bool freshCameraInfo;
+	bool freshCameraInfo;
 
-    ros::Subscriber projectionMat_subscriber_r;
-    ros::Subscriber projectionMat_subscriber_l;
+	ros::Subscriber projectionMat_subscriber_r;
+	ros::Subscriber projectionMat_subscriber_l;
 
-    void projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight);
-    void projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft);
+	void projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight);
+	void projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft);
 
-    cv::Mat P_left;
-    cv::Mat P_right;
-    
-    double matching_score(const cv::Mat & stat);
+	cv::Mat P_left;
+	cv::Mat P_right;
+	
+	double matching_score(const cv::Mat & stat);
 
 public:
 
@@ -152,11 +159,11 @@ public:
 	/*
 	 * This is the main function for tracking the needle. This function is called and it syncs all of the functions
 	*/
-    void measureFunc(std::vector<ToolModel::toolModel> &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, std::vector<double> &matchingScore);
+	void measureFunc(std::vector<ToolModel::toolModel> &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, std::vector<double> &matchingScore);
 
-    void update(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+	void update(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
-    void convertToolModel(const cv::Mat &toolMat, ToolModel::toolModel &toolModel, int arm);
+	void convertToolModel(const Eigen::Affine3d & trans, ToolModel::toolModel &toolModel);
 	/*
 	 * Uncented Kalman filter update
 	 */

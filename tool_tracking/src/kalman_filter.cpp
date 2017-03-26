@@ -99,6 +99,9 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 		*yellow_rpy.data()
 	);
 	kalman_sigma = (cv::Mat::zeros(12, 12, CV_32F));
+	
+	ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
+	ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
 
 	freshCameraInfo = false; //should be left and right
 	projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/unsynced/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
@@ -106,7 +109,33 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 
 	P_left = cv::Mat::zeros(3,4,CV_64FC1);
 	P_right = cv::Mat::zeros(3,4,CV_64FC1);
-
+	
+	//Subscribe to the necessary transforms.
+	tf::StampedTransform arm_l__cam_l_st;
+	tf::StampedTransform arm_r__cam_l_st;
+	tf::StampedTransform arm_l__cam_r_st;
+	tf::StampedTransform arm_r__cam_r_st;
+	try{
+		tf::TransformListener l;
+		while(!l.waitForTransform("/left_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+		l.lookupTransform("/left_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), arm_l__cam_l_st);
+		while(!l.waitForTransform("/left_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+		l.lookupTransform("/left_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), arm_r__cam_l_st);
+		while(!l.waitForTransform("/right_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+		l.lookupTransform("/right_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), arm_l__cam_r_st);
+		while(!l.waitForTransform("/right_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+		l.lookupTransform("/right_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), arm_r__cam_r_st);
+	}
+	catch (tf::TransformException ex){
+		ROS_ERROR("%s",ex.what());
+		exit(1);
+	}
+	//Convert to Affine3ds for storage, which is the format they will be used in for rendering.
+	XformUtils xfu;
+	arm_l__cam_l = xfu.transformTFToAffine3d(arm_l__cam_l_st);
+	arm_l__cam_r = xfu.transformTFToAffine3d(arm_l__cam_r_st);
+	arm_r__cam_l = xfu.transformTFToAffine3d(arm_r__cam_l_st);
+	arm_r__cam_r = xfu.transformTFToAffine3d(arm_r__cam_r_st);
 };
 
 void KalmanFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight){
@@ -263,6 +292,8 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 		*yellow_rpy.data()
 	);
 	
+	//ROS_ERROR("O: %f %f %f %f %f %f %f %f %f %f %f %f", z.at<double>(1, 1), z.at<double>(1, 2), z.at<double>(1, 3), z.at<double>(1, 4), z.at<double>(1, 5), z.at<double>(1, 6), z.at<double>(1, 7), z.at<double>(1, 8), z.at<double>(1, 9), z.at<double>(1, 10), z.at<double>(1, 11), z.at<double>(1, 12));
+	
 	//TODO: Figure out how to pre-process desired positions
 	
 	//Generate the sigma points.
@@ -361,6 +392,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	
 	std::vector<double> mscores;
 	mscores.resize(2*L);
+	//ROS_ERROR("P: %f %f %f %f %f %f %f %f %f %f %f %f", currentState_vec[0].at<double>(1, 1), currentState_vec[0].at<double>(1, 2), currentState_vec[0].at<double>(1, 3), currentState_vec[0].at<double>(1, 4), currentState_vec[0].at<double>(1, 5), currentState_vec[0].at<double>(1, 6), currentState_vec[0].at<double>(1, 7), currentState_vec[0].at<double>(1, 8), currentState_vec[0].at<double>(1, 9), currentState_vec[0].at<double>(1, 10), currentState_vec[0].at<double>(1, 11), currentState_vec[0].at<double>(1, 12));
 	for(int i = 0; i < 2*L; i++){
 		mscores[i] = matching_score(currentState_vec[i]);
 	}
@@ -385,30 +417,66 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 };
 
 double KalmanFilter::matching_score(const cv::Mat & stat){
+	//Convert our state into Eigen::Affine3ds; one for each arm
+	Eigen::Affine3d arm1 =
+		Eigen::Translation3d(stat.at<double>(1, 1), stat.at<double>(2, 1), stat.at<double>(3, 1))
+		*
+		Eigen::AngleAxisd(stat.at<double>(3, 1), Eigen::Vector3d::UnitX())
+		*
+		Eigen::AngleAxisd(stat.at<double>(4, 1), Eigen::Vector3d::UnitY())
+		*
+		Eigen::AngleAxisd(stat.at<double>(5, 1), Eigen::Vector3d::UnitZ())
+	;
+	Eigen::Affine3d arm2 =
+		Eigen::Translation3d(stat.at<double>(6, 1), stat.at<double>(7, 1), stat.at<double>(8, 1))
+		*
+		Eigen::AngleAxisd(stat.at<double>(9, 1), Eigen::Vector3d::UnitX())
+		*
+		Eigen::AngleAxisd(stat.at<double>(10, 1), Eigen::Vector3d::UnitY())
+		*
+		Eigen::AngleAxisd(stat.at<double>(11, 1), Eigen::Vector3d::UnitZ())
+	;
+	
+	//Transform into four affine3ds, one for each arm and one for each camera.
+	Eigen::Affine3d arm1cr = arm1 * arm_l__cam_r;
+	Eigen::Affine3d arm1cl = arm1 * arm_l__cam_l;
+	Eigen::Affine3d arm2cr = arm2 * arm_r__cam_r;
+	Eigen::Affine3d arm2cl = arm2 * arm_r__cam_l;
+	
+	//Convert them into tool models
+	ToolModel::toolModel a1r;
+	ToolModel::toolModel a2r;
+	ToolModel::toolModel a1l;
+	ToolModel::toolModel a2l;
+	convertToolModel(arm1cr, a1r);
+	convertToolModel(arm1cl, a1l);
+	convertToolModel(arm2cr, a2r);
+	convertToolModel(arm2cl, a2l);
+	
+	//Render the tools.
+	toolImage_left.setTo(0); //reset image for every start of an new loop
+	toolImage_right.setTo(0);
+	newToolModel.renderTool(toolImage_left, a1l, Cam_left, P_left);
+	newToolModel.renderTool(toolImage_right, a1r, Cam_right, P_right);
+	newToolModel.renderTool(toolImage_left, a2l, Cam_left, P_left);
+	newToolModel.renderTool(toolImage_right, a2r, Cam_right, P_right);
 
-	//Render the tool.
-	ToolModel::toolModel a1;
-	ToolModel::toolModel a2;
-	convertToolModel(stat, a1, 1);
-	convertToolModel(stat, a2, 2);
-	
-	
+	cv::imshow("Ren L", toolImage_left);
+	cv::imshow("Ren R", toolImage_right);
 
 	return -1.0;
 }
 
-void KalmanFilter::convertToolModel(const cv::Mat &toolMat, ToolModel::toolModel &toolModel, int arm){
+void KalmanFilter::convertToolModel(const Eigen::Affine3d & trans, ToolModel::toolModel &toolModel){
+	Eigen::Vector3d pos = trans.translation();
+	Eigen::Vector3d rpy = trans.rotation().eulerAngles(0, 1, 2);
 
-	int offset = (arm - 1) * 6;
-
-	toolModel.tvec_elp(0) = toolMat.at<double>(1 + offset, 1);  //left and right (image frame)
-	toolModel.tvec_elp(1) = toolMat.at<double>(2 + offset, 1); //up and down
-	toolModel.tvec_elp(2) = toolMat.at<double>(3 + offset, 1);
-	toolModel.rvec_elp(0) = toolMat.at<double>(4 + offset, 1);
-	toolModel.rvec_elp(1) = toolMat.at<double>(5 + offset, 1);
-	toolModel.rvec_elp(2) = toolMat.at<double>(6 + offset, 1);
-
-
+	toolModel.tvec_elp(0) = pos[0];
+	toolModel.tvec_elp(1) = pos[1];
+	toolModel.tvec_elp(2) = pos[2];
+	toolModel.rvec_elp(0) = rpy[0];
+	toolModel.rvec_elp(1) = rpy[1];
+	toolModel.rvec_elp(2) = rpy[2];
 };
 //This has been retained for archival purposes.
 //In the new paradigm, it will probably need to be split into two functions/steps. One that computes the sigma points, and one that takes those points and the image data and computes error.
