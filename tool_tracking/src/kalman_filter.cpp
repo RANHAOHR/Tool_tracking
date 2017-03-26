@@ -67,8 +67,8 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 
     kinematics = Davinci_fwd_solver();
 
-    cmd_green.resize(L);
-    cmd_yellow.resize(L);
+    cmd_green.resize(L / 2);
+    cmd_yellow.resize(L / 2);
 
     //Pull in our first round of sensor data.
     davinci_interface::init_joint_feedback(nh_);
@@ -84,7 +84,7 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     Eigen::Affine3d yellow_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_yellow.data()));
     Eigen::Vector3d yellow_trans = yellow_pos.translation();
     Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
-    kalman_mu = cv::Mat_<double>(12, 1);
+    kalman_mu = cv::Mat_<double>::zeros(12, 1);
 	kalman_mu.at<double>(1, 1) = green_trans[0];
 	kalman_mu.at<double>(2, 1) = green_trans[1];
 	kalman_mu.at<double>(3, 1) = green_trans[2];
@@ -205,7 +205,7 @@ void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& 
 };
 
 //Deprecated by KalmanFilter::update(). Archival code only.
-void KalmanFilter::measureFunc(ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, const cv::Mat &Cam_left, const cv::Mat &Cam_right, double &matchingScore) {
+void KalmanFilter::measureFunc(ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right, double &matchingScore) {
 
     //Looks mostly IP-related; need to resturcture to not be dependant on particles and instead use sigma-points.
 
@@ -227,8 +227,7 @@ void KalmanFilter::measureFunc(ToolModel::toolModel &toolPose, const cv::Mat &se
     toolImage_right.setTo(0);
 
     /***do the sampling and get the matching score***/
-    newToolModel.renderTool(toolImage_left, toolPose, Cam_left,
-                            P_left); //first get the rendered image using 3d model of the tool
+    newToolModel.renderTool(toolImage_left, toolPose, Cam_left, P_left); //first get the rendered image using 3d model of the tool
     double left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left);  //get the matching score
 
     newToolModel.renderTool(toolImage_right, toolPose, Cam_right, P_right);
@@ -263,7 +262,7 @@ cv::Mat KalmanFilter::adjoint(cv::Mat &G) {
 
 void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmented_right){	
 	/******Find and convert our various params and inputs******/
-	
+
 	//Get sensor update.
 	std::vector<std::vector<double> > tmp;
 	if(davinci_interface::get_fresh_robot_pos(tmp)){
@@ -298,7 +297,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	//Get command update.
 	//TODO: At the moment, the command is just the sensor update. We will need to get and preprocess the desired positions.
 	cv::Mat ut = zt.clone();
-	//ROS_ERROR("%f %f %f %f %f %f", zt.at<double>(1, 1),zt.at<double>(2, 1),zt.at<double>(3, 1),zt.at<double>(4, 1),zt.at<double>(5, 1),zt.at<double>(6, 1));
+	ROS_ERROR("%f %f %f %f %f %f", zt.at<double>(1, 1),zt.at<double>(2, 1),zt.at<double>(3, 1),zt.at<double>(4, 1),zt.at<double>(5, 1),zt.at<double>(6, 1));
 	
 	cv::Mat sigma_t_last = kalman_sigma.clone();
 	cv::Mat mu_t_last = kalman_mu.clone();
@@ -312,9 +311,9 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	///get the square root for sigma point generation using SVD decomposition
 	cv::Mat root_sigma_t_last = cv::Mat_<double>::zeros(L, 1);
 
-	cv::Mat s = cv::Mat_<double>(L, 1);  //allocate space for SVD
-	cv::Mat vt = cv::Mat_<double>(L, L);  //allocate space for SVD
-	cv::Mat u = cv::Mat_<double>(L, L);  //allocate space for SVD
+	cv::Mat s = cv::Mat_<double>::zeros(L, 1);  //allocate space for SVD
+	cv::Mat vt = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
+	cv::Mat u = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
 
 	cv::SVD::compute(kalman_sigma, s, u, vt);//The actual square root gets saved into s
 
@@ -326,6 +325,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	std::vector<cv::Mat_<double> > sigma_pts_last;
 	sigma_pts_last.resize(2*L + 1);
 	
+	ROS_ERROR("BEGINNING COUNTING LOOP 1");
 	sigma_pts_last[0] = mu_t_last.clone();//X_0
 	for (int i = 1; i <= L; i++) {
 		sigma_pts_last[i] = sigma_pts_last[0] + (gamma * root_sigma_t_last);
@@ -341,6 +341,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	w_c.resize(2*L + 1);
 	w_m[0] = lambda / (L + lambda);
 	w_c[0] = lambda / (L + lambda) + (1.0 - (alpha * alpha) + beta);
+	ROS_ERROR("BEGINNING COUNTING LOOP2");
 	for(int i = 1; i < 2 * L + 1; i++){
 		w_m[i] = 1.0 / (2.0 * (L + lambda));
 		w_c[i] = 1.0 / (2.0 * (L + lambda));
@@ -349,6 +350,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	/*****Update sigma points based on motion model******/
 	std::vector<cv::Mat_<double> > sigma_pts_bar;
 	sigma_pts_bar.resize(2*L + 1);
+	ROS_ERROR("BEGINNING COUNTING LOOP3");
 	for(int i = 0; i < 2 * L + 1; i++){
 		g(sigma_pts_bar[i], sigma_pts_last[i], ut);
 		//ROS_ERROR("%f %f %f %f %f %f", sigma_pts_bar[i].at<double>(1, 1),sigma_pts_bar[i].at<double>(2, 1),sigma_pts_bar[i].at<double>(3, 1),sigma_pts_bar[i].at<double>(4, 1),sigma_pts_bar[i].at<double>(5, 1),sigma_pts_bar[i].at<double>(6, 1));
@@ -358,10 +360,12 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	
 	/*****Create the predicted mus and sigmas.*****/
 	cv::Mat mu_bar = cv::Mat_<double>::zeros(12, 1);
+	ROS_ERROR("BEGINNING COUNTING LOOP 4");
 	for(int i = 0; i < 2 * L + 1; i++){
 		mu_bar = mu_bar + w_m[i] * sigma_pts_bar[i];
 	}
 	cv::Mat sigma_bar = cv::Mat_<double>::zeros(12, 12);
+	ROS_ERROR("BEGINNING COUNTING LOOP 5");
 	for(int i = 0; i < 2 * L + 1; i++){
 		sigma_bar = sigma_bar + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((sigma_pts_bar[i] - mu_bar).t());
 	}
@@ -369,22 +373,26 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	/*****Correction Step: Move the sigma points through the measurement function.*****/
 	std::vector<cv::Mat_<double> > Z_bar;
 	Z_bar.resize(2 * L + 1);
+	ROS_ERROR("BEGINNING COUNTING LOOP 6");
 	for(int i = 0; i < 2 * L + 1; i++){
 		h(Z_bar[i], sigma_pts_bar[i]);
 	}
 	
 	/*****Calculate derived variance statistics.*****/
 	cv::Mat z_caret = cv::Mat_<double>::zeros(12, 1);
+	ROS_ERROR("BEGINNING COUNTING LOOP 7");
 	for(int i = 0; i < 2 * L + 1; i++){
 		z_caret = z_caret + w_m[i] * Z_bar[i];
 	}
 	
 	cv::Mat S = cv::Mat_<double>::zeros(12, 12);
+	ROS_ERROR("BEGINNING COUNTING LOOP 8");
 	for(int i = 0; i < 2 * L + 1; i++){
 		S = S + w_c[i] * (Z_bar[i] - z_caret) * ((Z_bar[i] - z_caret).t());
 	}
 	
 	cv::Mat sigma_xz = cv::Mat_<double>::zeros(12, 12);
+	ROS_ERROR("BEGINNING COUNTING LOOP 9");
 	for(int i = 0; i < 2 * L + 1; i++){
 		sigma_xz = w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((Z_bar[i] - z_caret).t());
 	}
