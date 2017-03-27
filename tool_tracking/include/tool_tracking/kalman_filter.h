@@ -130,11 +130,11 @@ private:
 
     bool freshCameraInfo;
 
-//    ros::Subscriber projectionMat_subscriber_r;
-//    ros::Subscriber projectionMat_subscriber_l;
-//
-//    void projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight);
-//    void projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft);
+    ros::Subscriber projectionMat_subscriber_r;
+    ros::Subscriber projectionMat_subscriber_l;
+
+    void projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight);
+    void projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft);
 
     cv::Mat P_left;
     cv::Mat P_right;

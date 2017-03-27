@@ -102,43 +102,11 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     //ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
 
     freshCameraInfo = false; //should be left and right
-//    projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/unsynced/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
-//    projectionMat_subscriber_l = nh_.subscribe("/davinci_endo/unsynced/left/camera_info", 1, &KalmanFilter::projectionLeftCB, this);
+    projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
+    projectionMat_subscriber_l = nh_.subscribe("/davinci_endo/left/camera_info", 1, &KalmanFilter::projectionLeftCB, this);
 
     P_left = cv::Mat::zeros(3,4,CV_64FC1);
     P_right = cv::Mat::zeros(3,4,CV_64FC1);
-
-    P_left.at<double>(0, 0) = 893.7852590197848;
-    P_left.at<double>(1, 0) = 0;
-    P_left.at<double>(2, 0) = 0;
-
-    P_left.at<double>(0, 1) = 0;
-    P_left.at<double>(1, 1) = 893.7852590197848;
-    P_left.at<double>(2, 1) = 0;
-
-    P_left.at<double>(0, 2) = 288.4443244934082; // horiz
-    P_left.at<double>(1, 2) = 259.7727756500244; //verticle
-    P_left.at<double>(2, 2) = 1;
-
-    P_left.at<double>(0, 3) = 0;
-    P_left.at<double>(1, 3) = 0;
-    P_left.at<double>(2, 3) = 0;
-
-    P_right.at<double>(0, 0) = 893.7852590197848;
-    P_right.at<double>(1, 0) = 0;
-    P_right.at<double>(2, 0) = 0;
-
-    P_right.at<double>(0, 1) = 0;
-    P_right.at<double>(1, 1) = 893.7852590197848;
-    P_right.at<double>(2, 1) = 0;
-
-    P_right.at<double>(0, 2) = 288.4443244934082; // horiz
-    P_right.at<double>(1, 2) = 259.7727756500244; //verticle
-    P_right.at<double>(2, 2) = 1;
-
-    P_right.at<double>(0, 3) = 4.732953897952732;
-    P_right.at<double>(1, 3) = 0;
-    P_right.at<double>(2, 3) = 0;
 
     //Subscribe to the necessary transforms.
     tf::StampedTransform arm_l__cam_l_st;
@@ -183,47 +151,47 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 
 };
 
-//void KalmanFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight){
-//
-//    P_right.at<double>(0,0) = projectionRight->P[0];
-//    P_right.at<double>(0,1) = projectionRight->P[1];
-//    P_right.at<double>(0,2) = projectionRight->P[2];
-//    P_right.at<double>(0,3) = projectionRight->P[3];
-//
-//    P_right.at<double>(1,0) = projectionRight->P[4];
-//    P_right.at<double>(1,1) = projectionRight->P[5];
-//    P_right.at<double>(1,2) = projectionRight->P[6];
-//    P_right.at<double>(1,3) = projectionRight->P[7];
-//
-//    P_right.at<double>(2,0) = projectionRight->P[8];
-//    P_right.at<double>(2,1) = projectionRight->P[9];
-//    P_right.at<double>(2,2) = projectionRight->P[10];
-//    P_right.at<double>(2,3) = projectionRight->P[11];
-//
-//    ROS_INFO_STREAM("right: " << P_right);
-//    freshCameraInfo = true;
-//};
-//
-//void KalmanFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft){
-//
-//    P_left.at<double>(0,0) = projectionLeft->P[0];
-//    P_left.at<double>(0,1) = projectionLeft->P[1];
-//    P_left.at<double>(0,2) = projectionLeft->P[2];
-//    P_left.at<double>(0,3) = projectionLeft->P[3];
-//
-//    P_left.at<double>(1,0) = projectionLeft->P[4];
-//    P_left.at<double>(1,1) = projectionLeft->P[5];
-//    P_left.at<double>(1,2) = projectionLeft->P[6];
-//    P_left.at<double>(1,3) = projectionLeft->P[7];
-//
-//    P_left.at<double>(2,0) = projectionLeft->P[8];
-//    P_left.at<double>(2,1) = projectionLeft->P[9];
-//    P_left.at<double>(2,2) = projectionLeft->P[10];
-//    P_left.at<double>(2,3) = projectionLeft->P[11];
-//
-//    ROS_INFO_STREAM("left: " << P_left);
-//    freshCameraInfo = true;
-//};
+void KalmanFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight){
+
+    P_right.at<double>(0,0) = projectionRight->P[0];
+    P_right.at<double>(0,1) = projectionRight->P[1];
+    P_right.at<double>(0,2) = projectionRight->P[2];
+    P_right.at<double>(0,3) = projectionRight->P[3];
+
+    P_right.at<double>(1,0) = projectionRight->P[4];
+    P_right.at<double>(1,1) = projectionRight->P[5];
+    P_right.at<double>(1,2) = projectionRight->P[6];
+    P_right.at<double>(1,3) = projectionRight->P[7];
+
+    P_right.at<double>(2,0) = projectionRight->P[8];
+    P_right.at<double>(2,1) = projectionRight->P[9];
+    P_right.at<double>(2,2) = projectionRight->P[10];
+    P_right.at<double>(2,3) = projectionRight->P[11];
+
+    ROS_INFO_STREAM("right: " << P_right);
+    freshCameraInfo = true;
+};
+
+void KalmanFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft){
+
+    P_left.at<double>(0,0) = projectionLeft->P[0];
+    P_left.at<double>(0,1) = projectionLeft->P[1];
+    P_left.at<double>(0,2) = projectionLeft->P[2];
+    P_left.at<double>(0,3) = projectionLeft->P[3];
+
+    P_left.at<double>(1,0) = projectionLeft->P[4];
+    P_left.at<double>(1,1) = projectionLeft->P[5];
+    P_left.at<double>(1,2) = projectionLeft->P[6];
+    P_left.at<double>(1,3) = projectionLeft->P[7];
+
+    P_left.at<double>(2,0) = projectionLeft->P[8];
+    P_left.at<double>(2,1) = projectionLeft->P[9];
+    P_left.at<double>(2,2) = projectionLeft->P[10];
+    P_left.at<double>(2,3) = projectionLeft->P[11];
+
+    ROS_INFO_STREAM("left: " << P_left);
+    freshCameraInfo = true;
+};
 
 KalmanFilter::~KalmanFilter() {
 
