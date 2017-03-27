@@ -168,7 +168,7 @@ void KalmanFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &pr
     P_right.at<double>(2,2) = projectionRight->P[10];
     P_right.at<double>(2,3) = projectionRight->P[11];
 
-    ROS_INFO_STREAM("right: " << P_right);
+    //ROS_INFO_STREAM("right: " << P_right);
     freshCameraInfo = true;
 };
 
@@ -189,7 +189,7 @@ void KalmanFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &pro
     P_left.at<double>(2,2) = projectionLeft->P[10];
     P_left.at<double>(2,3) = projectionLeft->P[11];
 
-    ROS_INFO_STREAM("left: " << P_left);
+    //ROS_INFO_STREAM("left: " << P_left);
     freshCameraInfo = true;
 };
 
@@ -212,15 +212,30 @@ void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& 
 };
 
 //Deprecated by KalmanFilter::update(). Archival code only.
-double KalmanFilter::measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right) {
+double KalmanFilter::measureFunc(
+	cv::Mat & toolImage_left,
+	cv::Mat & toolImage_right,
+	ToolModel::toolModel &toolPose,
+	const cv::Mat &segmented_left,
+	const cv::Mat &segmented_right,
+	cv::Mat &Cam_left,
+	cv::Mat &Cam_right
+) {
+
+	ROS_INFO("IN MF");
 
     //Looks mostly IP-related; need to resturcture to not be dependant on particles and instead use sigma-points.
     toolImage_left.setTo(0);
     toolImage_right.setTo(0);
+    
+    ROS_INFO("Set images.");
 
     /***do the sampling and get the matching score***/
     //first get the rendered image using 3d model of the tool
     newToolModel.renderTool(toolImage_left, toolPose, Cam_left, P_left);
+    
+    ROS_INFO("Rendered tool 1.");
+    
     double left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left);  //get the matching score
 
     newToolModel.renderTool(toolImage_right, toolPose, Cam_right, P_right);
@@ -269,12 +284,10 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	//Get command update.
 	//TODO: At the moment, the command is just the sensor update. We will need to get and preprocess the desired positions.
 	cv::Mat ut = zt.clone();
-	ROS_ERROR("%f %f %f %f %f %f", zt.at<double>(0, 1),zt.at<double>(1, 1),zt.at<double>(2, 1),zt.at<double>(3, 1),zt.at<double>(4, 1),zt.at<double>(5, 1));
+	//ROS_ERROR("%f %f %f %f %f %f", zt.at<double>(0, 1),zt.at<double>(1, 1),zt.at<double>(2, 1),zt.at<double>(3, 1),zt.at<double>(4, 1),zt.at<double>(5, 1));
 	
 	cv::Mat sigma_t_last = kalman_sigma.clone();
 	cv::Mat mu_t_last = kalman_mu.clone();
-	
-	//ROS_ERROR("O: %f %f %f %f %f %f %f %f %f %f %f %f", z.at<double>(1, 1), z.at<double>(1, 2), z.at<double>(1, 3), z.at<double>(1, 4), z.at<double>(1, 5), z.at<double>(1, 6), z.at<double>(1, 7), z.at<double>(1, 8), z.at<double>(1, 9), z.at<double>(1, 10), z.at<double>(1, 11), z.at<double>(1, 12));
 	
 	//****Generate the sigma points.****
 	double lambda = alpha * alpha * (L + k) - L;
@@ -323,6 +336,13 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 		//ROS_ERROR("%f %f %f %f %f %f", sigma_pts_bar[i].at<double>(1, 1),sigma_pts_bar[i].at<double>(2, 1),sigma_pts_bar[i].at<double>(3, 1),sigma_pts_bar[i].at<double>(4, 1),sigma_pts_bar[i].at<double>(5, 1),sigma_pts_bar[i].at<double>(6, 1));
 	}
 	
+	/*****Render each sigma point and compute its matching score.*****/
+	std::vector<double> mscores;
+	mscores.resize(2*L + 1);
+	computeSigmaMeasures(mscores, sigma_pts_bar, segmented_left, segmented_right);
+	
+	//TODO: Calculate a second set of weights based on the matching score, to influence the effect of the sigma points.
+	
 	/*****Create the predicted mus and sigmas.*****/
 	cv::Mat mu_bar = cv::Mat_<double>::zeros(12, 1);
 	for(int i = 0; i < 2 * L + 1; i++){
@@ -356,6 +376,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 		sigma_xz = w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((Z_bar[i] - z_caret).t());
 	}
 	cv::Mat K = sigma_xz * S.inv();
+	
 	/*****Update our mu and sigma.*****/
 	kalman_mu = mu_bar + K * (zt - z_caret);
 	kalman_sigma = sigma_bar - K * S * K.t();
@@ -369,43 +390,52 @@ void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, 
 };
 
 /***this function should compute the matching score for each sigma points: for future use****/
-void KalmanFilter::computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat> & sigma_point_in, const cv::Mat &segmented_left, const cv::Mat &segmented_right){
+void KalmanFilter::computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in, const cv::Mat &segmented_left, const cv::Mat &segmented_right){
+	ROS_ERROR("IN CSM FUNC: %lu, %lu", measureWeights.size(), sigma_point_in.size());
     //TODO:
     double total = 0.0;
-    for (int i = 0; i < sigma_point_in.size() ; ++i) {
+    for (int i = 0; i < sigma_point_in.size() ; i++) {
         measureWeights[i] = matching_score(sigma_point_in[i], segmented_left, segmented_right );
         total += measureWeights[i];
     }
-    for (int j = 0; j < sigma_point_in.size(); ++j) {
+    for (int j = 0; j < sigma_point_in.size(); j++) {
         measureWeights[j] = measureWeights[j] / total;
     }
 
 };
 
 double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right) {
+ROS_ERROR("IN MSC");
+cout<< stat;
     //Convert our state into Eigen::Affine3ds; one for each arm
     Eigen::Affine3d arm1 =
             Eigen::Translation3d(stat.at<double>(1, 1), stat.at<double>(2, 1), stat.at<double>(3, 1))
             *
-            Eigen::AngleAxisd(stat.at<double>(3, 1), Eigen::Vector3d::UnitX())
+            Eigen::AngleAxisd(stat.at<double>(4, 1), Eigen::Vector3d::UnitX())
             *
-            Eigen::AngleAxisd(stat.at<double>(4, 1), Eigen::Vector3d::UnitY())
+            Eigen::AngleAxisd(stat.at<double>(5, 1), Eigen::Vector3d::UnitY())
             *
-            Eigen::AngleAxisd(stat.at<double>(5, 1), Eigen::Vector3d::UnitZ());
+            Eigen::AngleAxisd(stat.at<double>(6, 1), Eigen::Vector3d::UnitZ())
+    ;
     Eigen::Affine3d arm2 =
-            Eigen::Translation3d(stat.at<double>(6, 1), stat.at<double>(7, 1), stat.at<double>(8, 1))
+            Eigen::Translation3d(stat.at<double>(7, 1), stat.at<double>(8, 1), stat.at<double>(9, 1))
             *
-            Eigen::AngleAxisd(stat.at<double>(9, 1), Eigen::Vector3d::UnitX())
+            Eigen::AngleAxisd(stat.at<double>(10, 1), Eigen::Vector3d::UnitX())
             *
-            Eigen::AngleAxisd(stat.at<double>(10, 1), Eigen::Vector3d::UnitY())
+            Eigen::AngleAxisd(stat.at<double>(11, 1), Eigen::Vector3d::UnitY())
             *
-            Eigen::AngleAxisd(stat.at<double>(11, 1), Eigen::Vector3d::UnitZ());
+            Eigen::AngleAxisd(stat.at<double>(12, 1), Eigen::Vector3d::UnitZ())
+    ;
+            
+    ROS_ERROR("Past the conversion.");      
 
     //Convert them into tool models
     ToolModel::toolModel arm_1;
     ToolModel::toolModel arm_2;
     convertToolModel(arm1, arm_1);
     convertToolModel(arm2, arm_2);
+    
+    ROS_ERROR("Past the next conversion.");
 
     //Render the tools and compute the matching score
     double matchingScore_arm_1 = measureFunc(toolImage_left_arm_1, toolImage_right_arm_1, arm_1, segmented_left, segmented_right, Cam_left_arm_1, Cam_right_arm_1);

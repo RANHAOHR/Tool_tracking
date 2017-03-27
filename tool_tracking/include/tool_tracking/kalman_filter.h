@@ -145,7 +145,7 @@ private:
 	
 	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u);
 	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
-    void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat> & sigma_point_in, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+    void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
 public:
 
