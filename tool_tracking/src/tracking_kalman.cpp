@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
 //			cv::imshow("Cam R", rawImage_right);
 //			cv::imshow("Seg L", seg_left);
 //			cv::imshow("Seg R", seg_right);
-//			cv::waitKey(20);
+//			cv::waitKey(10);
 
             //this is to avoid the white line above
             cv::Mat new_seg_left = seg_left.rowRange(5,480);
@@ -119,13 +119,13 @@ int main(int argc, char **argv) {
             cv::resize(new_seg_left, new_seg_left,size);
             cv::resize(new_seg_right, new_seg_right,size);
 
-            UKF.update(seg_left, seg_right);
+            UKF.update(new_seg_left, new_seg_right);
             //matching_score
 
 			freshImage = false;
 			freshVelocity = false;
 
-            //ros::Duration(1).sleep();
+            ros::Duration(3).sleep();
 		}
 
 		//We want to update our filter whenever the robot is doing anything, not just when we are getting images.

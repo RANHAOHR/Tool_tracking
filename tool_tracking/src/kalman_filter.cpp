@@ -222,19 +222,13 @@ double KalmanFilter::measureFunc(
 	cv::Mat &Cam_right
 ) {
 
-	ROS_INFO("IN MF");
-
     //Looks mostly IP-related; need to resturcture to not be dependant on particles and instead use sigma-points.
     toolImage_left.setTo(0);
     toolImage_right.setTo(0);
-    
-    ROS_INFO("Set images.");
 
     /***do the sampling and get the matching score***/
     //first get the rendered image using 3d model of the tool
     newToolModel.renderTool(toolImage_left, toolPose, Cam_left, P_left);
-    
-    ROS_INFO("Rendered tool 1.");
     
     double left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left);  //get the matching score
 
@@ -264,7 +258,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	Eigen::Affine3d yellow_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_yellow.data()));
 	Eigen::Vector3d yellow_trans = yellow_pos.translation();
 	Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
-	cv::Mat zt = cv::Mat_<double>(12, 1);
+	cv::Mat zt = cv::Mat_<double>(L, 1);
 	zt.at<double>(0, 1) = green_trans[0];
 	zt.at<double>(1, 1) = green_trans[1];
 	zt.at<double>(2, 1) = green_trans[2];
@@ -344,11 +338,11 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	//TODO: Calculate a second set of weights based on the matching score, to influence the effect of the sigma points.
 	
 	/*****Create the predicted mus and sigmas.*****/
-	cv::Mat mu_bar = cv::Mat_<double>::zeros(12, 1);
+	cv::Mat mu_bar = cv::Mat_<double>::zeros(L, 1);
 	for(int i = 0; i < 2 * L + 1; i++){
 		mu_bar = mu_bar + w_m[i] * sigma_pts_bar[i];
 	}
-	cv::Mat sigma_bar = cv::Mat_<double>::zeros(12, 12);
+	cv::Mat sigma_bar = cv::Mat_<double>::zeros(L, L);
 	for(int i = 0; i < 2 * L + 1; i++){
 		sigma_bar = sigma_bar + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((sigma_pts_bar[i] - mu_bar).t());
 	}
@@ -361,17 +355,17 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	}
 	
 	/*****Calculate derived variance statistics.*****/
-	cv::Mat z_caret = cv::Mat_<double>::zeros(12, 1);
+	cv::Mat z_caret = cv::Mat_<double>::zeros(L, 1);
 	for(int i = 0; i < 2 * L + 1; i++){
 		z_caret = z_caret + w_m[i] * Z_bar[i];
 	}
 	
-	cv::Mat S = cv::Mat_<double>::zeros(12, 12);
+	cv::Mat S = cv::Mat_<double>::zeros(L, L);
 	for(int i = 0; i < 2 * L + 1; i++){
 		S = S + w_c[i] * (Z_bar[i] - z_caret) * ((Z_bar[i] - z_caret).t());
 	}
 	
-	cv::Mat sigma_xz = cv::Mat_<double>::zeros(12, 12);
+	cv::Mat sigma_xz = cv::Mat_<double>::zeros(L, L);
 	for(int i = 0; i < 2 * L + 1; i++){
 		sigma_xz = w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((Z_bar[i] - z_caret).t());
 	}
@@ -405,37 +399,50 @@ void KalmanFilter::computeSigmaMeasures(std::vector<double> & measureWeights, co
 };
 
 double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right) {
-ROS_ERROR("IN MSC");
-cout<< stat;
+
+    ROS_INFO_STREAM("stat IS: " << stat);
     //Convert our state into Eigen::Affine3ds; one for each arm
     Eigen::Affine3d arm1 =
-            Eigen::Translation3d(stat.at<double>(1, 1), stat.at<double>(2, 1), stat.at<double>(3, 1))
+            Eigen::Translation3d(stat.at<double>(0, 1), stat.at<double>(1, 1), stat.at<double>(2, 1))
             *
-            Eigen::AngleAxisd(stat.at<double>(4, 1), Eigen::Vector3d::UnitX())
+            Eigen::AngleAxisd(stat.at<double>(3, 1), Eigen::Vector3d::UnitX())
             *
-            Eigen::AngleAxisd(stat.at<double>(5, 1), Eigen::Vector3d::UnitY())
+            Eigen::AngleAxisd(stat.at<double>(4, 1), Eigen::Vector3d::UnitY())
             *
-            Eigen::AngleAxisd(stat.at<double>(6, 1), Eigen::Vector3d::UnitZ())
+            Eigen::AngleAxisd(stat.at<double>(5, 1), Eigen::Vector3d::UnitZ())
     ;
     Eigen::Affine3d arm2 =
-            Eigen::Translation3d(stat.at<double>(7, 1), stat.at<double>(8, 1), stat.at<double>(9, 1))
+            Eigen::Translation3d(stat.at<double>(6, 1), stat.at<double>(7, 1), stat.at<double>(8, 1))
             *
-            Eigen::AngleAxisd(stat.at<double>(10, 1), Eigen::Vector3d::UnitX())
+            Eigen::AngleAxisd(stat.at<double>(9, 1), Eigen::Vector3d::UnitX())
             *
-            Eigen::AngleAxisd(stat.at<double>(11, 1), Eigen::Vector3d::UnitY())
+            Eigen::AngleAxisd(stat.at<double>(10, 1), Eigen::Vector3d::UnitY())
             *
-            Eigen::AngleAxisd(stat.at<double>(12, 1), Eigen::Vector3d::UnitZ())
+            Eigen::AngleAxisd(stat.at<double>(11, 1), Eigen::Vector3d::UnitZ())
     ;
-            
-    ROS_ERROR("Past the conversion.");      
 
     //Convert them into tool models
     ToolModel::toolModel arm_1;
     ToolModel::toolModel arm_2;
     convertToolModel(arm1, arm_1);
     convertToolModel(arm2, arm_2);
-    
-    ROS_ERROR("Past the next conversion.");
+
+
+    //this is the POSE of the ELLIPSE part of the tool for arm 1
+    ROS_INFO_STREAM(" ARM 1 tvec(0)" << arm_1.tvec_elp(0) );
+    ROS_INFO_STREAM(" ARM 1 tvec(1)" << arm_1.tvec_elp(1) );
+    ROS_INFO_STREAM(" ARM 1 tvec(2)" << arm_1.tvec_elp(2) );
+    ROS_INFO_STREAM(" ARM 1 rvec(0)" << arm_1.rvec_elp(0) );
+    ROS_INFO_STREAM(" ARM 1 rvec(1)" << arm_1.rvec_elp(1) );
+    ROS_INFO_STREAM(" ARM 1 rvec(2)" << arm_1.rvec_elp(2) );
+
+    //this is the POSE of the ELLIPSE part of the tool for arm 2
+    ROS_INFO_STREAM(" ARM 2 tvec(0)" << arm_2.tvec_elp(0) );
+    ROS_INFO_STREAM(" ARM 2 tvec(1)" << arm_2.tvec_elp(1) );
+    ROS_INFO_STREAM(" ARM 2 tvec(2)" << arm_2.tvec_elp(2) );
+    ROS_INFO_STREAM(" ARM 2 rvec(0)" << arm_2.rvec_elp(0) );
+    ROS_INFO_STREAM(" ARM 2 rvec(1)" << arm_2.rvec_elp(1) );
+    ROS_INFO_STREAM(" ARM 2 rvec(2)" << arm_2.rvec_elp(2) );
 
     //Render the tools and compute the matching score
     double matchingScore_arm_1 = measureFunc(toolImage_left_arm_1, toolImage_right_arm_1, arm_1, segmented_left, segmented_right, Cam_left_arm_1, Cam_right_arm_1);
@@ -502,6 +509,8 @@ void KalmanFilter::convertToolModel(const Eigen::Affine3d & trans, ToolModel::to
     toolModel.rvec_elp(0) = rpy[0];
     toolModel.rvec_elp(1) = rpy[1];
     toolModel.rvec_elp(2) = rpy[2];
+
+    newToolModel.computeModelPose(toolModel, 0.0,0.0,0.0);
 };
 
 
