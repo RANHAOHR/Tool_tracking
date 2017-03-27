@@ -24,6 +24,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "/home/rxh349/ros_ws/src/Tool_tracking/tool_model/include"
   "/home/rxh349/ros_ws/src/cwru_davinci/cwru_davinci_interface/include"
   "/home/rxh349/ros_ws/src/cwru_davinci/cwru_davinci_kinematics/include"
+  "/home/rxh349/ros_ws/src/cwru_xform_utils/include"
   "/opt/ros/jade/include"
   "/usr/local/include/opencv"
   "/usr/local/include"

@@ -14,4 +14,4 @@ export PATH="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-deb
 export PKG_CONFIG_PATH="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/pkgconfig:/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/x86_64-linux-gnu/pkgconfig:/home/rxh349/ros_ws/devel/lib/x86_64-linux-gnu/pkgconfig:/opt/ros/jade/lib/x86_64-linux-gnu/pkgconfig:/home/rxh349/ros_ws/devel/lib/pkgconfig:/opt/ros/jade/lib/pkgconfig"
 export PYTHONPATH="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/python2.7/dist-packages:$PYTHONPATH"
 export ROSLISP_PACKAGE_DIRECTORIES="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/share/common-lisp:$ROSLISP_PACKAGE_DIRECTORIES"
-export ROS_PACKAGE_PATH="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking:/home/rxh349/ros_ws/src:/opt/ros/jade/share:/opt/ros/jade/stacks"
+export ROS_PACKAGE_PATH="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking:/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking:/home/rxh349/ros_ws/src:/opt/ros/jade/share:/opt/ros/jade/stacks"

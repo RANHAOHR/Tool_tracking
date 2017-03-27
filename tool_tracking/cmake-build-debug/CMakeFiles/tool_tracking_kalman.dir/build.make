@@ -143,6 +143,7 @@ devel/lib/libtool_tracking_kalman.so: /usr/local/lib/libopencv_core.so.3.0.0
 devel/lib/libtool_tracking_kalman.so: /usr/local/lib/libopencv_calib3d.so.3.0.0
 devel/lib/libtool_tracking_kalman.so: /home/rxh349/ros_ws/devel/lib/libdavinci_interface.so
 devel/lib/libtool_tracking_kalman.so: /home/rxh349/ros_ws/devel/lib/libdavinci_kinematics.so
+devel/lib/libtool_tracking_kalman.so: /home/rxh349/ros_ws/devel/lib/libcwru_xform_utils.so
 devel/lib/libtool_tracking_kalman.so: /opt/ros/jade/lib/libroscpp.so
 devel/lib/libtool_tracking_kalman.so: /usr/lib/x86_64-linux-gnu/libboost_signals.so
 devel/lib/libtool_tracking_kalman.so: /usr/lib/x86_64-linux-gnu/libboost_filesystem.so
