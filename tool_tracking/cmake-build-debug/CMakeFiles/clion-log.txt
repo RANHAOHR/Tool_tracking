@@ -1,17 +1,17 @@
-/home/rxh349/Documents/clion-2016.3.2/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking
--- Using CATKIN_DEVEL_PREFIX: /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel
--- Using CMAKE_PREFIX_PATH: /home/rxh349/ros_ws/devel;/opt/ros/jade
--- This workspace overlays: /home/rxh349/ros_ws/devel;/opt/ros/jade
+/home/ranhao/Documents/clion-2016.3.3/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking
+-- Using CATKIN_DEVEL_PREFIX: /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel
+-- Using CMAKE_PREFIX_PATH: /home/ranhao/ros_ws/devel;/opt/ros/indigo
+-- This workspace overlays: /home/ranhao/ros_ws/devel;/opt/ros/indigo
 -- Using PYTHON_EXECUTABLE: /usr/bin/python
 -- Using Debian Python package layout
 -- Using empy: /usr/bin/empy
 -- Using CATKIN_ENABLE_TESTING: ON
 -- Call enable_testing()
--- Using CATKIN_TEST_RESULTS_DIR: /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/test_results
+-- Using CATKIN_TEST_RESULTS_DIR: /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/test_results
 -- Found gtest sources under '/usr/src/gtest': gtests will be built
 -- Using Python nosetests: /usr/bin/nosetests-2.7
--- catkin 0.6.14
--- Using these message generators: gencpp;geneus;genlisp;genpy
+-- catkin 0.6.18
+-- Using these message generators: gencpp;genlisp;genpy
 -- Marking SHARED_LIBRARY "tool_tracking_particle" of package "tool_tracking" for installation
 -- Marking SHARED_LIBRARY "tool_tracking_kalman" of package "tool_tracking" for installation
 -- Marking EXECUTABLE "tracking_particle" of package "tool_tracking" for installation
@@ -19,4 +19,4 @@
 -- Marking HEADER FILES in "include" folder of package "tool_tracking" for installation
 -- Configuring done
 -- Generating done
--- Build files have been written to: /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug
+-- Build files have been written to: /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug

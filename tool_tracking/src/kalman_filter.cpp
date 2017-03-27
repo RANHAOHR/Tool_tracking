@@ -227,21 +227,6 @@ double KalmanFilter::measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_r
 
 };
 
-cv::Mat KalmanFilter::adjoint(cv::Mat &G) {
-    cv::Mat adjG = cv::Mat::zeros(6, 6, CV_64F);
-
-    cv::Mat Rot = G.colRange(0, 3).rowRange(0, 3);
-    cv::Mat p = G.colRange(3, 4).rowRange(0, 3);
-
-    cv::Mat p_skew = newToolModel.computeSkew(p);
-    //upper right corner
-    cv::Mat temp = p_skew * Rot;
-    Rot.copyTo(adjG.colRange(0, 3).rowRange(0, 3));
-    Rot.copyTo(adjG.colRange(3, 6).rowRange(3, 6));
-    temp.copyTo(adjG.colRange(3, 6).rowRange(0, 3));
-    return adjG;
-};
-
 void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmented_right){	
 	/******Find and convert our various params and inputs******/
 
@@ -289,6 +274,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	//****Generate the sigma points.****
 	double lambda = alpha * alpha * (L + k) - L;
 	double gamma = sqrt(L + lambda);
+    cv::Mat adjoint(cv::Mat &G);
 
 	///get the square root for sigma point generation using SVD decomposition
 	cv::Mat root_sigma_t_last = cv::Mat_<double>::zeros(L, 1);
@@ -300,9 +286,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	cv::SVD::compute(kalman_sigma, s, u, vt);//The actual square root gets saved into s
 
 	root_sigma_t_last = s.clone(); //store that back into the designated square root term
-	
-	ROS_ERROR("MARKER 1");
-	
+
 	//Populate the sigma points:
 	std::vector<cv::Mat_<double> > sigma_pts_last;
 	sigma_pts_last.resize(2*L + 1);

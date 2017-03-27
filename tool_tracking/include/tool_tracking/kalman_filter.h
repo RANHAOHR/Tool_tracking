@@ -73,10 +73,6 @@ class KalmanFilter {
 
 private:
 
-    cv::Mat Cam_left_arm_1;
-    cv::Mat Cam_right_arm_1;
-    cv::Mat Cam_left_arm_2;
-    cv::Mat Cam_right_arm_2;
     ros::NodeHandle nh_;  //may need this
 
     ///ros::Timer timer;
@@ -94,13 +90,15 @@ private:
     cv::Mat toolImage_left_arm_2; //left rendered Image for ARM 2
     cv::Mat toolImage_right_arm_2; //right rendered Image for ARM 2
 
-    cv::Rect ROI_left; //ROI for the left image
-    cv::Rect ROI_right; //ROI for the right image
-
     //Expect this to go away.
     std::vector<ToolModel::toolModel> particles; // particles
     std::vector<double> matchingScores; // particle scores (matching scores)
     std::vector<double> particleWeights; // particle weights calculated from matching scores
+
+    cv::Mat Cam_left_arm_1;
+    cv::Mat Cam_right_arm_1;
+    cv::Mat Cam_left_arm_2;
+    cv::Mat Cam_right_arm_2;
 
     int L;  ///DOF for one arm.
 
@@ -186,6 +184,5 @@ public:
 
     void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 
-    cv::Mat adjoint(cv::Mat &G);
 };
 #endif

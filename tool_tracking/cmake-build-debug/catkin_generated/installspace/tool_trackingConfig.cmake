@@ -67,8 +67,8 @@ set(tool_tracking_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
 if("FALSE" STREQUAL "TRUE")
-  set(tool_tracking_SOURCE_PREFIX /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking)
-  set(tool_tracking_DEVEL_PREFIX /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel)
+  set(tool_tracking_SOURCE_PREFIX /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking)
+  set(tool_tracking_DEVEL_PREFIX /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel)
   set(tool_tracking_INSTALL_PREFIX "")
   set(tool_tracking_PREFIX ${tool_tracking_DEVEL_PREFIX})
 else()
@@ -122,7 +122,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /usr/local/lib;/home/rxh349/ros_ws/devel/lib;/opt/ros/jade/lib)
+    foreach(path /usr/local/lib;/home/ranhao/ros_ws/devel/lib;/opt/ros/indigo/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
@@ -153,7 +153,7 @@ foreach(t ${tool_tracking_EXPORTED_TARGETS})
   endif()
 endforeach()
 
-set(depends "cv_bridge;image_transport;roscpp;sensor_msgs;std_msgs;message_runtime;cwru_opencv_common;vesselness_image_filter;tool_model;geometry_msgs;cwru_davinci_interface;cwru_davinci_kinematics")
+set(depends "cv_bridge;image_transport;roscpp;sensor_msgs;std_msgs;message_runtime;cwru_opencv_common;vesselness_image_filter;tool_model;geometry_msgs;cwru_davinci_interface;cwru_davinci_kinematics;xform_utils")
 foreach(depend ${depends})
   string(REPLACE " " ";" depend_list ${depend})
   # the package name of the dependency must be kept in a unique variable so that it is not overwritten in recursive calls
