@@ -12,11 +12,16 @@
 -- Using Python nosetests: /usr/bin/nosetests-2.7
 -- catkin 0.6.14
 -- Using these message generators: gencpp;geneus;genlisp;genpy
--- Marking SHARED_LIBRARY "tool_tracking_particle" of package "tool_tracking" for installation
--- Marking SHARED_LIBRARY "tool_tracking_kalman" of package "tool_tracking" for installation
--- Marking EXECUTABLE "tracking_particle" of package "tool_tracking" for installation
--- Marking EXECUTABLE "tracking_kalman" of package "tool_tracking" for installation
--- Marking HEADER FILES in "include" folder of package "tool_tracking" for installation
--- Configuring done
--- Generating done
--- Build files have been written to: /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug
+CMake Error at /home/rxh349/ros_ws/devel/share/xform_utils/cmake/xform_utilsConfig.cmake:141 (message):
+  Project 'tool_tracking' tried to find library 'xform_utils'.  The library
+  is neither a target nor built/installed properly.  Did you compile project
+  'xform_utils'? Did you find_package() it before the subdirectory containing
+  its code is included?
+Call Stack (most recent call first):
+  /home/rxh349/ros_ws/devel/share/catkin_simple/cmake/catkin_simple-extras.cmake:40 (find_package)
+  CMakeLists.txt:13 (catkin_simple)
+
+
+-- Configuring incomplete, errors occurred!
+See also "/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/CMakeFiles/CMakeOutput.log".
+See also "/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/CMakeFiles/CMakeError.log".
