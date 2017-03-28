@@ -205,6 +205,7 @@ public:
 
     cv::Mat convert4to3(const cv::Mat &inputMat);
 
+    void computeInvSE(const cv::Mat &inputMat, cv::Mat &outputMat);
     /****************Face editing and info**********************/
     cv::Point3d FindFaceNormal(cv::Point3d &input_v1, cv::Point3d &input_v2, cv::Point3d &input_v3,
                                cv::Point3d &input_n1, cv::Point3d &input_n2, cv::Point3d &input_n3);

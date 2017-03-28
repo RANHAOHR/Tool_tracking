@@ -27,7 +27,6 @@ void newImageCallback(const sensor_msgs::ImageConstPtr &msg, cv::Mat *outputImag
 	catch (cv_bridge::Exception &e) {
 		ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
 	}
-
 }
 
 cv::Mat segmentation(cv::Mat &InputImg) {
@@ -73,8 +72,8 @@ int main(int argc, char **argv) {
 
 	//TODO: get image size from camera model, or initialize segmented images,
 
-	cv::Mat rawImage_left = cv::Mat::zeros(475, 640, CV_32FC1);
-	cv::Mat rawImage_right = cv::Mat::zeros(475, 640, CV_32FC1);
+	cv::Mat rawImage_left = cv::Mat::zeros(480, 640, CV_32FC1);
+	cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_32FC1);
 
 	image_transport::ImageTransport it(nh);
 	image_transport::Subscriber img_sub_l = it.subscribe(
@@ -90,21 +89,28 @@ int main(int argc, char **argv) {
 
 	ROS_INFO("---- done subscribe -----");
 
-	/***testing segmentation images***/
-	cv::Size size(640, 480);
-	std::string package = ros::package::getPath("tool_tracking");
-	seg_left = cv::imread(package + "/left.png", CV_LOAD_IMAGE_GRAYSCALE);
-	//seg_left = cv::imread(package + "/particle_test.png", CV_LOAD_IMAGE_GRAYSCALE );  //testing image
-	seg_right = cv::imread(package + "/right.png", CV_LOAD_IMAGE_GRAYSCALE);
+//	/***testing segmentation images***/
+//	cv::Size size(640, 480);
+//	std::string package = ros::package::getPath("tool_tracking");
+//	seg_left = cv::imread(package + "/left.png", CV_LOAD_IMAGE_GRAYSCALE);
+//	//seg_left = cv::imread(package + "/particle_test.png", CV_LOAD_IMAGE_GRAYSCALE );  //testing image
+//	seg_right = cv::imread(package + "/right.png", CV_LOAD_IMAGE_GRAYSCALE);
+//
+//    //this is to avoid the white line above
+//    cv::Mat new_seg_left = seg_left.rowRange(5,480);
+//    cv::Mat new_seg_right = seg_right.rowRange(5,480);
+//
+//    cv::resize(new_seg_left, new_seg_left,size);
+//    cv::resize(new_seg_right, new_seg_right,size);
 
-	cv::waitKey();
+    ros::Duration(2).sleep();
 	/*** Timer set up ***/
 	ros::Rate loop_rate(50);
 
 	while (nh.ok()) {
 		ros::spinOnce();
 		
-		if (freshImage){
+		if (freshImage && UKF.freshCameraInfo){
 			seg_left = segmentation(rawImage_left);  //or use image_vessselness
 			seg_right = segmentation(rawImage_right);
 //			cv::imshow("Cam L", rawImage_left);
@@ -113,14 +119,8 @@ int main(int argc, char **argv) {
 //			cv::imshow("Seg R", seg_right);
 //			cv::waitKey(10);
 
-            //this is to avoid the white line above
-            cv::Mat new_seg_left = seg_left.rowRange(5,480);
-            cv::Mat new_seg_right = seg_right.rowRange(5,480);
 
-            cv::resize(new_seg_left, new_seg_left,size);
-            cv::resize(new_seg_right, new_seg_right,size);
-
-            UKF.update(new_seg_left, new_seg_right);
+            UKF.update(seg_left, seg_right);
             //matching_score
 
 			freshImage = false;

@@ -284,7 +284,11 @@ which are not related to the pose of the tool object*/
 cv::Mat ToolModel::camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat) {
     /*cam mat should be a 4x4 extrinsic parameter*/
 
-    cv::Mat Inv = cam_mat.inv();
+    //cv::Mat Inv = cam_mat.inv();
+    cv::Mat Inv = cv::Mat::eye(4,4,CV_64FC1);
+    computeInvSE(cam_mat, Inv );   //avoid singularity
+    //ROS_INFO_STREAM("Inv" << Inv);
+
     cv::Mat output_mat = Inv * input_mat; //transform the obj to camera frames
 
     return output_mat;
@@ -354,7 +358,8 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
     cv::Mat ept_2(4, 1, CV_64FC1);
 
     for (int i = 0; i < input_faces.size(); ++i) {
-
+//        ROS_INFO_STREAM("input_faces.size()"<< input_faces.size());
+//        ROS_INFO_STREAM("i "<< i);
         neighbor_num = (neighbor_faces[i].size()) / 3;  //each neighbor has two vertices
 
         if (neighbor_num > 0) {
@@ -364,7 +369,6 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
             int n1 = input_faces[i][3];
             int n2 = input_faces[i][4];
             int n3 = input_faces[i][5];
-
             new_Vertices.col(v1).copyTo(temp.col(0));
             cv::Point3d pt1 = convert_MattoPts(temp);
             new_Vertices.col(v2).copyTo(temp.col(0));
@@ -380,7 +384,6 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
             cv::Point3d vn3 = convert_MattoPts(temp);
 
             cv::Point3d fnormal = FindFaceNormal(pt1, pt2, pt3, vn1, vn2, vn3); //knowing the direction and normalized
-
             cv::Point3d face_point_i = pt1 + pt2 + pt3;
             face_point_i.x = face_point_i.x / 3;
             face_point_i.y = face_point_i.y / 3;
@@ -437,13 +440,13 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
 
                     }
 
+
                 }
 
             }
 
 
         }
-
     }
 
 };
@@ -948,6 +951,26 @@ cv::Mat ToolModel::computeSkew(cv::Mat &w) {
     return skew;
 
 };
+
+
+void ToolModel::computeInvSE(const cv::Mat &inputMat, cv::Mat &outputMat){
+
+    outputMat = cv::Mat::eye(4,4,CV_64F);
+
+    cv::Mat R = inputMat.colRange(0,3).rowRange(0,3);
+    cv::Mat p = inputMat.colRange(3,4).rowRange(0,3);
+
+    /*debug: opencv......*/
+    cv::Mat R_rat = R.clone();
+    cv::Mat p_tra = p.clone();
+
+    R_rat = R_rat.t();  // rotation of inverse
+    p_tra = -1 * R_rat * p_tra; // translation of inverse
+
+    R_rat.copyTo(outputMat.colRange(0,3).rowRange(0,3));
+    p_tra.copyTo(outputMat.colRange(3,4).rowRange(0,3));
+
+}
 
 /****render a rectangle contains the tool model, TODO:*****/
 void

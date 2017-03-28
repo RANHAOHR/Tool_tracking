@@ -50,11 +50,11 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     //initializeParticles(); Where we're going, we don't need particles.
 
     // initialization, just basic black image ??? how to get the size of the image
-    toolImage_left_arm_1 = cv::Mat::zeros(475, 640, CV_8UC3);
-    toolImage_right_arm_1 = cv::Mat::zeros(475, 640, CV_8UC3);
+    toolImage_left_arm_1 = cv::Mat::zeros(480, 640, CV_8UC3);
+    toolImage_right_arm_1 = cv::Mat::zeros(480, 640, CV_8UC3);
 
-    toolImage_left_arm_2 = cv::Mat::zeros(475, 640, CV_8UC3);
-    toolImage_right_arm_2 = cv::Mat::zeros(475, 640, CV_8UC3);
+    toolImage_left_arm_2 = cv::Mat::zeros(480, 640, CV_8UC3);
+    toolImage_right_arm_2 = cv::Mat::zeros(480, 640, CV_8UC3);
 
     //Set up forward kinematics.
     /***motion model params***/
@@ -64,38 +64,52 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 
     com_s1 = nh_.subscribe("/dvrk/PSM1/set_position_joint", 10, &KalmanFilter::newCommandCallback1, this);
     com_s2 = nh_.subscribe("/dvrk/PSM2/set_position_joint", 10, &KalmanFilter::newCommandCallback2, this);
-
+    ROS_ERROR("2");
     kinematics = Davinci_fwd_solver();
-
+    ROS_ERROR("3");
     //Pull in our first round of sensor data.
     davinci_interface::init_joint_feedback(nh_);
     std::vector<std::vector<double> > tmp;
-
+    int state_dimension = 6;
+    tmp.resize(2);
+    tmp[0].resize(state_dimension);
+    tmp[1].resize(state_dimension);
+    sensor_green.resize(state_dimension);
+    sensor_yellow.resize(state_dimension);
     if(davinci_interface::get_fresh_robot_pos(tmp)){
         sensor_green = tmp[0];
         sensor_yellow = tmp[1];
+    }else{
+        ROS_ERROR("CANNOT GET FRESH ROBOT POS");
     }
 
     Eigen::Affine3d green_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_green.data()));
     Eigen::Vector3d green_trans = green_pos.translation();
-    Eigen::Vector3d green_rpy = green_pos.rotation().eulerAngles(0, 1, 2);
+    //Eigen::Vector3d green_rpy = green_pos.rotation().eulerAngles(0, 1, 2);
+    ROS_ERROR("4");
+    cv::Mat green_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+    computeRodriguesVec(green_pos, green_rvec);
+
     Eigen::Affine3d yellow_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_yellow.data()));
     Eigen::Vector3d yellow_trans = yellow_pos.translation();
-    Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
+    //Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
+
+    cv::Mat yellow_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+    computeRodriguesVec(yellow_pos, yellow_rvec);
 
     kalman_mu = cv::Mat_<double>::zeros(12, 1);
 	kalman_mu.at<double>(0, 0) = green_trans[0];
 	kalman_mu.at<double>(1, 0) = green_trans[1];
 	kalman_mu.at<double>(2, 0) = green_trans[2];
-	kalman_mu.at<double>(3, 0) = green_rpy[0];
-	kalman_mu.at<double>(4, 0) = green_rpy[1];
-	kalman_mu.at<double>(5, 0) = green_rpy[2];
+	kalman_mu.at<double>(3, 0) = green_rvec.at<double>(0,0);
+	kalman_mu.at<double>(4, 0) = green_rvec.at<double>(1,0);
+	kalman_mu.at<double>(5, 0) = green_rvec.at<double>(2,0);
 	kalman_mu.at<double>(6, 0) = yellow_trans[0];
 	kalman_mu.at<double>(7, 0) = yellow_trans[1];
 	kalman_mu.at<double>(8, 0) = yellow_trans[2];
-	kalman_mu.at<double>(9, 0) = yellow_rpy[0];
-	kalman_mu.at<double>(10, 0) = yellow_rpy[1];
-	kalman_mu.at<double>(11, 0) = yellow_rpy[2];
+	kalman_mu.at<double>(9, 0) = yellow_rvec.at<double>(0,0);
+	kalman_mu.at<double>(10, 0) = yellow_rvec.at<double>(1,0);
+	kalman_mu.at<double>(11, 0) = yellow_rvec.at<double>(2,0);
     kalman_sigma = (cv::Mat_<double>::zeros(12, 12));
 
     //ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
@@ -131,14 +145,14 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 
     //Convert to Affine3ds for storage, which is the format they will be used in for rendering.
     XformUtils xfu;
-
+    ROS_ERROR("8");
     /////arm_l is arm_1???
     arm_l__cam_l = xfu.transformTFToAffine3d(arm_l__cam_l_st);
     arm_l__cam_r = xfu.transformTFToAffine3d(arm_l__cam_r_st);
     arm_r__cam_l = xfu.transformTFToAffine3d(arm_r__cam_l_st);
     arm_r__cam_r = xfu.transformTFToAffine3d(arm_r__cam_r_st);
-
-    print_affine(arm_l__cam_l);
+    ROS_ERROR("9");
+//    print_affine(arm_l__cam_l);
 
     convertEigenToMat(arm_l__cam_l, Cam_left_arm_1);
     convertEigenToMat(arm_l__cam_r, Cam_right_arm_1);
@@ -158,7 +172,8 @@ void KalmanFilter::print_affine(Eigen::Affine3d &affine) {
     cout<<affine.linear()<<endl;
     cout<<"origin: "<<affine.translation().transpose()<<endl;
 
-}
+};
+
 void KalmanFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight){
 
     P_right.at<double>(0,0) = projectionRight->P[0];
@@ -197,7 +212,7 @@ void KalmanFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &pro
     P_left.at<double>(2,2) = projectionLeft->P[10];
     P_left.at<double>(2,3) = projectionLeft->P[11];
 
-    //ROS_INFO_STREAM("left: " << P_left);
+//    ROS_INFO_STREAM("left: " << P_left);
     freshCameraInfo = true;
 };
 
@@ -206,6 +221,7 @@ KalmanFilter::~KalmanFilter() {
 };
 
 void KalmanFilter::newCommandCallback1(const sensor_msgs::JointState::ConstPtr& incoming){
+
     std::vector<double> positions = incoming->position;
     for(int i = 0; i < L; i++){
         cmd_green[i] = positions[i];
@@ -236,9 +252,28 @@ double KalmanFilter::measureFunc(
 
     /***do the sampling and get the matching score***/
     //first get the rendered image using 3d model of the tool
+
+    ROS_INFO_STREAM(" toolPose tvec(0)" << toolPose.tvec_elp(0) );
+    ROS_INFO_STREAM(" toolPose tvec(1)" << toolPose.tvec_elp(1) );
+    ROS_INFO_STREAM(" toolPose tvec(2)" << toolPose.tvec_elp(2) );
+    ROS_INFO_STREAM(" toolPose rvec(0)" << toolPose.rvec_elp(0) );
+    ROS_INFO_STREAM(" toolPose rvec(1)" << toolPose.rvec_elp(1) );
+    ROS_INFO_STREAM(" toolPose rvec(2)" << toolPose.rvec_elp(2) );
+
+    ROS_INFO_STREAM(" toolPose cyl tvec(0)" << toolPose.tvec_cyl(0) );
+    ROS_INFO_STREAM(" toolPose cyl tvec(1)" << toolPose.tvec_cyl(1) );
+    ROS_INFO_STREAM(" toolPose cyl tvec(2)" << toolPose.tvec_cyl(2) );
+    ROS_INFO_STREAM(" toolPose  cyl rvec(0)" << toolPose.rvec_cyl(0) );
+    ROS_INFO_STREAM(" toolPose cyl rvec(1)" << toolPose.rvec_cyl(1) );
+    ROS_INFO_STREAM(" toolPose cyl rvec(2)" << toolPose.rvec_cyl(2) );
+
+
     newToolModel.renderTool(toolImage_left, toolPose, Cam_left, P_left);
-    
+
+    ROS_INFO("1.2");
+
     double left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left);  //get the matching score
+    ROS_INFO("1.3");
 
     newToolModel.renderTool(toolImage_right, toolPose, Cam_right, P_right);
     double right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right);
@@ -251,35 +286,49 @@ double KalmanFilter::measureFunc(
 
 void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmented_right){	
 	/******Find and convert our various params and inputs******/
+    //Get sensor update.
+    std::vector<std::vector<double> > tmp;
+    int state_dimension = 6;
+    tmp.resize(2);
+    tmp[0].resize(state_dimension);
+    tmp[1].resize(state_dimension);
+    sensor_green.resize(state_dimension);
+    sensor_yellow.resize(state_dimension);
 
-	//Get sensor update.
-	std::vector<std::vector<double> > tmp;
+
 	if(davinci_interface::get_fresh_robot_pos(tmp)){
 		sensor_green = tmp[0];
 		sensor_yellow = tmp[1];
 	}
 	
-	//Convert into proper format
+	//Convert into proper format, not want to use the euler andgle prefer rodrigues for vision
 	Eigen::Affine3d green_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_green.data()));
 	Eigen::Vector3d green_trans = green_pos.translation();
 	Eigen::Vector3d green_rpy = green_pos.rotation().eulerAngles(0, 1, 2);
+
+    cv::Mat green_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+    computeRodriguesVec(green_pos, green_rvec);
+
 	Eigen::Affine3d yellow_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_yellow.data()));
 	Eigen::Vector3d yellow_trans = yellow_pos.translation();
 	Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
+    cv::Mat yellow_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+    computeRodriguesVec(yellow_pos, yellow_rvec);
+
 	cv::Mat zt = cv::Mat_<double>(L, 1);
 	zt.at<double>(0, 0) = green_trans[0];
 	zt.at<double>(1, 0) = green_trans[1];
 	zt.at<double>(2, 0) = green_trans[2];
-	zt.at<double>(3, 0) = green_rpy[0];
-	zt.at<double>(4, 0) = green_rpy[1];
-	zt.at<double>(5, 0) = green_rpy[2];
+	zt.at<double>(3, 0) = green_rvec.at<double>(0,0);
+	zt.at<double>(4, 0) = green_rvec.at<double>(1,0);
+	zt.at<double>(5, 0) = green_rvec.at<double>(2,0);
 	zt.at<double>(6, 0) = yellow_trans[0];
 	zt.at<double>(7, 0) = yellow_trans[1];
 	zt.at<double>(8, 0) = yellow_trans[2];
-	zt.at<double>(9, 0) = yellow_rpy[0];
-	zt.at<double>(10, 0) = yellow_rpy[1];
-	zt.at<double>(11, 0) = yellow_rpy[2];
-	
+	zt.at<double>(9, 0) = yellow_rvec.at<double>(0,0);
+	zt.at<double>(10, 0) = yellow_rvec.at<double>(1,0);
+	zt.at<double>(11, 0) = yellow_rvec.at<double>(2,0);
+
 	ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
 	ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
 	
@@ -341,7 +390,8 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	/*****Render each sigma point and compute its matching score.*****/
 	std::vector<double> mscores;
 	mscores.resize(2*L + 1);
-	computeSigmaMeasures(mscores, sigma_pts_bar, segmented_left, segmented_right);
+
+
 	
 	//TODO: Calculate a second set of weights based on the matching score, to influence the effect of the sigma points.
 	
@@ -354,7 +404,9 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	for(int i = 0; i < 2 * L + 1; i++){
 		sigma_bar = sigma_bar + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((sigma_pts_bar[i] - mu_bar).t());
 	}
-	
+
+
+    computeSigmaMeasures(mscores, sigma_pts_bar, segmented_left, segmented_right);
 	/*****Correction Step: Move the sigma points through the measurement function.*****/
 	std::vector<cv::Mat_<double> > Z_bar;
 	Z_bar.resize(2 * L + 1);
@@ -452,14 +504,17 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
     ROS_INFO_STREAM(" ARM 2 rvec(2)" << arm_2.rvec_elp(2) );
 
     //Render the tools and compute the matching score
+    ROS_INFO("1");
     double matchingScore_arm_1 = measureFunc(toolImage_left_arm_1, toolImage_right_arm_1, arm_1, segmented_left, segmented_right, Cam_left_arm_1, Cam_right_arm_1);
+    ROS_INFO("2");
     double matchingScore_arm_2 = measureFunc(toolImage_left_arm_2, toolImage_right_arm_2, arm_2, segmented_left, segmented_right, Cam_left_arm_2, Cam_right_arm_2);
 
-    cv::imshow("Render arm 1 Left cam" ,toolImage_left_arm_1 );
-    cv::imshow("Render arm 1 Right cam" ,toolImage_right_arm_1 );
-    cv::imshow("Render arm 2 Left cam" ,toolImage_left_arm_2 );
-    cv::imshow("Render arm 2 Right cam" ,toolImage_right_arm_2 );
-    cv::waitKey(10);
+    ROS_INFO("3");
+//    cv::imshow("Render arm 1 Left cam" ,toolImage_left_arm_1 );
+//    cv::imshow("Render arm 1 Right cam" ,toolImage_right_arm_1 );
+//    cv::imshow("Render arm 2 Left cam" ,toolImage_left_arm_2 );
+//    cv::imshow("Render arm 2 Right cam" ,toolImage_right_arm_2 );
+//    cv::waitKey(10);
 
     double result = (matchingScore_arm_1 + matchingScore_arm_2) / 2;
 
@@ -511,6 +566,15 @@ void KalmanFilter::convertToolModel(const Eigen::Affine3d & trans, ToolModel::to
     ////Not use euler angles or Rodrigues angles
 //    Eigen::Vector3d rpy = trans.rotation().eulerAngles(0, 1, 2);
 //    ROS_INFO_STREAM("RPY " << rpy);
+//
+//
+//    toolModel.tvec_elp(0) = pos[0];
+//    toolModel.tvec_elp(1) = pos[1];
+//    toolModel.tvec_elp(2) = pos[2];
+//    toolModel.rvec_elp(0) = rpy[0];
+//    toolModel.rvec_elp(1) = rpy[1];
+//    toolModel.rvec_elp(2) = rpy[2];
+//
 
     Eigen::Matrix3d rot_affine = trans.rotation();
 
@@ -537,7 +601,29 @@ void KalmanFilter::convertToolModel(const Eigen::Affine3d & trans, ToolModel::to
     toolModel.rvec_elp(1) = rot_vec.at<double>(1,0);
     toolModel.rvec_elp(2) = rot_vec.at<double>(2,0);
 
-    newToolModel.computeModelPose(toolModel, 0.0,0.0,0.0);
+    newToolModel.computeModelPose(toolModel, 0.0, 0.0, 0.0);
+};
+
+void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec){
+//    Eigen::Vector3d rpy = trans.rotation().eulerAngles(0, 1, 2);
+//    ROS_INFO_STREAM("RPY " << rpy);
+
+    Eigen::Matrix3d rot_affine = trans.rotation();
+
+    cv::Mat rot(3,3,CV_64FC1);
+    rot.at<double>(0,0) = rot_affine(0,0);
+    rot.at<double>(0,1) = rot_affine(0,1);
+    rot.at<double>(0,2) = rot_affine(0,2);
+    rot.at<double>(1,0) = rot_affine(1,0);
+    rot.at<double>(1,1) = rot_affine(1,1);
+    rot.at<double>(1,2) = rot_affine(1,2);
+    rot.at<double>(2,0) = rot_affine(2,0);
+    rot.at<double>(2,1) = rot_affine(2,1);
+    rot.at<double>(2,2) = rot_affine(2,2);
+
+    rot_vec = cv::Mat::zeros(3,1, CV_64FC1);
+    cv::Rodrigues(rot, rot_vec );
+    //ROS_INFO_STREAM("rot_vec " << rot_vec);
 };
 
 

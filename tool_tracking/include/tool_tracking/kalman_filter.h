@@ -130,7 +130,7 @@ private:
     Eigen::Affine3d arm_l__cam_r;
     Eigen::Affine3d arm_r__cam_r;
 
-    bool freshCameraInfo;
+
 
     ros::Subscriber projectionMat_subscriber_r;
     ros::Subscriber projectionMat_subscriber_l;
@@ -156,6 +156,7 @@ public:
     */
     KalmanFilter(ros::NodeHandle *nodehandle);
 
+    bool freshCameraInfo;
     /*
      * The deconstructor
      */
@@ -186,6 +187,7 @@ public:
     );
     double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right);
 
+    void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
     void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 
 };
