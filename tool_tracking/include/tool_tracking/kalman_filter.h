@@ -168,6 +168,8 @@ public:
      * This is the main function for tracking the needle. This function is called and it syncs all of the functions
     */
 
+    void print_affine(Eigen::Affine3d &affine);
+
     void update(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
     void convertToolModel(const Eigen::Affine3d & trans, ToolModel::toolModel &toolModel);

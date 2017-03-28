@@ -25,6 +25,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "/home/ranhao/ros_ws/src/Tool_tracking/tool_model/include"
   "/home/ranhao/ros_ws/src/cwru_davinci/cwru_davinci_interface/include"
   "/home/ranhao/ros_ws/src/cwru_davinci/cwru_davinci_kinematics/include"
+  "/home/ranhao/ros_ws/src/xform_utils/include"
   "/opt/ros/indigo/include"
   "/usr/include/eigen3"
   )

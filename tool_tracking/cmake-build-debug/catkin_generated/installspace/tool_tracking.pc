@@ -5,4 +5,4 @@ Description: Description of tool_tracking
 Version: 0.0.0
 Cflags: -I/usr/local/include
 Libs: -L/usr/local/lib -ltool_tracking_particle -ltool_tracking_kalman
-Requires: cv_bridge image_transport roscpp sensor_msgs std_msgs message_runtime cwru_opencv_common vesselness_image_filter tool_model geometry_msgs cwru_davinci_interface cwru_davinci_kinematics
+Requires: cv_bridge image_transport roscpp sensor_msgs std_msgs message_runtime cwru_opencv_common vesselness_image_filter tool_model geometry_msgs cwru_davinci_interface cwru_davinci_kinematics xform_utils

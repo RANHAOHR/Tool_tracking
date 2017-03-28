@@ -97,6 +97,7 @@ int main(int argc, char **argv) {
 	//seg_left = cv::imread(package + "/particle_test.png", CV_LOAD_IMAGE_GRAYSCALE );  //testing image
 	seg_right = cv::imread(package + "/right.png", CV_LOAD_IMAGE_GRAYSCALE);
 
+	cv::waitKey();
 	/*** Timer set up ***/
 	ros::Rate loop_rate(50);
 
