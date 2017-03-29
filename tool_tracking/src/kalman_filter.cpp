@@ -71,7 +71,6 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     davinci_interface::init_joint_feedback(nh_);
     std::vector<std::vector<double> > tmp;
 
-
     tmp.resize(2);
     tmp[0].resize(state_dimension);
     tmp[1].resize(state_dimension);
@@ -97,6 +96,7 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     computeRodriguesVec(yellow_pos, yellow_rvec);
 
     kalman_mu = cv::Mat_<double>::zeros(12, 1);
+
 	kalman_mu.at<double>(0, 0) = green_trans[0];
 	kalman_mu.at<double>(1, 0) = green_trans[1];
 	kalman_mu.at<double>(2, 0) = green_trans[2];
@@ -109,6 +109,7 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	kalman_mu.at<double>(9, 0) = yellow_rvec.at<double>(0,0);
 	kalman_mu.at<double>(10, 0) = yellow_rvec.at<double>(1,0);
 	kalman_mu.at<double>(11, 0) = yellow_rvec.at<double>(2,0);
+
     kalman_sigma = (cv::Mat_<double>::zeros(12, 12));
 
     //ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
@@ -168,52 +169,52 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 };
 
 void KalmanFilter::print_affine(Eigen::Affine3d &affine) {
-    cout<<"Rotation: "<<endl;
-    cout<<affine.linear()<<endl;
-    cout<<"origin: "<<affine.translation().transpose()<<endl;
+	cout<<"Rotation: "<<endl;
+	cout<<affine.linear()<<endl;
+	cout<<"origin: "<<affine.translation().transpose()<<endl;
 
 };
 
 void KalmanFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight){
 
-    P_right.at<double>(0,0) = projectionRight->P[0];
-    P_right.at<double>(0,1) = projectionRight->P[1];
-    P_right.at<double>(0,2) = projectionRight->P[2];
-    P_right.at<double>(0,3) = projectionRight->P[3];
+	P_right.at<double>(0,0) = projectionRight->P[0];
+	P_right.at<double>(0,1) = projectionRight->P[1];
+	P_right.at<double>(0,2) = projectionRight->P[2];
+	P_right.at<double>(0,3) = projectionRight->P[3];
 
-    P_right.at<double>(1,0) = projectionRight->P[4];
-    P_right.at<double>(1,1) = projectionRight->P[5];
-    P_right.at<double>(1,2) = projectionRight->P[6];
-    P_right.at<double>(1,3) = projectionRight->P[7];
+	P_right.at<double>(1,0) = projectionRight->P[4];
+	P_right.at<double>(1,1) = projectionRight->P[5];
+	P_right.at<double>(1,2) = projectionRight->P[6];
+	P_right.at<double>(1,3) = projectionRight->P[7];
 
-    P_right.at<double>(2,0) = projectionRight->P[8];
-    P_right.at<double>(2,1) = projectionRight->P[9];
-    P_right.at<double>(2,2) = projectionRight->P[10];
-    P_right.at<double>(2,3) = projectionRight->P[11];
+	P_right.at<double>(2,0) = projectionRight->P[8];
+	P_right.at<double>(2,1) = projectionRight->P[9];
+	P_right.at<double>(2,2) = projectionRight->P[10];
+	P_right.at<double>(2,3) = projectionRight->P[11];
 
-    //ROS_INFO_STREAM("right: " << P_right);
-    freshCameraInfo = true;
+	//ROS_INFO_STREAM("right: " << P_right);
+	freshCameraInfo = true;
 };
 
 void KalmanFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft){
 
-    P_left.at<double>(0,0) = projectionLeft->P[0];
-    P_left.at<double>(0,1) = projectionLeft->P[1];
-    P_left.at<double>(0,2) = projectionLeft->P[2];
-    P_left.at<double>(0,3) = projectionLeft->P[3];
+	P_left.at<double>(0,0) = projectionLeft->P[0];
+	P_left.at<double>(0,1) = projectionLeft->P[1];
+	P_left.at<double>(0,2) = projectionLeft->P[2];
+	P_left.at<double>(0,3) = projectionLeft->P[3];
 
-    P_left.at<double>(1,0) = projectionLeft->P[4];
-    P_left.at<double>(1,1) = projectionLeft->P[5];
-    P_left.at<double>(1,2) = projectionLeft->P[6];
-    P_left.at<double>(1,3) = projectionLeft->P[7];
+	P_left.at<double>(1,0) = projectionLeft->P[4];
+	P_left.at<double>(1,1) = projectionLeft->P[5];
+	P_left.at<double>(1,2) = projectionLeft->P[6];
+	P_left.at<double>(1,3) = projectionLeft->P[7];
 
-    P_left.at<double>(2,0) = projectionLeft->P[8];
-    P_left.at<double>(2,1) = projectionLeft->P[9];
-    P_left.at<double>(2,2) = projectionLeft->P[10];
-    P_left.at<double>(2,3) = projectionLeft->P[11];
+	P_left.at<double>(2,0) = projectionLeft->P[8];
+	P_left.at<double>(2,1) = projectionLeft->P[9];
+	P_left.at<double>(2,2) = projectionLeft->P[10];
+	P_left.at<double>(2,3) = projectionLeft->P[11];
 
-//    ROS_INFO_STREAM("left: " << P_left);
-    freshCameraInfo = true;
+//	ROS_INFO_STREAM("left: " << P_left);
+	freshCameraInfo = true;
 };
 
 KalmanFilter::~KalmanFilter() {
@@ -221,6 +222,7 @@ KalmanFilter::~KalmanFilter() {
 };
 
 void KalmanFilter::newCommandCallback1(const sensor_msgs::JointState::ConstPtr& incoming){
+
 
     std::vector<double> positions;
     positions.resize(L);
@@ -238,23 +240,32 @@ void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& 
     for(int j = 0; j < L; j++){
         cmd_yellow[j] = positions[j];
     }
+
+	cmd_green_old = cmd_green.clone();
+	cmd_time_green_old = cmd_time_green;
+	Eigen::Affine3d cmd_green_af = kinematics.fwd_kin_solve(Vectorq7x1(incoming->position.data()));
+
 };
 
-//Deprecated by KalmanFilter::update(). Archival code only.
+//void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& incoming){
+//	//TODO: Turn joint commands into delta-mats.
+//
+//};
+
+////Deprecated by KalmanFilter::update(). Archival code only.
 double KalmanFilter::measureFunc( cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, const cv::Mat &segmented_left,
 	const cv::Mat &segmented_right,
 	cv::Mat &Cam_left,
 	cv::Mat &Cam_right) {
 
-    //Looks mostly IP-related; need to resturcture to not be dependant on particles and instead use sigma-points.
-    toolImage_left.setTo(0);
-    toolImage_right.setTo(0);
+	//Looks mostly IP-related; need to resturcture to not be dependant on particles and instead use sigma-points.
+	toolImage_left.setTo(0);
+	toolImage_right.setTo(0);
 
-    /***do the sampling and get the matching score***/
-    //first get the rendered image using 3d model of the tool
+	/***do the sampling and get the matching score***/
+	//first get the rendered image using 3d model of the tool
 
     ukfToolModel.renderTool(toolImage_left, toolPose, Cam_left, P_left);
-
     double left = ukfToolModel.calculateMatchingScore(toolImage_left, segmented_left);  //get the matching score
 
     ukfToolModel.renderTool(toolImage_right, toolPose, Cam_right, P_right);
@@ -262,23 +273,23 @@ double KalmanFilter::measureFunc( cv::Mat & toolImage_left, cv::Mat & toolImage_
 
     ROS_INFO("RENDERED finish");
 
-    double matchingScore = sqrt(pow(left, 2) + pow(right, 2));
+	double matchingScore = sqrt(pow(left, 2) + pow(right, 2));
 
-    return matchingScore;
+	return matchingScore;
 
 };
 
-void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmented_right){	
+void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmented_right){
+	ROS_INFO("In update");
 	/******Find and convert our various params and inputs******/
-    //Get sensor update.
-    std::vector<std::vector<double> > tmp;
-
-    int state_dimension = 6;
-    tmp.resize(2);
-    tmp[0].resize(state_dimension);
-    tmp[1].resize(state_dimension);
-    sensor_green.resize(state_dimension);
-    sensor_yellow.resize(state_dimension);
+	//Get sensor update.
+	std::vector<std::vector<double> > tmp;
+	int state_dimension = 6;
+	tmp.resize(2);
+	tmp[0].resize(state_dimension);
+	tmp[1].resize(state_dimension);
+	sensor_green.resize(state_dimension);
+	sensor_yellow.resize(state_dimension);
 
 	if(davinci_interface::get_fresh_robot_pos(tmp)){
 		sensor_green = tmp[0];
@@ -290,14 +301,14 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	Eigen::Vector3d green_trans = green_pos.translation();
 	Eigen::Vector3d green_rpy = green_pos.rotation().eulerAngles(0, 1, 2);
 
-    cv::Mat green_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-    computeRodriguesVec(green_pos, green_rvec);
+	cv::Mat green_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+	computeRodriguesVec(green_pos, green_rvec);
 
 	Eigen::Affine3d yellow_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_yellow.data()));
 	Eigen::Vector3d yellow_trans = yellow_pos.translation();
 	Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
-    cv::Mat yellow_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-    computeRodriguesVec(yellow_pos, yellow_rvec);
+	cv::Mat yellow_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+	computeRodriguesVec(yellow_pos, yellow_rvec);
 
 	cv::Mat zt = cv::Mat_<double>(L, 1);
 	zt.at<double>(0, 0) = green_trans[0];
@@ -383,12 +394,13 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 		sigma_bar = sigma_bar + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((sigma_pts_bar[i] - mu_bar).t());
 	}
 
-    /*****Render each sigma point and compute its matching score.*****/
+	/*****Render each sigma point and compute its matching score.*****/
 
-    std::vector<double> mscores;
-    mscores.resize(2*L + 1);
+	std::vector<double> mscores;
+	mscores.resize(2*L + 1);
 
-    computeSigmaMeasures(mscores, sigma_pts_bar, segmented_left, segmented_right);
+	computeSigmaMeasures(mscores, sigma_pts_bar, segmented_left, segmented_right);
+
 	/*****Correction Step: Move the sigma points through the measurement function.*****/
 	std::vector<cv::Mat_<double> > Z_bar;
 	Z_bar.resize(2 * L + 1);
@@ -422,21 +434,21 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 };
 
 void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u){
-    //TODO: Very stupid placeholder model that squashes all of the sigma points into the last recorded position with zero variance.
-    sigma_point_out = u.clone();
+	//TODO: Very stupid placeholder model that squashes all of the sigma points into the last recorded position with zero variance.
+	sigma_point_out = u.clone();
 };
 
 /***this function should compute the matching score for each sigma points: for future use****/
 void KalmanFilter::computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in, const cv::Mat &segmented_left, const cv::Mat &segmented_right){
 	//ROS_ERROR("IN CSM FUNC: %lu, %lu", measureWeights.size(), sigma_point_in.size());
-    double total = 0.0;
-    for (int i = 0; i < sigma_point_in.size() ; i++) {
-        measureWeights[i] = matching_score(sigma_point_in[i], segmented_left, segmented_right );
-        total += measureWeights[i];
-    }
-    for (int j = 0; j < sigma_point_in.size(); j++) {
-        measureWeights[j] = measureWeights[j] / total;
-    }
+	double total = 0.0;
+	for (int i = 0; i < sigma_point_in.size() ; i++) {
+		measureWeights[i] = matching_score(sigma_point_in[i], segmented_left, segmented_right );
+		total += measureWeights[i];
+	}
+	for (int j = 0; j < sigma_point_in.size(); j++) {
+		measureWeights[j] = measureWeights[j] / total;
+	}
 
 };
 
@@ -486,7 +498,6 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
     //Render the tools and compute the matching score
 
     double matchingScore_arm_1 = measureFunc(toolImage_left_arm_1, toolImage_right_arm_1, arm_1, segmented_left, segmented_right, Cam_left_arm_1, Cam_right_arm_1);
-
     double matchingScore_arm_2 = measureFunc(toolImage_left_arm_2, toolImage_right_arm_2, arm_2, segmented_left, segmented_right, Cam_left_arm_2, Cam_right_arm_2);
 
     cv::imshow("Render arm 1 Left cam" ,toolImage_left_arm_1 );
@@ -498,6 +509,13 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
     double result = (matchingScore_arm_1 + matchingScore_arm_2) / 2;
 
     return result;
+
+//	cv::imshow("Render arm 1 Left cam" ,toolImage_left_arm_1 );
+//	cv::imshow("Render arm 1 Right cam" ,toolImage_right_arm_1 );
+//	cv::imshow("Render arm 2 Left cam" ,toolImage_left_arm_2 );
+//	cv::imshow("Render arm 2 Right cam" ,toolImage_right_arm_2 );
+//	cv::waitKey(10);
+
 };
 
 void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in){
@@ -508,34 +526,34 @@ void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in){
 /******from eigen to opencv matrix****/
 void KalmanFilter::convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix){
 
-    outputMatrix = cv::Mat::eye(4,4,CV_64FC1);
+	outputMatrix = cv::Mat::eye(4,4,CV_64FC1);
 
-    Eigen::Vector3d pos = trans.translation();
-    Eigen::Matrix3d rot = trans.linear();
+	Eigen::Vector3d pos = trans.translation();
+	Eigen::Matrix3d rot = trans.linear();
 
-    //this is the last col, translation
-    outputMatrix.at<double>(0,3) = pos(0);
-    outputMatrix.at<double>(1,3) = pos(1);
-    outputMatrix.at<double>(2,3) = pos(2);
+	//this is the last col, translation
+	outputMatrix.at<double>(0,3) = pos(0);
+	outputMatrix.at<double>(1,3) = pos(1);
+	outputMatrix.at<double>(2,3) = pos(2);
 
-    Eigen::Vector3d col_0, col_1, col_2;
-    //this is the first col, rotation x
-    col_0 = rot.col(0);
-    outputMatrix.at<double>(0,0) = col_0(0);
-    outputMatrix.at<double>(1,0) = col_0(1);
-    outputMatrix.at<double>(2,0) = col_0(2);
+	Eigen::Vector3d col_0, col_1, col_2;
+	//this is the first col, rotation x
+	col_0 = rot.col(0);
+	outputMatrix.at<double>(0,0) = col_0(0);
+	outputMatrix.at<double>(1,0) = col_0(1);
+	outputMatrix.at<double>(2,0) = col_0(2);
 
-    //this is the second col, rotation y
-    col_1 = rot.col(1);
-    outputMatrix.at<double>(0,1) = col_1(0);
-    outputMatrix.at<double>(1,1) = col_1(1);
-    outputMatrix.at<double>(2,1) = col_1(2);
+	//this is the second col, rotation y
+	col_1 = rot.col(1);
+	outputMatrix.at<double>(0,1) = col_1(0);
+	outputMatrix.at<double>(1,1) = col_1(1);
+	outputMatrix.at<double>(2,1) = col_1(2);
 
-    //this is the third col, rotation z
-    col_2 = rot.col(2);
-    outputMatrix.at<double>(0,2) = col_2(0);
-    outputMatrix.at<double>(1,2) = col_2(1);
-    outputMatrix.at<double>(2,2) = col_2(2);
+	//this is the third col, rotation z
+	col_2 = rot.col(2);
+	outputMatrix.at<double>(0,2) = col_2(0);
+	outputMatrix.at<double>(1,2) = col_2(1);
+	outputMatrix.at<double>(2,2) = col_2(2);
 
 };
 
@@ -551,7 +569,6 @@ void KalmanFilter::convertToolModel(const Eigen::Affine3d & trans, ToolModel::to
 //    toolModel.rvec_elp(0) = rpy[0];
 //    toolModel.rvec_elp(1) = rpy[1];
 //    toolModel.rvec_elp(2) = rpy[2];
-//
 
     Eigen::Matrix3d rot_affine = trans.rotation();
 
@@ -582,25 +599,25 @@ void KalmanFilter::convertToolModel(const Eigen::Affine3d & trans, ToolModel::to
 };
 
 void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec){
-//    Eigen::Vector3d rpy = trans.rotation().eulerAngles(0, 1, 2);
-//    ROS_INFO_STREAM("RPY " << rpy);
+//	Eigen::Vector3d rpy = trans.rotation().eulerAngles(0, 1, 2);
+//	ROS_INFO_STREAM("RPY " << rpy);
 
-    Eigen::Matrix3d rot_affine = trans.rotation();
+	Eigen::Matrix3d rot_affine = trans.rotation();
 
-    cv::Mat rot(3,3,CV_64FC1);
-    rot.at<double>(0,0) = rot_affine(0,0);
-    rot.at<double>(0,1) = rot_affine(0,1);
-    rot.at<double>(0,2) = rot_affine(0,2);
-    rot.at<double>(1,0) = rot_affine(1,0);
-    rot.at<double>(1,1) = rot_affine(1,1);
-    rot.at<double>(1,2) = rot_affine(1,2);
-    rot.at<double>(2,0) = rot_affine(2,0);
-    rot.at<double>(2,1) = rot_affine(2,1);
-    rot.at<double>(2,2) = rot_affine(2,2);
+	cv::Mat rot(3,3,CV_64FC1);
+	rot.at<double>(0,0) = rot_affine(0,0);
+	rot.at<double>(0,1) = rot_affine(0,1);
+	rot.at<double>(0,2) = rot_affine(0,2);
+	rot.at<double>(1,0) = rot_affine(1,0);
+	rot.at<double>(1,1) = rot_affine(1,1);
+	rot.at<double>(1,2) = rot_affine(1,2);
+	rot.at<double>(2,0) = rot_affine(2,0);
+	rot.at<double>(2,1) = rot_affine(2,1);
+	rot.at<double>(2,2) = rot_affine(2,2);
 
-    rot_vec = cv::Mat::zeros(3,1, CV_64FC1);
-    cv::Rodrigues(rot, rot_vec );
-    //ROS_INFO_STREAM("rot_vec " << rot_vec);
+	rot_vec = cv::Mat::zeros(3,1, CV_64FC1);
+	cv::Rodrigues(rot, rot_vec );
+	//ROS_INFO_STREAM("rot_vec " << rot_vec);
 };
 
 
@@ -609,137 +626,137 @@ void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat ro
 //For our immediate purposes, a magical function that updates a mu and sigma. He kills aliens and doesn't afraid of anything.
 void KalmanFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma, const cv::Mat &zt, const cv::Mat &ut){
 
-    //L is the dimension of the joint space for single arm
+	//L is the dimension of the joint space for single arm
 
-    double lambda = alpha * alpha * (L + k) - L;
+	double lambda = alpha * alpha * (L + k) - L;
 
-    double gamma = L + lambda;
-    gamma = pow(gamma, 0.5);
+	double gamma = L + lambda;
+	gamma = pow(gamma, 0.5);
 
-    ///get the square root for sigma
-    cv::Mat square_sigma = cv::Mat::zeros(L, 1, CV_64FC1);
+	///get the square root for sigma
+	cv::Mat square_sigma = cv::Mat::zeros(L, 1, CV_64FC1);
 
-    cv::Mat s = cv::Mat(L, 1, CV_64FC1);  //need the square root for sigma
-    cv::Mat vt = cv::Mat(L, L, CV_64FC1);  //need the square root for sigma
-    cv::Mat u = cv::Mat(L, L, CV_64FC1);  //need the square root for sigma
+	cv::Mat s = cv::Mat(L, 1, CV_64FC1);  //need the square root for sigma
+	cv::Mat vt = cv::Mat(L, L, CV_64FC1);  //need the square root for sigma
+	cv::Mat u = cv::Mat(L, L, CV_64FC1);  //need the square root for sigma
 
-    cv::SVD::compute(sigma, s, u, vt);  //s is supposed to be the one we are asking for, the sigular values
+	cv::SVD::compute(sigma, s, u, vt);  //s is supposed to be the one we are asking for, the sigular values
 
-    square_sigma = s.clone(); //safe way to pass values to a cv Mat
+	square_sigma = s.clone(); //safe way to pass values to a cv Mat
 
-    std::vector<cv::Mat> state_vecs;
-    state_vecs.resize(2*L); ///size is 2L
+	std::vector<cv::Mat> state_vecs;
+	state_vecs.resize(2*L); ///size is 2L
 
-    state_vecs[0] = mu.clone();   //X_nod
-    for (int i = 1; i < L; ++i) {
-        state_vecs[i] = state_vecs[0] + gamma * square_sigma;
-        state_vecs[i + L] = state_vecs[0] - gamma * square_sigma;
-    }
+	state_vecs[0] = mu.clone();   //X_nod
+	for (int i = 1; i < L; ++i) {
+		state_vecs[i] = state_vecs[0] + gamma * square_sigma;
+		state_vecs[i + L] = state_vecs[0] - gamma * square_sigma;
+	}
 
-    double weight_mean = lambda / (L + lambda);
-    double weight_covariance = weight_mean + 1-alpha * alpha + beta;
+	double weight_mean = lambda / (L + lambda);
+	double weight_covariance = weight_mean + 1-alpha * alpha + beta;
 
-    std::vector<double> weight_vec_c;
-    std::vector<double> weight_vec_m;
-    weight_vec_c.resize(2*L);
-    weight_vec_m.resize(2*L);
+	std::vector<double> weight_vec_c;
+	std::vector<double> weight_vec_m;
+	weight_vec_c.resize(2*L);
+	weight_vec_m.resize(2*L);
 
-    weight_vec_c[0] = weight_mean;
-    weight_vec_m[0] = weight_covariance;
+	weight_vec_c[0] = weight_mean;
+	weight_vec_m[0] = weight_covariance;
 
-    for (int l = 1; l < 2*L; ++l) {
-        weight_vec_c[l] = 1/(2 * (L + lambda ));
-        weight_vec_m[l] = 1/(2 * (L + lambda ));
-    }
+	for (int l = 1; l < 2*L; ++l) {
+		weight_vec_c[l] = 1/(2 * (L + lambda ));
+		weight_vec_m[l] = 1/(2 * (L + lambda ));
+	}
 
-    /***get the prediction***/
-    cv::Mat current_mu = cv::Mat::zeros(L,1,CV_64FC1);
-    cv::Mat current_sigma = cv::Mat::zeros(L,L, CV_64FC1);
+	/***get the prediction***/
+	cv::Mat current_mu = cv::Mat::zeros(L,1,CV_64FC1);
+	cv::Mat current_sigma = cv::Mat::zeros(L,L, CV_64FC1);
 
-    std::vector<cv::Mat> currentState_vec;
-    currentState_vec.resize(2*L);
+	std::vector<cv::Mat> currentState_vec;
+	currentState_vec.resize(2*L);
 
-    //TODO: missing function to get update state space vector?
+	//TODO: missing function to get update state space vector?
 
-    cv::Mat R = cv::Mat::eye(L,L,CV_64FC1);
-    R = R * 0.037;
+	cv::Mat R = cv::Mat::eye(L,L,CV_64FC1);
+	R = R * 0.037;
 
-    for (int m = 0; m < 2*L; ++m) {
-        cv::Mat temp = weight_vec_m[m] * currentState_vec[m];
-        current_mu = current_mu + temp;
-    }
+	for (int m = 0; m < 2*L; ++m) {
+		cv::Mat temp = weight_vec_m[m] * currentState_vec[m];
+		current_mu = current_mu + temp;
+	}
 
-    for (int n = 0; n < 2*L; ++n) {
-        cv::Mat var_mat = currentState_vec[n] - current_mu;
+	for (int n = 0; n < 2*L; ++n) {
+		cv::Mat var_mat = currentState_vec[n] - current_mu;
 
-        cv::Mat temp_mat = weight_vec_c[n] * var_mat * var_mat.t();
-        current_sigma = current_sigma + temp_mat;
-    }
+		cv::Mat temp_mat = weight_vec_c[n] * var_mat * var_mat.t();
+		current_sigma = current_sigma + temp_mat;
+	}
 
-    current_sigma = current_sigma + R;
+	current_sigma = current_sigma + R;
 
-    /*****get measurement****/
-    std::vector<cv::Mat> updateState_vec;
-    updateState_vec.resize(2*L);
+	/*****get measurement****/
+	std::vector<cv::Mat> updateState_vec;
+	updateState_vec.resize(2*L);
 
-    //compute new square root for current sigma
-    cv::SVD::compute(current_sigma, s, u, vt);  //s is supposed to be the one we are asking for, the sigular values
+	//compute new square root for current sigma
+	cv::SVD::compute(current_sigma, s, u, vt);  //s is supposed to be the one we are asking for, the sigular values
 
-    square_sigma = s.clone(); //safe way to pass values to a cv Mat
+	square_sigma = s.clone(); //safe way to pass values to a cv Mat
 
-    updateState_vec[0] = current_mu.clone();   //X_nod
-    for (int i = 1; i < L; ++i) {
-        updateState_vec[i] = updateState_vec[0] + gamma * square_sigma;
-        updateState_vec[i + L] = updateState_vec[0] - gamma * square_sigma;
-    }
+	updateState_vec[0] = current_mu.clone();   //X_nod
+	for (int i = 1; i < L; ++i) {
+		updateState_vec[i] = updateState_vec[0] + gamma * square_sigma;
+		updateState_vec[i + L] = updateState_vec[0] - gamma * square_sigma;
+	}
 
-    std::vector<cv::Mat> current_z_vec;
-    current_z_vec.resize(2*L);
+	std::vector<cv::Mat> current_z_vec;
+	current_z_vec.resize(2*L);
 
-    //TODO: get measurement function
+	//TODO: get measurement function
 
-    cv::Mat weighted_z = cv::Mat::zeros(2*L,1,CV_64FC1);
+	cv::Mat weighted_z = cv::Mat::zeros(2*L,1,CV_64FC1);
 
-    for (int j = 0; j < 2*L; ++j) {
-        cv::Mat temp = weight_vec_m[j] * current_z_vec[j];
-        weighted_z = weighted_z + temp;
-    }
+	for (int j = 0; j < 2*L; ++j) {
+		cv::Mat temp = weight_vec_m[j] * current_z_vec[j];
+		weighted_z = weighted_z + temp;
+	}
 
-    cv::Mat S_t = cv::Mat::zeros(L, L, CV_64FC1);
+	cv::Mat S_t = cv::Mat::zeros(L, L, CV_64FC1);
 
-    for (int i1 = 0; i1 < 2*L; ++i1) {
-        cv::Mat var_z = current_z_vec[i1] - weighted_z;
+	for (int i1 = 0; i1 < 2*L; ++i1) {
+		cv::Mat var_z = current_z_vec[i1] - weighted_z;
 
-        cv::Mat temp_mat = weight_vec_c[i1] * var_z * var_z.t();
-        S_t = S_t + temp_mat;
-    }
+		cv::Mat temp_mat = weight_vec_c[i1] * var_z * var_z.t();
+		S_t = S_t + temp_mat;
+	}
 
-    cv::Mat Q = cv::Mat::eye(L,L,CV_64FC1);
-    Q = Q * 0.00038;
+	cv::Mat Q = cv::Mat::eye(L,L,CV_64FC1);
+	Q = Q * 0.00038;
 
-    S_t = S_t + Q;
-    //get cross-covariance
-    cv::Mat omega_x_z  = cv::Mat::zeros(2*L, 1, CV_64FC1);
+	S_t = S_t + Q;
+	//get cross-covariance
+	cv::Mat omega_x_z  = cv::Mat::zeros(2*L, 1, CV_64FC1);
 
-    for (int k1 = 0; k1 < 2*L; ++k1) {
-        cv::Mat var_x = updateState_vec[k1] - current_mu;
+	for (int k1 = 0; k1 < 2*L; ++k1) {
+		cv::Mat var_x = updateState_vec[k1] - current_mu;
 
-        cv::Mat var_z = current_z_vec[k1] - weighted_z;
+		cv::Mat var_z = current_z_vec[k1] - weighted_z;
 
-        cv::Mat temp_mat = weight_vec_c[k1] * var_x * var_z.t();
+		cv::Mat temp_mat = weight_vec_c[k1] * var_x * var_z.t();
 
-        omega_x_z = omega_x_z + temp_mat;
-    }
+		omega_x_z = omega_x_z + temp_mat;
+	}
 
-    ///get Kalman factor
-    cv::Mat K_t = cv::Mat::zeros(L,L,CV_64FC1);
-    K_t = omega_x_z * S_t.inv();
+	///get Kalman factor
+	cv::Mat K_t = cv::Mat::zeros(L,L,CV_64FC1);
+	K_t = omega_x_z * S_t.inv();
 
-    //update mu and sigma
-    update_mu = cv::Mat::zeros(L,1,CV_64FC1);  ////just in case the dimension is not match
-    update_sigma = cv::Mat::zeros(L,L,CV_64FC1);
+	//update mu and sigma
+	update_mu = cv::Mat::zeros(L,1,CV_64FC1);  ////just in case the dimension is not match
+	update_sigma = cv::Mat::zeros(L,L,CV_64FC1);
 
-    update_mu = current_mu + K_t * (zt - weighted_z);
-    update_sigma = current_sigma - K_t * S_t * K_t.t();
+	update_mu = current_mu + K_t * (zt - weighted_z);
+	update_sigma = current_sigma - K_t * S_t * K_t.t();
 
 };

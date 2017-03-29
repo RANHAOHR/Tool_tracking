@@ -92,7 +92,7 @@ public:
     cv::Mat Cam_left_arm_2;
     cv::Mat Cam_right_arm_2;
 
-    int L;  ///DOF for one arm.
+    int L;  ///DOF for both arms.
 
     const static double alpha = 0.005;
     const static double k = 0.0; //TODO: how much?
@@ -104,8 +104,18 @@ public:
     void newCommandCallback1(const sensor_msgs::JointState::ConstPtr &incoming);
     void newCommandCallback2(const sensor_msgs::JointState::ConstPtr &incoming);
 
-    std::vector<double> cmd_green;
-    std::vector<double> cmd_yellow;
+    cv::Mat cmd_green;
+    cv::Mat cmd_yellow;
+
+//    std::vector<double> cmd_green;  ///temparay
+//    std::vector<double> cmd_yellow;
+
+    double cmd_time_green;
+    double cmd_time_yellow;
+    cv::Mat cmd_green_old;
+    cv::Mat cmd_yellow_old;
+    double cmd_time_green_old;
+    double cmd_time_yellow_old;
 
     std::vector<double> sensor_green;
     std::vector<double> sensor_yellow;
