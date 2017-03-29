@@ -73,29 +73,19 @@
 
 class KalmanFilter {
 
-private:
-
+//private:
+public:
     ros::NodeHandle nh_;  //may need this
 
-    ///ros::Timer timer;
-
-    ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
+    ToolModel ukfToolModel;  /// it should be set up the first time, probably need updates of the camera poses
 
     ToolModel::toolModel initial; //initial configuration
-
-    unsigned int toolSize; //size of the needle to be rendered
-    double Downsample_rate;
 
     cv::Mat toolImage_left_arm_1; //left rendered Image for ARM 1
     cv::Mat toolImage_right_arm_1; //right rendered Image for ARM 1
 
     cv::Mat toolImage_left_arm_2; //left rendered Image for ARM 2
     cv::Mat toolImage_right_arm_2; //right rendered Image for ARM 2
-
-    //Expect this to go away.
-    std::vector<ToolModel::toolModel> particles; // particles
-    std::vector<double> matchingScores; // particle scores (matching scores)
-    std::vector<double> particleWeights; // particle weights calculated from matching scores
 
     cv::Mat Cam_left_arm_1;
     cv::Mat Cam_right_arm_1;
@@ -130,8 +120,6 @@ private:
     Eigen::Affine3d arm_l__cam_r;
     Eigen::Affine3d arm_r__cam_r;
 
-
-
     ros::Subscriber projectionMat_subscriber_r;
     ros::Subscriber projectionMat_subscriber_l;
 
@@ -149,7 +137,7 @@ private:
 	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
     void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
-public:
+//public:
 
     /*
     * The default constructor

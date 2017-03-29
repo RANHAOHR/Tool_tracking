@@ -37,15 +37,15 @@ cv::Mat segmentation(cv::Mat &InputImg) {
 	cv::Mat res;
 	src = InputImg;
 
-	resize(src, src, cv::Size(), 1, 1);
+	cv::resize(src, src, cv::Size(), 1, 1);
 
 	double lowThresh = 43;
 
 	cv::cvtColor(src, src_gray, CV_BGR2GRAY);
 
-	blur(src_gray, src_gray, cv::Size(3, 3));
+	cv::blur(src_gray, src_gray, cv::Size(3, 3));
 
-	Canny(src_gray, grad, lowThresh, 4 * lowThresh, 3); //use Canny segmentation
+	cv::Canny(src_gray, grad, lowThresh, 4 * lowThresh, 3); //use Canny segmentation
 
 	grad.convertTo(res, CV_32FC1);
 
@@ -103,25 +103,40 @@ int main(int argc, char **argv) {
 //    cv::resize(new_seg_left, new_seg_left,size);
 //    cv::resize(new_seg_right, new_seg_right,size);
 
-    ros::Duration(2).sleep();
+
+//	ToolModel newtest;
+//
+//	ToolModel::toolModel initial_test;
+//
+//	initial_test.tvec_elp(0) = 0;  //left and right (image frame)
+//	initial_test.tvec_elp(1) = 0;  //up and down
+//	initial_test.tvec_elp(2) = -0.0037;
+//	initial_test.rvec_elp(0) = 1.11383;
+//	initial_test.rvec_elp(1) = 1.11383;
+//	initial_test.rvec_elp(2) = 2.24769;
+//
+//	newtest.computeModelPose(initial_test, 0.0, 0.0, 0.0 );
+
 	/*** Timer set up ***/
 	ros::Rate loop_rate(50);
 
+	ros::Duration(2).sleep();
 	while (nh.ok()) {
 		ros::spinOnce();
-		
+
 		if (freshImage && UKF.freshCameraInfo){
+
 			seg_left = segmentation(rawImage_left);  //or use image_vessselness
 			seg_right = segmentation(rawImage_right);
+			//ROS_INFO("AFTER SEG");
 //			cv::imshow("Cam L", rawImage_left);
-//			cv::imshow("Cam R", rawImage_right);
+//			cv::imshow("Cam R", rawImage_right);`
 //			cv::imshow("Seg L", seg_left);
 //			cv::imshow("Seg R", seg_right);
 //			cv::waitKey(10);
 
-
             UKF.update(seg_left, seg_right);
-            //matching_score
+			//UKF.measureFunc(UKF.toolImage_left_arm_1, UKF.toolImage_right_arm_1, initial_test, seg_left, seg_right, UKF.Cam_left_arm_1, UKF.Cam_right_arm_1);
 
 			freshImage = false;
 			freshVelocity = false;

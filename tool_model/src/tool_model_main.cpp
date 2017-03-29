@@ -29,11 +29,6 @@ int main(int argc, char **argv) {
             0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
 
 
-    Cam = (cv::Mat_<double>(4,4) << -0.9999999999863094, 0, 0, -0.1449998163371138,
-    0, 0.9999999999660707, 0, -0.03264553261121408,
-    0, 0, -0.999999999966269, 0,
-    0, 0, 0, 1);
-
     ToolModel newToolModel;
 
     ROS_INFO("After Loading Model and Initialization, please press ENTER to go on");
@@ -65,10 +60,6 @@ int main(int argc, char **argv) {
     P.at<double>(1, 3) = 0;
     P.at<double>(2, 3) = 0;
 
-    P = (cv::Mat_<double>(3, 4) << 1034.473006005065, 0, 320.5, -72.4131104203545,
-    0, 1034.473006005065, 240.5, 0,
-    0, 0, 1, 0);
-
     ToolModel::toolModel initial;
 
 //    initial.tvec_elp(0) = 0.025;  //left and right (image frame)
@@ -84,7 +75,7 @@ int main(int argc, char **argv) {
 //    newToolModel.renderTool(testImg, initial, Cam, P);
 
     initial.tvec_elp(0) = 0;  //left and right (image frame)
-    initial.tvec_elp(1) = 0;  //up and down
+    initial.tvec_elp(1) = -0;  //up and down
     initial.tvec_elp(2) = -0.0037;
     initial.rvec_elp(0) = 1.11383;
     initial.rvec_elp(1) = 1.11383;
@@ -92,7 +83,6 @@ int main(int argc, char **argv) {
 
     newToolModel.computeModelPose(initial, 0.0, 0.0, 0.0 );
     newToolModel.renderTool(testImg, initial, Cam, P);
-
 
 
     cv::imshow("tool image: ",testImg );
