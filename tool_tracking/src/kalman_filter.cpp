@@ -150,8 +150,7 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     arm_l__cam_l = xfu.transformTFToAffine3d(arm_l__cam_l_st);
     arm_l__cam_r = xfu.transformTFToAffine3d(arm_l__cam_r_st);
     arm_r__cam_l = xfu.transformTFToAffine3d(arm_r__cam_l_st);
-    arm_r__cam_r = xfu.transformTFToAffine3d(arm_r__cam_r_st);
-    ROS_ERROR("9");
+
 //    print_affine(arm_l__cam_l);
 
     convertEigenToMat(arm_l__cam_l, Cam_left_arm_1);
@@ -387,9 +386,6 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 		//ROS_ERROR("%f %f %f %f %f %f", sigma_pts_bar[i].at<double>(1, 1),sigma_pts_bar[i].at<double>(2, 1),sigma_pts_bar[i].at<double>(3, 1),sigma_pts_bar[i].at<double>(4, 1),sigma_pts_bar[i].at<double>(5, 1),sigma_pts_bar[i].at<double>(6, 1));
 	}
 	
-	/*****Render each sigma point and compute its matching score.*****/
-	std::vector<double> mscores;
-	mscores.resize(2*L + 1);
 
 
 	
@@ -404,6 +400,11 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	for(int i = 0; i < 2 * L + 1; i++){
 		sigma_bar = sigma_bar + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((sigma_pts_bar[i] - mu_bar).t());
 	}
+
+    /*****Render each sigma point and compute its matching score.*****/
+
+    std::vector<double> mscores;
+    mscores.resize(2*L + 1);
 
 
     computeSigmaMeasures(mscores, sigma_pts_bar, segmented_left, segmented_right);
