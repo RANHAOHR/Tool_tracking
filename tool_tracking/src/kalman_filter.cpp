@@ -59,8 +59,10 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     //Set up forward kinematics.
     /***motion model params***/
     unsigned int state_dimension = 6;
-    cmd_green.resize(state_dimension);
-    cmd_yellow.resize(state_dimension);
+    cmd_green = cv::Mat_<double>(state_dimension, 1);
+    cmd_yellow = cv::Mat_<double>(state_dimension, 1);
+	cmd_green_old = cv::Mat_<double>(state_dimension, 1);
+	cmd_yellow_old = cv::Mat_<double>(state_dimension, 1);
 
     com_s1 = nh_.subscribe("/dvrk/PSM1/set_position_joint", 10, &KalmanFilter::newCommandCallback1, this);
     com_s2 = nh_.subscribe("/dvrk/PSM2/set_position_joint", 10, &KalmanFilter::newCommandCallback2, this);
@@ -111,6 +113,26 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	kalman_mu.at<double>(11, 0) = yellow_rvec.at<double>(2,0);
 
     kalman_sigma = (cv::Mat_<double>::zeros(12, 12));
+
+	//Temporarily populate the motion commands to give zero motion.
+	cmd_green.at<double>(0, 0) = green_trans[0];
+	cmd_green.at<double>(1, 0) = green_trans[1];
+	cmd_green.at<double>(2, 0) = green_trans[2];
+	cmd_green.at<double>(3, 0) = green_rvec.at<double>(0,0);
+	cmd_green.at<double>(4, 0) = green_rvec.at<double>(1,0);
+	cmd_green.at<double>(5, 0) = green_rvec.at<double>(2,0);
+	cmd_yellow.at<double>(0, 0) = yellow_trans[0];
+	cmd_yellow.at<double>(1, 0) = yellow_trans[1];
+	cmd_yellow.at<double>(2, 0) = yellow_trans[2];
+	cmd_yellow.at<double>(3, 0) = yellow_rvec.at<double>(0,0);
+	cmd_yellow.at<double>(4, 0) = yellow_rvec.at<double>(1,0);
+	cmd_yellow.at<double>(5, 0) = yellow_rvec.at<double>(2,0);
+	cmd_green_old = cmd_green.clone();
+	cmd_yellow_old = cmd_yellow.clone();
+	cmd_time_green = rod::Time::now().toSec();
+	cmd_time_yellow = rod::Time::now().toSec();
+	cmd_time_green_old = rod::Time::now().toSec();
+	cmd_time_yellow_old = rod::Time::now().toSec();
 
     //ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
     //ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
@@ -165,6 +187,11 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
     ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
     ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
+
+	last_update = ros::time::Now().toSec();
+
+	ros::spinOnce();
+	ros::spinOnce();
 
 };
 
@@ -222,35 +249,43 @@ KalmanFilter::~KalmanFilter() {
 };
 
 void KalmanFilter::newCommandCallback1(const sensor_msgs::JointState::ConstPtr& incoming){
+	cmd_green_old = cmd_green.clone();
+	cmd_time_green_old = cmd_time_green;
 
+	Eigen::Affine3d cmd_green_af = kinematics.fwd_kin_solve(Vectorq7x1(incoming->position.data()));
+	Eigen::Vector3d green_trans = cmd_green_af.translation();
+	cv::Mat green_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+	computeRodriguesVec(cmd_green_af, green_rvec);
 
-    std::vector<double> positions;
-    positions.resize(L);
-    positions = incoming->position;
-    for(int i = 0; i < L; i++){
-        cmd_green[i] = positions[i];
-    }
+	cmd_green.at<double>(0, 0) = green_trans[0];
+	cmd_green.at<double>(1, 0) = green_trans[1];
+	cmd_green.at<double>(2, 0) = green_trans[2];
+	cmd_green.at<double>(3, 0) = green_rvec.at<double>(0,0);
+	cmd_green.at<double>(4, 0) = green_rvec.at<double>(1,0);
+	cmd_green.at<double>(5, 0) = green_rvec.at<double>(2,0);
+	
+	cmd_time_green = ros::Time::now().toSec();
 };
 
 void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& incoming){
 
-    std::vector<double> positions;
-    positions.resize(L);
-    positions = incoming->position;
-    for(int j = 0; j < L; j++){
-        cmd_yellow[j] = positions[j];
-    }
+	cmd_yellow_old = cmd_yellow.clone();
+	cmd_time_yellow_old = cmd_time_yellow;
 
-	cmd_green_old = cmd_green.clone();
-	cmd_time_green_old = cmd_time_green;
-	Eigen::Affine3d cmd_green_af = kinematics.fwd_kin_solve(Vectorq7x1(incoming->position.data()));
+	Eigen::Affine3d cmd_yellow_af = kinematics.fwd_kin_solve(Vectorq7x1(incoming->position.data()));
+	Eigen::Vector3d yellow_trans = cmd_yellow_af.translation();
+	cv::Mat yellow_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+	computeRodriguesVec(cmd_yellow_af, yellow_rvec);
 
+	cmd_yellow.at<double>(0, 0) = yellow_trans[0];
+	cmd_yellow.at<double>(1, 0) = yellow_trans[1];
+	cmd_yellow.at<double>(2, 0) = yellow_trans[2];
+	cmd_yellow.at<double>(3, 0) = yellow_rvec.at<double>(0,0);
+	cmd_yellow.at<double>(4, 0) = yellow_rvec.at<double>(1,0);
+	cmd_yellow.at<double>(5, 0) = yellow_rvec.at<double>(2,0);
+	
+	cmd_time_yellow = ros::Time::now().toSec();
 };
-
-//void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& incoming){
-//	//TODO: Turn joint commands into delta-mats.
-//
-//};
 
 ////Deprecated by KalmanFilter::update(). Archival code only.
 double KalmanFilter::measureFunc( cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, const cv::Mat &segmented_left,
@@ -327,11 +362,6 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
 	ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
 	
-	//Get command update.
-	//TODO: At the moment, the command is just the sensor update. We will need to get and preprocess the desired positions.
-	cv::Mat ut = zt.clone();
-	//ROS_ERROR("%f %f %f %f %f %f", zt.at<double>(0, 0),zt.at<double>(1, 0),zt.at<double>(2, 0),zt.at<double>(3, 0),zt.at<double>(4, 0),zt.at<double>(5, 0));
-	
 	cv::Mat sigma_t_last = kalman_sigma.clone();
 	cv::Mat mu_t_last = kalman_mu.clone();
 	
@@ -360,8 +390,6 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 		sigma_pts_last[i + L] = sigma_pts_last[0] - (gamma * root_sigma_t_last);
 	}
 	
-	//TODO: Incorporate a second set of weights based on the matching score, to influence the effect of the sigma points.
-	
 	//Compute their weights:
 	std::vector<double> w_m;
 	w_m.resize(2*L + 1);
@@ -378,7 +406,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	std::vector<cv::Mat_<double> > sigma_pts_bar;
 	sigma_pts_bar.resize(2*L + 1);
 	for(int i = 0; i < 2 * L + 1; i++){
-		g(sigma_pts_bar[i], sigma_pts_last[i], ut);
+		g(sigma_pts_bar[i], sigma_pts_last[i]);
 		//ROS_ERROR("%f %f %f %f %f %f", sigma_pts_bar[i].at<double>(1, 1),sigma_pts_bar[i].at<double>(2, 1),sigma_pts_bar[i].at<double>(3, 1),sigma_pts_bar[i].at<double>(4, 1),sigma_pts_bar[i].at<double>(5, 1),sigma_pts_bar[i].at<double>(6, 1));
 	}
 
@@ -433,9 +461,22 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	ROS_WARN("YELLOW ARM AT (%f %f %f): %f %f %f", kalman_mu.at<double>(6, 0), kalman_mu.at<double>(7, 0),kalman_mu.at<double>(8, 0),kalman_mu.at<double>(9, 0),kalman_mu.at<double>(10, 0), kalman_mu.at<double>(11, 0));
 };
 
-void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u){
-	//TODO: Very stupid placeholder model that squashes all of the sigma points into the last recorded position with zero variance.
-	sigma_point_out = u.clone();
+void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in){
+	cv::Mat delta_green = cv::Mat_<double>::zeros(6, 1);
+	cv::Mat delta_yellow = cv::Mat_<double>::zeros(6, 1);
+	if(cmd_time_green - cmd_time_green_old != 0){
+		cv::Mat delta_green = (cmd_green - cmd_green_old) / (cmd_time_green - cmd_time_green_old);
+	}
+	if(cmd_time_yellow - cmd_time_yellow_old != 0){
+		cv::Mat delta_yellow = (cmd_yellow - cmd_yellow_old) / (cmd_time_yellow - cmd_time_yellow_old);
+	}
+	cv::Mat delta_all = cv::Mat_<double>::zeros(6, 1);
+	hconcat(delta_all, delta_green, delta_yellow);
+	ctime = ros::Time::now().toSec();
+
+	sigma_point_out = sigma_point_in.clone();
+	sigma_point_in = sigma_point_in + delta_all * (ctime - last_update);
+	last_update = ctime;
 };
 
 /***this function should compute the matching score for each sigma points: for future use****/
@@ -519,7 +560,7 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
 };
 
 void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in){
-	//TODO: Very stupid placeholder model that assumes an absolutely perfect sensor.
+	//Assumes a non-functionally-distorted sensor. L:argely substituted for by the matching-score weighting.
 	sigma_point_out = sigma_point_in.clone();
 };
 
@@ -624,7 +665,7 @@ void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat ro
 //This has been retained for archival purposes.
 //In the new paradigm, it will probably need to be split into two functions/steps. One that computes the sigma points, and one that takes those points and the image data and computes error.
 //For our immediate purposes, a magical function that updates a mu and sigma. He kills aliens and doesn't afraid of anything.
-void KalmanFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma, const cv::Mat &zt, const cv::Mat &ut){
+void KalmanFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma, const cv::Mat &zt){
 
 	//L is the dimension of the joint space for single arm
 

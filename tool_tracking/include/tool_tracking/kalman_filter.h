@@ -104,11 +104,10 @@ public:
     void newCommandCallback1(const sensor_msgs::JointState::ConstPtr &incoming);
     void newCommandCallback2(const sensor_msgs::JointState::ConstPtr &incoming);
 
+	double last_update;
+
     cv::Mat cmd_green;
     cv::Mat cmd_yellow;
-
-//    std::vector<double> cmd_green;  ///temparay
-//    std::vector<double> cmd_yellow;
 
     double cmd_time_green;
     double cmd_time_yellow;
@@ -143,7 +142,7 @@ public:
 
 	double matching_score(const cv::Mat & stat);
 	
-	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u);
+	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
 	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
     void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
@@ -180,8 +179,7 @@ public:
             const cv::Mat &sigma,
             cv::Mat &update_mu,
             cv::Mat &update_sigma,
-            const cv::Mat &zt,
-            const cv::Mat &ut
+            const cv::Mat &zt
     );
     double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right);
 
