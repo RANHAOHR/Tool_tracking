@@ -23,32 +23,18 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
 
     cv::Mat Cam(4, 4, CV_64FC1);
-    Cam.at<double>(0, 0) = 1;
-    Cam.at<double>(1, 0) = 0;
-    Cam.at<double>(2, 0) = 0;
-    Cam.at<double>(3, 0) = 0;
+    Cam = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0,   ///meters or millimeters
+            0, -1, 0, 0,
+            0, 0, -1, 0.2,
+            0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
 
-    Cam.at<double>(0, 1) = 0;
-    Cam.at<double>(1, 1) = -1;
-    Cam.at<double>(2, 1) = 0;
-    Cam.at<double>(3, 1) = 0;
-
-    Cam.at<double>(0, 2) = 0;
-    Cam.at<double>(1, 2) = 0;
-    Cam.at<double>(2, 2) = -1;
-    Cam.at<double>(3, 2) = 0;
-
-    Cam.at<double>(0, 3) = 0.0;   //should be in meters
-    Cam.at<double>(1, 3) = 0.0;
-    Cam.at<double>(2, 3) = 0.2;  // cannot have z = 0 for reprojection, camera_z must be always point to object
-    Cam.at<double>(3, 3) = 1;
 
     ToolModel newToolModel;
 
     ROS_INFO("After Loading Model and Initialization, please press ENTER to go on");
     cin.ignore();
 
-    cv::Mat testImg = cv::Mat::zeros(480, 640, CV_64FC1); //CV_8UC3
+    cv::Mat testImg = cv::Mat::zeros(475, 640, CV_64FC1); //CV_8UC3
     cv::Mat P(3, 4, CV_64FC1);
 
 //    cv::Size size(640, 480);
@@ -76,17 +62,28 @@ int main(int argc, char **argv) {
 
     ToolModel::toolModel initial;
 
-    initial.tvec_elp(0) = 0.025;  //left and right (image frame)
-    initial.tvec_elp(1) = -0.01;  //up and down
-    initial.tvec_elp(2) = -0.03;
-    initial.rvec_elp(0) = 0.0;
-    initial.rvec_elp(1) = 0.0;
-    initial.rvec_elp(2) = -1.4;
+//    initial.tvec_elp(0) = 0.025;  //left and right (image frame)
+//    initial.tvec_elp(1) = -0.01;  //up and down
+//    initial.tvec_elp(2) = -0.03;
+//    initial.rvec_elp(0) = 0.0;
+//    initial.rvec_elp(1) = 0.0;
+//    initial.rvec_elp(2) = -1.4;
+//
+//    ToolModel::toolModel newTool;
+//
+//    newToolModel.computeModelPose(initial, 0.1, 0.3, 0.1 );
+//    newToolModel.renderTool(testImg, initial, Cam, P);
 
-    ToolModel::toolModel newTool;
+    initial.tvec_elp(0) = 0;  //left and right (image frame)
+    initial.tvec_elp(1) = -0;  //up and down
+    initial.tvec_elp(2) = -0.0037;
+    initial.rvec_elp(0) = 1.11383;
+    initial.rvec_elp(1) = 1.11383;
+    initial.rvec_elp(2) = 2.24769;
 
-    newToolModel.computeModelPose(initial, 0.1, 0.3, 0.1 );
+    newToolModel.computeModelPose(initial, 0.0, 0.0, 0.0 );
     newToolModel.renderTool(testImg, initial, Cam, P);
+
 
     cv::imshow("tool image: ",testImg );
     //cv::imshow("segImg : ",segImg );

@@ -518,6 +518,9 @@ tool_tracking_particle_LIB_DEPENDS:STATIC=general;/home/rxh349/ros_ws/devel/lib/
 //The directory containing a CMake configuration file for vesselness_image_filter.
 vesselness_image_filter_DIR:PATH=/home/rxh349/ros_ws/devel/share/vesselness_image_filter/cmake
 
+//The directory containing a CMake configuration file for xform_utils.
+xform_utils_DIR:PATH=xform_utils_DIR-NOTFOUND
+
 //The directory containing a CMake configuration file for xmlrpcpp.
 xmlrpcpp_DIR:PATH=/opt/ros/jade/share/xmlrpcpp/cmake
 

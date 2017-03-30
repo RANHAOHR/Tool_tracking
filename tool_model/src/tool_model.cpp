@@ -240,6 +240,8 @@ void ToolModel::load_model_vertices(const char *path, std::vector<glm::vec3> &ou
     }
 
     printf("loaded file %s successfully.\n", path);
+//    ROS_INFO_STREAM(" neighbor_faces[11][0]: " <<  neighbor_faces[11][0]);
+//    ROS_INFO_STREAM(" neighbor_faces[11][2]: " <<  neighbor_faces[11][3]);
     /*debug for faces*/
     // for (int i = 0; i < 10; ++i)
     // {
@@ -284,7 +286,11 @@ which are not related to the pose of the tool object*/
 cv::Mat ToolModel::camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat) {
     /*cam mat should be a 4x4 extrinsic parameter*/
 
-    cv::Mat Inv = cam_mat.inv();
+    //cv::Mat Inv = cam_mat.inv();
+    cv::Mat Inv = cv::Mat::eye(4,4,CV_64FC1);
+    computeInvSE(cam_mat, Inv );   //avoid singularity
+    //ROS_INFO_STREAM("Inv" << Inv);
+
     cv::Mat output_mat = Inv * input_mat; //transform the obj to camera frames
 
     return output_mat;
@@ -341,6 +347,8 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                                    cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
                                    const cv::Mat &P, cv::OutputArray jac) {
 
+//    ROS_INFO_STREAM(" neighbor_faces[11][0]: " <<  neighbor_faces[11][0]);
+//    ROS_INFO_STREAM(" neighbor_faces[11][2]: " <<  neighbor_faces[11][3]);
     cv::Mat new_Vertices = transformPoints(input_Vmat, rvec, tvec);
     new_Vertices = camTransformMats(CamMat, new_Vertices); //transform every point under camera frame
 
@@ -354,7 +362,7 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
     cv::Mat ept_2(4, 1, CV_64FC1);
 
     for (int i = 0; i < input_faces.size(); ++i) {
-
+        // ROS_INFO_STREAM("i "<< i);
         neighbor_num = (neighbor_faces[i].size()) / 3;  //each neighbor has two vertices
 
         if (neighbor_num > 0) {
@@ -380,26 +388,24 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
             cv::Point3d vn3 = convert_MattoPts(temp);
 
             cv::Point3d fnormal = FindFaceNormal(pt1, pt2, pt3, vn1, vn2, vn3); //knowing the direction and normalized
-
             cv::Point3d face_point_i = pt1 + pt2 + pt3;
             face_point_i.x = face_point_i.x / 3;
             face_point_i.y = face_point_i.y / 3;
             face_point_i.z = face_point_i.z / 3;
 
             double isfront_i = dotProduct(fnormal, face_point_i);
-
             if (isfront_i < 0.00000) {
                 for (int neighbor_count = 0; neighbor_count <
                                              neighbor_num; ++neighbor_count) {  //notice: cannot use J here, since the last j will not be counted
-
                     int j = 3 * neighbor_count;
-
                     int v1_ = input_faces[neighbor_faces[i][j]][0];
                     int v2_ = input_faces[neighbor_faces[i][j]][1];
                     int v3_ = input_faces[neighbor_faces[i][j]][2];
+
                     int n1_ = input_faces[neighbor_faces[i][j]][3];
                     int n2_ = input_faces[neighbor_faces[i][j]][4];
                     int n3_ = input_faces[neighbor_faces[i][j]][5];
+
 
                     new_Vertices.col(v1_).copyTo(temp.col(0));
                     cv::Point3d pt1_ = convert_MattoPts(temp);
@@ -437,13 +443,13 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
 
                     }
 
+
                 }
 
             }
 
 
         }
-
     }
 
 };
@@ -949,6 +955,26 @@ cv::Mat ToolModel::computeSkew(cv::Mat &w) {
 
 };
 
+
+void ToolModel::computeInvSE(const cv::Mat &inputMat, cv::Mat &outputMat){
+
+    outputMat = cv::Mat::eye(4,4,CV_64F);
+
+    cv::Mat R = inputMat.colRange(0,3).rowRange(0,3);
+    cv::Mat p = inputMat.colRange(3,4).rowRange(0,3);
+
+    /*debug: opencv......*/
+    cv::Mat R_rat = R.clone();
+    cv::Mat p_tra = p.clone();
+
+    R_rat = R_rat.t();  // rotation of inverse
+    p_tra = -1 * R_rat * p_tra; // translation of inverse
+
+    R_rat.copyTo(outputMat.colRange(0,3).rowRange(0,3));
+    p_tra.copyTo(outputMat.colRange(3,4).rowRange(0,3));
+
+}
+
 /****render a rectangle contains the tool model, TODO:*****/
 void
 ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P, cv::OutputArray jac) {
@@ -956,18 +982,15 @@ ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, co
     /** approach 1: using Vertices mat and normal mat **/
     Compute_Silhouette(body_faces, body_neighbors, body_Vmat, body_Nmat, CamMat, image, cv::Mat(tool.rvec_cyl),
                        cv::Mat(tool.tvec_cyl), P, jac);
+
     Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image,
                        cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac);
+
     Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat, gripper1_Nmat, CamMat, image,
                        cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac);
+
     Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image,
                        cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac);
-
-    /*approach 2: using Face info mat*/
-    // Compute_Silhouette(body_faces, body_neighbors, body_Vmat,bodyFace_normal, bodyFace_centroid, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min );
-    // Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat,ellipseFace_normal, ellipseFace_centroid, CamMat, image, cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac, XY_max, XY_min);
-    // Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat,gripper1Face_normal, gripper1Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac, XY_max, XY_min);
-    // Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat,gripper2Face_normal, gripper2Face_centroid, CamMat, image, cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac, XY_max, XY_min);
 
 };
 

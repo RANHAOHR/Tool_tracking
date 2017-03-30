@@ -67,22 +67,19 @@
 #include <cwru_davinci_kinematics/davinci_kinematics.h>
 #include <sensor_msgs/image_encodings.h>
 #include <cwru_opencv_common/projective_geometry.h>
+
 #include <cwru_xform_utils/xform_utils.h>
+//#include <xform_utils/xform_utils.h>
 
 class KalmanFilter {
 
-private:
-
+//private:
+public:
     ros::NodeHandle nh_;  //may need this
 
-    ///ros::Timer timer;
-
-    ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
+    ToolModel ukfToolModel;  /// it should be set up the first time, probably need updates of the camera poses
 
     ToolModel::toolModel initial; //initial configuration
-
-    unsigned int toolSize; //size of the needle to be rendered
-    double Downsample_rate;
 
     cv::Mat toolImage_left_arm_1; //left rendered Image for ARM 1
     cv::Mat toolImage_right_arm_1; //right rendered Image for ARM 1
@@ -90,17 +87,12 @@ private:
     cv::Mat toolImage_left_arm_2; //left rendered Image for ARM 2
     cv::Mat toolImage_right_arm_2; //right rendered Image for ARM 2
 
-    //Expect this to go away.
-    std::vector<ToolModel::toolModel> particles; // particles
-    std::vector<double> matchingScores; // particle scores (matching scores)
-    std::vector<double> particleWeights; // particle weights calculated from matching scores
-
     cv::Mat Cam_left_arm_1;
     cv::Mat Cam_right_arm_1;
     cv::Mat Cam_left_arm_2;
     cv::Mat Cam_right_arm_2;
 
-    int L;  ///DOF for one arm.
+    int L;  ///DOF for both arms.
 
     const static double alpha = 0.005;
     const static double k = 0.0; //TODO: how much?
@@ -112,8 +104,17 @@ private:
     void newCommandCallback1(const sensor_msgs::JointState::ConstPtr &incoming);
     void newCommandCallback2(const sensor_msgs::JointState::ConstPtr &incoming);
 
-    std::vector<double> cmd_green;
-    std::vector<double> cmd_yellow;
+	double last_update;
+
+    cv::Mat cmd_green;
+    cv::Mat cmd_yellow;
+
+    double cmd_time_green;
+    double cmd_time_yellow;
+    cv::Mat cmd_green_old;
+    cv::Mat cmd_yellow_old;
+    double cmd_time_green_old;
+    double cmd_time_yellow_old;
 
     std::vector<double> sensor_green;
     std::vector<double> sensor_yellow;
@@ -128,13 +129,11 @@ private:
     Eigen::Affine3d arm_l__cam_r;
     Eigen::Affine3d arm_r__cam_r;
 
-    bool freshCameraInfo;
+    ros::Subscriber projectionMat_subscriber_r;
+    ros::Subscriber projectionMat_subscriber_l;
 
-//    ros::Subscriber projectionMat_subscriber_r;
-//    ros::Subscriber projectionMat_subscriber_l;
-//
-//    void projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight);
-//    void projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft);
+    void projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight);
+    void projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft);
 
     cv::Mat P_left;
     cv::Mat P_right;
@@ -143,16 +142,20 @@ private:
 
 	double matching_score(const cv::Mat & stat);
 	
-	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u);
+	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
 	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
-    void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat> & sigma_point_in, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+    void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
-public:
+//public:
 
     /*
     * The default constructor
     */
     KalmanFilter(ros::NodeHandle *nodehandle);
+
+    bool freshCameraInfo;
+    bool getJointCommand_green;
+    bool getJointCommand_yellow;
 
     /*
      * The deconstructor
@@ -166,6 +169,8 @@ public:
      * This is the main function for tracking the needle. This function is called and it syncs all of the functions
     */
 
+    void print_affine(Eigen::Affine3d &affine);
+
     void update(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
     void convertToolModel(const Eigen::Affine3d & trans, ToolModel::toolModel &toolModel);
@@ -177,11 +182,11 @@ public:
             const cv::Mat &sigma,
             cv::Mat &update_mu,
             cv::Mat &update_sigma,
-            const cv::Mat &zt,
-            const cv::Mat &ut
+            const cv::Mat &zt
     );
     double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right);
 
+    void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
     void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 
 };
