@@ -164,7 +164,7 @@ Mat seg_right;
 	  		imshow( "Right_Segmented", seg_right );
 
 			  //cout<<"after imshow"<<endl;
-			waitKey(10);
+			//waitKey(10);
     		avg_tim += sec;
     		cout<< "avg time is : "<< avg_tim/count<<endl;
     		count += 1;

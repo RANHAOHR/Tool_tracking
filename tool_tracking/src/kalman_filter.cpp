@@ -325,7 +325,6 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	ROS_INFO("In update");
 
     ros::spinOnce();
-    ros::spinOnce();
     //avoid coredump
         /******Find and convert our various params and inputs******/
         //Get sensor update.
@@ -341,6 +340,9 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
             sensor_green = tmp[0];
             sensor_yellow = tmp[1];
         }
+        double sensor_time = ros::Time::now().toSec();
+        ROS_WARN("Sensor time %f", sensor_time);
+        ROS_WARN("Comman time %f", cmd_time_green);
 
         //Convert into proper format, not want to use the euler angle prefer rodrigues for vision
         Eigen::Affine3d green_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_green.data()));
@@ -370,8 +372,8 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
         zt.at<double>(10, 0) = yellow_rvec.at<double>(1,0);
         zt.at<double>(11, 0) = yellow_rvec.at<double>(2,0);
 
-        ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
-        ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
+        //ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
+        //ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
 
         cv::Mat sigma_t_last = kalman_sigma.clone();
         cv::Mat mu_t_last = kalman_mu.clone();
@@ -416,8 +418,12 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
         /*****Update sigma points based on motion model******/
         std::vector<cv::Mat_<double> > sigma_pts_bar;
         sigma_pts_bar.resize(2*L + 1);
+        
+       // ROS_WARN("S pos green (%f, %f, %f, %f, %f, %f)", zt.at<double>(0, 0), zt.at<double>(1, 0), zt.at<double>(2, 0), zt.at<double>(3, 0), zt.at<double>(4, 0), zt.at<double>(5, 0));
+        //ROS_WARN("C pos green (%f, %f, %f, %f, %f, %f)", cmd_green.at<double>(0, 0), cmd_green.at<double>(1, 0), cmd_green.at<double>(2, 0), cmd_green.at<double>(3, 0), cmd_green.at<double>(4, 0), cmd_green.at<double>(5, 0));
+        
         for(int i = 0; i < 2 * L + 1; i++){
-            g(sigma_pts_bar[i], sigma_pts_last[i]);
+            g(sigma_pts_bar[i], sigma_pts_last[i], zt);
             //ROS_ERROR("%f %f %f %f %f %f", sigma_pts_bar[i].at<double>(1, 1),sigma_pts_bar[i].at<double>(2, 1),sigma_pts_bar[i].at<double>(3, 1),sigma_pts_bar[i].at<double>(4, 1),sigma_pts_bar[i].at<double>(5, 1),sigma_pts_bar[i].at<double>(6, 1));
         }
         last_update = ros::Time::now().toSec();
@@ -447,9 +453,9 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
         /*****Correction Step: Move the sigma points through the measurement function.*****/
         std::vector<cv::Mat_<double> > Z_bar;
         Z_bar.resize(2 * L + 1);
-
+        cv::Mat sig_delt = zt - sigma_pts_bar[0];
         for(int i = 0; i < 2 * L + 1; i++){
-            h(Z_bar[i], sigma_pts_bar[i]);  ////using the sigma bar computed by new mu and sigma_bar
+            h(Z_bar[i], sigma_pts_bar[i], sig_delt);
         }
 
         /*****Calculate derived variance statistics.*****/
@@ -457,6 +463,8 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
         for(int i = 0; i < 2 * L + 1; i++){
             z_caret = z_caret + w_m[i] * Z_bar[i];
         }
+        
+        ROS_INFO_STREAM("correction? " << zt - z_caret);
 
         cv::Mat S = cv::Mat_<double>::zeros(L, L);
         for(int i = 0; i < 2 * L + 1; i++){
@@ -465,35 +473,50 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 
         cv::Mat sigma_xz = cv::Mat_<double>::zeros(L, L);
         for(int i = 0; i < 2 * L + 1; i++){
-            sigma_xz = w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((Z_bar[i] - z_caret).t());
+        	ROS_ERROR_STREAM("x_minus_mu\n" << sigma_xz);
+            sigma_xz = sigma_xz + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((Z_bar[i] - z_caret).t());
         }
         cv::Mat K = sigma_xz * S.inv();
 
         /*****Update our mu and sigma.*****/
-        kalman_mu = mu_bar + K * (zt - z_caret);
+        kalman_mu = mu_bar + (zt - z_caret);
         kalman_sigma = sigma_bar - K * S * K.t();
         ROS_WARN("GREEN ARM AT (%f %f %f): %f %f %f", kalman_mu.at<double>(0, 0), kalman_mu.at<double>(1, 0),kalman_mu.at<double>(2, 0),kalman_mu.at<double>(3, 0),kalman_mu.at<double>(4, 0), kalman_mu.at<double>(5, 0));
         ROS_WARN("YELLOW ARM AT (%f %f %f): %f %f %f", kalman_mu.at<double>(6, 0), kalman_mu.at<double>(7, 0),kalman_mu.at<double>(8, 0),kalman_mu.at<double>(9, 0),kalman_mu.at<double>(10, 0), kalman_mu.at<double>(11, 0));
 
 };
 
-void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in){
+void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & zt){
 	cv::Mat delta_green = cv::Mat_<double>::zeros(6, 1);
 	cv::Mat delta_yellow = cv::Mat_<double>::zeros(6, 1);
-	if(cmd_time_green - cmd_time_green_old != 0 && fvc_green){
-		delta_green = (cmd_green - cmd_green_old) / (cmd_time_green - cmd_time_green_old);
+	if(fvc_green){
+		cv::Mat sensor_green = cv::Mat_<double>::zeros(6, 1);
+		sensor_green.at<double>(0, 0) = zt.at<double>(0, 0);
+		sensor_green.at<double>(1, 0) = zt.at<double>(1, 0);
+		sensor_green.at<double>(2, 0) = zt.at<double>(2, 0);
+		sensor_green.at<double>(3, 0) = zt.at<double>(3, 0);
+		sensor_green.at<double>(4, 0) = zt.at<double>(4, 0);
+		sensor_green.at<double>(5, 0) = zt.at<double>(5, 0);
+		delta_green = (sensor_green - cmd_green);
+		//ROS_INFO("GREEN DELTAS %f %f %f %f %f %f", delta_green.at<double>(0, 0), delta_green.at<double>(1, 0), delta_green.at<double>(2, 0), delta_green.at<double>(3, 0), delta_green.at<double>(4, 0), delta_green.at<double>(5, 0));
 	}
-	if(cmd_time_yellow - cmd_time_yellow_old != 0 && fvc_yellow){
-		delta_yellow = (cmd_yellow - cmd_yellow_old) / (cmd_time_yellow - cmd_time_yellow_old);
+	if(fvc_yellow){
+		cv::Mat sensor_yellow = cv::Mat_<double>::zeros(6, 1);
+		sensor_yellow.at<double>(0, 0) = zt.at<double>(6, 0);
+		sensor_yellow.at<double>(1, 0) = zt.at<double>(7, 0);
+		sensor_yellow.at<double>(2, 0) = zt.at<double>(8, 0);
+		sensor_yellow.at<double>(3, 0) = zt.at<double>(9, 0);
+		sensor_yellow.at<double>(4, 0) = zt.at<double>(10, 0);
+		sensor_yellow.at<double>(5, 0) = zt.at<double>(11, 0);
+		delta_yellow = (sensor_yellow - cmd_yellow);
+		//ROS_INFO("YELLOW DELTAS %f %f %f %f %f %f", delta_yellow.at<double>(0, 0), delta_yellow.at<double>(1, 0), delta_yellow.at<double>(2, 0), delta_yellow.at<double>(3, 0), delta_yellow.at<double>(4, 0), delta_yellow.at<double>(5, 0));
 	}
 	cv::Mat delta_all = cv::Mat_<double>::zeros(12, 1);
 	vconcat(delta_green, delta_yellow, delta_all);
 	double current_time = ros::Time::now().toSec();
 
-   // ROS_WARN_STREAM()
-
 	sigma_point_out = sigma_point_in.clone();
-	sigma_point_out = sigma_point_in + delta_all * (current_time - last_update);
+	sigma_point_out = sigma_point_in + delta_all;
 };
 
 /***this function should compute the matching score for each sigma points: for future use****/
@@ -543,7 +566,8 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
     convertToolModel(arm2, arm_2);
 
 //    //this is the POSE of the ELLIPSE part of the tool for arm 1
-    ROS_INFO_STREAM(" ARM 1 tvec(0)" << arm_1.tvec_elp(0) );
+//They are also really annoying.
+   /* ROS_INFO_STREAM(" ARM 1 tvec(0)" << arm_1.tvec_elp(0) );
     ROS_INFO_STREAM(" ARM 1 tvec(1)" << arm_1.tvec_elp(1) );
     ROS_INFO_STREAM(" ARM 1 tvec(2)" << arm_1.tvec_elp(2) );
     ROS_INFO_STREAM(" ARM 1 rvec(0)" << arm_1.rvec_elp(0) );
@@ -556,7 +580,7 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
     ROS_INFO_STREAM(" ARM 2 tvec(2)" << arm_2.tvec_elp(2) );
     ROS_INFO_STREAM(" ARM 2 rvec(0)" << arm_2.rvec_elp(0) );
     ROS_INFO_STREAM(" ARM 2 rvec(1)" << arm_2.rvec_elp(1) );
-    ROS_INFO_STREAM(" ARM 2 rvec(2)" << arm_2.rvec_elp(2) );
+    ROS_INFO_STREAM(" ARM 2 rvec(2)" << arm_2.rvec_elp(2) );*/
 
     //Render the tools and compute the matching score
 
@@ -575,9 +599,11 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
 
 };
 
-void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in){
+void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & sigma_delt){
 	//Assumes a non-functionally-distorted sensor. L:argely substituted for by the matching-score weighting.
+	//ROS_INFO_STREAM("DELT " << sigma_delt);
 	sigma_point_out = sigma_point_in.clone();
+	sigma_point_out = sigma_point_out;// + sigma_delt;
 };
 
 /******from eigen to opencv matrix****/
@@ -645,6 +671,7 @@ void KalmanFilter::convertToolModel(const Eigen::Affine3d & trans, ToolModel::to
     //ROS_INFO_STREAM("rot_vec " << rot_vec);
 
     //TODO: need to add the joint angles
+    //Do we even HAVE that?
     toolModel.tvec_elp(0) = pos[0];
     toolModel.tvec_elp(1) = pos[1];
     toolModel.tvec_elp(2) = pos[2];
@@ -675,145 +702,4 @@ void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat ro
 	rot_vec = cv::Mat::zeros(3,1, CV_64FC1);
 	cv::Rodrigues(rot, rot_vec );
 	//ROS_INFO_STREAM("rot_vec " << rot_vec);
-};
-
-
-//This has been retained for archival purposes.
-//In the new paradigm, it will probably need to be split into two functions/steps. One that computes the sigma points, and one that takes those points and the image data and computes error.
-//For our immediate purposes, a magical function that updates a mu and sigma. He kills aliens and doesn't afraid of anything.
-void KalmanFilter::UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma, const cv::Mat &zt){
-
-	//L is the dimension of the joint space for single arm
-
-	double lambda = alpha * alpha * (L + k) - L;
-
-	double gamma = L + lambda;
-	gamma = pow(gamma, 0.5);
-
-	///get the square root for sigma
-	cv::Mat square_sigma = cv::Mat::zeros(L, 1, CV_64FC1);
-
-	cv::Mat s = cv::Mat(L, 1, CV_64FC1);  //need the square root for sigma
-	cv::Mat vt = cv::Mat(L, L, CV_64FC1);  //need the square root for sigma
-	cv::Mat u = cv::Mat(L, L, CV_64FC1);  //need the square root for sigma
-
-	cv::SVD::compute(sigma, s, u, vt);  //s is supposed to be the one we are asking for, the sigular values
-
-	square_sigma = s.clone(); //safe way to pass values to a cv Mat
-
-	std::vector<cv::Mat> state_vecs;
-	state_vecs.resize(2*L); ///size is 2L
-
-	state_vecs[0] = mu.clone();   //X_nod
-	for (int i = 1; i < L; ++i) {
-		state_vecs[i] = state_vecs[0] + gamma * square_sigma;
-		state_vecs[i + L] = state_vecs[0] - gamma * square_sigma;
-	}
-
-	double weight_mean = lambda / (L + lambda);
-	double weight_covariance = weight_mean + 1-alpha * alpha + beta;
-
-	std::vector<double> weight_vec_c;
-	std::vector<double> weight_vec_m;
-	weight_vec_c.resize(2*L);
-	weight_vec_m.resize(2*L);
-
-	weight_vec_c[0] = weight_mean;
-	weight_vec_m[0] = weight_covariance;
-
-	for (int l = 1; l < 2*L; ++l) {
-		weight_vec_c[l] = 1/(2 * (L + lambda ));
-		weight_vec_m[l] = 1/(2 * (L + lambda ));
-	}
-
-	/***get the prediction***/
-	cv::Mat current_mu = cv::Mat::zeros(L,1,CV_64FC1);
-	cv::Mat current_sigma = cv::Mat::zeros(L,L, CV_64FC1);
-
-	std::vector<cv::Mat> currentState_vec;
-	currentState_vec.resize(2*L);
-
-	//TODO: missing function to get update state space vector?
-
-	cv::Mat R = cv::Mat::eye(L,L,CV_64FC1);
-	R = R * 0.037;
-
-	for (int m = 0; m < 2*L; ++m) {
-		cv::Mat temp = weight_vec_m[m] * currentState_vec[m];
-		current_mu = current_mu + temp;
-	}
-
-	for (int n = 0; n < 2*L; ++n) {
-		cv::Mat var_mat = currentState_vec[n] - current_mu;
-
-		cv::Mat temp_mat = weight_vec_c[n] * var_mat * var_mat.t();
-		current_sigma = current_sigma + temp_mat;
-	}
-
-	current_sigma = current_sigma + R;
-
-	/*****get measurement****/
-	std::vector<cv::Mat> updateState_vec;
-	updateState_vec.resize(2*L);
-
-	//compute new square root for current sigma
-	cv::SVD::compute(current_sigma, s, u, vt);  //s is supposed to be the one we are asking for, the sigular values
-
-	square_sigma = s.clone(); //safe way to pass values to a cv Mat
-
-	updateState_vec[0] = current_mu.clone();   //X_nod
-	for (int i = 1; i < L; ++i) {
-		updateState_vec[i] = updateState_vec[0] + gamma * square_sigma;
-		updateState_vec[i + L] = updateState_vec[0] - gamma * square_sigma;
-	}
-
-	std::vector<cv::Mat> current_z_vec;
-	current_z_vec.resize(2*L);
-
-	//TODO: get measurement function
-
-	cv::Mat weighted_z = cv::Mat::zeros(2*L,1,CV_64FC1);
-
-	for (int j = 0; j < 2*L; ++j) {
-		cv::Mat temp = weight_vec_m[j] * current_z_vec[j];
-		weighted_z = weighted_z + temp;
-	}
-
-	cv::Mat S_t = cv::Mat::zeros(L, L, CV_64FC1);
-
-	for (int i1 = 0; i1 < 2*L; ++i1) {
-		cv::Mat var_z = current_z_vec[i1] - weighted_z;
-
-		cv::Mat temp_mat = weight_vec_c[i1] * var_z * var_z.t();
-		S_t = S_t + temp_mat;
-	}
-
-	cv::Mat Q = cv::Mat::eye(L,L,CV_64FC1);
-	Q = Q * 0.00038;
-
-	S_t = S_t + Q;
-	//get cross-covariance
-	cv::Mat omega_x_z  = cv::Mat::zeros(2*L, 1, CV_64FC1);
-
-	for (int k1 = 0; k1 < 2*L; ++k1) {
-		cv::Mat var_x = updateState_vec[k1] - current_mu;
-
-		cv::Mat var_z = current_z_vec[k1] - weighted_z;
-
-		cv::Mat temp_mat = weight_vec_c[k1] * var_x * var_z.t();
-
-		omega_x_z = omega_x_z + temp_mat;
-	}
-
-	///get Kalman factor
-	cv::Mat K_t = cv::Mat::zeros(L,L,CV_64FC1);
-	K_t = omega_x_z * S_t.inv();
-
-	//update mu and sigma
-	update_mu = cv::Mat::zeros(L,1,CV_64FC1);  ////just in case the dimension is not match
-	update_sigma = cv::Mat::zeros(L,L,CV_64FC1);
-
-	update_mu = current_mu + K_t * (zt - weighted_z);
-	update_sigma = current_sigma - K_t * S_t * K_t.t();
-
 };

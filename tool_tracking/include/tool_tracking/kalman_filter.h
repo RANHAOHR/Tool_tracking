@@ -68,8 +68,8 @@
 #include <sensor_msgs/image_encodings.h>
 #include <cwru_opencv_common/projective_geometry.h>
 
-//#include <cwru_xform_utils/xform_utils.h>
-#include <xform_utils/xform_utils.h>
+#include <cwru_xform_utils/xform_utils.h>
+//#include <xform_utils/xform_utils.h>
 
 class KalmanFilter {
 
@@ -142,8 +142,8 @@ public:
 
 	double matching_score(const cv::Mat & stat);
 	
-	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
-	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
+	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & zt);
+	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & sigma_delt);
     void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
     bool fvc_green;
