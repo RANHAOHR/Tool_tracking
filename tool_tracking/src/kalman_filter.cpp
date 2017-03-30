@@ -138,8 +138,6 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     //ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
 
     freshCameraInfo = false; //should be left and right
-    getJointCommand_green = false;
-    getJointCommand_yellow = false;
 
     projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
     projectionMat_subscriber_l = nh_.subscribe("/davinci_endo/left/camera_info", 1, &KalmanFilter::projectionLeftCB, this);
@@ -192,6 +190,9 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
 
 	last_update = ros::Time::now().toSec();
+
+    fvc_yellow = false;
+    fvc_green = false;
 
 	ros::spinOnce();
 	ros::spinOnce();
@@ -269,7 +270,7 @@ void KalmanFilter::newCommandCallback1(const sensor_msgs::JointState::ConstPtr& 
 	
 	cmd_time_green = ros::Time::now().toSec();
 
-    getJointCommand_green = true;
+    fvc_green = true;
 };
 
 void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& incoming){
@@ -278,6 +279,7 @@ void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& 
 	cmd_time_yellow_old = cmd_time_yellow;
 
 	Eigen::Affine3d cmd_yellow_af = kinematics.fwd_kin_solve(Vectorq7x1(incoming->position.data()));
+
 	Eigen::Vector3d yellow_trans = cmd_yellow_af.translation();
 	cv::Mat yellow_rvec = cv::Mat::zeros(3,1,CV_64FC1);
 	computeRodriguesVec(cmd_yellow_af, yellow_rvec);
@@ -291,7 +293,7 @@ void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& 
 	
 	cmd_time_yellow = ros::Time::now().toSec();
 
-    getJointCommand_yellow = false;
+    fvc_yellow = true;
 };
 
 ////Deprecated by KalmanFilter::update(). Archival code only.
@@ -313,8 +315,6 @@ double KalmanFilter::measureFunc( cv::Mat & toolImage_left, cv::Mat & toolImage_
     ukfToolModel.renderTool(toolImage_right, toolPose, Cam_right, P_right);
     double right = ukfToolModel.calculateMatchingScore(toolImage_right, segmented_right);
 
-    ROS_INFO("RENDERED finish");
-
 	double matchingScore = sqrt(pow(left, 2) + pow(right, 2));
 
 	return matchingScore;
@@ -323,8 +323,10 @@ double KalmanFilter::measureFunc( cv::Mat & toolImage_left, cv::Mat & toolImage_
 
 void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmented_right){
 	ROS_INFO("In update");
+
+    ros::spinOnce();
+    ros::spinOnce();
     //avoid coredump
-    if(getJointCommand_green && getJointCommand_yellow && freshCameraInfo){
         /******Find and convert our various params and inputs******/
         //Get sensor update.
         std::vector<std::vector<double> > tmp;
@@ -418,6 +420,9 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
             g(sigma_pts_bar[i], sigma_pts_last[i]);
             //ROS_ERROR("%f %f %f %f %f %f", sigma_pts_bar[i].at<double>(1, 1),sigma_pts_bar[i].at<double>(2, 1),sigma_pts_bar[i].at<double>(3, 1),sigma_pts_bar[i].at<double>(4, 1),sigma_pts_bar[i].at<double>(5, 1),sigma_pts_bar[i].at<double>(6, 1));
         }
+        last_update = ros::Time::now().toSec();
+    fvc_green = false;
+    fvc_yellow = false;
 
         //TODO: Calculate a second set of weights based on the matching score, to influence the effect of the sigma points.
 
@@ -470,30 +475,25 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
         ROS_WARN("GREEN ARM AT (%f %f %f): %f %f %f", kalman_mu.at<double>(0, 0), kalman_mu.at<double>(1, 0),kalman_mu.at<double>(2, 0),kalman_mu.at<double>(3, 0),kalman_mu.at<double>(4, 0), kalman_mu.at<double>(5, 0));
         ROS_WARN("YELLOW ARM AT (%f %f %f): %f %f %f", kalman_mu.at<double>(6, 0), kalman_mu.at<double>(7, 0),kalman_mu.at<double>(8, 0),kalman_mu.at<double>(9, 0),kalman_mu.at<double>(10, 0), kalman_mu.at<double>(11, 0));
 
-    }
-    //make sure everything is fresh, need a spinOnce??
-    getJointCommand_green = false;
-    getJointCommand_yellow =false;
-    freshCameraInfo = false;
-
 };
 
 void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in){
 	cv::Mat delta_green = cv::Mat_<double>::zeros(6, 1);
 	cv::Mat delta_yellow = cv::Mat_<double>::zeros(6, 1);
-	if(cmd_time_green - cmd_time_green_old != 0){
+	if(cmd_time_green - cmd_time_green_old != 0 && fvc_green){
 		delta_green = (cmd_green - cmd_green_old) / (cmd_time_green - cmd_time_green_old);
 	}
-	if(cmd_time_yellow - cmd_time_yellow_old != 0){
+	if(cmd_time_yellow - cmd_time_yellow_old != 0 && fvc_yellow){
 		delta_yellow = (cmd_yellow - cmd_yellow_old) / (cmd_time_yellow - cmd_time_yellow_old);
 	}
-	cv::Mat delta_all = cv::Mat_<double>::zeros(6, 1);
-	hconcat(delta_all, delta_green, delta_yellow);
+	cv::Mat delta_all = cv::Mat_<double>::zeros(12, 1);
+	vconcat(delta_green, delta_yellow, delta_all);
 	double current_time = ros::Time::now().toSec();
+
+   // ROS_WARN_STREAM()
 
 	sigma_point_out = sigma_point_in.clone();
 	sigma_point_out = sigma_point_in + delta_all * (current_time - last_update);
-	last_update = current_time;
 };
 
 /***this function should compute the matching score for each sigma points: for future use****/
@@ -517,7 +517,7 @@ void KalmanFilter::computeSigmaMeasures(std::vector<double> & measureWeights, co
 
 double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right) {
 
-    ROS_INFO_STREAM("stat IS: " << stat);
+    //ROS_INFO_STREAM("stat IS: " << stat);
     //Convert our state into Eigen::Affine3ds; one for each arm
     Eigen::Affine3d arm1 =
             Eigen::Translation3d(stat.at<double>(0, 0), stat.at<double>(1, 0), stat.at<double>(2, 0))
@@ -542,7 +542,7 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
     convertToolModel(arm1, arm_1);
     convertToolModel(arm2, arm_2);
 
-    //this is the POSE of the ELLIPSE part of the tool for arm 1
+//    //this is the POSE of the ELLIPSE part of the tool for arm 1
     ROS_INFO_STREAM(" ARM 1 tvec(0)" << arm_1.tvec_elp(0) );
     ROS_INFO_STREAM(" ARM 1 tvec(1)" << arm_1.tvec_elp(1) );
     ROS_INFO_STREAM(" ARM 1 tvec(2)" << arm_1.tvec_elp(2) );
@@ -563,11 +563,11 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
     double matchingScore_arm_1 = measureFunc(toolImage_left_arm_1, toolImage_right_arm_1, arm_1, segmented_left, segmented_right, Cam_left_arm_1, Cam_right_arm_1);
     double matchingScore_arm_2 = measureFunc(toolImage_left_arm_2, toolImage_right_arm_2, arm_2, segmented_left, segmented_right, Cam_left_arm_2, Cam_right_arm_2);
 
-    cv::imshow("Render arm 1 Left cam" ,toolImage_left_arm_1 );
-    cv::imshow("Render arm 1 Right cam" ,toolImage_right_arm_1 );
-    cv::imshow("Render arm 2 Left cam" ,toolImage_left_arm_2 );
-    cv::imshow("Render arm 2 Right cam" ,toolImage_right_arm_2 );
-    cv::waitKey(10);
+//    cv::imshow("Render arm 1 Left cam" ,toolImage_left_arm_1 );
+//    cv::imshow("Render arm 1 Right cam" ,toolImage_right_arm_1 );
+//    cv::imshow("Render arm 2 Left cam" ,toolImage_left_arm_2 );
+//    cv::imshow("Render arm 2 Right cam" ,toolImage_right_arm_2 );
+//    cv::waitKey(10);
 
     double result = (matchingScore_arm_1 + matchingScore_arm_2) / 2;
 

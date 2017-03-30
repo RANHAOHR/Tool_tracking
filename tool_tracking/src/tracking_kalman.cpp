@@ -121,6 +121,7 @@ int main(int argc, char **argv) {
 	ros::Rate loop_rate(50);
 
 	ros::Duration(2).sleep();
+
 	while (nh.ok()) {
 		ros::spinOnce();
 
@@ -141,7 +142,7 @@ int main(int argc, char **argv) {
 			freshImage = false;
 			freshVelocity = false;
 
-            ros::Duration(3).sleep();
+            //ros::Duration(3).sleep();
 		}
 
 		//We want to update our filter whenever the robot is doing anything, not just when we are getting images.
