@@ -112,9 +112,13 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	kalman_mu.at<double>(10, 0) = yellow_rvec.at<double>(1,0);
 	kalman_mu.at<double>(11, 0) = yellow_rvec.at<double>(2,0);
 
-    kalman_sigma = (cv::Mat_<double>::zeros(12, 12));
+    //kalman_sigma = (cv::Mat_<double>::zeros(12, 12));
+    kalman_sigma = (cv::Mat_<double>::eye(12, 12));
+    for (int j = 0; j < 12; ++j) {
+        kalman_sigma.at<double>(j,j) = ukfToolModel.randomNumber(0.04,0); //gaussian generator
+    }
 
-	//Temporarily populate the motion commands to give zero motion.
+    //Temporarily populate the motion commands to give zero motion.
 	cmd_green.at<double>(0, 0) = green_trans[0];
 	cmd_green.at<double>(1, 0) = green_trans[1];
 	cmd_green.at<double>(2, 0) = green_trans[2];
@@ -324,165 +328,169 @@ double KalmanFilter::measureFunc( cv::Mat & toolImage_left, cv::Mat & toolImage_
 void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmented_right){
 	ROS_INFO("In update");
 
+
     ros::spinOnce();
     //avoid coredump
-        /******Find and convert our various params and inputs******/
-        //Get sensor update.
-        std::vector<std::vector<double> > tmp;
-        int state_dimension = 6;
-        tmp.resize(2);
-        tmp[0].resize(state_dimension);
-        tmp[1].resize(state_dimension);
-        sensor_green.resize(state_dimension);
-        sensor_yellow.resize(state_dimension);
+    /******Find and convert our various params and inputs******/
+    //Get sensor update.
+    std::vector<std::vector<double> > tmp;
+    int state_dimension = 6;
+    tmp.resize(2);
+    tmp[0].resize(state_dimension);
+    tmp[1].resize(state_dimension);
+    sensor_green.resize(state_dimension);
+    sensor_yellow.resize(state_dimension);
 
-        if(davinci_interface::get_fresh_robot_pos(tmp)){
-            sensor_green = tmp[0];
-            sensor_yellow = tmp[1];
-        }
-        double sensor_time = ros::Time::now().toSec();
-        ROS_WARN("Sensor time %f", sensor_time);
-        ROS_WARN("Comman time %f", cmd_time_green);
+    if(davinci_interface::get_fresh_robot_pos(tmp)){
+        sensor_green = tmp[0];
+        sensor_yellow = tmp[1];
+    }
+    double sensor_time = ros::Time::now().toSec();
+    ROS_WARN("Sensor time %f", sensor_time);
+    ROS_WARN("Comman time %f", cmd_time_green);
 
-        //Convert into proper format, not want to use the euler angle prefer rodrigues for vision
-        Eigen::Affine3d green_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_green.data()));
-        Eigen::Vector3d green_trans = green_pos.translation();
-        Eigen::Vector3d green_rpy = green_pos.rotation().eulerAngles(0, 1, 2);
+    //Convert into proper format, not want to use the euler angle prefer rodrigues for vision
+    Eigen::Affine3d green_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_green.data()));
+    Eigen::Vector3d green_trans = green_pos.translation();
+    Eigen::Vector3d green_rpy = green_pos.rotation().eulerAngles(0, 1, 2);
 
-        cv::Mat green_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-        computeRodriguesVec(green_pos, green_rvec);
+    cv::Mat green_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+    computeRodriguesVec(green_pos, green_rvec);
 
-        Eigen::Affine3d yellow_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_yellow.data()));
-        Eigen::Vector3d yellow_trans = yellow_pos.translation();
-        Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
-        cv::Mat yellow_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-        computeRodriguesVec(yellow_pos, yellow_rvec);
+    Eigen::Affine3d yellow_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_yellow.data()));
+    Eigen::Vector3d yellow_trans = yellow_pos.translation();
+    Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
+    cv::Mat yellow_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+    computeRodriguesVec(yellow_pos, yellow_rvec);
 
-        cv::Mat zt = cv::Mat_<double>(L, 1);
-        zt.at<double>(0, 0) = green_trans[0];
-        zt.at<double>(1, 0) = green_trans[1];
-        zt.at<double>(2, 0) = green_trans[2];
-        zt.at<double>(3, 0) = green_rvec.at<double>(0,0);
-        zt.at<double>(4, 0) = green_rvec.at<double>(1,0);
-        zt.at<double>(5, 0) = green_rvec.at<double>(2,0);
-        zt.at<double>(6, 0) = yellow_trans[0];
-        zt.at<double>(7, 0) = yellow_trans[1];
-        zt.at<double>(8, 0) = yellow_trans[2];
-        zt.at<double>(9, 0) = yellow_rvec.at<double>(0,0);
-        zt.at<double>(10, 0) = yellow_rvec.at<double>(1,0);
-        zt.at<double>(11, 0) = yellow_rvec.at<double>(2,0);
+    cv::Mat zt = cv::Mat_<double>(L, 1);
+    zt.at<double>(0, 0) = green_trans[0];
+    zt.at<double>(1, 0) = green_trans[1];
+    zt.at<double>(2, 0) = green_trans[2];
+    zt.at<double>(3, 0) = green_rvec.at<double>(0,0);
+    zt.at<double>(4, 0) = green_rvec.at<double>(1,0);
+    zt.at<double>(5, 0) = green_rvec.at<double>(2,0);
+    zt.at<double>(6, 0) = yellow_trans[0];
+    zt.at<double>(7, 0) = yellow_trans[1];
+    zt.at<double>(8, 0) = yellow_trans[2];
+    zt.at<double>(9, 0) = yellow_rvec.at<double>(0,0);
+    zt.at<double>(10, 0) = yellow_rvec.at<double>(1,0);
+    zt.at<double>(11, 0) = yellow_rvec.at<double>(2,0);
 
-        //ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
-        //ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
+    ROS_INFO("SENSOR GREEN ARM AT (%f %f %f): %f %f %f", zt.at<double>(0, 0), zt.at<double>(1, 0),zt.at<double>(2, 0),zt.at<double>(3, 0),zt.at<double>(4, 0), zt.at<double>(5, 0));
+    ROS_INFO("SENSOR YELLOW ARM AT (%f %f %f): %f %f %f", zt.at<double>(6, 0), zt.at<double>(7, 0),zt.at<double>(8, 0),zt.at<double>(9, 0),zt.at<double>(10, 0), zt.at<double>(11, 0));
 
-        cv::Mat sigma_t_last = kalman_sigma.clone();
-        cv::Mat mu_t_last = kalman_mu.clone();
+    cv::Mat sigma_t_last = kalman_sigma.clone();
+    cv::Mat mu_t_last = kalman_mu.clone();
 
-        //****Generate the sigma points.****
-        double lambda = alpha * alpha * (L + k) - L;
-        double gamma = sqrt(L + lambda);
+    //****Generate the sigma points.****
+    double lambda = alpha * alpha * (L + k) - L;
+    double gamma = sqrt(L + lambda);
 
-        ///get the square root for sigma point generation using SVD decomposition
-        cv::Mat root_sigma_t_last = cv::Mat_<double>::zeros(L, 1);
+    ///get the square root for sigma point generation using SVD decomposition
+    cv::Mat root_sigma_t_last = cv::Mat_<double>::zeros(L, 1);
 
-        cv::Mat s = cv::Mat_<double>::zeros(L, 1);  //allocate space for SVD
-        cv::Mat vt = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
-        cv::Mat u = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
+    cv::Mat s = cv::Mat_<double>::zeros(L, 1);  //allocate space for SVD
+    cv::Mat vt = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
+    cv::Mat u = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
 
-        cv::SVD::compute(kalman_sigma, s, u, vt);//The actual square root gets saved into s
+    cv::SVD::compute(sigma_t_last, s, u, vt);//The actual square root gets saved into s
 
-        root_sigma_t_last = s.clone(); //store that back into the designated square root term
+    root_sigma_t_last = s.clone(); //store that back into the designated square root term
+    ROS_INFO_STREAM("root_sigma_t_last" << root_sigma_t_last);
+    //Populate the sigma points:
+    std::vector<cv::Mat_<double> > sigma_pts_last;
+    sigma_pts_last.resize(2*L + 1);
 
-        //Populate the sigma points:
-        std::vector<cv::Mat_<double> > sigma_pts_last;
-        sigma_pts_last.resize(2*L + 1);
+    sigma_pts_last[0] = mu_t_last.clone();//X_0
+    for (int i = 1; i <= L; i++) {
+        sigma_pts_last[i] = sigma_pts_last[0] + (gamma * root_sigma_t_last);
+        sigma_pts_last[i + L] = sigma_pts_last[0] - (gamma * root_sigma_t_last);
+    }
 
-        sigma_pts_last[0] = mu_t_last.clone();//X_0
-        for (int i = 1; i <= L; i++) {
-            sigma_pts_last[i] = sigma_pts_last[0] + (gamma * root_sigma_t_last);
-            sigma_pts_last[i + L] = sigma_pts_last[0] - (gamma * root_sigma_t_last);
-        }
+    //Compute their weights:
+    std::vector<double> w_m;
+    w_m.resize(2*L + 1);
+    std::vector<double> w_c;
+    w_c.resize(2*L + 1);
+    w_m[0] = lambda / (L + lambda);
+    w_c[0] = lambda / (L + lambda) + (1.0 - (alpha * alpha) + beta);
+    for(int i = 1; i < 2 * L + 1; i++){
+        w_m[i] = 1.0 / (2.0 * (L + lambda));
+        w_c[i] = 1.0 / (2.0 * (L + lambda));
+    }
 
-        //Compute their weights:
-        std::vector<double> w_m;
-        w_m.resize(2*L + 1);
-        std::vector<double> w_c;
-        w_c.resize(2*L + 1);
-        w_m[0] = lambda / (L + lambda);
-        w_c[0] = lambda / (L + lambda) + (1.0 - (alpha * alpha) + beta);
-        for(int i = 1; i < 2 * L + 1; i++){
-            w_m[i] = 1.0 / (2.0 * (L + lambda));
-            w_c[i] = 1.0 / (2.0 * (L + lambda));
-        }
+    /*****Update sigma points based on motion model******/
+    std::vector<cv::Mat_<double> > sigma_pts_bar;
+    sigma_pts_bar.resize(2*L + 1);
 
-        /*****Update sigma points based on motion model******/
-        std::vector<cv::Mat_<double> > sigma_pts_bar;
-        sigma_pts_bar.resize(2*L + 1);
-        
-       // ROS_WARN("S pos green (%f, %f, %f, %f, %f, %f)", zt.at<double>(0, 0), zt.at<double>(1, 0), zt.at<double>(2, 0), zt.at<double>(3, 0), zt.at<double>(4, 0), zt.at<double>(5, 0));
-        //ROS_WARN("C pos green (%f, %f, %f, %f, %f, %f)", cmd_green.at<double>(0, 0), cmd_green.at<double>(1, 0), cmd_green.at<double>(2, 0), cmd_green.at<double>(3, 0), cmd_green.at<double>(4, 0), cmd_green.at<double>(5, 0));
-        
-        for(int i = 0; i < 2 * L + 1; i++){
-            g(sigma_pts_bar[i], sigma_pts_last[i], zt);
-            //ROS_ERROR("%f %f %f %f %f %f", sigma_pts_bar[i].at<double>(1, 1),sigma_pts_bar[i].at<double>(2, 1),sigma_pts_bar[i].at<double>(3, 1),sigma_pts_bar[i].at<double>(4, 1),sigma_pts_bar[i].at<double>(5, 1),sigma_pts_bar[i].at<double>(6, 1));
-        }
-        last_update = ros::Time::now().toSec();
+   // ROS_WARN("S pos green (%f, %f, %f, %f, %f, %f)", zt.at<double>(0, 0), zt.at<double>(1, 0), zt.at<double>(2, 0), zt.at<double>(3, 0), zt.at<double>(4, 0), zt.at<double>(5, 0));
+    //ROS_WARN("C pos green (%f, %f, %f, %f, %f, %f)", cmd_green.at<double>(0, 0), cmd_green.at<double>(1, 0), cmd_green.at<double>(2, 0), cmd_green.at<double>(3, 0), cmd_green.at<double>(4, 0), cmd_green.at<double>(5, 0));
+
+    for(int i = 0; i < 2 * L + 1; i++){
+        g(sigma_pts_bar[i], sigma_pts_last[i], zt);
+        //ROS_ERROR("%f %f %f %f %f %f", sigma_pts_bar[i].at<double>(1, 1),sigma_pts_bar[i].at<double>(2, 1),sigma_pts_bar[i].at<double>(3, 1),sigma_pts_bar[i].at<double>(4, 1),sigma_pts_bar[i].at<double>(5, 1),sigma_pts_bar[i].at<double>(6, 1));
+    }
+    last_update = ros::Time::now().toSec();
     fvc_green = false;
     fvc_yellow = false;
 
-        //TODO: Calculate a second set of weights based on the matching score, to influence the effect of the sigma points.
+    //TODO: Calculate a second set of weights based on the matching score, to influence the effect of the sigma points.
 
-        /*****Create the predicted mus and sigmas.*****/
-        cv::Mat mu_bar = cv::Mat_<double>::zeros(L, 1);
-        for(int i = 0; i < 2 * L + 1; i++){
-            mu_bar = mu_bar + w_m[i] * sigma_pts_bar[i];
-        }
-        cv::Mat sigma_bar = cv::Mat_<double>::zeros(L, L);
-        for(int i = 0; i < 2 * L + 1; i++){
-            sigma_bar = sigma_bar + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((sigma_pts_bar[i] - mu_bar).t());
-        }
+    /*****Create the predicted mus and sigmas.*****/
+    cv::Mat mu_bar = cv::Mat_<double>::zeros(L, 1);
+    for(int i = 0; i < 2 * L + 1; i++){
+        mu_bar = mu_bar + w_m[i] * sigma_pts_bar[i];
+    }
+    cv::Mat sigma_bar = cv::Mat_<double>::zeros(L, L);
+    for(int i = 0; i < 2 * L + 1; i++){
+        sigma_bar = sigma_bar + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((sigma_pts_bar[i] - mu_bar).t());
+    }
+    //ROS_INFO_STREAM("sigma_bar "<< sigma_bar);
+    /*****Render each sigma point and compute its matching score.*****/
 
-        /*****Render each sigma point and compute its matching score.*****/
+    std::vector<double> mscores;
+    mscores.resize(2*L + 1);
 
-        std::vector<double> mscores;
-        mscores.resize(2*L + 1);
+    computeSigmaMeasures(mscores, sigma_pts_bar, segmented_left, segmented_right);
+    //TODO:intend to use mscores as wit=eights to bias the mu of z_hat
 
-        computeSigmaMeasures(mscores, sigma_pts_bar, segmented_left, segmented_right);
-        //TODO:intend to use mscores as wit=eights to bias the mu of z_hat
+    /*****Correction Step: Move the sigma points through the measurement function.*****/
+    std::vector<cv::Mat_<double> > Z_bar;
+    Z_bar.resize(2 * L + 1);
+    cv::Mat sig_delt = zt - sigma_pts_bar[0];
+    for(int i = 0; i < 2 * L + 1; i++){
 
-        /*****Correction Step: Move the sigma points through the measurement function.*****/
-        std::vector<cv::Mat_<double> > Z_bar;
-        Z_bar.resize(2 * L + 1);
-        cv::Mat sig_delt = zt - sigma_pts_bar[0];
-        for(int i = 0; i < 2 * L + 1; i++){
-            h(Z_bar[i], sigma_pts_bar[i], sig_delt);
-        }
+        h(Z_bar[i], sigma_pts_bar[i], sig_delt);
+    }
 
-        /*****Calculate derived variance statistics.*****/
-        cv::Mat z_caret = cv::Mat_<double>::zeros(L, 1);
-        for(int i = 0; i < 2 * L + 1; i++){
-            z_caret = z_caret + w_m[i] * Z_bar[i];
-        }
-        
-        ROS_INFO_STREAM("correction? " << zt - z_caret);
+    /*****Calculate derived variance statistics.*****/
+    cv::Mat z_caret = cv::Mat_<double>::zeros(L, 1);
+    for(int i = 0; i < 2 * L + 1; i++){
+        z_caret = z_caret + w_m[i] * Z_bar[i];
+    }
 
-        cv::Mat S = cv::Mat_<double>::zeros(L, L);
-        for(int i = 0; i < 2 * L + 1; i++){
-            S = S + w_c[i] * (Z_bar[i] - z_caret) * ((Z_bar[i] - z_caret).t());
-        }
+    ROS_INFO_STREAM("correction? " << zt - z_caret);
 
-        cv::Mat sigma_xz = cv::Mat_<double>::zeros(L, L);
-        for(int i = 0; i < 2 * L + 1; i++){
-        	ROS_ERROR_STREAM("x_minus_mu\n" << sigma_xz);
-            sigma_xz = sigma_xz + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((Z_bar[i] - z_caret).t());
-        }
-        cv::Mat K = sigma_xz * S.inv();
+    cv::Mat S = cv::Mat_<double>::zeros(L, L);
+    for(int i = 0; i < 2 * L + 1; i++){
+        S = S + w_c[i] * (Z_bar[i] - z_caret) * ((Z_bar[i] - z_caret).t());
+    }
 
-        /*****Update our mu and sigma.*****/
-        kalman_mu = mu_bar + (zt - z_caret);
-        kalman_sigma = sigma_bar - K * S * K.t();
-        ROS_WARN("GREEN ARM AT (%f %f %f): %f %f %f", kalman_mu.at<double>(0, 0), kalman_mu.at<double>(1, 0),kalman_mu.at<double>(2, 0),kalman_mu.at<double>(3, 0),kalman_mu.at<double>(4, 0), kalman_mu.at<double>(5, 0));
-        ROS_WARN("YELLOW ARM AT (%f %f %f): %f %f %f", kalman_mu.at<double>(6, 0), kalman_mu.at<double>(7, 0),kalman_mu.at<double>(8, 0),kalman_mu.at<double>(9, 0),kalman_mu.at<double>(10, 0), kalman_mu.at<double>(11, 0));
+    cv::Mat sigma_xz = cv::Mat_<double>::zeros(L, L);
+    for(int i = 0; i < 2 * L + 1; i++){
+        sigma_xz = sigma_xz + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((Z_bar[i] - z_caret).t());
+    }
+
+    cv::Mat K = sigma_xz * S.inv();
+
+    /*****Update our mu and sigma.*****/
+    kalman_mu = mu_bar + (zt - z_caret);
+    kalman_sigma = sigma_bar - S;
+//    kalman_mu = mu_bar + K * (zt - z_caret);
+//    kalman_sigma = sigma_bar - K * S * K.t();
+    ROS_WARN("GREEN ARM AT (%f %f %f): %f %f %f", kalman_mu.at<double>(0, 0), kalman_mu.at<double>(1, 0),kalman_mu.at<double>(2, 0),kalman_mu.at<double>(3, 0),kalman_mu.at<double>(4, 0), kalman_mu.at<double>(5, 0));
+    ROS_WARN("YELLOW ARM AT (%f %f %f): %f %f %f", kalman_mu.at<double>(6, 0), kalman_mu.at<double>(7, 0),kalman_mu.at<double>(8, 0),kalman_mu.at<double>(9, 0),kalman_mu.at<double>(10, 0), kalman_mu.at<double>(11, 0));
 
 };
 
@@ -600,10 +608,10 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
 };
 
 void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & sigma_delt){
-	//Assumes a non-functionally-distorted sensor. L:argely substituted for by the matching-score weighting.
+	//Assumes a non-functionally-distorted sensor. Largely substituted for by the matching-score weighting.
 	//ROS_INFO_STREAM("DELT " << sigma_delt);
-	sigma_point_out = sigma_point_in.clone();
-	sigma_point_out = sigma_point_out;// + sigma_delt;
+	cv::Mat temp = sigma_point_in.clone();
+	sigma_point_out = temp; // + sigma_delt;
 };
 
 /******from eigen to opencv matrix****/
