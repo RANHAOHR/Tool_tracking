@@ -145,7 +145,7 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	//ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
 	//ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
 
-	freshCameraInfo = false; //should be left and right
+	//freshCameraInfo = false; //should be left and right
 	
 	//The projection matrix from the simulation does not accurately reflect the Da Vinci robot. We are hardcoding the matrix from the da vinci itself.
 	//projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
@@ -199,14 +199,14 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 
 	try{
 		tf::TransformListener l;
-		while(!l.waitForTransform("/left_camera_link", "one_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
-		l.lookupTransform("/left_camera_link", "one_psm_base_link", ros::Time(0.0), arm_1__cam_l_st);
-		while(!l.waitForTransform("/left_camera_link", "two_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
-		l.lookupTransform("/left_camera_link", "two_psm_base_link", ros::Time(0.0), arm_2__cam_l_st);
-		while(!l.waitForTransform("/right_camera_link", "one_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
-		l.lookupTransform("/right_camera_link", "one_psm_base_link", ros::Time(0.0), arm_1__cam_r_st);
-		while(!l.waitForTransform("/right_camera_link", "two_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
-		l.lookupTransform("/right_camera_link", "two_psm_base_link", ros::Time(0.0), arm_2__cam_r_st);
+		while(!l.waitForTransform("/left_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+		l.lookupTransform("/left_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), arm_1__cam_l_st);
+		while(!l.waitForTransform("/left_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+		l.lookupTransform("/left_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), arm_2__cam_l_st);
+		while(!l.waitForTransform("/right_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+		l.lookupTransform("/right_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), arm_1__cam_r_st);
+		while(!l.waitForTransform("/right_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+		l.lookupTransform("/right_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), arm_2__cam_r_st);
 	}
 	catch (tf::TransformException ex){
 		ROS_ERROR("%s",ex.what());
@@ -227,10 +227,10 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	convertEigenToMat(arm_2__cam_l, Cam_left_arm_2);
 	convertEigenToMat(arm_2__cam_r, Cam_right_arm_2);
 	
-	Cam_left_arm_2 = cv::Mat_<double>::eye(4, 4);
+	/*Cam_left_arm_2 = cv::Mat_<double>::eye(4, 4);
 	Cam_left_arm_1 = cv::Mat_<double>::eye(4, 4);
 	Cam_right_arm_2 = cv::Mat_<double>::eye(4, 4);
-	Cam_right_arm_1 = cv::Mat_<double>::eye(4, 4);
+	Cam_right_arm_1 = cv::Mat_<double>::eye(4, 4);*/
 
 	ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
 	ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
@@ -526,8 +526,8 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	cv::Mat K = sigma_xz * S.inv();
 
 	/*****Update our mu and sigma.*****/
-	kalman_mu = mu_bar + (zt - z_caret);
-	kalman_sigma = sigma_bar - S;
+	//kalman_mu = mu_bar + (zt - z_caret);
+	//kalman_sigma = sigma_bar - S;
 //	kalman_mu = mu_bar + K * (zt - z_caret);
 //	kalman_sigma = sigma_bar - K * S * K.t();
 	ROS_WARN("1 ARM AT (%f %f %f): %f %f %f", kalman_mu.at<double>(0, 0), kalman_mu.at<double>(1, 0),kalman_mu.at<double>(2, 0),kalman_mu.at<double>(3, 0),kalman_mu.at<double>(4, 0), kalman_mu.at<double>(5, 0));
@@ -537,7 +537,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 };
 
 void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & zt){
-	cv::Mat delta_1 = cv::Mat_<double>::zeros(6, 1);
+	/*cv::Mat delta_1 = cv::Mat_<double>::zeros(6, 1);
 	cv::Mat delta_2 = cv::Mat_<double>::zeros(6, 1);
 	if(fvc_1){
 		cv::Mat sensor_1 = cv::Mat_<double>::zeros(6, 1);
@@ -563,10 +563,11 @@ void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, 
 	}
 	cv::Mat delta_all = cv::Mat_<double>::zeros(12, 1);
 	vconcat(delta_1, delta_2, delta_all);
-	double current_time = ros::Time::now().toSec();
+	double current_time = ros::Time::now().toSec();*/
 
-	sigma_point_out = sigma_point_in.clone();
-	sigma_point_out = sigma_point_in + delta_all;
+	//sigma_point_out = sigma_point_in.clone();
+	//sigma_point_out = sigma_point_in + delta_all;
+	sigma_point_out = zt.clone();
 };
 
 /***this function should compute the matching score for all of the sigma points****/
@@ -626,7 +627,7 @@ double KalmanFilter::matching_score(
 	convertToolModel(arm1, arm_1, joints_1[4], joints_1[5], joints_1[6]);
 	convertToolModel(arm2, arm_2, joints_2[4], joints_2[5], joints_2[6]);
 	
-	//ROS_ERROR("SHOWING SIGPOINT %f %f %f %f %f %f",stat.at<double>(0 , 0), stat.at<double>(1 , 0), stat.at<double>(2 , 0), stat.at<double>(3 , 0), stat.at<double>(4 , 0), stat.at<double>(5 , 0));
+	ROS_ERROR("SHOWING SIGPOINT %f %f %f %f %f %f",stat.at<double>(0 , 0), stat.at<double>(1 , 0), stat.at<double>(2 , 0), stat.at<double>(3 , 0), stat.at<double>(4 , 0), stat.at<double>(5 , 0));
 
 //	//this is the POSE of the ELLIPSE part of the tool for arm 1
 //They are also really annoying.
