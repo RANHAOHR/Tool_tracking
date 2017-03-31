@@ -287,9 +287,10 @@ cv::Mat ToolModel::camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat) {
     /*cam mat should be a 4x4 extrinsic parameter*/
 
     //cv::Mat Inv = cam_mat.inv();
-    cv::Mat Inv = cv::Mat::eye(4,4,CV_64FC1);
+    cv::Mat Inv = cv::Mat_<double>::eye(4,4);
     computeInvSE(cam_mat, Inv );   //avoid singularity
     //ROS_INFO_STREAM("Inv" << Inv);
+
 
     cv::Mat output_mat = Inv * input_mat; //transform the obj to camera frames
 
@@ -349,11 +350,13 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
 
 //    ROS_INFO_STREAM(" neighbor_faces[11][0]: " <<  neighbor_faces[11][0]);
 //    ROS_INFO_STREAM(" neighbor_faces[11][2]: " <<  neighbor_faces[11][3]);
+
     cv::Mat new_Vertices = transformPoints(input_Vmat, rvec, tvec);
     new_Vertices = camTransformMats(CamMat, new_Vertices); //transform every point under camera frame
 
     cv::Mat new_Normals = transformPoints(input_Nmat, rvec, tvec);
     new_Normals = camTransformMats(CamMat, new_Normals); //transform every surface normal under camera frame
+
 
     unsigned long neighbor_num = 0;
     cv::Mat temp(4, 1, CV_64FC1);
@@ -695,8 +698,8 @@ void ToolModel::modify_model_(std::vector<glm::vec3> &input_vertices, std::vecto
         input_Nmat.at<double>(1, i) = input_Npts[i].y;
         input_Nmat.at<double>(2, i) = input_Npts[i].z;
         input_Nmat.at<double>(3, i) = 0;
-
     }
+
 };
 
 /*This function is to generate a tool model, contains the following info:

@@ -23,17 +23,17 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
 
     cv::Mat Cam(4, 4, CV_64FC1);
-//    Cam = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0,   ///meters or millimeters
-//            0, -1, 0, 0,
-//            0, 0, -1, 0.2,
-//            0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
+    Cam = (cv::Mat_<double>(4, 4) << -1, 0, 0, 0,   ///meters or millimeters
+            0, 1, 0, 0,
+            0, 0, -1, 0.047,
+            0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
 
 // y = -0.0326455693
-    // x = -0.154999816
-    Cam = (cv::Mat_<double>(4, 4) << -1, 0, 0, -0.154999816,
-    0, 1, 0, -0.0326455693,
-    0, 0, -1, 0.0,
-    0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
+//    // x = -0.154999816
+//    Cam = (cv::Mat_<double>(4, 4) << -1, 0, 0, -0.154999816,
+//    0, 1, 0, -0.0326455693,
+//    0, 0, -1, 0.0,
+//    0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
 
     ToolModel newToolModel;
 
@@ -69,28 +69,27 @@ int main(int argc, char **argv) {
 
     ToolModel::toolModel initial;
 
-//    initial.tvec_elp(0) = 0.025;  //left and right (image frame)
-//    initial.tvec_elp(1) = -0.01;  //up and down
-//    initial.tvec_elp(2) = -0.03;
-//    initial.rvec_elp(0) = 0.0;
-//    initial.rvec_elp(1) = 0.0;
-//    initial.rvec_elp(2) = -1.4;
+    initial.tvec_elp(0) = 0.025;  //left and right (image frame)
+    initial.tvec_elp(1) = 0.01;  //up and down
+    initial.tvec_elp(2) = 0.03;
+    initial.rvec_elp(0) = 0.0;
+    initial.rvec_elp(1) = -0.1;
+    initial.rvec_elp(2) = -1.4;
 //
 //    ToolModel::toolModel newTool;
 //
 //    newToolModel.computeModelPose(initial, 0.1, 0.3, 0.1 );
 //    newToolModel.renderTool(testImg, initial, Cam, P);
 
-    initial.tvec_elp(0) = -0.154999816;  //left and right (image frame)
-    initial.tvec_elp(1) = 0;  //up and down
-    initial.tvec_elp(2) = 0.2;
-    initial.rvec_elp(0) = 0;
-    initial.rvec_elp(1) = 0;
-    initial.rvec_elp(2) = 0;
+//    initial.tvec_elp(0) = -0.229326;  //left and right (image frame)
+//    initial.tvec_elp(1) = 0.012038;  //up and down
+//    initial.tvec_elp(2) = -0.070578;
+//    initial.rvec_elp(0) = 0.088650;
+//    initial.rvec_elp(1) = -1.305;
+//    initial.rvec_elp(2) = 0.31401;
 
     newToolModel.computeModelPose(initial, 0.0, 0.0, 0.0 );
     newToolModel.renderTool(testImg, initial, Cam, P);
-
 
     cv::imshow("tool image: ",testImg );
     //cv::imshow("segImg : ",segImg );

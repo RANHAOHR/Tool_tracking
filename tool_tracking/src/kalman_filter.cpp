@@ -757,12 +757,31 @@ void KalmanFilter::convertToolModel(const cv::Mat & trans, ToolModel::toolModel 
 	cv::Rodrigues(rot, rot_vec );
 	//ROS_INFO_STREAM("rot_vec " << rot_vec);*/
 
-	toolModel.tvec_elp(0) = trans.at<double>(0,0);
-	toolModel.tvec_elp(1) = trans.at<double>(1,0);
-	toolModel.tvec_elp(2) = trans.at<double>(2,0);
-	toolModel.rvec_elp(0) = trans.at<double>(3,0);
-	toolModel.rvec_elp(1) = trans.at<double>(4,0);
-	toolModel.rvec_elp(2) = trans.at<double>(5,0);
+    cv::Mat adjust_mat = (cv::Mat_<double>(3, 3) << 1.0, 0.0, 0.0,
+            0.0, 0.0, -1.0,
+            0.0, 1.0, 0.0);
+
+    cv::Mat test_t = cv::Mat(3,1,CV_64FC1);
+    cv::Mat test_r = cv::Mat(3,1,CV_64FC1);
+
+    test_t.at<double>(0,0) = trans.at<double>(0,0);
+    test_t.at<double>(1,0) = trans.at<double>(1,0);
+    test_t.at<double>(2,0) = trans.at<double>(2,0);
+
+    test_r.at<double>(0,0) = trans.at<double>(3,0);
+    test_r.at<double>(1,0) = trans.at<double>(4,0);
+    test_r.at<double>(2,0) = trans.at<double>(5,0);
+
+
+    test_t = adjust_mat * test_t;
+    test_r = adjust_mat * test_r;
+
+	toolModel.tvec_elp(0) = test_t.at<double>(0,0);
+	toolModel.tvec_elp(1) = test_t.at<double>(1,0);
+	toolModel.tvec_elp(2) = test_t.at<double>(2,0);
+	toolModel.rvec_elp(0) = test_r.at<double>(0,0);
+	toolModel.rvec_elp(1) = test_r.at<double>(1,0);
+	toolModel.rvec_elp(2) = test_r.at<double>(2,0);
 
 	ukfToolModel.computeModelPose(toolModel, ja1, ja2, ja3);
 };
