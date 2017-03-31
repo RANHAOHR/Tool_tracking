@@ -68,8 +68,8 @@
 #include <sensor_msgs/image_encodings.h>
 #include <cwru_opencv_common/projective_geometry.h>
 
-//#include <cwru_xform_utils/xform_utils.h>
-#include <xform_utils/xform_utils.h>
+#include <cwru_xform_utils/xform_utils.h>
+//#include <xform_utils/xform_utils.h>
 
 class KalmanFilter {
 
@@ -138,13 +138,20 @@ public:
     cv::Mat P_left;
     cv::Mat P_right;
 
-    double matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+    double matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right, const std::vector<double> & joints_left, const std::vector<double> & joints_right);
 
-	double matching_score(const cv::Mat & stat);
+	//double matching_score(const cv::Mat & stat);
 	
 	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & zt);
 	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & sigma_delt);
-    void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+    void computeSigmaMeasures(
+		std::vector<double> & measureWeights,
+		const std::vector<cv::Mat_<double> > & sigma_point_in,
+		const cv::Mat &segmented_left,
+		const cv::Mat &segmented_right,
+		const std::vector<double> & joints_left,
+		const std::vector<double> & joints_right
+	);
 
     bool fvc_green;
     bool fvc_yellow;
@@ -174,9 +181,9 @@ public:
 
     void update(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
-    void convertToolModel(const Eigen::Affine3d & trans, ToolModel::toolModel &toolModel);
+    void convertToolModel(const Eigen::Affine3d & trans, ToolModel::toolModel &toolModel, double ja1, double ja2, double ja3);
     /*
-     * Uncented Kalman filter update
+     * Unscented Kalman filter update
      */
     void UnscentedKalmanFilter(
             const cv::Mat &mu,

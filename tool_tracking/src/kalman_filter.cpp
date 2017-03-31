@@ -326,7 +326,7 @@ double KalmanFilter::measureFunc( cv::Mat & toolImage_left, cv::Mat & toolImage_
 };
 
 void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmented_right){
-	ROS_INFO("In update");
+	//ROS_INFO("In update");
 
 
     ros::spinOnce();
@@ -452,7 +452,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
     std::vector<double> mscores;
     mscores.resize(2*L + 1);
 
-    computeSigmaMeasures(mscores, sigma_pts_bar, segmented_left, segmented_right);
+    computeSigmaMeasures(mscores, sigma_pts_bar, segmented_left, segmented_right, tmp[1], tmp[0]);
     //TODO:intend to use mscores as wit=eights to bias the mu of z_hat
 
     /*****Correction Step: Move the sigma points through the measurement function.*****/
@@ -485,7 +485,7 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
     cv::Mat K = sigma_xz * S.inv();
 
     /*****Update our mu and sigma.*****/
-    kalman_mu = mu_bar + (zt - z_caret);
+    kalman_mu = mu_bar + K * (zt - z_caret);
     kalman_sigma = sigma_bar - S;
 //    kalman_mu = mu_bar + K * (zt - z_caret);
 //    kalman_sigma = sigma_bar - K * S * K.t();
@@ -527,12 +527,19 @@ void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, 
 	sigma_point_out = sigma_point_in + delta_all;
 };
 
-/***this function should compute the matching score for each sigma points: for future use****/
-void KalmanFilter::computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in, const cv::Mat &segmented_left, const cv::Mat &segmented_right){
+/***this function should compute the matching score for all of the sigma points****/
+void KalmanFilter::computeSigmaMeasures(
+	std::vector<double> & measureWeights,
+	const std::vector<cv::Mat_<double> > & sigma_point_in,
+	const cv::Mat &segmented_left,
+	const cv::Mat &segmented_right,
+	const std::vector<double> & joints_left,
+	const std::vector<double> & joints_right
+){
 	//ROS_ERROR("IN CSM FUNC: %lu, %lu", measureWeights.size(), sigma_point_in.size());
 	double total = 0.0;
 	for (int i = 0; i < sigma_point_in.size() ; i++) {
-		measureWeights[i] = matching_score(sigma_point_in[i], segmented_left, segmented_right );
+		measureWeights[i] = matching_score(sigma_point_in[i], segmented_left, segmented_right, joints_left, joints_right);
 		total += measureWeights[i];
 	}
     if(total > 0.0){
@@ -546,7 +553,13 @@ void KalmanFilter::computeSigmaMeasures(std::vector<double> & measureWeights, co
 
 };
 
-double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right) {
+double KalmanFilter::matching_score(
+	const cv::Mat & stat,
+	const cv::Mat &segmented_left,
+	const cv::Mat &segmented_right,
+	const std::vector<double> & joints_left,
+	const std::vector<double> & joints_right
+){
 
     //ROS_INFO_STREAM("stat IS: " << stat);
     //Convert our state into Eigen::Affine3ds; one for each arm
@@ -570,8 +583,8 @@ double KalmanFilter::matching_score(const cv::Mat & stat, const cv::Mat &segment
     //Convert them into tool models
     ToolModel::toolModel arm_1;
     ToolModel::toolModel arm_2;
-    convertToolModel(arm1, arm_1);
-    convertToolModel(arm2, arm_2);
+    convertToolModel(arm1, arm_1, joints_right[4], joints_right[5], joints_right[6]);
+    convertToolModel(arm2, arm_2, joints_left[4], joints_left[5], joints_left[6]);
 
 //    //this is the POSE of the ELLIPSE part of the tool for arm 1
 //They are also really annoying.
@@ -648,8 +661,7 @@ void KalmanFilter::convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & ou
 
 };
 
-//TODO: STILL NEED OTHER DIMENSIONS
-void KalmanFilter::convertToolModel(const Eigen::Affine3d & trans, ToolModel::toolModel &toolModel){
+void KalmanFilter::convertToolModel(const Eigen::Affine3d & trans, ToolModel::toolModel &toolModel, double ja1, double ja2, double ja3){
     Eigen::Vector3d pos = trans.translation();
     ////Not use euler angles or Rodrigues angles
 //    Eigen::Vector3d rpy = trans.rotation().eulerAngles(0, 1, 2);
@@ -678,8 +690,6 @@ void KalmanFilter::convertToolModel(const Eigen::Affine3d & trans, ToolModel::to
     cv::Rodrigues(rot, rot_vec );
     //ROS_INFO_STREAM("rot_vec " << rot_vec);
 
-    //TODO: need to add the joint angles
-    //Do we even HAVE that?
     toolModel.tvec_elp(0) = pos[0];
     toolModel.tvec_elp(1) = pos[1];
     toolModel.tvec_elp(2) = pos[2];
@@ -687,7 +697,7 @@ void KalmanFilter::convertToolModel(const Eigen::Affine3d & trans, ToolModel::to
     toolModel.rvec_elp(1) = rot_vec.at<double>(1,0);
     toolModel.rvec_elp(2) = rot_vec.at<double>(2,0);
 
-    ukfToolModel.computeModelPose(toolModel, 0.0, 0.3, 0.0);
+    ukfToolModel.computeModelPose(toolModel, ja1, ja2, ja3);
 };
 
 void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec){
