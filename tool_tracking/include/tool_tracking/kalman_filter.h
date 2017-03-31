@@ -106,28 +106,28 @@ public:
 
 	double last_update;
 
-    cv::Mat cmd_green;
-    cv::Mat cmd_yellow;
+    cv::Mat cmd_1;
+    cv::Mat cmd_2;
 
-    double cmd_time_green;
-    double cmd_time_yellow;
-    cv::Mat cmd_green_old;
-    cv::Mat cmd_yellow_old;
-    double cmd_time_green_old;
-    double cmd_time_yellow_old;
+    double cmd_time_1;
+    double cmd_time_2;
+    cv::Mat cmd_1_old;
+    cv::Mat cmd_2_old;
+    double cmd_time_1_old;
+    double cmd_time_2_old;
 
-    std::vector<double> sensor_green;
-    std::vector<double> sensor_yellow;
+    std::vector<double> sensor_1;
+    std::vector<double> sensor_2;
 
     cv::Mat kalman_mu;
     cv::Mat kalman_sigma;
 
     Davinci_fwd_solver kinematics;
 
-    Eigen::Affine3d arm_l__cam_l;
-    Eigen::Affine3d arm_r__cam_l;
-    Eigen::Affine3d arm_l__cam_r;
-    Eigen::Affine3d arm_r__cam_r;
+    Eigen::Affine3d arm_1__cam_l;
+    Eigen::Affine3d arm_2__cam_l;
+    Eigen::Affine3d arm_1__cam_r;
+    Eigen::Affine3d arm_2__cam_r;
 
     ros::Subscriber projectionMat_subscriber_r;
     ros::Subscriber projectionMat_subscriber_l;
@@ -138,7 +138,7 @@ public:
     cv::Mat P_left;
     cv::Mat P_right;
 
-    double matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right, const std::vector<double> & joints_left, const std::vector<double> & joints_right);
+    double matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right, const std::vector<double> & joints_1, const std::vector<double> & joints_2);
 
 	//double matching_score(const cv::Mat & stat);
 	
@@ -149,12 +149,12 @@ public:
 		const std::vector<cv::Mat_<double> > & sigma_point_in,
 		const cv::Mat &segmented_left,
 		const cv::Mat &segmented_right,
-		const std::vector<double> & joints_left,
-		const std::vector<double> & joints_right
+		const std::vector<double> & joints_1,
+		const std::vector<double> & joints_2
 	);
 
-    bool fvc_green;
-    bool fvc_yellow;
+    bool fvc_1;
+    bool fvc_2;
 
 //public:
 
@@ -181,7 +181,7 @@ public:
 
     void update(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
-    void convertToolModel(const Eigen::Affine3d & trans, ToolModel::toolModel &toolModel, double ja1, double ja2, double ja3);
+    void convertToolModel(const cv::Mat & trans, ToolModel::toolModel &toolModel, double ja1, double ja2, double ja3);
     /*
      * Unscented Kalman filter update
      */
