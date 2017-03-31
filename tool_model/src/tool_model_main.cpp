@@ -23,11 +23,15 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
 
     cv::Mat Cam(4, 4, CV_64FC1);
-    Cam = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0,   ///meters or millimeters
-            0, -1, 0, 0,
+    //Cam = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0,   ///meters or millimeters
+     //       0, -1, 0, 0,
+      //      0, 0, -1, 0.2,
+      //      0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
+
+    Cam = (cv::Mat_<double>(4, 4) << -1, 0, 0, -0.154,   ///meters or millimeters
+            0, 1, 0, -0.032,
             0, 0, -1, 0.2,
             0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
-
 
     ToolModel newToolModel;
 
@@ -74,12 +78,12 @@ int main(int argc, char **argv) {
 //    newToolModel.computeModelPose(initial, 0.1, 0.3, 0.1 );
 //    newToolModel.renderTool(testImg, initial, Cam, P);
 
-    initial.tvec_elp(0) = 0;  //left and right (image frame)
-    initial.tvec_elp(1) = -0;  //up and down
-    initial.tvec_elp(2) = -0.0037;
-    initial.rvec_elp(0) = 1.11383;
-    initial.rvec_elp(1) = 1.11383;
-    initial.rvec_elp(2) = 2.24769;
+    initial.tvec_elp(0) = -0.154;  //left and right (image frame)
+    initial.tvec_elp(1) = 0;  //up and down
+    initial.tvec_elp(2) = 0;
+    initial.rvec_elp(0) = 0;
+    initial.rvec_elp(1) = 0;
+    initial.rvec_elp(2) = 0;
 
     newToolModel.computeModelPose(initial, 0.0, 0.0, 0.0 );
     newToolModel.renderTool(testImg, initial, Cam, P);
