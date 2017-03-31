@@ -248,7 +248,7 @@ void KalmanFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &pro
 	P_left.at<double>(2,2) = projectionLeft->P[10];
 	P_left.at<double>(2,3) = projectionLeft->P[11];
 
-//	ROS_INFO_STREAM("left: " << P_left);
+	ROS_INFO_STREAM("left: " << P_left);
 	freshCameraInfo = true;
 };
 
@@ -472,10 +472,17 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 
     ROS_INFO_STREAM("correction? " << zt - z_caret);
 
+    cv::Mat Q = cv::Mat::eye(12,12,CV_64FC1);
+    Q = Q * 0.5;
     cv::Mat S = cv::Mat_<double>::zeros(L, L);
     for(int i = 0; i < 2 * L + 1; i++){
         S = S + w_c[i] * (Z_bar[i] - z_caret) * ((Z_bar[i] - z_caret).t());
     }
+    ROS_INFO_STREAM("S " << S);
+
+    S = S + Q;
+    ROS_INFO_STREAM("S inv " << S.inv());
+
 
     cv::Mat sigma_xz = cv::Mat_<double>::zeros(L, L);
     for(int i = 0; i < 2 * L + 1; i++){
@@ -483,12 +490,12 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
     }
 
     cv::Mat K = sigma_xz * S.inv();
-
+ROS_INFO_STREAM("K " << K);
     /*****Update our mu and sigma.*****/
+//    kalman_mu = mu_bar + (zt - z_caret);
+//    kalman_sigma = sigma_bar - S;
     kalman_mu = mu_bar + K * (zt - z_caret);
-    kalman_sigma = sigma_bar - S;
-//    kalman_mu = mu_bar + K * (zt - z_caret);
-//    kalman_sigma = sigma_bar - K * S * K.t();
+    kalman_sigma = sigma_bar - K * S * K.t();
     ROS_WARN("GREEN ARM AT (%f %f %f): %f %f %f", kalman_mu.at<double>(0, 0), kalman_mu.at<double>(1, 0),kalman_mu.at<double>(2, 0),kalman_mu.at<double>(3, 0),kalman_mu.at<double>(4, 0), kalman_mu.at<double>(5, 0));
     ROS_WARN("YELLOW ARM AT (%f %f %f): %f %f %f", kalman_mu.at<double>(6, 0), kalman_mu.at<double>(7, 0),kalman_mu.at<double>(8, 0),kalman_mu.at<double>(9, 0),kalman_mu.at<double>(10, 0), kalman_mu.at<double>(11, 0));
 
