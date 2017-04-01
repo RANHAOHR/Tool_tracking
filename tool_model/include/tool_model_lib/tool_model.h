@@ -187,6 +187,11 @@ public:
                             cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
                             const cv::Mat &P, cv::OutputArray jac);
 
+    void Compute_Silhouette_Body(const std::vector<std::vector<int> > &input_faces,
+                                            const std::vector<std::vector<int> > &neighbor_faces,
+                                            const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
+                                            cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
+                                            const cv::Mat &P, cv::OutputArray jac);
 
     /**********************math computation*******************/
     cv::Point3d crossProduct(cv::Point3d &vec1, cv::Point3d &vec2);

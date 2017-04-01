@@ -215,10 +215,10 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 
 	//Convert to Affine3ds for storage, which is the format they will be used in for rendering.
 	XformUtils xfu;
-	arm_1__cam_l = xfu.transformTFToAffine3d(arm_1__cam_l_st);//.inverse();
-	arm_1__cam_r = xfu.transformTFToAffine3d(arm_1__cam_r_st);//.inverse();
-	arm_2__cam_l = xfu.transformTFToAffine3d(arm_2__cam_l_st);//.inverse();
-	arm_2__cam_r = xfu.transformTFToAffine3d(arm_2__cam_r_st);//.inverse();
+	arm_1__cam_l = xfu.transformTFToAffine3d(arm_1__cam_l_st).inverse();
+	arm_1__cam_r = xfu.transformTFToAffine3d(arm_1__cam_r_st).inverse();
+	arm_2__cam_l = xfu.transformTFToAffine3d(arm_2__cam_l_st).inverse();
+	arm_2__cam_r = xfu.transformTFToAffine3d(arm_2__cam_r_st).inverse();
 
 //	print_affine(arm_l__cam_l);
 
@@ -226,11 +226,10 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	convertEigenToMat(arm_1__cam_r, Cam_right_arm_1);
 	convertEigenToMat(arm_2__cam_l, Cam_left_arm_2);
 	convertEigenToMat(arm_2__cam_r, Cam_right_arm_2);
-	
-	/*Cam_left_arm_2 = cv::Mat_<double>::eye(4, 4);
-	Cam_left_arm_1 = cv::Mat_<double>::eye(4, 4);
-	Cam_right_arm_2 = cv::Mat_<double>::eye(4, 4);
-	Cam_right_arm_1 = cv::Mat_<double>::eye(4, 4);*/
+
+//	Cam_left_arm_1 = cv::Mat_<double>::eye(4, 4);
+//	Cam_right_arm_2 = cv::Mat_<double>::eye(4, 4);
+//	Cam_right_arm_1 = cv::Mat_<double>::eye(4, 4);
 
 	ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
 	ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
@@ -757,31 +756,34 @@ void KalmanFilter::convertToolModel(const cv::Mat & trans, ToolModel::toolModel 
 	cv::Rodrigues(rot, rot_vec );
 	//ROS_INFO_STREAM("rot_vec " << rot_vec);*/
 
-    cv::Mat adjust_mat = (cv::Mat_<double>(3, 3) << 1.0, 0.0, 0.0,
-            0.0, 0.0, -1.0,
-            0.0, 1.0, 0.0);
+	toolModel.tvec_elp(0) = trans.at<double>(0,0);
+	toolModel.tvec_elp(1) = trans.at<double>(1,0);
+	toolModel.tvec_elp(2) = trans.at<double>(2,0);
+	toolModel.rvec_elp(0) = trans.at<double>(3,0);
+	toolModel.rvec_elp(1) = trans.at<double>(4,0);
+	toolModel.rvec_elp(2) = trans.at<double>(5,0);
 
-    cv::Mat test_t = cv::Mat(3,1,CV_64FC1);
-    cv::Mat test_r = cv::Mat(3,1,CV_64FC1);
-
-    test_t.at<double>(0,0) = trans.at<double>(0,0);
-    test_t.at<double>(1,0) = trans.at<double>(1,0);
-    test_t.at<double>(2,0) = trans.at<double>(2,0);
-
-    test_r.at<double>(0,0) = trans.at<double>(3,0);
-    test_r.at<double>(1,0) = trans.at<double>(4,0);
-    test_r.at<double>(2,0) = trans.at<double>(5,0);
-
-
-    test_t = adjust_mat * test_t;
-    test_r = adjust_mat * test_r;
-
-	toolModel.tvec_elp(0) = test_t.at<double>(0,0);
-	toolModel.tvec_elp(1) = test_t.at<double>(1,0);
-	toolModel.tvec_elp(2) = test_t.at<double>(2,0);
-	toolModel.rvec_elp(0) = test_r.at<double>(0,0);
-	toolModel.rvec_elp(1) = test_r.at<double>(1,0);
-	toolModel.rvec_elp(2) = test_r.at<double>(2,0);
+//    cv::Mat adjoint_mat = (cv::Mat_<double>(3,3) << 1,0,0,
+//    0,0,-1,
+//    0,1,0);
+//
+//    cv::Mat temp_t(3,1, CV_64FC1);
+//    cv::Mat temp_r(3,1, CV_64FC1);
+//
+//    temp_t = trans.rowRange(0,3);
+//    temp_r = trans.rowRange(3,6);
+//
+//    temp_t = adjoint_mat * temp_t;
+//    temp_r = adjoint_mat * temp_r;
+//
+//    toolModel.tvec_elp(0) = temp_t.at<double>(0,0);
+//    toolModel.tvec_elp(1) = temp_t.at<double>(1,0);
+//    toolModel.tvec_elp(2) = temp_t.at<double>(2,0);
+//    toolModel.rvec_elp(0) = temp_r.at<double>(0,0);
+//    toolModel.rvec_elp(1) = temp_r.at<double>(1,0);
+//    toolModel.rvec_elp(2) = temp_r.at<double>(2,0);
+    ROS_INFO_STREAM("ja3 " << ja3);
+    ROS_INFO_STREAM("ja2 " << ja2);
 
 	ukfToolModel.computeModelPose(toolModel, ja1, ja2, ja3);
 };

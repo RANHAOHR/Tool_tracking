@@ -252,7 +252,7 @@ void ToolModel::load_model_vertices(const char *path, std::vector<glm::vec3> &ou
     // for (int i = 0; i < 10; ++i)
     // {
     //     ROS_INFO_STREAM("vertex: " << i );
-    //     ROS_INFO_STREAM("x: " << out_vertices[i].x << " y: " << out_vertices[i].y << " z: " << out_vertices[i].z );        
+    //     ROS_INFO_STREAM("x: " << out_vertices[i].x << " y: " << out_vertices[i].y << " z: " << out_vertices[i].z );
     // }
 
     // /*screen unneccessary faces*/
@@ -280,7 +280,7 @@ void ToolModel::Convert_glTocv_pts(std::vector<glm::vec3> &input_vertices, std::
 };
 
 
-/* find the camera view point, should it be (0,0,0), input faces stores the indices of the vertices and normals, 
+/* find the camera view point, should it be (0,0,0), input faces stores the indices of the vertices and normals,
 which are not related to the pose of the tool object*/
 /*** TODO: camera transformations ***/
 cv::Mat ToolModel::camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat) {
@@ -292,7 +292,7 @@ cv::Mat ToolModel::camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat) {
     //ROS_INFO_STREAM("Inv" << Inv);
 
 
-    cv::Mat output_mat = Inv * input_mat; //transform the obj to camera frames
+    cv::Mat output_mat = cam_mat * input_mat; //transform the obj to camera frames
 
     return output_mat;
 };
@@ -351,10 +351,19 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
 //    ROS_INFO_STREAM(" neighbor_faces[11][0]: " <<  neighbor_faces[11][0]);
 //    ROS_INFO_STREAM(" neighbor_faces[11][2]: " <<  neighbor_faces[11][3]);
 
-    cv::Mat new_Vertices = transformPoints(input_Vmat, rvec, tvec);
+    cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << 1,0,0,0,
+    0,0,1,0,
+    0,-1,0,0,
+    0,0,0,1);
+
+    cv::Mat temp_input_Vmat = adjoint_mat * input_Vmat;
+    cv::Mat temp_input_Nmat = adjoint_mat * input_Nmat;
+
+
+    cv::Mat new_Vertices = transformPoints(temp_input_Vmat, rvec, tvec);
     new_Vertices = camTransformMats(CamMat, new_Vertices); //transform every point under camera frame
 
-    cv::Mat new_Normals = transformPoints(input_Nmat, rvec, tvec);
+    cv::Mat new_Normals = transformPoints(temp_input_Nmat, rvec, tvec);
     new_Normals = camTransformMats(CamMat, new_Normals); //transform every surface normal under camera frame
 
 
@@ -458,6 +467,123 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
 };
 
 
+
+
+
+void ToolModel::Compute_Silhouette_Body(const std::vector<std::vector<int> > &input_faces,
+                                   const std::vector<std::vector<int> > &neighbor_faces,
+                                   const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
+                                   cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
+                                   const cv::Mat &P, cv::OutputArray jac) {
+
+//    ROS_INFO_STREAM(" neighbor_faces[11][0]: " <<  neighbor_faces[11][0]);
+//    ROS_INFO_STREAM(" neighbor_faces[11][2]: " <<  neighbor_faces[11][3]);
+
+    cv::Mat new_Vertices = transformPoints(input_Vmat, rvec, tvec);
+    new_Vertices = camTransformMats(CamMat, new_Vertices); //transform every point under camera frame
+
+    cv::Mat new_Normals = transformPoints(input_Nmat, rvec, tvec);
+    new_Normals = camTransformMats(CamMat, new_Normals); //transform every surface normal under camera frame
+
+    unsigned long neighbor_num = 0;
+    cv::Mat temp(4, 1, CV_64FC1);
+
+    cv::Mat ept_1(4, 1, CV_64FC1);
+    cv::Mat ept_2(4, 1, CV_64FC1);
+
+    for (int i = 0; i < input_faces.size(); ++i) {
+        // ROS_INFO_STREAM("i "<< i);
+        neighbor_num = (neighbor_faces[i].size()) / 3;  //each neighbor has two vertices
+
+        if (neighbor_num > 0) {
+            int v1 = input_faces[i][0];
+            int v2 = input_faces[i][1];
+            int v3 = input_faces[i][2];
+            int n1 = input_faces[i][3];
+            int n2 = input_faces[i][4];
+            int n3 = input_faces[i][5];
+
+            new_Vertices.col(v1).copyTo(temp.col(0));
+            cv::Point3d pt1 = convert_MattoPts(temp);
+            new_Vertices.col(v2).copyTo(temp.col(0));
+            cv::Point3d pt2 = convert_MattoPts(temp);
+            new_Vertices.col(v3).copyTo(temp.col(0));
+            cv::Point3d pt3 = convert_MattoPts(temp);
+
+            new_Normals.col(n1).copyTo(temp.col(0));
+            cv::Point3d vn1 = convert_MattoPts(temp);
+            new_Normals.col(n2).copyTo(temp.col(0));
+            cv::Point3d vn2 = convert_MattoPts(temp);
+            new_Normals.col(n3).copyTo(temp.col(0));
+            cv::Point3d vn3 = convert_MattoPts(temp);
+
+            cv::Point3d fnormal = FindFaceNormal(pt1, pt2, pt3, vn1, vn2, vn3); //knowing the direction and normalized
+            cv::Point3d face_point_i = pt1 + pt2 + pt3;
+            face_point_i.x = face_point_i.x / 3;
+            face_point_i.y = face_point_i.y / 3;
+            face_point_i.z = face_point_i.z / 3;
+
+            double isfront_i = dotProduct(fnormal, face_point_i);
+            if (isfront_i < 0.00000) {
+                for (int neighbor_count = 0; neighbor_count <
+                                             neighbor_num; ++neighbor_count) {  //notice: cannot use J here, since the last j will not be counted
+                    int j = 3 * neighbor_count;
+                    int v1_ = input_faces[neighbor_faces[i][j]][0];
+                    int v2_ = input_faces[neighbor_faces[i][j]][1];
+                    int v3_ = input_faces[neighbor_faces[i][j]][2];
+
+                    int n1_ = input_faces[neighbor_faces[i][j]][3];
+                    int n2_ = input_faces[neighbor_faces[i][j]][4];
+                    int n3_ = input_faces[neighbor_faces[i][j]][5];
+
+
+                    new_Vertices.col(v1_).copyTo(temp.col(0));
+                    cv::Point3d pt1_ = convert_MattoPts(temp);
+                    new_Vertices.col(v2_).copyTo(temp.col(0));
+                    cv::Point3d pt2_ = convert_MattoPts(temp);
+                    new_Vertices.col(v3_).copyTo(temp.col(0));
+                    cv::Point3d pt3_ = convert_MattoPts(temp);
+
+                    new_Normals.col(n1_).copyTo(temp.col(0));
+                    cv::Point3d vn1_ = convert_MattoPts(temp);
+                    new_Normals.col(n2_).copyTo(temp.col(0));
+                    cv::Point3d vn2_ = convert_MattoPts(temp);
+                    new_Normals.col(n3_).copyTo(temp.col(0));
+                    cv::Point3d vn3_ = convert_MattoPts(temp);
+
+                    cv::Point3d fnormal_n = FindFaceNormal(pt1_, pt2_, pt3_, vn1_, vn2_, vn3_);
+
+                    cv::Point3d face_point_j = pt1_ + pt2_ + pt3_;
+                    face_point_j.x = face_point_j.x / 3;
+                    face_point_j.y = face_point_j.y / 3;
+                    face_point_j.z = face_point_j.z / 3;
+
+                    double isfront_j = dotProduct(fnormal_n, face_point_j);
+
+                    if (isfront_i * isfront_j < 0.0) // one is front, another is back
+                    {
+                        /*finish finding, drawing the image*/
+                        new_Vertices.col(neighbor_faces[i][j + 1]).copyTo(ept_1);  //under camera frames
+                        new_Vertices.col(neighbor_faces[i][j + 2]).copyTo(ept_2);
+
+                        cv::Point2d prjpt_1 = reproject(ept_1, P);
+                        cv::Point2d prjpt_2 = reproject(ept_2, P);
+
+                        cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
+
+                    }
+
+
+                }
+
+            }
+
+
+        }
+    }
+
+};
+
 cv::Mat ToolModel::convert4to3(const cv::Mat &inputMat) {
 
     cv::Mat res_mat(3, 1, CV_64FC1);
@@ -501,7 +627,7 @@ cv::Point3d ToolModel::getFaceNormal(const cv::Mat &pt1, const cv::Mat &pt2, con
     res.x = resNorm.at<double>(0, 0);
     res.y = resNorm.at<double>(1, 0);
     res.z = resNorm.at<double>(2, 0);
-    return res;  // knowing the direction  
+    return res;  // knowing the direction
 
 };
 
@@ -790,7 +916,7 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, doub
 
 /*using ellipse pose to compute cylinder pose*/
 void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputModel, const double &theta_tool, const double &theta_grip_1,
-                                 const double &theta_grip_2) {
+                                  const double &theta_grip_2) {
 
     cv::Mat I = cv::Mat::eye(3, 3, CV_64FC1);
 
@@ -814,6 +940,7 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
     test_gripper.at<double>(0, 0) = 0;
     test_gripper.at<double>(1, 0) = offset_gripper - 0.4522;  //
     test_gripper.at<double>(2, 0) = 0;
+
 
     cv::Mat rot_elp(3, 3, CV_64FC1);
     cv::Rodrigues(inputModel.rvec_elp, rot_elp);  // get rotation mat of the ellipse
@@ -842,7 +969,7 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
 
 /*using cylinder pose to compute ellipse pose*/
 void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_ellipse, const double &theta_grip_1,
-                                 const double &theta_grip_2) {
+                                   const double &theta_grip_2) {
 
     cv::Mat I = cv::Mat::eye(3, 3, CV_64FC1);
 
@@ -897,14 +1024,65 @@ void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_tool
 
     cv::Mat I = cv::Mat::eye(3, 3, CV_64FC1);
 
-    /*********** computations for ellipse kinematics **********/
+//    /*********** computations for ellipse kinematics **********/
+//    cv::Mat q_temp(4, 1, CV_64FC1);
+//
+//    inputModel.rvec_cyl(0) = inputModel.rvec_elp(0); //roll angle should be the same.
+//    inputModel.rvec_cyl(1) = inputModel.rvec_elp(1); //pitch angle should be the same.
+//    inputModel.rvec_cyl(2) = inputModel.rvec_elp(2) + theta_tool; //yaw angle is plus the theta_ellipse
+//
+//    q_temp = transformPoints( q_ellipse, cv::Mat(inputModel.rvec_cyl),
+//                              cv::Mat(inputModel.tvec_elp)); //transform the ellipse coord according to cylinder pose
+//
+//    inputModel.tvec_cyl(0) = q_temp.at<double>(0, 0);
+//    inputModel.tvec_cyl(1) = q_temp.at<double>(1, 0);
+//    inputModel.tvec_cyl(2) = q_temp.at<double>(2, 0);
+//
+//    /*********** computations for gripper kinematics **********/
+//    cv::Mat test_gripper(3, 1, CV_64FC1);
+//    test_gripper.at<double>(0, 0) = 0;
+//    test_gripper.at<double>(1, 0) = offset_gripper - 0.4522;  //
+//    test_gripper.at<double>(2, 0) = 0;
+//
+//    cv::Mat rot_elp(3, 3, CV_64FC1);
+//    cv::Rodrigues(inputModel.rvec_elp, rot_elp);  // get rotation mat of the ellipse
+//
+//    cv::Mat q_rot(3, 1, CV_64FC1);
+//    q_rot = rot_elp * test_gripper;
+//
+//    inputModel.tvec_grip1(0) = q_rot.at<double>(0, 0) + inputModel.tvec_elp(0);
+//    inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
+//    inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
+//
+//    inputModel.rvec_grip1(0) = inputModel.rvec_elp(0) + theta_grip_1;  //roll angle is plus the theta_gripper
+//    inputModel.rvec_grip1(1) = inputModel.rvec_elp(1);
+//    inputModel.rvec_grip1(2) = inputModel.rvec_elp(2);
+//
+//    /*gripper 2*/
+//    inputModel.tvec_grip2(0) = inputModel.tvec_grip1(0);
+//    inputModel.tvec_grip2(1) = inputModel.tvec_grip1(1);
+//    inputModel.tvec_grip2(2) = inputModel.tvec_grip1(2);
+//
+//    inputModel.rvec_grip2(0) = inputModel.rvec_elp(0) + theta_grip_2;  //roll angle is plus the theta_gripper
+//    inputModel.rvec_grip2(1) = inputModel.rvec_elp(1);
+//    inputModel.rvec_grip2(2) = inputModel.rvec_elp(2);
+
+
+//    /*********** computations for ellipse kinematics **********/
     cv::Mat q_temp(4, 1, CV_64FC1);
 
     inputModel.rvec_cyl(0) = inputModel.rvec_elp(0); //roll angle should be the same.
-    inputModel.rvec_cyl(1) = inputModel.rvec_elp(1); //pitch angle should be the same.
-    inputModel.rvec_cyl(2) = inputModel.rvec_elp(2) + theta_tool; //yaw angle is plus the theta_ellipse
+    inputModel.rvec_cyl(1) = inputModel.rvec_elp(1) + theta_tool; //pitch angle should be the same.
+    inputModel.rvec_cyl(2) = inputModel.rvec_elp(2); //yaw angle is plus the theta_ellipse
 
-    q_temp = transformPoints( q_ellipse, cv::Mat(inputModel.rvec_cyl),
+
+    cv::Mat temp_q_ellipse = cv::Mat(4, 1, CV_64FC1);
+    temp_q_ellipse.at<double>(0, 0) = 0;
+    temp_q_ellipse.at<double>(1, 0) = 0;  //0.1106m
+    temp_q_ellipse.at<double>(2, 0) = (offset_ellipse - offset_body);
+    temp_q_ellipse.at<double>(3, 0) = 1;
+
+    q_temp = transformPoints( temp_q_ellipse, cv::Mat(inputModel.rvec_cyl),
                               cv::Mat(inputModel.tvec_elp)); //transform the ellipse coord according to cylinder pose
 
     inputModel.tvec_cyl(0) = q_temp.at<double>(0, 0);
@@ -914,8 +1092,14 @@ void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_tool
     /*********** computations for gripper kinematics **********/
     cv::Mat test_gripper(3, 1, CV_64FC1);
     test_gripper.at<double>(0, 0) = 0;
-    test_gripper.at<double>(1, 0) = offset_gripper - 0.4522;  //
+    test_gripper.at<double>(1, 0) = (offset_gripper - offset_ellipse);  //
     test_gripper.at<double>(2, 0) = 0;
+
+    cv::Mat adjoint_mat = (cv::Mat_<double>(3,3) << 1,0,0,
+            0,0,1,
+            0,-1,0);
+
+    test_gripper = adjoint_mat * test_gripper;
 
     cv::Mat rot_elp(3, 3, CV_64FC1);
     cv::Rodrigues(inputModel.rvec_elp, rot_elp);  // get rotation mat of the ellipse
@@ -923,11 +1107,13 @@ void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_tool
     cv::Mat q_rot(3, 1, CV_64FC1);
     q_rot = rot_elp * test_gripper;
 
+
+    ////The given that here seems to be the offset for one, and the angle distance between them
     inputModel.tvec_grip1(0) = q_rot.at<double>(0, 0) + inputModel.tvec_elp(0);
     inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
     inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
 
-    inputModel.rvec_grip1(0) = inputModel.rvec_elp(0) + theta_grip_1;  //roll angle is plus the theta_gripper
+    inputModel.rvec_grip1(0) = inputModel.rvec_elp(0) + theta_grip_1 + theta_grip_2;  //roll angle is plus the theta_gripper
     inputModel.rvec_grip1(1) = inputModel.rvec_elp(1);
     inputModel.rvec_grip1(2) = inputModel.rvec_elp(2);
 
@@ -936,7 +1122,8 @@ void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_tool
     inputModel.tvec_grip2(1) = inputModel.tvec_grip1(1);
     inputModel.tvec_grip2(2) = inputModel.tvec_grip1(2);
 
-    inputModel.rvec_grip2(0) = inputModel.rvec_elp(0) + theta_grip_2;  //roll angle is plus the theta_gripper
+
+    inputModel.rvec_grip2(0) = inputModel.rvec_elp(0) + theta_grip_1;  //roll angle is plus the theta_gripper,
     inputModel.rvec_grip2(1) = inputModel.rvec_elp(1);
     inputModel.rvec_grip2(2) = inputModel.rvec_elp(2);
 
@@ -1003,27 +1190,27 @@ float ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segme
 
     /*** When ROI is an empty rec, the position of tool is simply just not match, return 0 matching score ***/
     //if (ROI.area() != 0) {
-        cv::Mat ROI_toolImage = toolImage.clone(); //(ROI); //crop tool image
-        cv::Mat segImageGrey = segmentedImage.clone(); //(ROI); //crop segmented image, notice the size of the segmented image
+    cv::Mat ROI_toolImage = toolImage.clone(); //(ROI); //crop tool image
+    cv::Mat segImageGrey = segmentedImage.clone(); //(ROI); //crop segmented image, notice the size of the segmented image
 
-        segImageGrey.convertTo(segImageGrey, CV_32FC1);
-        cv::Mat segImgBlur;
-        cv::GaussianBlur(segImageGrey,segImgBlur, cv::Size(9,9),4,4);
-        segImgBlur /= 255; //scale the blurred image
+    segImageGrey.convertTo(segImageGrey, CV_32FC1);
+    cv::Mat segImgBlur;
+    cv::GaussianBlur(segImageGrey,segImgBlur, cv::Size(9,9),4,4);
+    segImgBlur /= 255; //scale the blurred image
 
 //    cv::imshow("segImgBlur", segImgBlur);
 //    cv::waitKey(0);
-        cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
-        cv::Mat toolImFloat; //Float data type of grey scale tool image
+    cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
+    cv::Mat toolImFloat; //Float data type of grey scale tool image
 
-        cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
+    cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
 
-        toolImageGrey.convertTo(toolImFloat, CV_32FC1); // convert grey scale to float
+    toolImageGrey.convertTo(toolImFloat, CV_32FC1); // convert grey scale to float
 
-        cv::Mat result(1, 1, CV_32FC1);
+    cv::Mat result(1, 1, CV_32FC1);
 
-        cv::matchTemplate(segImgBlur, toolImFloat, result, CV_TM_CCORR_NORMED); //seg, toolImg
-        matchingScore = static_cast<float> (result.at<float>(0));
+    cv::matchTemplate(segImgBlur, toolImFloat, result, CV_TM_CCORR_NORMED); //seg, toolImg
+    matchingScore = static_cast<float> (result.at<float>(0));
 
 //    } else {
 //        ROS_INFO("EMPTY ROI, zero matching score");
@@ -1121,4 +1308,3 @@ cv::Point2d ToolModel::reproject(const cv::Mat &point, const cv::Mat &P) {
 
     return output;
 };
-
