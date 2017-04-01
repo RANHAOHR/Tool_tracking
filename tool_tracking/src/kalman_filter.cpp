@@ -763,29 +763,7 @@ void KalmanFilter::convertToolModel(const cv::Mat & trans, ToolModel::toolModel 
 	toolModel.rvec_elp(1) = trans.at<double>(4,0);
 	toolModel.rvec_elp(2) = trans.at<double>(5,0);
 
-//    cv::Mat adjoint_mat = (cv::Mat_<double>(3,3) << 1,0,0,
-//    0,0,-1,
-//    0,1,0);
-//
-//    cv::Mat temp_t(3,1, CV_64FC1);
-//    cv::Mat temp_r(3,1, CV_64FC1);
-//
-//    temp_t = trans.rowRange(0,3);
-//    temp_r = trans.rowRange(3,6);
-//
-//    temp_t = adjoint_mat * temp_t;
-//    temp_r = adjoint_mat * temp_r;
-//
-//    toolModel.tvec_elp(0) = temp_t.at<double>(0,0);
-//    toolModel.tvec_elp(1) = temp_t.at<double>(1,0);
-//    toolModel.tvec_elp(2) = temp_t.at<double>(2,0);
-//    toolModel.rvec_elp(0) = temp_r.at<double>(0,0);
-//    toolModel.rvec_elp(1) = temp_r.at<double>(1,0);
-//    toolModel.rvec_elp(2) = temp_r.at<double>(2,0);
-    ROS_INFO_STREAM("ja3 " << ja3);
-    ROS_INFO_STREAM("ja2 " << ja2);
-
-	ukfToolModel.computeModelPose(toolModel, ja1, ja2, ja3);
+	ukfToolModel.computeDavinciModel(toolModel, ja1, ja2, ja3);
 };
 
 void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec){

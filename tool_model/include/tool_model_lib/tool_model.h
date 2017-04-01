@@ -170,6 +170,9 @@ public:
     void computeRandomPose(const toolModel &seed_pose, toolModel &inputModel, const double &theta_tool, const double &theta_grip_1,
                                       const double &theta_grip_2);
 
+    void computeDavinciModel(toolModel &inputModel, const double &theta_tool, const double &theta_grip_1,
+                                        const double &theta_grip_2);
+
     //cam view need to be modified
     void renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P,
                         cv::OutputArray = cv::noArray());

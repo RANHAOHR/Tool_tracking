@@ -1022,53 +1022,55 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
 void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_tool, const double &theta_grip_1,
                                  const double &theta_grip_2) {
 
-    cv::Mat I = cv::Mat::eye(3, 3, CV_64FC1);
+    /*********** computations for ellipse kinematics **********/
+    cv::Mat q_temp(4, 1, CV_64FC1);
 
-//    /*********** computations for ellipse kinematics **********/
-//    cv::Mat q_temp(4, 1, CV_64FC1);
-//
-//    inputModel.rvec_cyl(0) = inputModel.rvec_elp(0); //roll angle should be the same.
-//    inputModel.rvec_cyl(1) = inputModel.rvec_elp(1); //pitch angle should be the same.
-//    inputModel.rvec_cyl(2) = inputModel.rvec_elp(2) + theta_tool; //yaw angle is plus the theta_ellipse
-//
-//    q_temp = transformPoints( q_ellipse, cv::Mat(inputModel.rvec_cyl),
-//                              cv::Mat(inputModel.tvec_elp)); //transform the ellipse coord according to cylinder pose
-//
-//    inputModel.tvec_cyl(0) = q_temp.at<double>(0, 0);
-//    inputModel.tvec_cyl(1) = q_temp.at<double>(1, 0);
-//    inputModel.tvec_cyl(2) = q_temp.at<double>(2, 0);
-//
-//    /*********** computations for gripper kinematics **********/
-//    cv::Mat test_gripper(3, 1, CV_64FC1);
-//    test_gripper.at<double>(0, 0) = 0;
-//    test_gripper.at<double>(1, 0) = offset_gripper - 0.4522;  //
-//    test_gripper.at<double>(2, 0) = 0;
-//
-//    cv::Mat rot_elp(3, 3, CV_64FC1);
-//    cv::Rodrigues(inputModel.rvec_elp, rot_elp);  // get rotation mat of the ellipse
-//
-//    cv::Mat q_rot(3, 1, CV_64FC1);
-//    q_rot = rot_elp * test_gripper;
-//
-//    inputModel.tvec_grip1(0) = q_rot.at<double>(0, 0) + inputModel.tvec_elp(0);
-//    inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
-//    inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
-//
-//    inputModel.rvec_grip1(0) = inputModel.rvec_elp(0) + theta_grip_1;  //roll angle is plus the theta_gripper
-//    inputModel.rvec_grip1(1) = inputModel.rvec_elp(1);
-//    inputModel.rvec_grip1(2) = inputModel.rvec_elp(2);
-//
-//    /*gripper 2*/
-//    inputModel.tvec_grip2(0) = inputModel.tvec_grip1(0);
-//    inputModel.tvec_grip2(1) = inputModel.tvec_grip1(1);
-//    inputModel.tvec_grip2(2) = inputModel.tvec_grip1(2);
-//
-//    inputModel.rvec_grip2(0) = inputModel.rvec_elp(0) + theta_grip_2;  //roll angle is plus the theta_gripper
-//    inputModel.rvec_grip2(1) = inputModel.rvec_elp(1);
-//    inputModel.rvec_grip2(2) = inputModel.rvec_elp(2);
+    inputModel.rvec_cyl(0) = inputModel.rvec_elp(0); //roll angle should be the same.
+    inputModel.rvec_cyl(1) = inputModel.rvec_elp(1); //pitch angle should be the same.
+    inputModel.rvec_cyl(2) = inputModel.rvec_elp(2) + theta_tool; //yaw angle is plus the theta_ellipse
 
+    q_temp = transformPoints( q_ellipse, cv::Mat(inputModel.rvec_cyl),
+                              cv::Mat(inputModel.tvec_elp)); //transform the ellipse coord according to cylinder pose
 
-//    /*********** computations for ellipse kinematics **********/
+    inputModel.tvec_cyl(0) = q_temp.at<double>(0, 0);
+    inputModel.tvec_cyl(1) = q_temp.at<double>(1, 0);
+    inputModel.tvec_cyl(2) = q_temp.at<double>(2, 0);
+
+    /*********** computations for gripper kinematics **********/
+    cv::Mat test_gripper(3, 1, CV_64FC1);
+    test_gripper.at<double>(0, 0) = 0;
+    test_gripper.at<double>(1, 0) = offset_gripper - 0.4522;  //
+    test_gripper.at<double>(2, 0) = 0;
+
+    cv::Mat rot_elp(3, 3, CV_64FC1);
+    cv::Rodrigues(inputModel.rvec_elp, rot_elp);  // get rotation mat of the ellipse
+
+    cv::Mat q_rot(3, 1, CV_64FC1);
+    q_rot = rot_elp * test_gripper;
+
+    inputModel.tvec_grip1(0) = q_rot.at<double>(0, 0) + inputModel.tvec_elp(0);
+    inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
+    inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
+
+    inputModel.rvec_grip1(0) = inputModel.rvec_elp(0) + theta_grip_1;  //roll angle is plus the theta_gripper
+    inputModel.rvec_grip1(1) = inputModel.rvec_elp(1);
+    inputModel.rvec_grip1(2) = inputModel.rvec_elp(2);
+
+    /*gripper 2*/
+    inputModel.tvec_grip2(0) = inputModel.tvec_grip1(0);
+    inputModel.tvec_grip2(1) = inputModel.tvec_grip1(1);
+    inputModel.tvec_grip2(2) = inputModel.tvec_grip1(2);
+
+    inputModel.rvec_grip2(0) = inputModel.rvec_elp(0) + theta_grip_2;  //roll angle is plus the theta_gripper
+    inputModel.rvec_grip2(1) = inputModel.rvec_elp(1);
+    inputModel.rvec_grip2(2) = inputModel.rvec_elp(2);
+
+};
+
+void ToolModel::computeDavinciModel(toolModel &inputModel, const double &theta_tool, const double &theta_grip_1,
+                                 const double &theta_grip_2) {
+
+    /*********** computations for ellipse kinematics **********/
     cv::Mat q_temp(4, 1, CV_64FC1);
 
     inputModel.rvec_cyl(0) = inputModel.rvec_elp(0); //roll angle should be the same.
@@ -1127,7 +1129,9 @@ void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_tool
     inputModel.rvec_grip2(1) = inputModel.rvec_elp(1);
     inputModel.rvec_grip2(2) = inputModel.rvec_elp(2);
 
+
 };
+
 
 cv::Mat ToolModel::computeSkew(cv::Mat &w) {
     cv::Mat skew(3, 3, CV_64FC1);
