@@ -65,15 +65,15 @@ int main(int argc, char **argv) {
 	freshImage = false;
 	//freshVelocity = false;//Moving all velocity-related things inside of the kalman.
 
-	cv::Mat seg_left;
-	cv::Mat seg_right;
+	cv::Mat seg_left  = cv::Mat::zeros(640, 800, CV_32FC1);
+	cv::Mat seg_right  = cv::Mat::zeros(640, 800, CV_32FC1);
 
 	trackingImgs.resize(2);
 
 	//TODO: get image size from camera model, or initialize segmented images,
 
-	cv::Mat rawImage_left = cv::Mat::zeros(480, 640, CV_32FC1);
-	cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_32FC1);
+	cv::Mat rawImage_left = cv::Mat::zeros(640, 800, CV_32FC1);
+	cv::Mat rawImage_right = cv::Mat::zeros(640, 800, CV_32FC1);
 
 	image_transport::ImageTransport it(nh);
 	image_transport::Subscriber img_sub_l = it.subscribe(

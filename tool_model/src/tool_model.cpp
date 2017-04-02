@@ -359,7 +359,6 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
     cv::Mat temp_input_Vmat = adjoint_mat * input_Vmat;
     cv::Mat temp_input_Nmat = adjoint_mat * input_Nmat;
 
-
     cv::Mat new_Vertices = transformPoints(temp_input_Vmat, rvec, tvec);
     new_Vertices = camTransformMats(CamMat, new_Vertices); //transform every point under camera frame
 
@@ -466,18 +465,11 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
 
 };
 
-
-
-
-
 void ToolModel::Compute_Silhouette_Body(const std::vector<std::vector<int> > &input_faces,
                                    const std::vector<std::vector<int> > &neighbor_faces,
                                    const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
                                    cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
                                    const cv::Mat &P, cv::OutputArray jac) {
-
-//    ROS_INFO_STREAM(" neighbor_faces[11][0]: " <<  neighbor_faces[11][0]);
-//    ROS_INFO_STREAM(" neighbor_faces[11][2]: " <<  neighbor_faces[11][3]);
 
     cv::Mat new_Vertices = transformPoints(input_Vmat, rvec, tvec);
     new_Vertices = camTransformMats(CamMat, new_Vertices); //transform every point under camera frame
@@ -754,7 +746,7 @@ cv::Point3d ToolModel::FindFaceNormal(cv::Point3d &input_v1, cv::Point3d &input_
 
 int ToolModel::Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2, std::vector<int> &match_vec) {
     int match_count = 0;
-    //std::vector<int> match_vec;   //match_vec should contain both the matching count and the matched vertices
+    //std::vector<int> match_vec;   //mat/home/ranhao/ros_ws/src/Tool_tracking/tool_modelch_vec should contain both the matching count and the matched vertices
 
     if (vec1.size() != vec2.size())  ///face vectors
     {
@@ -1080,7 +1072,7 @@ void ToolModel::computeDavinciModel(toolModel &inputModel, const double &theta_t
 
     cv::Mat temp_q_ellipse = cv::Mat(4, 1, CV_64FC1);
     temp_q_ellipse.at<double>(0, 0) = 0;
-    temp_q_ellipse.at<double>(1, 0) = 0;  //0.1106m
+    temp_q_ellipse.at<double>(1, 0) = 0;  // -(offset_ellipse - offset_body);0.1106m
     temp_q_ellipse.at<double>(2, 0) = (offset_ellipse - offset_body);
     temp_q_ellipse.at<double>(3, 0) = 1;
 
@@ -1108,7 +1100,6 @@ void ToolModel::computeDavinciModel(toolModel &inputModel, const double &theta_t
 
     cv::Mat q_rot(3, 1, CV_64FC1);
     q_rot = rot_elp * test_gripper;
-
 
     ////The given that here seems to be the offset for one, and the angle distance between them
     inputModel.tvec_grip1(0) = q_rot.at<double>(0, 0) + inputModel.tvec_elp(0);

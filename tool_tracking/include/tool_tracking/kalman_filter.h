@@ -68,8 +68,8 @@
 #include <sensor_msgs/image_encodings.h>
 #include <cwru_opencv_common/projective_geometry.h>
 
-#include <cwru_xform_utils/xform_utils.h>
-//#include <xform_utils/xform_utils.h>
+//#include <cwru_xform_utils/xform_utils.h>
+#include <xform_utils/xform_utils.h>
 
 class KalmanFilter {
 
@@ -87,7 +87,10 @@ public:
     cv::Mat toolImage_left_arm_2; //left rendered Image for ARM 2
     cv::Mat toolImage_right_arm_2; //right rendered Image for ARM 2
 
-    cv::Mat Cam_left_arm_1;
+	cv::Mat toolImage_cam_left;
+	cv::Mat toolImage_cam_right;
+
+	cv::Mat Cam_left_arm_1;
     cv::Mat Cam_right_arm_1;
     cv::Mat Cam_left_arm_2;
     cv::Mat Cam_right_arm_2;
@@ -143,7 +146,7 @@ public:
 	//double matching_score(const cv::Mat & stat);
 	
 	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & zt);
-	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & sigma_delt);
+	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
     void computeSigmaMeasures(
 		std::vector<double> & measureWeights,
 		const std::vector<cv::Mat_<double> > & sigma_point_in,
@@ -193,8 +196,9 @@ public:
             const cv::Mat &zt
     );
     double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right);
-
-    void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
+	double measureFuncSameCam(cv::Mat & toolImage_cam, ToolModel::toolModel &toolPose_left, ToolModel::toolModel &toolPose_right,
+											const cv::Mat &segmented_cam, const cv::Mat & Projection_mat, cv::Mat &Cam_matrix_tool_left, cv::Mat &Cam_matrix_tool_right);
+	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
     void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 
 };
