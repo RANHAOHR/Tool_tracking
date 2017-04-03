@@ -73,8 +73,7 @@
 
 class KalmanFilter {
 
-//private:
-public:
+private:
     ros::NodeHandle nh_;  //may need this
 
     ToolModel ukfToolModel;  /// it should be set up the first time, probably need updates of the camera poses
@@ -89,6 +88,8 @@ public:
 
 	cv::Mat toolImage_cam_left;
 	cv::Mat toolImage_cam_right;
+
+
 
 	cv::Mat Cam_left_arm_1;
     cv::Mat Cam_right_arm_1;
@@ -159,7 +160,10 @@ public:
     bool fvc_1;
     bool fvc_2;
 
-//public:
+public:
+
+	cv::Mat tool_rawImg_left;
+	cv::Mat tool_rawImg_right;
 
     /*
     * The default constructor
@@ -197,7 +201,7 @@ public:
     );
     double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right);
 	double measureFuncSameCam(cv::Mat & toolImage_cam, ToolModel::toolModel &toolPose_left, ToolModel::toolModel &toolPose_right,
-											const cv::Mat &segmented_cam, const cv::Mat & Projection_mat, cv::Mat &Cam_matrix_tool_left, cv::Mat &Cam_matrix_tool_right);
+											const cv::Mat &segmented_cam, const cv::Mat & Projection_mat, cv::Mat &raw_img, cv::Mat &Cam_matrix_tool_left, cv::Mat &Cam_matrix_tool_right);
 	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
     void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 

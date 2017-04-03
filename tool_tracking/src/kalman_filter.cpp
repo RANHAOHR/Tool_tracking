@@ -53,14 +53,17 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	ROS_INFO("Initializing UKF...");
 
 	// initialization, just basic black image ??? how to get the size of the image
-	toolImage_left_arm_1 = cv::Mat::zeros(640, 800, CV_8UC3);
-	toolImage_right_arm_1 = cv::Mat::zeros(640, 800, CV_8UC3);
+	toolImage_left_arm_1 = cv::Mat::zeros(480, 640, CV_8UC3);
+	toolImage_right_arm_1 = cv::Mat::zeros(480, 640, CV_8UC3);
 
-	toolImage_left_arm_2 = cv::Mat::zeros(640, 800, CV_8UC3);
-	toolImage_right_arm_2 = cv::Mat::zeros(640, 800, CV_8UC3);
+	toolImage_left_arm_2 = cv::Mat::zeros(480, 640, CV_8UC3);
+	toolImage_right_arm_2 = cv::Mat::zeros(480, 640, CV_8UC3);
 
-	toolImage_cam_left = cv::Mat::zeros(640, 800, CV_8UC3);
-	toolImage_cam_right = cv::Mat::zeros(640, 800, CV_8UC3);
+	toolImage_cam_left = cv::Mat::zeros(480, 640, CV_8UC3);
+	toolImage_cam_right = cv::Mat::zeros(480, 640, CV_8UC3);
+
+	tool_rawImg_left = cv::Mat::zeros(480, 640, CV_8UC3);
+	tool_rawImg_right =cv::Mat::zeros(480, 640, CV_8UC3);
 
 	//Set up forward kinematics.
 	/***motion model params***/
@@ -366,7 +369,7 @@ double KalmanFilter::measureFunc(
 };
 
 double KalmanFilter::measureFuncSameCam(cv::Mat & toolImage_cam, ToolModel::toolModel &toolPose_left, ToolModel::toolModel &toolPose_right,
-										const cv::Mat &segmented_cam, const cv::Mat & Projection_mat, cv::Mat &Cam_matrix_tool_left, cv::Mat &Cam_matrix_tool_right) {
+										const cv::Mat &segmented_cam, const cv::Mat & Projection_mat, cv::Mat &raw_img, cv::Mat &Cam_matrix_tool_left, cv::Mat &Cam_matrix_tool_right) {
 
 	toolImage_cam.setTo(0);
 	/***do the sampling and get the matching score***/
@@ -374,6 +377,9 @@ double KalmanFilter::measureFuncSameCam(cv::Mat & toolImage_cam, ToolModel::tool
 
 	ukfToolModel.renderTool(toolImage_cam, toolPose_left, Cam_matrix_tool_left, Projection_mat);
 	ukfToolModel.renderTool(toolImage_cam, toolPose_right, Cam_matrix_tool_right, Projection_mat);
+
+	ukfToolModel.renderTool(raw_img, toolPose_left, Cam_matrix_tool_left, Projection_mat);
+	ukfToolModel.renderTool(raw_img, toolPose_right, Cam_matrix_tool_right, Projection_mat);
 
 	double matchingScore = ukfToolModel.calculateMatchingScore(toolImage_cam, segmented_cam);
 
@@ -646,7 +652,7 @@ double KalmanFilter::matching_score(
 
 	//Render the tools and compute the matching score
 	//TODO: Need both arms in the same image.
-
+//
 //	double matchingScore_arm_1 = measureFunc(
 //		toolImage_left_arm_1,
 //		toolImage_right_arm_1,
@@ -676,11 +682,11 @@ double KalmanFilter::matching_score(
 //
 //	double result = (matchingScore_arm_1 + matchingScore_arm_2) / 2;
 	////testing
-	double matchingScore_left = measureFuncSameCam(toolImage_cam_left, arm_1, arm_2, segmented_left, P_left, Cam_left_arm_1, Cam_left_arm_2);
-	double matchingScore_right = measureFuncSameCam(toolImage_cam_right, arm_1, arm_2, segmented_right, P_right, Cam_right_arm_1, Cam_right_arm_2);
+	double matchingScore_left = measureFuncSameCam(toolImage_cam_left, arm_1, arm_2, segmented_left, P_left, tool_rawImg_left, Cam_left_arm_1, Cam_left_arm_2);
+	double matchingScore_right = measureFuncSameCam(toolImage_cam_right, arm_1, arm_2, segmented_right, P_right,tool_rawImg_right, Cam_right_arm_1, Cam_right_arm_2);
 
-	cv::imshow("Real Left Cam", segmented_left);
-	cv::imshow("Real Right Cam", segmented_right);
+	cv::imshow("Real Left Cam", tool_rawImg_left);
+	cv::imshow("Real Right Cam", tool_rawImg_right);
 
 	cv::imshow("Render under LEFT cam" ,toolImage_cam_left );
 	cv::imshow("Render under RIGHT cam" ,toolImage_cam_right );

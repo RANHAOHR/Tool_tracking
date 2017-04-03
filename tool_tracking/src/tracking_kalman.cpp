@@ -126,6 +126,8 @@ int main(int argc, char **argv) {
 		ros::spinOnce();
 
 		if (freshImage ){
+			UKF.tool_rawImg_left = rawImage_left.clone();
+			UKF.tool_rawImg_right = rawImage_right.clone();
 
 			seg_left = segmentation(rawImage_left);  //or use image_vessselness
 			seg_right = segmentation(rawImage_right);
