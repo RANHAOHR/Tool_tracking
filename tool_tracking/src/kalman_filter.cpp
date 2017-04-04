@@ -73,8 +73,8 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	cmd_1_old = cv::Mat_<double>(state_dimension, 1);
 	cmd_2_old = cv::Mat_<double>(state_dimension, 1);
 
-//	com_s1 = nh_.subscribe("/dvrk/PSM1/set_position_joint", 10, &KalmanFilter::newCommandCallback1, this);
-//	com_s2 = nh_.subscribe("/dvrk/PSM2/set_position_joint", 10, &KalmanFilter::newCommandCallback2, this);
+	com_s1 = nh_.subscribe("/dvrk/PSM1/set_position_joint", 10, &KalmanFilter::newCommandCallback1, this);
+	com_s2 = nh_.subscribe("/dvrk/PSM2/set_position_joint", 10, &KalmanFilter::newCommandCallback2, this);
 
 	kinematics = Davinci_fwd_solver();
 
