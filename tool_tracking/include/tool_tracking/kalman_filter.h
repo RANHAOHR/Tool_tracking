@@ -142,20 +142,14 @@ private:
     cv::Mat P_left;
     cv::Mat P_right;
 
-    double matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right, const std::vector<double> & joints_1, const std::vector<double> & joints_2);
+    double matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
 	//double matching_score(const cv::Mat & stat);
 	
 	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & zt);
 	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
-    void computeSigmaMeasures(
-		std::vector<double> & measureWeights,
-		const std::vector<cv::Mat_<double> > & sigma_point_in,
-		const cv::Mat &segmented_left,
-		const cv::Mat &segmented_right,
-		const std::vector<double> & joints_1,
-		const std::vector<double> & joints_2
-	);
+    void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in,
+		const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
     bool fvc_1;
     bool fvc_2;
