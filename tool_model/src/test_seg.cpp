@@ -2,24 +2,15 @@
 
 #include <ros/ros.h>
  #include <cv_bridge/cv_bridge.h>
- #include <sensor_msgs/image_encodings.h>
  #include <image_transport/image_transport.h>
-
-#include <time.h> 
 
  #include "std_msgs/MultiArrayLayout.h"
  #include "std_msgs/MultiArrayDimension.h"
  #include "std_msgs/Float64MultiArray.h"
 
- #include <vector>
- #include <iostream>
 
 #include <highgui.h>
-#include "opencv2/imgproc/imgproc.hpp"
-#include <opencv2/core/core.hpp>
 
-#include <stdlib.h>
-#include <stdio.h>
 #include "opencv/cv.hpp"
 using namespace cv;
 
@@ -163,11 +154,16 @@ Mat seg_right;
     		imshow( "right_raw_img", rawImage_right);
 	  		imshow( "Right_Segmented", seg_right );
 
+			imwrite("/home/ranhao/ros_ws/src/Tool_tracking/tool_model/left_raw_img.png", rawImage_left);
+			imwrite("/home/ranhao/ros_ws/src/Tool_tracking/tool_model/Left_Segmented.png", seg_left);
+			imwrite("/home/ranhao/ros_ws/src/Tool_tracking/tool_model/right_raw_img.png", rawImage_right);
+			imwrite("/home/ranhao/ros_ws/src/Tool_tracking/tool_model/Right_Segmented.png", seg_right);
+
 			  //cout<<"after imshow"<<endl;
 			//waitKey(10);
-    		avg_tim += sec;
-    		cout<< "avg time is : "<< avg_tim/count<<endl;
-    		count += 1;
+//    		avg_tim += sec;
+//    		cout<< "avg time is : "<< avg_tim/count<<endl;
+//    		count += 1;
     		//cout<<"each segmentation peroid takes: "<<t<<endl;
     		freshImage = false;
     	}
