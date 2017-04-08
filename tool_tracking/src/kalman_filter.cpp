@@ -59,8 +59,8 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	toolImage_left_arm_2 = cv::Mat::zeros(480, 640, CV_8UC3);
 	toolImage_right_arm_2 = cv::Mat::zeros(480, 640, CV_8UC3);
 
-	toolImage_cam_left = cv::Mat::zeros(480, 640, CV_8UC3);
-	toolImage_cam_right = cv::Mat::zeros(480, 640, CV_8UC3);
+	toolImage_cam_left = cv::Mat::zeros(800, 1200, CV_8UC3);
+	toolImage_cam_right = cv::Mat::zeros(800, 1200, CV_8UC3);
 
 	tool_rawImg_left = cv::Mat::zeros(480, 640, CV_8UC3);
 	tool_rawImg_right =cv::Mat::zeros(480, 640, CV_8UC3);
@@ -83,38 +83,59 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	std::vector<std::vector<double> > tmp;
 
 	tmp.resize(2);
-	tmp[0].resize(state_dimension);
-	tmp[1].resize(state_dimension);
-	sensor_1.resize(state_dimension);
-	sensor_2.resize(state_dimension);
 	if(davinci_interface::get_fresh_robot_pos(tmp)){
 		sensor_1 = tmp[0];
 		sensor_2 = tmp[1];
 	}
-
 	Eigen::Affine3d a1_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_1.data()));
 	Eigen::Vector3d a1_trans = a1_pos.translation();
-	//Eigen::Vector3d green_rpy = green_pos.rotation().eulerAngles(0, 1, 2);
-
 	cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
 	computeRodriguesVec(a1_pos, a1_rvec);
 
+
 	Eigen::Affine3d a2_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_2.data()));
 	Eigen::Vector3d a2_trans = a2_pos.translation();
-	//Eigen::Vector3d yellow_rpy = yellow_pos.rotation().eulerAngles(0, 1, 2);
-
 	cv::Mat a2_rvec = cv::Mat::zeros(3,1,CV_64FC1);
 	computeRodriguesVec(a2_pos, a2_rvec);
 
+/*	Eigen::Affine3d a1_1 = kinematics.computeAffineOfDH(DH_a1, DH_d1, DH_alpha1, sensor_1[0] + DH_q_offset0 );
+	Eigen::Affine3d a1_2 = kinematics.computeAffineOfDH(DH_a2, DH_d2, DH_alpha2, sensor_1[1] + DH_q_offset1 );
+	Eigen::Affine3d a1_3 = kinematics.computeAffineOfDH(DH_a3, sensor_1[2] + DH_d3, DH_alpha3, DH_q_offset2 );
+
+
+	Eigen::Affine3d a1_pos = a1_1 * a1_2 * a1_3;
+	Eigen::Vector3d a1_trans = a1_pos.translation();
+	//Eigen::Vector3d green_rpy = green_pos.rotation().eulerAngles(0, 1, 2);
+
+//	Eigen::Affine3d a1_4 = kinematics.computeAffineOfDH(DH_a4, DH_d4, DH_alpha4, sensor_1[3] + DH_q_offset3 );
+//	Eigen::Affine3d a1_5 = kinematics.computeAffineOfDH(DH_a5, DH_d5, DH_alpha5, sensor_1[4] + DH_q_offset4 );
+// 	a1_pos = a1_pos * a1_4 * a1_5;
+	cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+	computeRodriguesVec(a1_pos, a1_rvec);
+
+	//Eigen::Affine3d a2_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_2.data()));
+	Eigen::Affine3d a2_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha1, sensor_2[0] + DH_q_offset0 );
+	Eigen::Affine3d a2_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha2, sensor_2[1] + DH_q_offset1 );
+	Eigen::Affine3d a2_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_2[2] + DH_d2, DH_alpha3, DH_q_offset2 );
+	//Eigen::Affine3d a2_4 = kinematics.computeAffineOfDH(DH_a_params[3], DH_d4, DH_alpha4, sensor_2[3] + DH_q_offset3 );
+
+	Eigen::Affine3d a2_pos = a2_1 * a2_2 * a2_3;
+	Eigen::Vector3d a2_trans = a2_pos.translation();
+
+//	Eigen::Affine3d a2_4 = kinematics.computeAffineOfDH(DH_a4, DH_d4, DH_alpha4, sensor_1[3] + DH_q_offset3 );
+//	Eigen::Affine3d a2_5 = kinematics.computeAffineOfDH(DH_a5, DH_d5, DH_alpha5, sensor_2[4] + DH_q_offset4 );
+//	a2_pos = a2_pos * a2_4 * a2_5;
+	cv::Mat a2_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+	computeRodriguesVec(a2_pos, a2_rvec);*/
+
 	kalman_mu = cv::Mat_<double>::zeros(L, 1);
 
-	//TODO:HERE has the orientation CHANGED weired!!!!!!!!!!!!!!!!!!!!!!!!!!
 	kalman_mu.at<double>(0 , 0) = a1_trans[0];
 	kalman_mu.at<double>(1 , 0) = a1_trans[1];
 	kalman_mu.at<double>(2 , 0) = a1_trans[2];
-	kalman_mu.at<double>(3 , 0) = a2_rvec.at<double>(0,0);
-	kalman_mu.at<double>(4 , 0) = a2_rvec.at<double>(1,0);
-	kalman_mu.at<double>(5 , 0) = a2_rvec.at<double>(2,0);
+	kalman_mu.at<double>(3 , 0) = a1_rvec.at<double>(0,0);
+	kalman_mu.at<double>(4 , 0) = a1_rvec.at<double>(1,0);
+	kalman_mu.at<double>(5 , 0) = a1_rvec.at<double>(2,0);
 	kalman_mu.at<double>(6 , 0) = tmp[0][4];
 	kalman_mu.at<double>(7 , 0) = tmp[0][5];
 	kalman_mu.at<double>(8 , 0) = tmp[0][6];
@@ -122,9 +143,9 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	kalman_mu.at<double>(9 , 0) = a2_trans[0];
 	kalman_mu.at<double>(10, 0) = a2_trans[1];
 	kalman_mu.at<double>(11, 0) = a2_trans[2];
-	kalman_mu.at<double>(12, 0) = a1_rvec.at<double>(0,0);
-	kalman_mu.at<double>(13, 0) = a1_rvec.at<double>(1,0);
-	kalman_mu.at<double>(14, 0) = a1_rvec.at<double>(2,0);
+	kalman_mu.at<double>(12, 0) = a2_rvec.at<double>(0,0);
+	kalman_mu.at<double>(13, 0) = a2_rvec.at<double>(1,0);
+	kalman_mu.at<double>(14, 0) = a2_rvec.at<double>(2,0);
 	kalman_mu.at<double>(15, 0) = tmp[1][4];
 	kalman_mu.at<double>(16, 0) = tmp[1][5];
 	kalman_mu.at<double>(17, 0) = tmp[1][6];
@@ -160,40 +181,74 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	//freshCameraInfo = false; //should be left and right
 	
 	//The projection matrix from the simulation does not accurately reflect the Da Vinci robot. We are hardcoding the matrix from the da vinci itself.
-	//projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
-	//projectionMat_subscriber_l = nh_.subscribe("/davinci_endo/left/camera_info", 1, &KalmanFilter::projectionLeftCB, this);
+//	projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
+//	projectionMat_subscriber_l = nh_.subscribe("/davinci_endo/left/camera_info", 1, &KalmanFilter::projectionLeftCB, this);
 
 	P_left = cv::Mat::zeros(3,4,CV_64FC1);
 	P_right = cv::Mat::zeros(3,4,CV_64FC1);
 	
 	cv::Mat P_l(3, 4, CV_64FC1);
-	P_l.at<double>(0, 0) = 893.7852590197848;
+//	P_l.at<double>(0, 0) = 893.7852590197848;
+//	P_l.at<double>(1, 0) = 0;
+//	P_l.at<double>(2, 0) = 0;
+//
+//	P_l.at<double>(0, 1) = 0;
+//	P_l.at<double>(1, 1) = 893.7852590197848;
+//	P_l.at<double>(2, 1) = 0;
+//
+//	P_l.at<double>(0, 2) = 288.4443244934082; // horiz
+//	P_l.at<double>(1, 2) = 259.7727756500244; //verticle
+//	P_l.at<double>(2, 2) = 1;
+//
+//	P_l.at<double>(0, 3) = 0;
+//	P_l.at<double>(1, 3) = 0;
+//	P_l.at<double>(2, 3) = 0;
+
+	/*********/
+	P_l.at<double>(0, 0) = 1034.473;
 	P_l.at<double>(1, 0) = 0;
 	P_l.at<double>(2, 0) = 0;
 
 	P_l.at<double>(0, 1) = 0;
-	P_l.at<double>(1, 1) = 893.7852590197848;
+	P_l.at<double>(1, 1) = 1034.473;
 	P_l.at<double>(2, 1) = 0;
 
-	P_l.at<double>(0, 2) = 288.4443244934082; // horiz
-	P_l.at<double>(1, 2) = 259.7727756500244; //verticle
+	P_l.at<double>(0, 2) = 320.5; // horiz
+	P_l.at<double>(1, 2) = 240.5; //verticle
 	P_l.at<double>(2, 2) = 1;
 
 	P_l.at<double>(0, 3) = 0;
 	P_l.at<double>(1, 3) = 0;
 	P_l.at<double>(2, 3) = 0;
 
+
 	cv::Mat P_r(3, 4, CV_64FC1);
-	P_r.at<double>(0, 0) = 893.7852590197848;
+//	P_r.at<double>(0, 0) = 893.7852590197848;
+//	P_r.at<double>(1, 0) = 0;
+//	P_r.at<double>(2, 0) = 0;
+//
+//	P_r.at<double>(0, 1) = 0;
+//	P_r.at<double>(1, 1) = 893.7852590197848;
+//	P_r.at<double>(2, 1) = 0;
+//
+//	P_r.at<double>(0, 2) = 288.4443244934082; // horiz
+//	P_r.at<double>(1, 2) = 259.7727756500244; //verticle
+//	P_r.at<double>(2, 2) = 1;
+//
+//	P_r.at<double>(0, 3) = 4.732953897952732;
+//	P_r.at<double>(1, 3) = 0;
+//	P_r.at<double>(2, 3) = 0;
+
+	P_r.at<double>(0, 0) = 1034.473;
 	P_r.at<double>(1, 0) = 0;
 	P_r.at<double>(2, 0) = 0;
 
 	P_r.at<double>(0, 1) = 0;
-	P_r.at<double>(1, 1) = 893.7852590197848;
+	P_r.at<double>(1, 1) = 1034.473;
 	P_r.at<double>(2, 1) = 0;
 
-	P_r.at<double>(0, 2) = 288.4443244934082; // horiz
-	P_r.at<double>(1, 2) = 259.7727756500244; //verticle
+	P_r.at<double>(0, 2) = 320.5; // horiz
+	P_r.at<double>(1, 2) = 240.5; //verticle
 	P_r.at<double>(2, 2) = 1;
 
 	P_r.at<double>(0, 3) = 4.732953897952732;
@@ -400,29 +455,19 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	/******Find and convert our various params and inputs******/
 	//Get sensor update.
 	std::vector<std::vector<double> > tmp;
-	int state_dimension = 6;
 	tmp.resize(2);
-	tmp[0].resize(state_dimension);
-	tmp[1].resize(state_dimension);
-	sensor_1.resize(state_dimension);
-	sensor_2.resize(state_dimension);
-
 	if(davinci_interface::get_fresh_robot_pos(tmp)){
 		sensor_1 = tmp[0];
 		sensor_2 = tmp[1];
 	}
-
-	//Convert into proper format, not want to use the euler angle prefer rodrigues for vision
 	Eigen::Affine3d a1_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_1.data()));
 	Eigen::Vector3d a1_trans = a1_pos.translation();
-	//Eigen::Vector3d a1_rpy = a1_pos.rotation().eulerAngles(0, 1, 2);
-
 	cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
 	computeRodriguesVec(a1_pos, a1_rvec);
 
+
 	Eigen::Affine3d a2_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_2.data()));
 	Eigen::Vector3d a2_trans = a2_pos.translation();
-	//Eigen::Vector3d a2_rpy = a2_pos.rotation().eulerAngles(0, 1, 2);
 	cv::Mat a2_rvec = cv::Mat::zeros(3,1,CV_64FC1);
 	computeRodriguesVec(a2_pos, a2_rvec);
 
@@ -430,9 +475,9 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	zt.at<double>(0 , 0) = a1_trans[0];
 	zt.at<double>(1 , 0) = a1_trans[1];
 	zt.at<double>(2 , 0) = a1_trans[2];
-	zt.at<double>(3 , 0) = a2_rvec.at<double>(0,0);
-	zt.at<double>(4 , 0) = a2_rvec.at<double>(1,0);
-	zt.at<double>(5 , 0) = a2_rvec.at<double>(2,0);
+	zt.at<double>(3 , 0) = a1_rvec.at<double>(0,0);
+	zt.at<double>(4 , 0) = a1_rvec.at<double>(1,0);
+	zt.at<double>(5 , 0) = a1_rvec.at<double>(2,0);
 	zt.at<double>(6 , 0) = tmp[0][4];
 	zt.at<double>(7 , 0) = tmp[0][5];
 	zt.at<double>(8 , 0) = tmp[0][6];
@@ -440,9 +485,9 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	zt.at<double>(9 , 0) = a2_trans[0];
 	zt.at<double>(10, 0) = a2_trans[1];
 	zt.at<double>(11, 0) = a2_trans[2];
-	zt.at<double>(12, 0) = a1_rvec.at<double>(0,0);
-	zt.at<double>(13, 0) = a1_rvec.at<double>(1,0);
-	zt.at<double>(14, 0) = a1_rvec.at<double>(2,0);
+	zt.at<double>(12, 0) = a2_rvec.at<double>(0,0);
+	zt.at<double>(13, 0) = a2_rvec.at<double>(1,0);
+	zt.at<double>(14, 0) = a2_rvec.at<double>(2,0);
 	zt.at<double>(15, 0) = tmp[1][4];
 	zt.at<double>(16, 0) = tmp[1][5];
 	zt.at<double>(17, 0) = tmp[1][6];
@@ -654,12 +699,12 @@ double KalmanFilter::matching_score(
 
 	/*TODO: different coordinate system and definition of orientations*/
 	double joint_oval_1 = stat.at<double>(6 , 0);
-	double joint_grip_dist_1 = -stat.at<double>(7 , 0);
-	double joint_grip_angle_1 = -stat.at<double>(8 , 0);
+	double joint_grip_dist_1 = stat.at<double>(7 , 0);
+	double joint_grip_angle_1 = stat.at<double>(8 , 0);
 
 	double joint_oval_2 = stat.at<double>(15, 0);
-	double joint_grip_dist_2 = -stat.at<double>(16, 0);
-	double joint_grip_angle_2 = -stat.at<double>(17, 0);
+	double joint_grip_dist_2 = stat.at<double>(16, 0);
+	double joint_grip_angle_2 = stat.at<double>(17, 0);
 
 	convertToolModel(arm1, arm_1, joint_oval_1, joint_grip_dist_1, joint_grip_angle_1);
 	convertToolModel(arm2, arm_2, joint_oval_2, joint_grip_dist_2, joint_grip_angle_2);
@@ -668,7 +713,7 @@ double KalmanFilter::matching_score(
 
 	//Render the tools and compute the matching score
 	//TODO: Need both arms in the same image.
-//
+
 //	double matchingScore_arm_1 = measureFunc(
 //		toolImage_left_arm_1,
 //		toolImage_right_arm_1,
@@ -784,14 +829,15 @@ void KalmanFilter::convertToolModel(const cv::Mat & trans, ToolModel::toolModel 
 	cv::Rodrigues(rot, rot_vec );
 	//ROS_INFO_STREAM("rot_vec " << rot_vec);*/
 
-	toolModel.tvec_elp(0) = trans.at<double>(0,0);
-	toolModel.tvec_elp(1) = trans.at<double>(1,0);
-	toolModel.tvec_elp(2) = trans.at<double>(2,0);
-	toolModel.rvec_elp(0) = trans.at<double>(3,0);
-	toolModel.rvec_elp(1) = trans.at<double>(4,0);
-	toolModel.rvec_elp(2) = trans.at<double>(5,0);
+	toolModel.tvec_grip2(0) = trans.at<double>(0,0);
+	toolModel.tvec_grip2(1) = trans.at<double>(1,0);
+	toolModel.tvec_grip2(2) = trans.at<double>(2,0);
+	toolModel.rvec_grip2(0) = trans.at<double>(3,0);
+	toolModel.rvec_grip2(1) = trans.at<double>(4,0);
+	toolModel.rvec_grip2(2) = trans.at<double>(5,0);
 
 	ukfToolModel.computeDavinciModel(toolModel, ja1, ja2, ja3);
+
 };
 
 void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec){

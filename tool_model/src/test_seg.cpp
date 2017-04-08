@@ -158,9 +158,9 @@ Mat seg_right;
 			imwrite("/home/ranhao/ros_ws/src/Tool_tracking/tool_model/Left_Segmented.png", seg_left);
 			imwrite("/home/ranhao/ros_ws/src/Tool_tracking/tool_model/right_raw_img.png", rawImage_right);
 			imwrite("/home/ranhao/ros_ws/src/Tool_tracking/tool_model/Right_Segmented.png", seg_right);
-
+			waitKey(10);
 			  //cout<<"after imshow"<<endl;
-			//waitKey(10);
+
 //    		avg_tim += sec;
 //    		cout<< "avg time is : "<< avg_tim/count<<endl;
 //    		count += 1;
