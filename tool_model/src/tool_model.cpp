@@ -37,13 +37,7 @@
  */
 
 #include <ros/ros.h>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
-
-#include <opencv2/opencv.hpp>
-
 #include <boost/random.hpp>
-#include <cwru_opencv_common/projective_geometry.h>
 
 #include <tool_model_lib/tool_model.h>
 
@@ -822,7 +816,7 @@ void ToolModel::modify_model_(std::vector<glm::vec3> &input_vertices, std::vecto
 translation, rotation, new z axis, new x axis*/
 //TODO:
 ToolModel::toolModel
-ToolModel::setRandomConfig(const toolModel &seeds, const double &theta) {
+ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder, const double &theta_oval, const double &theta_open){
 
     toolModel newTool = seeds;  //BODY part is done here
 
@@ -830,35 +824,30 @@ ToolModel::setRandomConfig(const toolModel &seeds, const double &theta) {
     double step = 0.0016;
     double dev = randomNumber(step, 0);
 
-    newTool.tvec_elp(0) = seeds.tvec_elp(0) + dev;
+    newTool.tvec_grip2(0) = seeds.tvec_grip2(0) + dev;
 
     dev = randomNumber(step, 0);
-    newTool.tvec_elp(1) = seeds.tvec_elp(1) + dev;
+    newTool.tvec_grip2(1) = seeds.tvec_grip2(1) + dev;
 
     dev = randomNumber(step, 0);
-    newTool.tvec_elp(2) = seeds.tvec_elp(2)+ dev;// + dev;
+    newTool.tvec_grip2(2) = seeds.tvec_grip2(2)+ dev;
 
     dev = randomNumber(step, 0);
-    newTool.rvec_elp(0) = seeds.rvec_elp(0)+ dev;
+    newTool.rvec_grip2(0) = seeds.rvec_grip2(0)+ dev;
 
     dev = randomNumber(step, 0);
-    newTool.rvec_elp(1) = seeds.rvec_elp(1)+ dev;
+    newTool.rvec_grip2(1) = seeds.rvec_grip2(1)+ dev;
 
     dev = randomNumber(step, 0);
-    newTool.rvec_elp(2) = seeds.rvec_elp(2)+ dev;
-
+    newTool.rvec_grip2(2) = seeds.rvec_grip2(2)+ dev;
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    double theta_ellipse = theta + randomNumber(0.001, 0);    //-90,90
-    double theta_grip_1 = randomNum(-M_PI / 2, M_PI / 2);
-    double theta_grip_2 = randomNum(-M_PI / 2, M_PI / 2);
+    double theta_1 = theta_cylinder + randomNumber(0.001, 0);   // tool rotation
+    double theta_grip_1 = theta_oval + randomNumber(0.001, 0); // oval rotation
+    double theta_grip_2 = theta_open + randomNumber(0.001, 0);
 
-    /*** if the two joints get overflow ***/
-    if (theta_grip_1 < theta_grip_2)
-        theta_grip_1 = theta_grip_2 + randomNum(0, 0.2);
-
-    computeModelPose(newTool, theta_ellipse, theta_grip_1, theta_grip_2);
+    computeDavinciModel(newTool, theta_1, theta_grip_1, theta_grip_2);
 
     return newTool;
 };

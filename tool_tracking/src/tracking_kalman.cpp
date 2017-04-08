@@ -89,34 +89,6 @@ int main(int argc, char **argv) {
 
 	ROS_INFO("---- done subscribe -----");
 
-//	/***testing segmentation images***/
-//	cv::Size size(640, 480);
-//	std::string package = ros::package::getPath("tool_tracking");
-//	seg_left = cv::imread(package + "/left.png", CV_LOAD_IMAGE_GRAYSCALE);
-//	//seg_left = cv::imread(package + "/particle_test.png", CV_LOAD_IMAGE_GRAYSCALE );  //testing image
-//	seg_right = cv::imread(package + "/right.png", CV_LOAD_IMAGE_GRAYSCALE);
-//
-//    //this is to avoid the white line above
-//    cv::Mat new_seg_left = seg_left.rowRange(5,480);
-//    cv::Mat new_seg_right = seg_right.rowRange(5,480);
-//
-//    cv::resize(new_seg_left, new_seg_left,size);
-//    cv::resize(new_seg_right, new_seg_right,size);
-
-
-//	ToolModel newtest;
-//
-//	ToolModel::toolModel initial_test;
-//
-//	initial_test.tvec_elp(0) = 0;  //left and right (image frame)
-//	initial_test.tvec_elp(1) = 0;  //up and down
-//	initial_test.tvec_elp(2) = -0.0037;
-//	initial_test.rvec_elp(0) = 1.11383;
-//	initial_test.rvec_elp(1) = 1.11383;
-//	initial_test.rvec_elp(2) = 2.24769;
-//
-//	newtest.computeModelPose(initial_test, 0.0, 0.0, 0.0 );
-
 	/*** Timer set up ***/
 	ros::Rate loop_rate(50);
 

@@ -42,7 +42,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-		nh_(*nodehandle), numParticles(500), Downsample_rate(0.02), toolSize(2), L(7) {
+        node_handle(*nodehandle), numParticles(100), Downsample_rate(0.02), toolSize(2), L(9) {
 
 	/****need to subscribe this***/
     tf::StampedTransform arm_1__cam_l_st;
@@ -86,17 +86,17 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
 
 
-	Cam_left = Cam_left_arm_2.clone();  ///should be camera extrinsic parameter relative to the tools
-	Cam_right = Cam_right_arm_2.clone();
+	Cam_left = Cam_left_arm_1.clone();  ///should be camera extrinsic parameter relative to the tools
+	Cam_right = Cam_right_arm_1.clone();
 
 	initializeParticles();
 
 	// initialization, just basic black image ??? how to get the size of the image
-	toolImage_left = cv::Mat::zeros(475, 640, CV_8UC3);
-	toolImage_right = cv::Mat::zeros(475, 640, CV_8UC3);
+	toolImage_left = cv::Mat::zeros(480, 640, CV_8UC3);
+	toolImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
 
-	toolImage_left_temp = cv::Mat::zeros(475, 640, CV_8UC3);
-	toolImage_right_temp = cv::Mat::zeros(475, 640, CV_8UC3);
+	toolImage_left_temp = cv::Mat::zeros(480, 640, CV_8UC3);
+	toolImage_right_temp = cv::Mat::zeros(480, 640, CV_8UC3);
 
 
 };
@@ -111,23 +111,23 @@ void ParticleFilter::initializeParticles() {
 	matchingScores.resize(numParticles); //initialize matching score array
 	particleWeights.resize(numParticles); //initialize particle weight array
 
-	///generate random seeds
-//	initial.tvec_elp(0) = 0.0;  //left and right (image frame)
-//	initial.tvec_elp(1) = 0.0;  //up and down
-//	initial.tvec_elp(2) = -0.03;
-//	initial.rvec_elp(0) = 0.0;
-//	initial.rvec_elp(1) = 0.0;
-//	initial.rvec_elp(2) = -1;
 
     /******Find and convert our various params and inputs******/
     //Get sensor update.
+    kinematics = Davinci_fwd_solver();
+
+    //Pull in our first round of sensor data.
+    davinci_interface::init_joint_feedback(node_handle);
+
     std::vector<std::vector<double> > tmp;
     tmp.resize(2);
     if(davinci_interface::get_fresh_robot_pos(tmp)){
         sensor_1 = tmp[0];
         sensor_2 = tmp[1];
     }
+
     Eigen::Affine3d a1_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_1.data()));
+
     Eigen::Vector3d a1_trans = a1_pos.translation();
     cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
     computeRodriguesVec(a1_pos, a1_rvec);
@@ -138,24 +138,26 @@ void ParticleFilter::initializeParticles() {
     cv::Mat a2_rvec = cv::Mat::zeros(3,1,CV_64FC1);
     computeRodriguesVec(a2_pos, a2_rvec);
 
-	initial.tvec_grip2(0) = a2_trans[0];  //left and right (image frame)
-	initial.tvec_grip2(1) = a2_trans[1];  //up and down
-	initial.tvec_grip2(2) = a2_trans[2];
-	initial.rvec_grip2(0) = a2_rvec.at<double>(0,0);
-	initial.rvec_grip2(1) = a2_rvec.at<double>(1,0);
-	initial.rvec_grip2(2) = a2_rvec.at<double>(2,0);
+	initial.tvec_grip2(0) = a1_trans[0];  //left and right (image frame)
+	initial.tvec_grip2(1) = a1_trans[1];  //up and down
+	initial.tvec_grip2(2) = a1_trans[2];
+	initial.rvec_grip2(0) = a1_rvec.at<double>(0,0);
+	initial.rvec_grip2(1) = a1_rvec.at<double>(1,0);
+	initial.rvec_grip2(2) = a1_rvec.at<double>(2,0);
 
-    double theta = 0.1; //initial guess
+    double theta_cylinder = tmp[0][4]; //initial guess
+    double theta_oval = tmp[0][5]; //initial guess
+    double theta_open = tmp[0][6]; //initial guess
 
 	for (int i = 0; i < numParticles; i++) {
-		particles[i] = newToolModel.setRandomConfig(initial, theta);
+		particles[i] = newToolModel.setRandomConfig(initial, theta_cylinder, theta_oval, theta_open );
 	}
 
 };
 
 
 std::vector<cv::Mat>
-ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,
+ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right,
 							 const cv::Mat &P_left, const cv::Mat &P_right) {
 
     ros::spinOnce();
@@ -189,7 +191,6 @@ ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_le
 //            ROS_INFO_STREAM(" particle rvec(0)" << i << " " <<particles[i].rvec_cyl(0) );
 //            ROS_INFO_STREAM(" particle rvec(1)" << i << " " <<particles[i].rvec_cyl(1) );
 //            ROS_INFO_STREAM(" particle rvec(2)" << i << " " <<particles[i].rvec_cyl(2) );
-
 			toolImage_left.setTo(0); //reset image for every start of an new loop
 			newToolModel.renderTool(toolImage_left, particles[i], Cam_left,
 									P_left); //first get the rendered image using 3d model of the tool

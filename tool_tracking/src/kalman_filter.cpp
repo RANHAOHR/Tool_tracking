@@ -98,35 +98,6 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	cv::Mat a2_rvec = cv::Mat::zeros(3,1,CV_64FC1);
 	computeRodriguesVec(a2_pos, a2_rvec);
 
-/*	Eigen::Affine3d a1_1 = kinematics.computeAffineOfDH(DH_a1, DH_d1, DH_alpha1, sensor_1[0] + DH_q_offset0 );
-	Eigen::Affine3d a1_2 = kinematics.computeAffineOfDH(DH_a2, DH_d2, DH_alpha2, sensor_1[1] + DH_q_offset1 );
-	Eigen::Affine3d a1_3 = kinematics.computeAffineOfDH(DH_a3, sensor_1[2] + DH_d3, DH_alpha3, DH_q_offset2 );
-
-
-	Eigen::Affine3d a1_pos = a1_1 * a1_2 * a1_3;
-	Eigen::Vector3d a1_trans = a1_pos.translation();
-	//Eigen::Vector3d green_rpy = green_pos.rotation().eulerAngles(0, 1, 2);
-
-//	Eigen::Affine3d a1_4 = kinematics.computeAffineOfDH(DH_a4, DH_d4, DH_alpha4, sensor_1[3] + DH_q_offset3 );
-//	Eigen::Affine3d a1_5 = kinematics.computeAffineOfDH(DH_a5, DH_d5, DH_alpha5, sensor_1[4] + DH_q_offset4 );
-// 	a1_pos = a1_pos * a1_4 * a1_5;
-	cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-	computeRodriguesVec(a1_pos, a1_rvec);
-
-	//Eigen::Affine3d a2_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_2.data()));
-	Eigen::Affine3d a2_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha1, sensor_2[0] + DH_q_offset0 );
-	Eigen::Affine3d a2_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha2, sensor_2[1] + DH_q_offset1 );
-	Eigen::Affine3d a2_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_2[2] + DH_d2, DH_alpha3, DH_q_offset2 );
-	//Eigen::Affine3d a2_4 = kinematics.computeAffineOfDH(DH_a_params[3], DH_d4, DH_alpha4, sensor_2[3] + DH_q_offset3 );
-
-	Eigen::Affine3d a2_pos = a2_1 * a2_2 * a2_3;
-	Eigen::Vector3d a2_trans = a2_pos.translation();
-
-//	Eigen::Affine3d a2_4 = kinematics.computeAffineOfDH(DH_a4, DH_d4, DH_alpha4, sensor_1[3] + DH_q_offset3 );
-//	Eigen::Affine3d a2_5 = kinematics.computeAffineOfDH(DH_a5, DH_d5, DH_alpha5, sensor_2[4] + DH_q_offset4 );
-//	a2_pos = a2_pos * a2_4 * a2_5;
-	cv::Mat a2_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-	computeRodriguesVec(a2_pos, a2_rvec);*/
 
 	kalman_mu = cv::Mat_<double>::zeros(L, 1);
 

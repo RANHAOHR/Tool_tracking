@@ -75,7 +75,7 @@ private:
 	cv::Mat Cam_left;
 	cv::Mat Cam_right;
 
-	ros::NodeHandle nh_;  //may need this
+	ros::NodeHandle node_handle;
 
 	///ros::Timer timer;
 
@@ -143,7 +143,7 @@ public:
 	 * This is the main function for tracking the needle. This function is called and it syncs all of the functions
 	*/
 	std::vector<cv::Mat>
-	trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,
+	trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right,
 				 const cv::Mat &P_left, const cv::Mat &P_right);
 	/*
 	 * resampling method
