@@ -3,8 +3,7 @@
 #include <image_transport/image_transport.h>
 #include <cwru_opencv_common/projective_geometry.h>
 #include <tool_tracking/particle_filter.h>
-#include "std_msgs/MultiArrayLayout.h"
-#include "std_msgs/Float64MultiArray.h"
+
 
 bool freshImage;
 bool freshCameraInfo;
@@ -90,42 +89,70 @@ int main(int argc, char **argv) {
 
 	/****TODO: Temp Projection matrices****/
 	cv::Mat P_l(3, 4, CV_64FC1);
-	P_l.at<double>(0, 0) = 893.7852590197848;
-	P_l.at<double>(1, 0) = 0;
-	P_l.at<double>(2, 0) = 0;
+    cv::Mat P_r(3, 4, CV_64FC1);
+//	P_l.at<double>(0, 0) = 893.7852590197848;
+//	P_l.at<double>(1, 0) = 0;
+//	P_l.at<double>(2, 0) = 0;
+//
+//	P_l.at<double>(0, 1) = 0;
+//	P_l.at<double>(1, 1) = 893.7852590197848;
+//	P_l.at<double>(2, 1) = 0;
+//
+//	P_l.at<double>(0, 2) = 288.4443244934082; // horiz
+//	P_l.at<double>(1, 2) = 259.7727756500244; //verticle
+//	P_l.at<double>(2, 2) = 1;
+//
+//	P_l.at<double>(0, 3) = 0;
+//	P_l.at<double>(1, 3) = 0;
+//	P_l.at<double>(2, 3) = 0;
+//
+//	P_r.at<double>(0, 0) = 893.7852590197848;
+//	P_r.at<double>(1, 0) = 0;
+//	P_r.at<double>(2, 0) = 0;
+//
+//	P_r.at<double>(0, 1) = 0;
+//	P_r.at<double>(1, 1) = 893.7852590197848;
+//	P_r.at<double>(2, 1) = 0;
+//
+//	P_r.at<double>(0, 2) = 288.4443244934082; // horiz
+//	P_r.at<double>(1, 2) = 259.7727756500244; //verticle
+//	P_r.at<double>(2, 2) = 1;
+//
+//	P_r.at<double>(0, 3) = 4.732953897952732;
+//	P_r.at<double>(1, 3) = 0;
+//	P_r.at<double>(2, 3) = 0;
 
-	P_l.at<double>(0, 1) = 0;
-	P_l.at<double>(1, 1) = 893.7852590197848;
-	P_l.at<double>(2, 1) = 0;
+    P_l.at<double>(0, 0) = 1034.473;
+    P_l.at<double>(1, 0) = 0;
+    P_l.at<double>(2, 0) = 0;
 
-	P_l.at<double>(0, 2) = 288.4443244934082; // horiz
-	P_l.at<double>(1, 2) = 259.7727756500244; //verticle
-	P_l.at<double>(2, 2) = 1;
+    P_l.at<double>(0, 1) = 0;
+    P_l.at<double>(1, 1) = 1034.473;
+    P_l.at<double>(2, 1) = 0;
 
-	P_l.at<double>(0, 3) = 0;
-	P_l.at<double>(1, 3) = 0;
-	P_l.at<double>(2, 3) = 0;
+    P_l.at<double>(0, 2) = 320.5; // horiz
+    P_l.at<double>(1, 2) = 240.5; //verticle
+    P_l.at<double>(2, 2) = 1;
 
-	cv::Mat P_r(3, 4, CV_64FC1);
-	P_r.at<double>(0, 0) = 893.7852590197848;
-	P_r.at<double>(1, 0) = 0;
-	P_r.at<double>(2, 0) = 0;
+    P_l.at<double>(0, 3) = 0;
+    P_l.at<double>(1, 3) = 0;
+    P_l.at<double>(2, 3) = 0;
 
-	P_r.at<double>(0, 1) = 0;
-	P_r.at<double>(1, 1) = 893.7852590197848;
-	P_r.at<double>(2, 1) = 0;
+    P_r.at<double>(0, 0) = 1034.473;
+    P_r.at<double>(1, 0) = 0;
+    P_r.at<double>(2, 0) = 0;
 
-	P_r.at<double>(0, 2) = 288.4443244934082; // horiz
-	P_r.at<double>(1, 2) = 259.7727756500244; //verticle
-	P_r.at<double>(2, 2) = 1;
+    P_r.at<double>(0, 1) = 0;
+    P_r.at<double>(1, 1) = 1034.473;
+    P_r.at<double>(2, 1) = 0;
 
-	P_r.at<double>(0, 3) = 4.732953897952732;
-	P_r.at<double>(1, 3) = 0;
-	P_r.at<double>(2, 3) = 0;
+    P_r.at<double>(0, 2) = 320.5; // horiz
+    P_r.at<double>(1, 2) = 240.5; //verticle
+    P_r.at<double>(2, 2) = 1;
 
-	clock_t t;
-	double avg_tim = 0.0;
-	int count = 1;
+    P_r.at<double>(0, 3) = 4.732953897952732;
+    P_r.at<double>(1, 3) = 0;
+    P_r.at<double>(2, 3) = 0;
 
 	/*** Timer set up ***/
 	ros::Rate loop_rate(50);

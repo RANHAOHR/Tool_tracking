@@ -43,8 +43,6 @@
 #include <iostream>
 
 #include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
 #include <stdlib.h>
 #include <math.h>
 
@@ -64,6 +62,12 @@
 #include <geometry_msgs/Transform.h>
 #include <cwru_davinci_interface/davinci_interface.h>
 
+#include <tf/transform_listener.h>
+#include <cwru_davinci_interface/davinci_interface.h>
+#include <cwru_davinci_kinematics/davinci_kinematics.h>
+
+//#include <cwru_xform_utils/xform_utils.h>
+#include <xform_utils/xform_utils.h>
 
 class ParticleFilter {
 
@@ -98,15 +102,20 @@ private:
 
 	int L;  ///DOF for one arm.
 
-	ros::Subscriber com_s1;
-	ros::Subscriber com_s2;
+    cv::Mat Cam_left_arm_1;
+    cv::Mat Cam_right_arm_1;
+    cv::Mat Cam_left_arm_2;
+    cv::Mat Cam_right_arm_2;
 
-	void newCommandCallback1(const sensor_msgs::JointState::ConstPtr &incoming);
+    Davinci_fwd_solver kinematics;
 
-	void newCommandCallback2(const sensor_msgs::JointState::ConstPtr &incoming);
+    Eigen::Affine3d arm_1__cam_l;
+    Eigen::Affine3d arm_2__cam_l;
+    Eigen::Affine3d arm_1__cam_r;
+    Eigen::Affine3d arm_2__cam_r;
 
-	std::vector<double> cmd_green;
-	std::vector<double> cmd_yellow;
+    std::vector<double> sensor_1;
+    std::vector<double> sensor_2;
 
 
 public:
@@ -159,6 +168,8 @@ public:
 							  cv::Mat &zt, cv::Mat &ut);
 
 	cv::Mat adjoint(cv::Mat &G);
+    void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
+    void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 
 };
 

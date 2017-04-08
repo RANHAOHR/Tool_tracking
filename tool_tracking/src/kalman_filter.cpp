@@ -67,14 +67,14 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 
 	//Set up forward kinematics.
 	/***motion model params***/
-	unsigned int state_dimension = 6;
-	cmd_1 = cv::Mat_<double>(state_dimension, 1);
-	cmd_2 = cv::Mat_<double>(state_dimension, 1);
-	cmd_1_old = cv::Mat_<double>(state_dimension, 1);
-	cmd_2_old = cv::Mat_<double>(state_dimension, 1);
-
-	com_s1 = nh_.subscribe("/dvrk/PSM1/set_position_joint", 10, &KalmanFilter::newCommandCallback1, this);
-	com_s2 = nh_.subscribe("/dvrk/PSM2/set_position_joint", 10, &KalmanFilter::newCommandCallback2, this);
+//	unsigned int state_dimension = 6;
+//	cmd_1 = cv::Mat_<double>(state_dimension, 1);
+//	cmd_2 = cv::Mat_<double>(state_dimension, 1);
+//	cmd_1_old = cv::Mat_<double>(state_dimension, 1);
+//	cmd_2_old = cv::Mat_<double>(state_dimension, 1);
+//
+//	com_s1 = nh_.subscribe("/dvrk/PSM1/set_position_joint", 10, &KalmanFilter::newCommandCallback1, this);
+//	com_s2 = nh_.subscribe("/dvrk/PSM2/set_position_joint", 10, &KalmanFilter::newCommandCallback2, this);
 
 	kinematics = Davinci_fwd_solver();
 
@@ -156,24 +156,27 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	}
 
 	//Temporarily populate the motion commands to give zero motion.
-	cmd_1.at<double>(0, 0) = a1_trans[0];
-	cmd_1.at<double>(1, 0) = a1_trans[1];
-	cmd_1.at<double>(2, 0) = a1_trans[2];
-	cmd_1.at<double>(3, 0) = a1_rvec.at<double>(0,0);
-	cmd_1.at<double>(4, 0) = a1_rvec.at<double>(1,0);
-	cmd_1.at<double>(5, 0) = a1_rvec.at<double>(2,0);
-	cmd_2.at<double>(0, 0) = a2_trans[0];
-	cmd_2.at<double>(1, 0) = a2_trans[1];
-	cmd_2.at<double>(2, 0) = a2_trans[2];
-	cmd_2.at<double>(3, 0) = a2_rvec.at<double>(0,0);
-	cmd_2.at<double>(4, 0) = a2_rvec.at<double>(1,0);
-	cmd_2.at<double>(5, 0) = a2_rvec.at<double>(2,0);
-	cmd_1_old = cmd_1.clone();
-	cmd_2_old = cmd_2.clone();
-	cmd_time_1 = ros::Time::now().toSec();
-	cmd_time_2 = ros::Time::now().toSec();
-	cmd_time_1_old = ros::Time::now().toSec();
-	cmd_time_2_old = ros::Time::now().toSec();
+//	cmd_1.at<double>(0, 0) = a1_trans[0];
+//	cmd_1.at<double>(1, 0) = a1_trans[1];
+//	cmd_1.at<double>(2, 0) = a1_trans[2];
+//	cmd_1.at<double>(3, 0) = a1_rvec.at<double>(0,0);
+//	cmd_1.at<double>(4, 0) = a1_rvec.at<double>(1,0);
+//	cmd_1.at<double>(5, 0) = a1_rvec.at<double>(2,0);
+//	cmd_2.at<double>(0, 0) = a2_trans[0];
+//	cmd_2.at<double>(1, 0) = a2_trans[1];
+//	cmd_2.at<double>(2, 0) = a2_trans[2];
+//	cmd_2.at<double>(3, 0) = a2_rvec.at<double>(0,0);
+//	cmd_2.at<double>(4, 0) = a2_rvec.at<double>(1,0);
+//	cmd_2.at<double>(5, 0) = a2_rvec.at<double>(2,0);
+//	cmd_1_old = cmd_1.clone();
+//	cmd_2_old = cmd_2.clone();
+//	cmd_time_1 = ros::Time::now().toSec();
+//	cmd_time_2 = ros::Time::now().toSec();
+//	cmd_time_1_old = ros::Time::now().toSec();
+//	cmd_time_2_old = ros::Time::now().toSec();
+//    fvc_1 = false;
+//    fvc_2 = false;
+//    last_update = ros::Time::now().toSec();
 
 	//ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
 	//ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
@@ -299,12 +302,8 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
 	ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
 
-	fvc_1 = false;
-	fvc_2 = false;
 
 	ros::spinOnce();
-	
-	last_update = ros::Time::now().toSec();
 };
 
 void KalmanFilter::print_affine(Eigen::Affine3d &affine) {
@@ -470,6 +469,38 @@ void KalmanFilter::update(const cv::Mat &segmented_left, const cv::Mat &segmente
 	Eigen::Vector3d a2_trans = a2_pos.translation();
 	cv::Mat a2_rvec = cv::Mat::zeros(3,1,CV_64FC1);
 	computeRodriguesVec(a2_pos, a2_rvec);
+
+	/*
+	Eigen::Affine3d a1_1 = kinematics.computeAffineOfDH(DH_a1, DH_d1, DH_alpha1, sensor_1[0] + DH_q_offset0 );
+	Eigen::Affine3d a1_2 = kinematics.computeAffineOfDH(DH_a2, DH_d2, DH_alpha2, sensor_1[1] + DH_q_offset1 );
+	Eigen::Affine3d a1_3 = kinematics.computeAffineOfDH(DH_a3, sensor_1[2] + DH_d3, DH_alpha3, DH_q_offset2 );
+
+
+	Eigen::Affine3d a1_pos = kinematics.affine_frame0_wrt_base_ * a1_1 * a1_2 * a1_3;
+	Eigen::Vector3d a1_trans = a1_pos.translation();
+
+	cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+	Eigen::Affine3d a1_4 = kinematics.computeAffineOfDH(DH_a4, DH_d4, DH_alpha4, sensor_1[3] + DH_q_offset3 );
+	Eigen::Affine3d a1_5 = kinematics.computeAffineOfDH(DH_a5, DH_d5, DH_alpha5, sensor_1[4] + DH_q_offset4 );
+
+	Eigen::Affine3d a1_rot = a1_pos * a1_4 * a1_5;
+	computeRodriguesVec(a1_pos, a1_rvec);
+
+	//Eigen::Affine3d a2_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_2.data()));
+	Eigen::Affine3d a2_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha1, sensor_2[0] + DH_q_offset0 );
+	Eigen::Affine3d a2_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha2, sensor_2[1] + DH_q_offset1 );
+	Eigen::Affine3d a2_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_2[2] + DH_d2, DH_alpha3, DH_q_offset2 );
+
+	Eigen::Affine3d a2_pos = kinematics.affine_frame0_wrt_base_ * a2_1 * a2_2 * a2_3;
+	Eigen::Vector3d a2_trans = a2_pos.translation();
+
+	Eigen::Affine3d a2_4 = kinematics.computeAffineOfDH(DH_a4, DH_d4, DH_alpha4, sensor_2[3] + DH_q_offset3 );
+	Eigen::Affine3d a2_5 = kinematics.computeAffineOfDH(DH_a5, DH_d5, DH_alpha5, sensor_2[4] + DH_q_offset4 );
+
+	Eigen::Affine3d a2_rot = a2_pos * a2_4 * a2_5;
+	cv::Mat a2_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+	computeRodriguesVec(a2_pos, a2_rvec);
+*/
 
 	cv::Mat zt = cv::Mat_<double>(L, 1);
 	zt.at<double>(0 , 0) = a1_trans[0];

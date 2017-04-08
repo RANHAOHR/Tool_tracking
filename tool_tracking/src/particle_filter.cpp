@@ -45,15 +45,49 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
 		nh_(*nodehandle), numParticles(500), Downsample_rate(0.02), toolSize(2), L(7) {
 
 	/****need to subscribe this***/
-	Cam_left = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0,   ///meters or millimeters
-			0, -1, 0, 0,
-			0, 0, -1, 0.2,
-			0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
+    tf::StampedTransform arm_1__cam_l_st;
+    tf::StampedTransform arm_2__cam_l_st;
+    tf::StampedTransform arm_1__cam_r_st;
+    tf::StampedTransform arm_2__cam_r_st;
 
-	Cam_right = (cv::Mat_<double>(4, 4) << 1, 0, 0, -0.005,   ///meters or millimeters
-			0, -1, 0, 0,
-			0, 0, -1, 0.2,
-			0, 0, 0, 1);
+    try{
+        tf::TransformListener l;
+        while(!l.waitForTransform("/left_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+        l.lookupTransform("/left_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), arm_1__cam_l_st);
+        while(!l.waitForTransform("/left_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+        l.lookupTransform("/left_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), arm_2__cam_l_st);
+        while(!l.waitForTransform("/right_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+        l.lookupTransform("/right_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), arm_1__cam_r_st);
+        while(!l.waitForTransform("/right_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+        l.lookupTransform("/right_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), arm_2__cam_r_st);
+    }
+    catch (tf::TransformException ex){
+        ROS_ERROR("%s",ex.what());
+        exit(1);
+    }
+
+    //Convert to Affine3ds for storage, which is the format they will be used in for rendering.
+    XformUtils xfu;
+    arm_1__cam_l = xfu.transformTFToAffine3d(arm_1__cam_l_st);//.inverse();
+    arm_1__cam_r = xfu.transformTFToAffine3d(arm_1__cam_r_st);//.inverse();
+    arm_2__cam_l = xfu.transformTFToAffine3d(arm_2__cam_l_st);//.inverse();
+    arm_2__cam_r = xfu.transformTFToAffine3d(arm_2__cam_r_st);//.inverse();
+
+//	print_affine(arm_l__cam_l);
+
+    convertEigenToMat(arm_1__cam_l, Cam_left_arm_1);
+    convertEigenToMat(arm_1__cam_r, Cam_right_arm_1);
+    convertEigenToMat(arm_2__cam_l, Cam_left_arm_2);
+    convertEigenToMat(arm_2__cam_r, Cam_right_arm_2);
+
+    ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
+    ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
+    ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
+    ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
+
+
+	Cam_left = Cam_left_arm_2.clone();  ///should be camera extrinsic parameter relative to the tools
+	Cam_right = Cam_right_arm_2.clone();
 
 	initializeParticles();
 
@@ -64,13 +98,7 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
 	toolImage_left_temp = cv::Mat::zeros(475, 640, CV_8UC3);
 	toolImage_right_temp = cv::Mat::zeros(475, 640, CV_8UC3);
 
-	/***motion model params***/
 
-	com_s1 = nh_.subscribe("/dvrk/PSM1/set_position_joint", 10, &ParticleFilter::newCommandCallback1, this);
-	com_s2 = nh_.subscribe("/dvrk/PSM2/set_position_joint", 10, &ParticleFilter::newCommandCallback2, this);
-
-	cmd_green.resize(L);
-	cmd_yellow.resize(L);
 };
 
 ParticleFilter::~ParticleFilter() {
@@ -91,12 +119,31 @@ void ParticleFilter::initializeParticles() {
 //	initial.rvec_elp(1) = 0.0;
 //	initial.rvec_elp(2) = -1;
 
-	initial.tvec_elp(0) = 0.027;  //left and right (image frame)
-	initial.tvec_elp(1) = -0.01;  //up and down
-	initial.tvec_elp(2) = -0.03;
-	initial.rvec_elp(0) = 0.0;
-	initial.rvec_elp(1) = 0.0;
-	initial.rvec_elp(2) = -1.4;
+    /******Find and convert our various params and inputs******/
+    //Get sensor update.
+    std::vector<std::vector<double> > tmp;
+    tmp.resize(2);
+    if(davinci_interface::get_fresh_robot_pos(tmp)){
+        sensor_1 = tmp[0];
+        sensor_2 = tmp[1];
+    }
+    Eigen::Affine3d a1_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_1.data()));
+    Eigen::Vector3d a1_trans = a1_pos.translation();
+    cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+    computeRodriguesVec(a1_pos, a1_rvec);
+
+
+    Eigen::Affine3d a2_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_2.data()));
+    Eigen::Vector3d a2_trans = a2_pos.translation();
+    cv::Mat a2_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+    computeRodriguesVec(a2_pos, a2_rvec);
+
+	initial.tvec_grip2(0) = a2_trans[0];  //left and right (image frame)
+	initial.tvec_grip2(1) = a2_trans[1];  //up and down
+	initial.tvec_grip2(2) = a2_trans[2];
+	initial.rvec_grip2(0) = a2_rvec.at<double>(0,0);
+	initial.rvec_grip2(1) = a2_rvec.at<double>(1,0);
+	initial.rvec_grip2(2) = a2_rvec.at<double>(2,0);
 
     double theta = 0.1; //initial guess
 
@@ -106,25 +153,14 @@ void ParticleFilter::initializeParticles() {
 
 };
 
-void ParticleFilter::newCommandCallback1(const sensor_msgs::JointState::ConstPtr& incoming){
-	std::vector<double> positions = incoming->position;
-	for(int i = 0; i < L; i++){
-		cmd_green[i] = positions[i];
-	}
-};
-
-void ParticleFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& incoming){
-	std::vector<double> positions = incoming->position;
-	for(int j = 0; j < L; j++){
-		cmd_yellow[j] = positions[j];
-	}
-};
 
 std::vector<cv::Mat>
 ParticleFilter::trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,
 							 const cv::Mat &P_left, const cv::Mat &P_right) {
 
-	// ROS_INFO("---- Inside tracking function ---");
+    ros::spinOnce();
+
+    // ROS_INFO("---- Inside tracking function ---");
 	std::vector<cv::Mat> trackingImages;
 	trackingImages.resize(2);
 
@@ -525,5 +561,61 @@ void ParticleFilter::resamplingParticles(const std::vector<ToolModel::toolModel>
 
 		update_particles.push_back(sampleModel[idx]);
 	}
+
+};
+
+void ParticleFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec){
+//	Eigen::Vector3d rpy = trans.rotation().eulerAngles(0, 1, 2);
+//	ROS_INFO_STREAM("RPY " << rpy);
+
+    Eigen::Matrix3d rot_affine = trans.rotation();
+
+    cv::Mat rot(3,3,CV_64FC1);
+    rot.at<double>(0,0) = rot_affine(0,0);
+    rot.at<double>(0,1) = rot_affine(0,1);
+    rot.at<double>(0,2) = rot_affine(0,2);
+    rot.at<double>(1,0) = rot_affine(1,0);
+    rot.at<double>(1,1) = rot_affine(1,1);
+    rot.at<double>(1,2) = rot_affine(1,2);
+    rot.at<double>(2,0) = rot_affine(2,0);
+    rot.at<double>(2,1) = rot_affine(2,1);
+    rot.at<double>(2,2) = rot_affine(2,2);
+
+    rot_vec = cv::Mat::zeros(3,1, CV_64FC1);
+    cv::Rodrigues(rot, rot_vec );
+    //ROS_INFO_STREAM("rot_vec " << rot_vec);
+};
+
+/******from eigen to opencv matrix****/
+void ParticleFilter::convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix){
+
+    outputMatrix = cv::Mat::eye(4,4,CV_64FC1);
+
+    Eigen::Vector3d pos = trans.translation();
+    Eigen::Matrix3d rot = trans.linear();
+
+    //this is the last col, translation
+    outputMatrix.at<double>(0,3) = pos(0);
+    outputMatrix.at<double>(1,3) = pos(1);
+    outputMatrix.at<double>(2,3) = pos(2);
+
+    Eigen::Vector3d col_0, col_1, col_2;
+    //this is the first col, rotation x
+    col_0 = rot.col(0);
+    outputMatrix.at<double>(0,0) = col_0(0);
+    outputMatrix.at<double>(1,0) = col_0(1);
+    outputMatrix.at<double>(2,0) = col_0(2);
+
+    //this is the second col, rotation y
+    col_1 = rot.col(1);
+    outputMatrix.at<double>(0,1) = col_1(0);
+    outputMatrix.at<double>(1,1) = col_1(1);
+    outputMatrix.at<double>(2,1) = col_1(2);
+
+    //this is the third col, rotation z
+    col_2 = rot.col(2);
+    outputMatrix.at<double>(0,2) = col_2(0);
+    outputMatrix.at<double>(1,2) = col_2(1);
+    outputMatrix.at<double>(2,2) = col_2(2);
 
 };
