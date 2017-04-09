@@ -373,7 +373,7 @@ void KalmanFilter::newCommandCallback2(const sensor_msgs::JointState::ConstPtr& 
 	fvc_2 = true;
 };
 
-////Deprecated by KalmanFilter::update()?
+
 double KalmanFilter::measureFunc(
 	cv::Mat & toolImage_left,
 	cv::Mat & toolImage_right,

@@ -80,8 +80,8 @@ int main(int argc, char **argv) {
     freshImage = false;
     //freshVelocity = false;//Moving all velocity-related things inside of the kalman.
 
-    cv::Mat seg_left  = cv::Mat::zeros(480, 640, CV_32FC1);
-    cv::Mat seg_right  = cv::Mat::zeros(480, 640, CV_32FC1);
+    cv::Mat seg_left  = cv::Mat::zeros(480, 640, CV_8UC1);
+    cv::Mat seg_right  = cv::Mat::zeros(480, 640, CV_8UC1);
 
     trackingImgs.resize(2);
 
@@ -104,8 +104,8 @@ int main(int argc, char **argv) {
 
     ros::Duration(2).sleep();
 	/****TODO: Temp Projection matrices****/
-	cv::Mat P_l(3, 4, CV_64FC1);
-    cv::Mat P_r(3, 4, CV_64FC1);
+//	cv::Mat P_l(3, 4, CV_64FC1);
+//    cv::Mat P_r(3, 4, CV_64FC1);
 //	P_l.at<double>(0, 0) = 893.7852590197848;
 //	P_l.at<double>(1, 0) = 0;
 //	P_l.at<double>(2, 0) = 0;
@@ -138,54 +138,20 @@ int main(int argc, char **argv) {
 //	P_r.at<double>(1, 3) = 0;
 //	P_r.at<double>(2, 3) = 0;
 
-    P_l.at<double>(0, 0) = 1034.473;
-    P_l.at<double>(1, 0) = 0;
-    P_l.at<double>(2, 0) = 0;
-
-    P_l.at<double>(0, 1) = 0;
-    P_l.at<double>(1, 1) = 1034.473;
-    P_l.at<double>(2, 1) = 0;
-
-    P_l.at<double>(0, 2) = 320.5; // horiz
-    P_l.at<double>(1, 2) = 240.5; //verticle
-    P_l.at<double>(2, 2) = 1;
-
-    P_l.at<double>(0, 3) = 0;
-    P_l.at<double>(1, 3) = 0;
-    P_l.at<double>(2, 3) = 0;
-
-    P_r.at<double>(0, 0) = 1034.473;
-    P_r.at<double>(1, 0) = 0;
-    P_r.at<double>(2, 0) = 0;
-
-    P_r.at<double>(0, 1) = 0;
-    P_r.at<double>(1, 1) = 1034.473;
-    P_r.at<double>(2, 1) = 0;
-
-    P_r.at<double>(0, 2) = 320.5; // horiz
-    P_r.at<double>(1, 2) = 240.5; //verticle
-    P_r.at<double>(2, 2) = 1;
-
-    P_r.at<double>(0, 3) = 4.732953897952732;
-    P_r.at<double>(1, 3) = 0;
-    P_r.at<double>(2, 3) = 0;
-
 	while (nh.ok()) {
 		ros::spinOnce();
 		/*** make sure camera information is ready ***/
 
 		/*** if camera is ready, doing the tracking based on segemented image***/
 		if (freshImage) {
-        ROS_INFO("1");
-        seg_left = segmentation(rawImage_left);  //or use image_vessselness
-        seg_right = segmentation(rawImage_right);
-            ROS_INFO("2");
-            trackingImgs = Particles.trackingTool(seg_left, seg_right, P_l,
-												  P_r); //with rendered tool and segmented img
-//
-//			cv::imshow("Rendered Image: Left", trackingImgs[0]);
-//			cv::imshow("Rendered Image: Right", trackingImgs[1]);
-//			cv::waitKey(50);
+
+            Particles.raw_image_left = rawImage_left.clone();
+            Particles.raw_image_right = rawImage_right.clone();
+
+            seg_left = segmentation(rawImage_left);  //or use image_vessselness
+            seg_right = segmentation(rawImage_right);
+
+            trackingImgs = Particles.trackingTool(seg_left, seg_right); //with rendered tool and segmented img
 
 			freshImage = false;
 			freshVelocity = false;

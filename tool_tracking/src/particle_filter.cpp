@@ -42,7 +42,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-        node_handle(*nodehandle), numParticles(50), Downsample_rate(0.02), toolSize(2){
+        node_handle(*nodehandle), numParticles(200), Downsample_rate(0.02){
 
 	/****need to subscribe this***/
     tf::StampedTransform arm_1__cam_l_st;
@@ -73,8 +73,6 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     arm_2__cam_l = xfu.transformTFToAffine3d(arm_2__cam_l_st);//.inverse();
     arm_2__cam_r = xfu.transformTFToAffine3d(arm_2__cam_r_st);//.inverse();
 
-//	print_affine(arm_l__cam_l);
-
     convertEigenToMat(arm_1__cam_l, Cam_left_arm_1);
     convertEigenToMat(arm_1__cam_r, Cam_right_arm_1);
     convertEigenToMat(arm_2__cam_l, Cam_left_arm_2);
@@ -85,19 +83,56 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
     ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
 
-
-	Cam_left = Cam_left_arm_1.clone();  ///should be camera extrinsic parameter relative to the tools
-	Cam_right = Cam_right_arm_1.clone();
-
 	initializeParticles();
 
 	// initialization, just basic black image ??? how to get the size of the image
-	toolImage_left = cv::Mat::zeros(480, 640, CV_8UC3);
-	toolImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
+	toolImage_left_arm_1 = cv::Mat::zeros(480, 640, CV_8UC3);
+	toolImage_right_arm_1 = cv::Mat::zeros(480, 640, CV_8UC3);
+
+	toolImage_left_arm_2 = cv::Mat::zeros(480, 640, CV_8UC3);
+	toolImage_right_arm_2 = cv::Mat::zeros(480, 640, CV_8UC3);
 
 	toolImage_left_temp = cv::Mat::zeros(480, 640, CV_8UC3);
 	toolImage_right_temp = cv::Mat::zeros(480, 640, CV_8UC3);
 
+	raw_image_left = cv::Mat::zeros(480, 640, CV_8UC3);
+	raw_image_right = cv::Mat::zeros(480, 640, CV_8UC3);
+
+
+	P_left = cv::Mat::zeros(3,4,CV_64FC1);
+	P_right = cv::Mat::zeros(3,4,CV_64FC1);
+
+	P_left.at<double>(0, 0) = 1034.473;
+	P_left.at<double>(1, 0) = 0;
+	P_left.at<double>(2, 0) = 0;
+
+	P_left.at<double>(0, 1) = 0;
+	P_left.at<double>(1, 1) = 1034.473;
+	P_left.at<double>(2, 1) = 0;
+
+	P_left.at<double>(0, 2) = 320.5; // horiz
+	P_left.at<double>(1, 2) = 240.5; //verticle
+	P_left.at<double>(2, 2) = 1;
+
+	P_left.at<double>(0, 3) = 0;
+	P_left.at<double>(1, 3) = 0;
+	P_left.at<double>(2, 3) = 0;
+
+	P_right.at<double>(0, 0) = 1034.473;
+	P_right.at<double>(1, 0) = 0;
+	P_right.at<double>(2, 0) = 0;
+
+	P_right.at<double>(0, 1) = 0;
+	P_right.at<double>(1, 1) = 1034.473;
+	P_right.at<double>(2, 1) = 0;
+
+	P_right.at<double>(0, 2) = 320.5; // horiz
+	P_right.at<double>(1, 2) = 240.5; //verticle
+	P_right.at<double>(2, 2) = 1;
+
+	P_right.at<double>(0, 3) = 4.732953897952732;
+	P_right.at<double>(1, 3) = 0;
+	P_right.at<double>(2, 3) = 0;
 
 };
 
@@ -107,10 +142,14 @@ ParticleFilter::~ParticleFilter() {
 
 void ParticleFilter::initializeParticles() {
 	ROS_INFO("---- Initialize particle is called---");
-	particles.resize(numParticles); //initialize particle array
-	matchingScores.resize(numParticles); //initialize matching score array
-	particleWeights.resize(numParticles); //initialize particle weight array
+	matchingScores_arm_1.resize(numParticles); //initialize matching score array
+	matchingScores_arm_2.resize(numParticles); //initialize matching score array
 
+	particles_arm_1.resize(numParticles); //initialize particle array
+	particleWeights_arm_1.resize(numParticles); //initialize particle weight array
+
+	particles_arm_2.resize(numParticles); //initialize particle array
+	particleWeights_arm_2.resize(numParticles); //initialize particle weight array
 
     /******Find and convert our various params and inputs******/
     //Get sensor update.
@@ -138,6 +177,7 @@ void ParticleFilter::initializeParticles() {
     cv::Mat a2_rvec = cv::Mat::zeros(3,1,CV_64FC1);
     computeRodriguesVec(a2_pos, a2_rvec);
 
+	/*** first arm particles initialization ***/
 	initial.tvec_grip2(0) = a1_trans[0];  //left and right (image frame)
 	initial.tvec_grip2(1) = a1_trans[1];  //up and down
 	initial.tvec_grip2(2) = a1_trans[2];
@@ -150,126 +190,114 @@ void ParticleFilter::initializeParticles() {
     double theta_open = tmp[0][6]; //initial guess
 
 	for (int i = 0; i < numParticles; i++) {
-		particles[i] = newToolModel.setRandomConfig(initial, theta_cylinder, theta_oval, theta_open );
+		particles_arm_1[i] = newToolModel.setRandomConfig(initial, theta_cylinder, theta_oval, theta_open );
+	}
+
+	/*** second arm particles initialization ***/
+	initial.tvec_grip2(0) = a2_trans[0];  //left and right (image frame)
+	initial.tvec_grip2(1) = a2_trans[1];  //up and down
+	initial.tvec_grip2(2) = a2_trans[2];
+	initial.rvec_grip2(0) = a2_rvec.at<double>(0,0);
+	initial.rvec_grip2(1) = a2_rvec.at<double>(1,0);
+	initial.rvec_grip2(2) = a2_rvec.at<double>(2,0);
+
+	theta_cylinder = tmp[1][4]; //initial guess
+	theta_oval = tmp[1][5]; //initial guess
+	theta_open = tmp[1][6]; //initial guess
+
+	for (int i = 0; i < numParticles; i++) {
+		particles_arm_2[i] = newToolModel.setRandomConfig(initial, theta_cylinder, theta_oval, theta_open );
 	}
 
 };
 
 
-std::vector<cv::Mat>
-ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right,
-							 const cv::Mat &P_left, const cv::Mat &P_right) {
+std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right) {
 
     ros::spinOnce();
 
+	ROS_INFO("---- in tracking function ---");
     // ROS_INFO("---- Inside tracking function ---");
 	std::vector<cv::Mat> trackingImages;
 	trackingImages.resize(2);
 
-	double maxScore = 0.0; //track the maximum scored particle
-    int maxScoreIdx = -1; //maximum scored particle index
 	/***Update according to the max score***/
 
-	while (maxScore < 1) {
+	double maxScore_1 = 0.0;
+	double maxScore_2 = 0.0;
 
-        maxScoreIdx = -1; //maximum scored particle index
-        maxScore = 0.0;
-        double totalScore = 0.0; //total score
+		int maxScoreIdx_1 = -1; //maximum scored particle index
+		int maxScoreIdx_2 = -1; //maximum scored particle index
 
-		cv::Mat segmentedImage_left = segmented_left.clone();
-		cv::Mat segmentedImage_right = segmented_right.clone();
+//		maxScore_1 = 0.0;
+//		maxScore_2 = 0.0;
+
+        double totalScore_1 = 0.0; //total score
+		double totalScore_2 = 0.0; //total score
 
 		toolImage_left_temp.setTo(0);
 		toolImage_right_temp.setTo(0);
 
-		/***do the sampling and get the matching score***/
-		for (int i = 0; i < particles.size(); ++i) {
+	/***do the sampling and get the matching score***/
+	for (int i = 0; i < numParticles; ++i) {
 
-			toolImage_left.setTo(0); //reset image for every start of an new loop
-			newToolModel.renderTool(toolImage_left, particles[i], Cam_left, P_left); //first get the rendered image using 3d model of the tool
+		matchingScores_arm_1[i] = measureFuncSameCam(toolImage_left_arm_1,toolImage_right_arm_1,particles_arm_1[i],segmented_left, segmented_right,Cam_left_arm_1,Cam_right_arm_1);
 
-			float left = newToolModel.calculateMatchingScore(toolImage_left, segmented_left);  //get the matching score
+		//matchingScores_arm_2[i] = measureFuncSameCam(toolImage_left_arm_2,toolImage_right_arm_2,particles_arm_2[i],segmented_left, segmented_right,Cam_left_arm_2,Cam_right_arm_2);
 
-			toolImage_right.setTo(0); //reset image
-			newToolModel.renderTool(toolImage_right, particles[i], Cam_right, P_right);
-			float right = newToolModel.calculateMatchingScore(toolImage_right, segmented_right);
+		newToolModel.renderTool(toolImage_left_temp, particles_arm_1[i], Cam_left_arm_1, P_left);
+		newToolModel.renderTool(toolImage_right_temp, particles_arm_1[i], Cam_right_arm_1, P_right);
 
-			/***testing***/
-			newToolModel.renderTool(toolImage_left_temp, particles[i], Cam_left, P_left);
-			newToolModel.renderTool(toolImage_right_temp, particles[i], Cam_right, P_right);
 
-			matchingScores[i] = sqrt(pow(left, 2) + pow(right, 2));
-
-			/////what if just for the left tool, TEST
-			//matchingScores[i] = left;
-
-			if (matchingScores[i] >= maxScore) {
-				maxScore = matchingScores[i];
-				maxScoreIdx = i;
-			}
-			totalScore += matchingScores[i];
+		if (matchingScores_arm_1[i] >= maxScore_1) {
+			maxScore_1 = matchingScores_arm_1[i];
+			maxScoreIdx_1 = i;
 		}
+		totalScore_1 += matchingScores_arm_1[i];
 
-		cv::imshow("temp left", toolImage_left_temp);
-
-		ROS_INFO_STREAM("Maxscore: " << maxScore);  //debug
-
-		/*** calculate weights using matching score and do the resampling ***/
-		for (int j = 0; j < particles.size(); ++j) { // normalize the weights
-			particleWeights[j] = (matchingScores[j] / totalScore);
-			//ROS_INFO_STREAM("weights" << particleWeights[j]);
-		}
-
-		//render in segmented image, no need to get the ROI
-
-		newToolModel.renderTool(segmentedImage_left, particles[maxScoreIdx], Cam_left, P_left);
-		//newToolModel.renderTool(segmentedImage_right, particles[maxScoreIdx], Cam_right, P_right);
-
-        ToolModel::toolModel best_particle = particles[maxScoreIdx];
-//        toolImage_left.setTo(0);
-//        newToolModel.renderTool(toolImage_left, best_particle, Cam_left, P_left);
-//        cv::imshow("best particle", toolImage_left);
-//		ROS_INFO_STREAM("Best particle tvec(0)" << particles[maxScoreIdx].tvec_elp(0) );
-//		ROS_INFO_STREAM("Best particle tvec(1)" << particles[maxScoreIdx].tvec_elp(1) );
-//		ROS_INFO_STREAM("Best particle tvec(2)" << particles[maxScoreIdx].tvec_elp(2) );
-//		ROS_INFO_STREAM("Best particle rvec(0)" << particles[maxScoreIdx].rvec_elp(0) );
-//		ROS_INFO_STREAM("Best particle rvec(1)" << particles[maxScoreIdx].rvec_elp(1) );
-//		ROS_INFO_STREAM("Best particle rvec(2)" << particles[maxScoreIdx].rvec_elp(2) );
-//
-//        ROS_INFO_STREAM("Best particle tvec(0)" << particles[maxScoreIdx].tvec_cyl(0) );
-//        ROS_INFO_STREAM("Best particle tvec(1)" << particles[maxScoreIdx].tvec_cyl(1) );
-//        ROS_INFO_STREAM("Best particle tvec(2)" << particles[maxScoreIdx].tvec_cyl(2) );
-//        ROS_INFO_STREAM("Best particle rvec(0)" << particles[maxScoreIdx].rvec_cyl(0) );
-//        ROS_INFO_STREAM("Best particle rvec(1)" << particles[maxScoreIdx].rvec_cyl(1) );
-//        ROS_INFO_STREAM("Best particle rvec(2)" << particles[maxScoreIdx].rvec_cyl(2) );
-
-		trackingImages[0] = segmentedImage_left.clone();
-
-
-		ROS_INFO_STREAM("new particles.SIZE" << particles.size());
-		//each time will clear the particles and resample them
-		std::vector<ToolModel::toolModel> oldParticles = particles;
-        //resample using low variance resampling method
-		resamplingParticles(oldParticles, particleWeights, particles);
-        //std::vector<ToolModel::toolModel> updatedParticles = particles;
-        newToolModel.renderTool(segmentedImage_left, best_particle, Cam_left, P_left);
-        trackingImages[1] = segmentedImage_left.clone();
-
-        updateParticles(particles, best_particle);
-
-		//cv::imshow("temp right", toolImage_right_temp);
-		cv::imshow("trackingImages left", trackingImages[0]);
-		//cv::imshow("best particle 2 in same loop",trackingImages[1]);
-		cv::waitKey(10);
+//			if (matchingScores_arm_2[i] >= maxScore_2) {
+//				maxScore_2 = matchingScores_arm_2[i];
+//				maxScoreIdx_2 = i;
+//			}
+//			totalScore_2 += matchingScores_arm_2[i];
 
 	}
 
-	/*** UPDATE particles, based on the given body vel and updating rate ***/
-	// double dT = 0.02; //sampling rate
-//	updateSamples(bodyVel, dT);
+	cv::imshow("temp image arm_1 left: " , toolImage_left_temp);
+	cv::imshow("temp image arm_1 right:  " , toolImage_right_temp);
+	ROS_INFO_STREAM("Maxscore arm 1: " << maxScore_1);  //debug
+
+	/*** calculate weights using matching score and do the resampling ***/
+	for (int j = 0; j < numParticles; ++j) { // normalize the weights
+		particleWeights_arm_1[j] = (matchingScores_arm_1[j] / totalScore_1);
+		//ROS_INFO_STREAM("weights" << particleWeights[j]);
+	}
+
+	ToolModel::toolModel best_particle = particles_arm_1[maxScoreIdx_1];
+
+	//each time will clear the particles and resample them, resample using low variance resampling method
+	std::vector<ToolModel::toolModel> oldParticles = particles_arm_1;
+	resamplingParticles(oldParticles, particleWeights_arm_1, particles_arm_1);
+
+	//std::vector<ToolModel::toolModel> updatedParticles = particles;
+	updateParticles(particles_arm_1, best_particle);
+
+
+	///showing results for each iteration here
+	//render in segmented image
+	newToolModel.renderTool(raw_image_left, particles_arm_1[maxScoreIdx_1], Cam_left_arm_1, P_left);
+	newToolModel.renderTool(raw_image_right, particles_arm_1[maxScoreIdx_1], Cam_right_arm_1, P_right);
+	// showing the best particle on left and right image
+	trackingImages[0] = raw_image_left.clone();
+	trackingImages[1] = raw_image_right.clone();
+	cv::imshow("trackingImages left", trackingImages[0]);
+	cv::imshow("trackingImages right", trackingImages[1]);
+	//cv::imshow("best particle 2 in same loop",trackingImages[1]);
+	cv::waitKey(10);
 
 	return trackingImages;
 };
+
 
 /***** update particles to find and reach to the best pose ***/
 void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedParticles,
@@ -290,27 +318,28 @@ void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedP
 
 };
 
-double ParticleFilter::measureFuncSameCam(cv::Mat & toolImage_cam, ToolModel::toolModel &toolPose_left, ToolModel::toolModel &toolPose_right,
-										  const cv::Mat &segmented_cam, const cv::Mat & Projection_mat, cv::Mat &raw_img, cv::Mat &Cam_matrix_tool_left, cv::Mat &Cam_matrix_tool_right) {
 
-	toolImage_cam.setTo(0);
+double ParticleFilter::measureFuncSameCam(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose,
+		const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right) {
+
+	toolImage_left.setTo(0);
+	toolImage_right.setTo(0);
+
 	/***do the sampling and get the matching score***/
 	//first get the rendered image using 3d model of the tool
+	newToolModel.renderTool(toolImage_left, toolPose, Cam_left, P_left);
+	double left = newToolModel.calculateChamferScore(toolImage_left, segmented_left);  //get the matching score
 
-	newToolModel.renderTool(toolImage_cam, toolPose_left, Cam_matrix_tool_left, Projection_mat);
-	newToolModel.renderTool(toolImage_cam, toolPose_right, Cam_matrix_tool_right, Projection_mat);
+	newToolModel.renderTool(toolImage_right, toolPose, Cam_right, P_right);
+	double right = newToolModel.calculateChamferScore(toolImage_right, segmented_right);
 
-	newToolModel.renderTool(raw_img, toolPose_left, Cam_matrix_tool_left, Projection_mat);
-	newToolModel.renderTool(raw_img, toolPose_right, Cam_matrix_tool_right, Projection_mat);
-
-	double matchingScore = newToolModel.calculateMatchingScore(toolImage_cam, segmented_cam);
+	double matchingScore = sqrt(pow(left, 2) + pow(right, 2));
 
 	return matchingScore;
 };
 
-/*** one possible motion model for tool in image frame ***/
-void ParticleFilter::updateSamples(const cv::Mat &bodyVel,
-									 double &updateRate) { //get particles and update them based on given spatial velocity
+/*** one possible motion model for tool in image frame, update particles based on given spatial velocity ***/
+void ParticleFilter::updateSamples(const cv::Mat &bodyVel, double &updateRate, std::vector<ToolModel::toolModel> particles) {
 
 	cv::Mat Rot = cv::Mat::zeros(3, 3, CV_64F);
 	cv::Mat p = cv::Mat::zeros(3, 1, CV_64F);

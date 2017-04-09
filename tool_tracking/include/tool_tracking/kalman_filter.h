@@ -87,8 +87,6 @@ private:
 	cv::Mat toolImage_cam_left;
 	cv::Mat toolImage_cam_right;
 
-
-
 	cv::Mat Cam_left_arm_1;
     cv::Mat Cam_right_arm_1;
     cv::Mat Cam_left_arm_2;

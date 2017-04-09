@@ -1207,6 +1207,8 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
     cv::Mat ROI_toolImage = toolImage.clone(); //CV_8UC3
     cv::Mat segImgGrey = segmentedImage.clone(); //CV_8UC1
 
+    segImgGrey.convertTo(segImgGrey, CV_8UC1);
+
     /***tool image process**/
     cv::Mat toolImageGrey(ROI_toolImage.size(), CV_8UC1); //grey scale of toolImage since tool image has 3 channels
     cv::Mat toolImFloat(ROI_toolImage.size(), CV_32FC1); //Float data type of grey scale tool image
@@ -1250,9 +1252,6 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
                 total += tool_pixel;
         }
     }
-
-//    cv::imshow("result: ", resultImg);
-    // cv::waitKey();
 
     for (int k = 0; k < resultImg.rows; ++k) {
         for (int i = 0; i < resultImg.cols; ++i) {

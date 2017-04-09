@@ -83,22 +83,27 @@ private:
 
 	ToolModel::toolModel initial; //initial configuration
 
-	unsigned int toolSize; //size of the needle to be rendered
 	double Downsample_rate;
 
 	unsigned int numParticles; //total number of particles
-	cv::Mat toolImage_left; //left rendered Image
-	cv::Mat toolImage_right; //right rendered Image
+
+	cv::Mat toolImage_left_arm_1; //left rendered Image for ARM 1
+	cv::Mat toolImage_right_arm_1; //right rendered Image for ARM 1
+
+	cv::Mat toolImage_left_arm_2; //left rendered Image for ARM 2
+	cv::Mat toolImage_right_arm_2; //right rendered Image for ARM 2
 
 	cv::Mat toolImage_left_temp; //left rendered Image
 	cv::Mat toolImage_right_temp; //right rendered Image
 
-	cv::Rect ROI_left; //ROI for the left image
-	cv::Rect ROI_right; //ROI for the right image
+	std::vector<double> matchingScores_arm_1; // particle scores (matching scores)
+	std::vector<double> matchingScores_arm_2; // particle scores (matching scores)
 
-	std::vector<ToolModel::toolModel> particles; // particles
-	std::vector<double> matchingScores; // particle scores (matching scores)
-	std::vector<double> particleWeights; // particle weights calculated from matching scores
+	std::vector<ToolModel::toolModel> particles_arm_1; // particles
+	std::vector<double> particleWeights_arm_1; // particle weights calculated from matching scores
+
+	std::vector<ToolModel::toolModel> particles_arm_2; // particles
+	std::vector<double> particleWeights_arm_2; // particle weights calculated from matching scores
 
     cv::Mat Cam_left_arm_1;
     cv::Mat Cam_right_arm_1;
@@ -117,6 +122,15 @@ private:
 
 
 public:
+
+	/*
+	 * for comparing and testing
+	 */
+	cv::Mat raw_image_left; //left rendered Image
+	cv::Mat raw_image_right; //right rendered Image
+
+	cv::Mat P_left;
+	cv::Mat P_right;
 
 	/*
 	* The default constructor
@@ -140,9 +154,7 @@ public:
 	/*
 	 * This is the main function for tracking the needle. This function is called and it syncs all of the functions
 	*/
-	std::vector<cv::Mat>
-	trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right,
-				 const cv::Mat &P_left, const cv::Mat &P_right);
+	std::vector<cv::Mat> trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 	/*
 	 * resampling method
 	 */
@@ -156,12 +168,12 @@ public:
 	/*
 	 * get measuerment for two tools
 	 */
-	double measureFuncSameCam(cv::Mat & toolImage_cam, ToolModel::toolModel &toolPose_left, ToolModel::toolModel &toolPose_right,
-											  const cv::Mat &segmented_cam, const cv::Mat & Projection_mat, cv::Mat &raw_img, cv::Mat &Cam_matrix_tool_left, cv::Mat &Cam_matrix_tool_right);
+	double measureFuncSameCam(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose,
+							  const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right);
 	/*
 	 * update particles
 	 */
-	void updateSamples(const cv::Mat &bodyVel, double &updateRate);
+	void updateSamples(const cv::Mat &bodyVel, double &updateRate, std::vector<ToolModel::toolModel> particles);
 
 	void updateParticles(std::vector<ToolModel::toolModel> &updateParticles, const ToolModel::toolModel &bestParticle);
 
