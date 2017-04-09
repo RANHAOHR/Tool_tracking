@@ -342,9 +342,6 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                                    cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
                                    const cv::Mat &P, cv::OutputArray jac) {
 
-//    ROS_INFO_STREAM(" neighbor_faces[11][0]: " <<  neighbor_faces[11][0]);
-//    ROS_INFO_STREAM(" neighbor_faces[11][2]: " <<  neighbor_faces[11][3]);
-
     cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << -1,0,0,0,
     0,0,1,0,
     0,1,0,0,
@@ -367,7 +364,6 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
     cv::Mat ept_2(4, 1, CV_64FC1);
 
     for (int i = 0; i < input_faces.size(); ++i) {
-        // ROS_INFO_STREAM("i "<< i);
         neighbor_num = (neighbor_faces[i].size()) / 3;  //each neighbor has two vertices
 
         if (neighbor_num > 0) {
@@ -459,6 +455,7 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
 
 };
 
+/* This is the original tool configuration */
 void ToolModel::Compute_Silhouette_Body(const std::vector<std::vector<int> > &input_faces,
                                    const std::vector<std::vector<int> > &neighbor_faces,
                                    const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
@@ -821,7 +818,7 @@ ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder,
     toolModel newTool = seeds;  //BODY part is done here
 
     ///what if generate seeding group
-    double step = 0.0016;
+    double step = 0.0012;
     double dev = randomNumber(step, 0);
 
     newTool.tvec_grip2(0) = seeds.tvec_grip2(0) + dev;
@@ -858,7 +855,7 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, doub
 
     //gaussianTool = max_pose;
     //create normally distributed random samples
-    step = 0.0016;  ////currently make it stable
+    step = 0.0012;  ////currently make it stable
     double dev = randomNumber(step, 0);
     gaussianTool.tvec_elp(0) = max_pose.tvec_elp(0)+ dev;
 
@@ -880,12 +877,8 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, doub
     /************** sample the angles of the joints **************/
     //set positive as clockwise
     double theta_ = randomNumber(step, 0);    //-90,90
-    double theta_grip_1 = randomNum(-M_PI / 2, M_PI / 2);
-    double theta_grip_2 = randomNum(-M_PI / 2, M_PI / 2);
-
-    /*** if the two joints get overflow ***/
-    if (theta_grip_1 < theta_grip_2)
-        theta_grip_1 = theta_grip_2 + randomNum(0, 0.2);
+    double theta_grip_1 = randomNumber(step, 0);
+    double theta_grip_2 = randomNumber(step, 0);
 
     computeRandomPose(max_pose, gaussianTool, theta_, theta_grip_1, theta_grip_2);
     //computeModelPose(gaussianTool, theta_, theta_grip_1, theta_grip_2);
@@ -903,11 +896,17 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
     cv::Mat q_temp(4, 1, CV_64FC1);
 
     inputModel.rvec_cyl(0) = inputModel.rvec_elp(0); //roll angle should be the same.
-    inputModel.rvec_cyl(1) = inputModel.rvec_elp(1); //pitch angle should be the same.
+    inputModel.rvec_cyl(1) = seed_pose.rvec_cyl(1)+ theta_tool; //pitch angle here changed
 
-    inputModel.rvec_cyl(2) = seed_pose.rvec_cyl(2)+ theta_tool; //yaw angle is plus the theta_ellipse
+    inputModel.rvec_cyl(2) = inputModel.rvec_elp(2); //yaw angle is plus the theta_ellipse
 
-    q_temp = transformPoints( q_ellipse, cv::Mat(inputModel.rvec_cyl),
+    cv::Mat temp_q_ellipse = cv::Mat(4, 1, CV_64FC1);
+    temp_q_ellipse.at<double>(0, 0) = 0;
+    temp_q_ellipse.at<double>(1, 0) = 0;
+    temp_q_ellipse.at<double>(2, 0) = -(offset_ellipse - offset_body);
+    temp_q_ellipse.at<double>(3, 0) = 1;
+
+    q_temp = transformPoints( temp_q_ellipse, cv::Mat(inputModel.rvec_cyl),
                               cv::Mat(inputModel.tvec_elp)); //transform the ellipse coord according to cylinder pose
 
     inputModel.tvec_cyl(0) = q_temp.at<double>(0, 0);
@@ -917,8 +916,8 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
     /*********** computations for gripper kinematics **********/
     cv::Mat test_gripper(3, 1, CV_64FC1);
     test_gripper.at<double>(0, 0) = 0;
-    test_gripper.at<double>(1, 0) = offset_gripper - 0.4522;  //
-    test_gripper.at<double>(2, 0) = 0;
+    test_gripper.at<double>(1, 0) = 0;  //
+    test_gripper.at<double>(2, 0) = (offset_gripper - offset_ellipse);
 
 
     cv::Mat rot_elp(3, 3, CV_64FC1);
@@ -931,7 +930,7 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
     inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
     inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
 
-    inputModel.rvec_grip1(0) = inputModel.rvec_elp(0) + theta_grip_1;  //roll angle is plus the theta_gripper
+    inputModel.rvec_grip1(0) = inputModel.rvec_elp(0) + theta_grip_1 + theta_grip_2;  //roll angle is plus the theta_gripper
     inputModel.rvec_grip1(1) = inputModel.rvec_elp(1);
     inputModel.rvec_grip1(2) = inputModel.rvec_elp(2);
 

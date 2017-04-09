@@ -100,8 +100,6 @@ private:
 	std::vector<double> matchingScores; // particle scores (matching scores)
 	std::vector<double> particleWeights; // particle weights calculated from matching scores
 
-	int L;  ///DOF for one arm.
-
     cv::Mat Cam_left_arm_1;
     cv::Mat Cam_right_arm_1;
     cv::Mat Cam_left_arm_2;
@@ -156,16 +154,17 @@ public:
 							 std::vector<ToolModel::toolModel> &update_particles);
 
 	/*
+	 * get measuerment for two tools
+	 */
+	double measureFuncSameCam(cv::Mat & toolImage_cam, ToolModel::toolModel &toolPose_left, ToolModel::toolModel &toolPose_right,
+											  const cv::Mat &segmented_cam, const cv::Mat & Projection_mat, cv::Mat &raw_img, cv::Mat &Cam_matrix_tool_left, cv::Mat &Cam_matrix_tool_right);
+	/*
 	 * update particles
 	 */
 	void updateSamples(const cv::Mat &bodyVel, double &updateRate);
 
 	void updateParticles(std::vector<ToolModel::toolModel> &updateParticles, const ToolModel::toolModel &bestParticle);
-	/*
-	 * Uncented Kalman filter update
-	 */
-	void UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma,
-							  cv::Mat &zt, cv::Mat &ut);
+
 
 	cv::Mat adjoint(cv::Mat &G);
     void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
