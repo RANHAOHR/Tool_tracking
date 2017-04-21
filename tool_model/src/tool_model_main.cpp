@@ -23,19 +23,11 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
 
     cv::Mat Cam(4, 4, CV_64FC1);
-    Cam = (cv::Mat_<double>(4, 4) << -1, 0, 0, 0.2050501017838127,
-    -0.008488763807650363, 0.9979174200774186, 0.06394344059437709, -0.01557946390738235,
-    0.02462794373760943, 0.06413498799360984, -0.9976372926581665, -0.00616102464539853,
-    0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
-    Cam = Cam.inv();
-ROS_INFO_STREAM("CAM INV:" << Cam );
-// y = -0.0326455693
-//    // x = -0.154999816
 
-//    Cam = (cv::Mat_<double>(4, 4) << -1, 0, 0, -0.154999816,
-//    0, 1, 0, -0.0326455693,
-//    0, 0, -1, 0.0,
-//    0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
+    Cam = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0.0,
+    0, 0, -1, 0.0,
+    0, 1, 0, 0.2,
+    0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
 
     ToolModel newToolModel;
 
@@ -72,30 +64,24 @@ ROS_INFO_STREAM("CAM INV:" << Cam );
     ToolModel::toolModel initial;
 
 //    initial.tvec_elp(0) = 0.0;  //left and right (image frame)
-//    initial.tvec_elp(1) = 0.01;  //up and down
-//    initial.tvec_elp(2) = 0.03;
-//    initial.rvec_elp(0) = 0.0;
-//    initial.rvec_elp(1) = -0.1;
-//    initial.rvec_elp(2) = -1.4;
+//    initial.tvec_elp(1) = 0.0;  //up and down
+//    initial.tvec_elp(2) = 0.0;
+//    initial.rvec_elp(0) = 1.0;
+//    initial.rvec_elp(1) = 1.0;
+//    initial.rvec_elp(2) = 1.0;
 //
 //    ToolModel::toolModel newTool;
-//
-//    newToolModel.computeModelPose(initial, 0.1, 0.3, 0.1 );
+
+//    newToolModel.computeModelPose(initial, 0.0, 0.0, 0.0 );
 //    newToolModel.renderTool(testImg, initial, Cam, P);
 
-//    initial.tvec_elp(0) = -0.20 + 0.4;  //left and right (image frame)
-//    initial.tvec_elp(1) =0.017324;  //up and down
-//    initial.tvec_elp(2) =-0.098107;
-//    initial.rvec_elp(0) = 2.234886;
-//    initial.rvec_elp(1) = 0.705768;
-//    initial.rvec_elp(2) = 1.643338;
 
-    initial.tvec_elp(0) = 0.207689;// +0.4  //left and right (image frame)
-    initial.tvec_elp(1) =   0.026625;  //up and down
-    initial.tvec_elp(2) =  -0.076241;
-    initial.rvec_elp(0) = 0.088608;
-    initial.rvec_elp(1) =   -1.305077;
-    initial.rvec_elp(2) =   0.313916;
+//    initial.tvec_elp(0) = 0.207689;// +0.4  //left and right (image frame)
+//    initial.tvec_elp(1) =   0.026625;  //up and down
+//    initial.tvec_elp(2) =  -0.076241;
+//    initial.rvec_elp(0) = 0.088608;
+//    initial.rvec_elp(1) =   -1.305077;
+//    initial.rvec_elp(2) =   0.313916;
 
 
 //    cv::Mat rot(3,3, CV_64FC1);
@@ -115,12 +101,12 @@ ROS_INFO_STREAM("CAM INV:" << Cam );
 //    ROS_INFO_STREAM("new_rvec" << new_rvec);
 //
 //
-//    initial.tvec_elp(0) = new_tvec.at<double>(0,0);// +0.4  //left and right (image frame)
-//    initial.tvec_elp(1) = new_tvec.at<double>(1,0);  //up and down
-//    initial.tvec_elp(2) = new_tvec.at<double>(2,0);
-//    initial.rvec_elp(0) = new_rvec.at<double>(0,0);
-//    initial.rvec_elp(1) =  new_rvec.at<double>(1,0);
-//    initial.rvec_elp(2) =  new_rvec.at<double>(2,0);
+    initial.tvec_grip2(0) = 0.0;// +0.4  //left and right (image frame)
+    initial.tvec_grip2(1) = 0.0;  //up and down
+    initial.tvec_grip2(2) = 0.0;
+    initial.rvec_grip2(0) = 0.1;
+    initial.rvec_grip2(1) = 0.1;
+    initial.rvec_grip2(2) = 0.0;
 
 
     newToolModel.computeDavinciModel(initial, 0.0, 0.0, 0.0 );

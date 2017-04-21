@@ -139,9 +139,6 @@ public:
     double offset_ellipse; // all in meters
     double offset_gripper; //
 
-    cv::Mat q_ellipse;  //initial point for ellipse
-    cv::Mat q_gripper;  //initial point for gripper
-
     /************** basic funcs ****************/
     ToolModel();  //constructor, TODO: we need this to be the camera extrinsic param relative to the tool frame
 

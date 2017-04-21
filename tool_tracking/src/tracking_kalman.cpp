@@ -3,8 +3,6 @@
 #include <image_transport/image_transport.h>
 #include <cwru_opencv_common/projective_geometry.h>
 #include <tool_tracking/kalman_filter.h>
-#include "std_msgs/MultiArrayLayout.h"
-#include "std_msgs/Float64MultiArray.h"
 
 bool freshImage;
 bool freshCameraInfo;
@@ -65,15 +63,15 @@ int main(int argc, char **argv) {
 	freshImage = false;
 	//freshVelocity = false;//Moving all velocity-related things inside of the kalman.
 
-	cv::Mat seg_left  = cv::Mat::zeros(640, 800, CV_32FC1);
-	cv::Mat seg_right  = cv::Mat::zeros(640, 800, CV_32FC1);
+	cv::Mat seg_left  = cv::Mat::zeros(480, 640, CV_32FC1);
+	cv::Mat seg_right  = cv::Mat::zeros(480, 640, CV_32FC1);
 
 	trackingImgs.resize(2);
 
 	//TODO: get image size from camera model, or initialize segmented images,
 
-	cv::Mat rawImage_left = cv::Mat::zeros(640, 800, CV_32FC1);
-	cv::Mat rawImage_right = cv::Mat::zeros(640, 800, CV_32FC1);
+	cv::Mat rawImage_left = cv::Mat::zeros(480, 640, CV_32FC1);
+	cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_32FC1);
 
 	image_transport::ImageTransport it(nh);
 	image_transport::Subscriber img_sub_l = it.subscribe(
@@ -98,10 +96,11 @@ int main(int argc, char **argv) {
 		ros::spinOnce();
 
 		if (freshImage ){
+
 			UKF.tool_rawImg_left = rawImage_left.clone();
 			UKF.tool_rawImg_right = rawImage_right.clone();
 
-			seg_left = segmentation(rawImage_left);  //or use image_vessselness
+			seg_left = segmentation(rawImage_left);
 			seg_right = segmentation(rawImage_right);
 			//ROS_INFO("AFTER SEG");
 //			cv::imshow("Cam L", rawImage_left);
@@ -110,12 +109,10 @@ int main(int argc, char **argv) {
 //			cv::imshow("Seg R", seg_right);
 //			cv::waitKey(10);
 
-            UKF.update(seg_left, seg_right);
+            UKF.UKF_double_arm(seg_left, seg_right);
 			//UKF.measureFunc(UKF.toolImage_left_arm_1, UKF.toolImage_right_arm_1, initial_test, seg_left, seg_right, UKF.Cam_left_arm_1, UKF.Cam_right_arm_1);
 
 			freshImage = false;
-			freshVelocity = false;
-
             //ros::Duration(3).sleep();
 		}
 

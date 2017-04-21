@@ -66,8 +66,8 @@
 #include <sensor_msgs/image_encodings.h>
 #include <cwru_opencv_common/projective_geometry.h>
 
-//#include <cwru_xform_utils/xform_utils.h>
-#include <xform_utils/xform_utils.h>
+#include <cwru_xform_utils/xform_utils.h>
+//#include <xform_utils/xform_utils.h>
 
 class KalmanFilter {
 
@@ -119,8 +119,8 @@ private:
     std::vector<double> sensor_1;
     std::vector<double> sensor_2;
 
-    cv::Mat kalman_mu;
-    cv::Mat kalman_sigma;
+    cv::Mat kalman_mu_arm1;
+    cv::Mat kalman_sigma_arm1;
 
     Davinci_fwd_solver kinematics;
 
@@ -176,7 +176,9 @@ public:
 
     void print_affine(Eigen::Affine3d &affine);
 
-    void update(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+	void UKF_double_arm(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+
+    void update(std::vector <double> &sensor_data, cv::Mat & kalman_mu, cv::Mat & kalman_sigma, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
     void convertToolModel(const cv::Mat & trans, ToolModel::toolModel &toolModel, double ja1, double ja2, double ja3);
     /*
@@ -189,7 +191,8 @@ public:
             cv::Mat &update_sigma,
             const cv::Mat &zt
     );
-    double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right);
+    double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right, cv::Mat & rawImage_left,
+					   cv::Mat & rawImage_right);
 	double measureFuncSameCam(cv::Mat & toolImage_cam, ToolModel::toolModel &toolPose_left, ToolModel::toolModel &toolPose_right,
 											const cv::Mat &segmented_cam, const cv::Mat & Projection_mat, cv::Mat &raw_img, cv::Mat &Cam_matrix_tool_left, cv::Mat &Cam_matrix_tool_right);
 	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
