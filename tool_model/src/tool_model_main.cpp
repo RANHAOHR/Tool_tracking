@@ -56,61 +56,34 @@ int main(int argc, char **argv) {
     P.at<double>(1, 2) = 259.7727756500244; //verticle
     P.at<double>(2, 2) = 1;
 
-    P.at<double>(0, 3) = 0;
+    P.at<double>(0, 3) = 0.0;//4.732;
     P.at<double>(1, 3) = 0;
     P.at<double>(2, 3) = 0;
 
 
     ToolModel::toolModel initial;
 
-//    initial.tvec_elp(0) = 0.0;  //left and right (image frame)
-//    initial.tvec_elp(1) = 0.0;  //up and down
-//    initial.tvec_elp(2) = 0.0;
-//    initial.rvec_elp(0) = 1.0;
-//    initial.rvec_elp(1) = 1.0;
-//    initial.rvec_elp(2) = 1.0;
-//
-//    ToolModel::toolModel newTool;
-
-//    newToolModel.computeModelPose(initial, 0.0, 0.0, 0.0 );
-//    newToolModel.renderTool(testImg, initial, Cam, P);
-
-
-//    initial.tvec_elp(0) = 0.207689;// +0.4  //left and right (image frame)
-//    initial.tvec_elp(1) =   0.026625;  //up and down
-//    initial.tvec_elp(2) =  -0.076241;
-//    initial.rvec_elp(0) = 0.088608;
-//    initial.rvec_elp(1) =   -1.305077;
-//    initial.rvec_elp(2) =   0.313916;
-
-
-//    cv::Mat rot(3,3, CV_64FC1);
-//    cv::Rodrigues(initial.rvec_elp, rot);
-//    rot = rot.t();
-//
-//    cv::Mat new_rvec(3,1,CV_64FC1);
-//    cv::Rodrigues(rot, new_rvec);
-//
-//    cv::Mat new_tvec(3,1,CV_64FC1);
-//    new_tvec.at<double>(0,0) = initial.tvec_elp(0);
-//    new_tvec.at<double>(1,0) = initial.tvec_elp(1);
-//    new_tvec.at<double>(2,0) = initial.tvec_elp(2);
-//
-//    new_tvec = -1 * rot * new_tvec; // translation of inverse
-//    ROS_INFO_STREAM("new_tvec" << new_tvec);
-//    ROS_INFO_STREAM("new_rvec" << new_rvec);
-//
-//
-    initial.tvec_grip2(0) = 0.0;// +0.4  //left and right (image frame)
-    initial.tvec_grip2(1) = 0.0;  //up and down
-    initial.tvec_grip2(2) = 0.0;
-    initial.rvec_grip2(0) = 0.1;
-    initial.rvec_grip2(1) = 0.1;
-    initial.rvec_grip2(2) = 0.0;
+    initial.tvec_grip1(0) = 0.02;// +0.4  //left and right (image frame)
+    initial.tvec_grip1(1) = 0.0;  //up and down
+    initial.tvec_grip1(2) = 0.0;
+    initial.rvec_grip1(0) = 0;
+    initial.rvec_grip1(1) = 0.0;
+    initial.rvec_grip1(2) = 0.0;
 
 
     newToolModel.computeDavinciModel(initial, 0.0, 0.0, 0.0 );
     newToolModel.renderTool(testImg, initial, Cam, P);
+
+//    initial.tvec_cyl(0) = 0.01;// +0.4  //left and right (image frame)
+//    initial.tvec_cyl(1) = 0.0;  //up and down
+//    initial.tvec_cyl(2) = 0.04;
+//    initial.rvec_cyl(0) = 0.2;
+//    initial.rvec_cyl(1) = 1.4;
+//    initial.rvec_cyl(2) = 0.2;
+//
+//
+//    newToolModel.computeEllipsePose(initial, 0.0, 0.0, 0.0 );
+//    newToolModel.renderTool(testImg, initial, Cam, P);
 
     cv::imshow("tool image: ",testImg );
     //cv::imshow("segImg : ",segImg );

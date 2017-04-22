@@ -330,15 +330,15 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                                    cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
                                    const cv::Mat &P, cv::OutputArray jac) {
 
-//    cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << -1,0,0,0,
-//    0,0,1,0,
-//    0,1,0,0,
-//    0,0,0,1);
+    cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << -1,0,0,0,
+    0,0,1,0,
+    0,1,0,0,
+    0,0,0,1); //tip
 
-    cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << 0,0,1,0,
-            1,0,0,0,
-            0,1,0,0,
-            0,0,0,1);
+//    cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << 0,0,1,0,
+//            1,0,0,0,
+//            0,1,0,0,
+//            0,0,0,1);
 
     cv::Mat temp_input_Vmat = adjoint_mat * input_Vmat;
     cv::Mat temp_input_Nmat = adjoint_mat * input_Nmat;
@@ -962,6 +962,9 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     inputModel.tvec_elp(1) = q_temp.at<double>(1, 0);
     inputModel.tvec_elp(2) = q_temp.at<double>(2, 0);
 
+
+
+
     inputModel.rvec_elp(0) = inputModel.rvec_cyl(0) + theta_ellipse; //roll angle should be the same.
     inputModel.rvec_elp(1) = inputModel.rvec_cyl(1); //pitch angle should be the same.
     inputModel.rvec_elp(2) = inputModel.rvec_cyl(2);// + theta_ellipse; //yaw angle is plus the theta_ellipse
@@ -1065,15 +1068,29 @@ void ToolModel::computeDavinciModel(toolModel &inputModel, const double &theta_t
     q_temp = transformPoints( q_temp, cv::Mat(inputModel.rvec_grip1),
                               cv::Mat(inputModel.tvec_grip1));
 
-    /*gripper 2's position need to be adjust*/
+    /*gripper 's position need to be adjust*/
     inputModel.tvec_grip1(0) = q_temp.at<double>(0, 0);
     inputModel.tvec_grip1(1) = q_temp.at<double>(1, 0);
     inputModel.tvec_grip1(2) = q_temp.at<double>(2, 0);
 
     /*oval part*/
-    inputModel.rvec_elp(0) = inputModel.rvec_grip1(0) + theta_grip_1; //or maybe the negative of the theta
-    inputModel.rvec_elp(1) = inputModel.rvec_grip1(1);// + theta_grip_1; //pitch angle should be the same.
-    inputModel.rvec_elp(2) = inputModel.rvec_grip1(2); //yaw angle is plus the theta_ellipse
+    cv::Mat rot_ellipse(3,3,CV_64FC1);
+    cv::Rodrigues(inputModel.rvec_grip1, rot_ellipse);
+
+    double cos_theta = cos(theta_grip_1);
+    double sin_theta = sin(theta_grip_1);
+
+    cv::Mat g_ellipse = (cv::Mat_<double>(3,3) << 1, 0, 0,
+    0, cos_theta, -sin_theta,
+    0,sin_theta, cos_theta);
+
+    cv::Mat rot_new = rot_ellipse * g_ellipse;
+    cv::Mat temp_vec(3,1,CV_64FC1);
+    cv::Rodrigues(rot_new, temp_vec);
+
+    inputModel.rvec_elp(0) = temp_vec.at<double>(0,0); //or maybe the negative of the theta
+    inputModel.rvec_elp(1) = temp_vec.at<double>(1,0);// + theta_grip_1; //pitch angle should be the same.
+    inputModel.rvec_elp(2) = temp_vec.at<double>(2,0); //yaw angle is plus the theta_ellipse
 
     cv::Mat q_ellipse_ = cv::Mat(4, 1, CV_64FC1);
     q_ellipse_.at<double>(0, 0) = 0;
@@ -1089,21 +1106,70 @@ void ToolModel::computeDavinciModel(toolModel &inputModel, const double &theta_t
     inputModel.tvec_elp(2) = q_ellipse_.at<double>(2, 0); //yaw angle is plus the theta_ellipse
 
     /*cylinder part*/
+    cv::Mat rot_cylinder(3,3,CV_64FC1);
+    cv::Rodrigues(inputModel.rvec_elp, rot_cylinder);
+
+    cos_theta = cos(theta_tool);
+    sin_theta = sin(theta_tool);
+
+    cv::Mat g_cylinder = (cv::Mat_<double>(3,3) << cos_theta, 0, sin_theta,
+            0, 1, 0,
+            -sin_theta, 0, cos_theta);
+
+    cv::Mat rot_cyl = rot_cylinder * g_cylinder;
+    cv::Mat cyl_vec(3,1,CV_64FC1);
+    cv::Rodrigues(rot_cyl, cyl_vec);
+
+    inputModel.rvec_cyl(0) = cyl_vec.at<double>(0,0);
+    inputModel.rvec_cyl(1) = cyl_vec.at<double>(1,0);
+    inputModel.rvec_cyl(2) = cyl_vec.at<double>(2,0);
+
     cv::Mat q_cylinder_ = cv::Mat(4, 1, CV_64FC1);
     q_cylinder_.at<double>(0, 0) = 0;
     q_cylinder_.at<double>(1, 0) = 0;//0.1106m
     q_cylinder_.at<double>(2, 0) = -(offset_ellipse - offset_body);
     q_cylinder_.at<double>(3, 0) = 1;//0.1106m
 
-    inputModel.rvec_cyl(0) = inputModel.rvec_elp(0);
-    inputModel.rvec_cyl(1) = inputModel.rvec_elp(1)+ theta_tool;
-    inputModel.rvec_cyl(2) = inputModel.rvec_elp(2);
-
     q_cylinder_ = transformPoints( q_cylinder_, cv::Mat(inputModel.rvec_cyl), cv::Mat(inputModel.tvec_elp)); //transform the ellipse coord according to cylinder pose
 
     inputModel.tvec_cyl(0) = q_cylinder_.at<double>(0, 0);
     inputModel.tvec_cyl(1) = q_cylinder_.at<double>(1, 0);
     inputModel.tvec_cyl(2) = q_cylinder_.at<double>(2, 0);
+
+    /**********old and new***************/
+//    inputModel.rvec_elp(0) = inputModel.rvec_grip1(0) + theta_grip_1; //or maybe the negative of the theta
+//    inputModel.rvec_elp(1) = inputModel.rvec_grip1(1);// + theta_grip_1; //pitch angle should be the same.
+//    inputModel.rvec_elp(2) = inputModel.rvec_grip1(2); //yaw angle is plus the theta_ellipse
+//
+//    cv::Mat q_ellipse_ = cv::Mat(4, 1, CV_64FC1);
+//    q_ellipse_.at<double>(0, 0) = 0;
+//    q_ellipse_.at<double>(1, 0) = 0;//
+//    q_ellipse_.at<double>(2, 0) = -(offset_gripper - offset_ellipse);
+//    q_ellipse_.at<double>(3, 0) = 1;
+//
+//    q_ellipse_ = transformPoints( q_ellipse_, cv::Mat(inputModel.rvec_elp),
+//                              cv::Mat(inputModel.tvec_grip1)); //transform the ellipse coord according to cylinder pose
+//
+//    inputModel.tvec_elp(0) = q_ellipse_.at<double>(0, 0); //or maybe the negative of the theta
+//    inputModel.tvec_elp(1) = q_ellipse_.at<double>(1, 0); //pitch angle should be the same.
+//    inputModel.tvec_elp(2) = q_ellipse_.at<double>(2, 0); //yaw angle is plus the theta_ellipse
+//
+//    /*cylinder part*/
+//    cv::Mat q_cylinder_ = cv::Mat(4, 1, CV_64FC1);
+//    q_cylinder_.at<double>(0, 0) = 0;
+//    q_cylinder_.at<double>(1, 0) = 0;//0.1106m
+//    q_cylinder_.at<double>(2, 0) = -(offset_ellipse - offset_body);
+//    q_cylinder_.at<double>(3, 0) = 1;//0.1106m
+//
+//    inputModel.rvec_cyl(0) = inputModel.rvec_elp(0);
+//    inputModel.rvec_cyl(1) = inputModel.rvec_elp(1)+ theta_tool;
+//    inputModel.rvec_cyl(2) = inputModel.rvec_elp(2);
+//
+//    q_cylinder_ = transformPoints( q_cylinder_, cv::Mat(inputModel.rvec_cyl), cv::Mat(inputModel.tvec_elp)); //transform the ellipse coord according to cylinder pose
+//
+//    inputModel.tvec_cyl(0) = q_cylinder_.at<double>(0, 0);
+//    inputModel.tvec_cyl(1) = q_cylinder_.at<double>(1, 0);
+//    inputModel.tvec_cyl(2) = q_cylinder_.at<double>(2, 0);
 
     /*********** gripper 1 **********/
     inputModel.tvec_grip2(0) = inputModel.tvec_grip1(0);
