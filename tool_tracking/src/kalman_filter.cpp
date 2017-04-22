@@ -111,19 +111,26 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	kalman_mu_arm1.at<double>(7 , 0) = tmp[0][5];
 	kalman_mu_arm1.at<double>(8 , 0) = tmp[0][6];
 
-//	kalman_mu.at<double>(9 , 0) = a2_trans[0];
-//	kalman_mu.at<double>(10, 0) = a2_trans[1];
-//	kalman_mu.at<double>(11, 0) = a2_trans[2];
-//	kalman_mu.at<double>(12, 0) = a2_rvec.at<double>(0,0);
-//	kalman_mu.at<double>(13, 0) = a2_rvec.at<double>(1,0);
-//	kalman_mu.at<double>(14, 0) = a2_rvec.at<double>(2,0);
-//	kalman_mu.at<double>(15, 0) = tmp[1][4];
-//	kalman_mu.at<double>(16, 0) = tmp[1][5];
-//	kalman_mu.at<double>(17, 0) = tmp[1][6];
+	kalman_mu_arm2 = cv::Mat_<double>::zeros(L, 1);
+
+	kalman_mu_arm2.at<double>(9 , 0) = a2_trans[0];
+	kalman_mu_arm2.at<double>(10, 0) = a2_trans[1];
+	kalman_mu_arm2.at<double>(11, 0) = a2_trans[2];
+	kalman_mu_arm2.at<double>(12, 0) = a2_rvec.at<double>(0,0);
+	kalman_mu_arm2.at<double>(13, 0) = a2_rvec.at<double>(1,0);
+	kalman_mu_arm2.at<double>(14, 0) = a2_rvec.at<double>(2,0);
+	kalman_mu_arm2.at<double>(15, 0) = tmp[1][4];
+	kalman_mu_arm2.at<double>(16, 0) = tmp[1][5];
+	kalman_mu_arm2.at<double>(17, 0) = tmp[1][6];
 
 	kalman_sigma_arm1 = (cv::Mat_<double>::eye(L, L));
 	for (int j = 0; j < L; ++j) {
 		kalman_sigma_arm1.at<double>(j,j) = ukfToolModel.randomNumber(0.04,0); //gaussian generator
+	}
+
+	kalman_sigma_arm2 = (cv::Mat_<double>::eye(L, L));
+	for (int j = 0; j < L; ++j) {
+		kalman_sigma_arm2.at<double>(j,j) = ukfToolModel.randomNumber(0.04,0); //gaussian generator
 	}
 
 	//Temporarily populate the motion commands to give zero motion.
@@ -148,9 +155,6 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 //    fvc_1 = false;
 //    fvc_2 = false;
 //    last_update = ros::Time::now().toSec();
-
-	//ROS_INFO("GREEN ARM AT (%f %f %f): %f %f %f", green_trans[0], green_trans[1], green_trans[2], green_rpy[0], green_rpy[1], green_rpy[2]);
-	//ROS_INFO("YELLOW ARM AT (%f %f %f): %f %f %f", yellow_trans[0], yellow_trans[1], yellow_trans[2], yellow_rpy[0], yellow_rpy[1], yellow_rpy[2]);
 
 	//freshCameraInfo = false; //should be left and right
 	
@@ -432,8 +436,10 @@ void KalmanFilter::UKF_double_arm(const cv::Mat &segmented_left, const cv::Mat &
 		sensor_2 = tmp[1];
 	}
 
-
+	ROS_INFO("--------------ARM 1 : --------------");
 	update(sensor_1, kalman_mu_arm1, kalman_sigma_arm1, segmented_left, segmented_right );
+	//ROS_INFO("--------------ARM 2 : --------------");
+	//update(sensor_2, kalman_mu_arm2, kalman_sigma_arm2, segmented_left, segmented_right );
 
 };
 
@@ -443,10 +449,10 @@ void KalmanFilter::update(std::vector <double> &sensor_data, cv::Mat & kalman_mu
 	
 	/******Find and convert our various params and inputs******/
 
-	Eigen::Affine3d a1_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_data.data()));
-	Eigen::Vector3d a1_trans = a1_pos.translation();
-	cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-	computeRodriguesVec(a1_pos, a1_rvec);
+	Eigen::Affine3d arm_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_data.data()));
+	Eigen::Vector3d arm_trans = arm_pos.translation();
+	cv::Mat arm_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+	computeRodriguesVec(arm_pos, arm_rvec);
 
 //	Eigen::Affine3d a1_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0], sensor_data[0] + DH_q_offset0 );
 //	Eigen::Affine3d a1_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1], sensor_data[1] + DH_q_offset1 );
@@ -470,25 +476,16 @@ void KalmanFilter::update(std::vector <double> &sensor_data, cv::Mat & kalman_mu
 
 
 	cv::Mat zt = cv::Mat_<double>(L, 1);
-	zt.at<double>(0 , 0) = a1_trans[0];
-	zt.at<double>(1 , 0) = a1_trans[1];
-	zt.at<double>(2 , 0) = a1_trans[2];
-	zt.at<double>(3 , 0) = a1_rvec.at<double>(0,0);
-	zt.at<double>(4 , 0) = a1_rvec.at<double>(1,0);
-	zt.at<double>(5 , 0) = a1_rvec.at<double>(2,0);
+	zt.at<double>(0 , 0) = arm_trans[0];
+	zt.at<double>(1 , 0) = arm_trans[1];
+	zt.at<double>(2 , 0) = arm_trans[2];
+	zt.at<double>(3 , 0) = arm_rvec.at<double>(0,0);
+	zt.at<double>(4 , 0) = arm_rvec.at<double>(1,0);
+	zt.at<double>(5 , 0) = arm_rvec.at<double>(2,0);
 	zt.at<double>(6 , 0) = sensor_data[4];
 	zt.at<double>(7 , 0) = sensor_data[5];
 	zt.at<double>(8 , 0) = sensor_data[6];
 
-//	zt.at<double>(9 , 0) = a2_trans[0];
-//	zt.at<double>(10, 0) = a2_trans[1];
-//	zt.at<double>(11, 0) = a2_trans[2];
-//	zt.at<double>(12, 0) = a2_rvec.at<double>(0,0);
-//	zt.at<double>(13, 0) = a2_rvec.at<double>(1,0);
-//	zt.at<double>(14, 0) = a2_rvec.at<double>(2,0);
-//	zt.at<double>(15, 0) = tmp[1][4];
-//	zt.at<double>(16, 0) = tmp[1][5];
-//	zt.at<double>(17, 0) = tmp[1][6];
 
 	ROS_INFO("SENSOR data AT (%f %f %f): %f %f %f, joints: %f %f %f ",zt.at<double>(0, 0), zt.at<double>(1, 0),zt.at<double>(2, 0),zt.at<double>(3, 0),zt.at<double>(4, 0), zt.at<double>(5, 0), zt.at<double>(6, 0), zt.at<double>(7, 0),zt.at<double>(8, 0));
 
@@ -597,9 +594,7 @@ void KalmanFilter::update(std::vector <double> &sensor_data, cv::Mat & kalman_mu
 	/*****Update our mu and sigma.*****/
 	kalman_mu = mu_bar + K * (zt - z_caret);
 	kalman_sigma = sigma_bar - K * S * K.t();
-	ROS_WARN("1 ARM AT (%f %f %f): %f %f %f, joints: %f %f %f ",kalman_mu.at<double>(0, 0), kalman_mu.at<double>(1, 0),kalman_mu.at<double>(2, 0),kalman_mu.at<double>(3, 0),kalman_mu.at<double>(4, 0), kalman_mu.at<double>(5, 0), kalman_mu.at<double>(6, 0), kalman_mu.at<double>(7, 0),kalman_mu.at<double>(8, 0));
-//	ROS_WARN("2 ARM AT (%f %f %f): %f %f %f, joints: %f %f %f ",kalman_mu.at<double>(9, 0),kalman_mu.at<double>(10, 0), kalman_mu.at<double>(11, 0),  kalman_mu.at<double>(12, 0), kalman_mu.at<double>(13, 0),kalman_mu.at<double>(14, 0),  kalman_mu.at<double>(15, 0), kalman_mu.at<double>(16, 0),kalman_mu.at<double>(17, 0));
-
+	ROS_WARN("KALMAN ARM AT (%f %f %f): %f %f %f, joints: %f %f %f ",kalman_mu.at<double>(0, 0), kalman_mu.at<double>(1, 0),kalman_mu.at<double>(2, 0),kalman_mu.at<double>(3, 0),kalman_mu.at<double>(4, 0), kalman_mu.at<double>(5, 0), kalman_mu.at<double>(6, 0), kalman_mu.at<double>(7, 0),kalman_mu.at<double>(8, 0));
 };
 
 void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & zt){
@@ -664,15 +659,15 @@ void KalmanFilter::computeSigmaMeasures(
 
 };
 
-double KalmanFilter::matching_score(
-	const cv::Mat &stat,
-	const cv::Mat &segmented_left,
+
+/****using vision fucntions here careful with dimensions****/
+double KalmanFilter::matching_score(const cv::Mat &stat, const cv::Mat &segmented_left,
 	const cv::Mat &segmented_right){
 
 	//ROS_INFO_STREAM("stat IS: " << stat);
 	//Convert our state into Eigen::Affine3ds; one for each arm, I change the order here
 	cv::Mat arm1 = cv::Mat_<double>::zeros(6, 1);
-	cv::Mat arm2 = cv::Mat_<double>::zeros(6, 1);
+
 	arm1.at<double>(0,0) = stat.at<double>(0 , 0);
 	arm1.at<double>(1,0) = stat.at<double>(1 , 0);
 	arm1.at<double>(2,0) = stat.at<double>(2 , 0);
@@ -680,28 +675,15 @@ double KalmanFilter::matching_score(
 	arm1.at<double>(4,0) = stat.at<double>(4 , 0);
 	arm1.at<double>(5,0) = stat.at<double>(5 , 0);
 
-//	arm2.at<double>(0,0) = stat.at<double>(9 , 0);
-//	arm2.at<double>(1,0) = stat.at<double>(10, 0);
-//	arm2.at<double>(2,0) = stat.at<double>(11, 0);
-//	arm2.at<double>(3,0) = stat.at<double>(12, 0);
-//	arm2.at<double>(4,0) = stat.at<double>(13, 0);
-//	arm2.at<double>(5,0) = stat.at<double>(14, 0);
-
-
 	//Convert them into tool models
 	ToolModel::toolModel arm_1;
-//	ToolModel::toolModel arm_2;
+
 	/*TODO: different coordinate system and definition of orientations*/
 	double joint_oval_1 = stat.at<double>(6 , 0);
 	double joint_grip_dist_1 = stat.at<double>(7 , 0);
 	double joint_grip_angle_1 = stat.at<double>(8 , 0);
 
-//	double joint_oval_2 = stat.at<double>(15, 0);
-//	double joint_grip_dist_2 = stat.at<double>(16, 0);
-//	double joint_grip_angle_2 = stat.at<double>(17, 0);
-
 	convertToolModel(arm1, arm_1, joint_oval_1, joint_grip_dist_1, joint_grip_angle_1);
-	//convertToolModel(arm2, arm_2, joint_oval_2, joint_grip_dist_2, joint_grip_angle_2);
 	
 	//ROS_ERROR("SHOWING SIGPOINT %f %f %f %f %f %f",stat.at<double>(0 , 0), stat.at<double>(1 , 0), stat.at<double>(2 , 0), stat.at<double>(3 , 0), stat.at<double>(4 , 0), stat.at<double>(5 , 0));
 
@@ -801,31 +783,6 @@ void KalmanFilter::convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & ou
 void KalmanFilter::convertToolModel(const cv::Mat & trans, ToolModel::toolModel &toolModel, double ja1, double ja2, double ja3){
 	//Eigen::Vector3d pos = trans.translation();
 	////Not use euler angles or Rodrigues angles
-//	Eigen::Vector3d rpy = trans.rotation().eulerAngles(0, 1, 2);
-//	ROS_INFO_STREAM("RPY " << rpy);
-//	toolModel.tvec_elp(0) = pos[0];
-//	toolModel.tvec_elp(1) = pos[1];
-//	toolModel.tvec_elp(2) = pos[2];
-//	toolModel.rvec_elp(0) = rpy[0];
-//	toolModel.rvec_elp(1) = rpy[1];
-//	toolModel.rvec_elp(2) = rpy[2];
-
-	/*Eigen::Matrix3d rot_affine = trans.rotation();
-
-	cv::Mat rot(3,3,CV_64FC1);
-	rot.at<double>(0,0) = rot_affine(0,0);
-	rot.at<double>(0,1) = rot_affine(0,1);
-	rot.at<double>(0,2) = rot_affine(0,2);
-	rot.at<double>(1,0) = rot_affine(1,0);
-	rot.at<double>(1,1) = rot_affine(1,1);
-	rot.at<double>(1,2) = rot_affine(1,2);
-	rot.at<double>(2,0) = rot_affine(2,0);
-	rot.at<double>(2,1) = rot_affine(2,1);
-	rot.at<double>(2,2) = rot_affine(2,2);
-
-	cv::Mat rot_vec(3,1, CV_64FC1);
-	cv::Rodrigues(rot, rot_vec );
-	//ROS_INFO_STREAM("rot_vec " << rot_vec);*/
 
 	toolModel.tvec_grip1(0) = trans.at<double>(0,0);
 	toolModel.tvec_grip1(1) = trans.at<double>(1,0);

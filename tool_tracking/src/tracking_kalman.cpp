@@ -6,7 +6,6 @@
 
 bool freshImage;
 bool freshCameraInfo;
-bool freshVelocity;
 
 using namespace std;
 using namespace cv_projective;

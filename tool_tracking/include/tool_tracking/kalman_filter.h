@@ -116,11 +116,18 @@ private:
     double cmd_time_1_old;
     double cmd_time_2_old;
 
+	bool fvc_1;
+	bool fvc_2;
+
+	/************using variables*************/
     std::vector<double> sensor_1;
     std::vector<double> sensor_2;
 
     cv::Mat kalman_mu_arm1;
     cv::Mat kalman_sigma_arm1;
+
+	cv::Mat kalman_mu_arm2;
+	cv::Mat kalman_sigma_arm2;
 
     Davinci_fwd_solver kinematics;
 
@@ -139,16 +146,11 @@ private:
     cv::Mat P_right;
 
     double matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
-
-	//double matching_score(const cv::Mat & stat);
 	
 	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & zt);
 	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
     void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in,
 		const cv::Mat &segmented_left, const cv::Mat &segmented_right);
-
-    bool fvc_1;
-    bool fvc_2;
 
 public:
 

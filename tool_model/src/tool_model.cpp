@@ -271,8 +271,6 @@ cv::Mat ToolModel::camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat) {
     //cv::Mat Inv = cam_mat.inv();
     cv::Mat Inv = cv::Mat_<double>::eye(4,4);
     computeInvSE(cam_mat, Inv );   //avoid singularity
-    //ROS_INFO_STREAM("Inv" << Inv);
-
 
     cv::Mat output_mat = cam_mat * input_mat; //transform the obj to camera frames
 
@@ -400,116 +398,6 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                     int n2_ = input_faces[neighbor_faces[i][j]][4];
                     int n3_ = input_faces[neighbor_faces[i][j]][5];
 
-
-                    new_Vertices.col(v1_).copyTo(temp.col(0));
-                    cv::Point3d pt1_ = convert_MattoPts(temp);
-                    new_Vertices.col(v2_).copyTo(temp.col(0));
-                    cv::Point3d pt2_ = convert_MattoPts(temp);
-                    new_Vertices.col(v3_).copyTo(temp.col(0));
-                    cv::Point3d pt3_ = convert_MattoPts(temp);
-
-                    new_Normals.col(n1_).copyTo(temp.col(0));
-                    cv::Point3d vn1_ = convert_MattoPts(temp);
-                    new_Normals.col(n2_).copyTo(temp.col(0));
-                    cv::Point3d vn2_ = convert_MattoPts(temp);
-                    new_Normals.col(n3_).copyTo(temp.col(0));
-                    cv::Point3d vn3_ = convert_MattoPts(temp);
-
-                    cv::Point3d fnormal_n = FindFaceNormal(pt1_, pt2_, pt3_, vn1_, vn2_, vn3_);
-
-                    cv::Point3d face_point_j = pt1_ + pt2_ + pt3_;
-                    face_point_j.x = face_point_j.x / 3;
-                    face_point_j.y = face_point_j.y / 3;
-                    face_point_j.z = face_point_j.z / 3;
-
-                    double isfront_j = dotProduct(fnormal_n, face_point_j);
-
-                    if (isfront_i * isfront_j < 0.0) // one is front, another is back
-                    {
-                        /*finish finding, drawing the image*/
-                        new_Vertices.col(neighbor_faces[i][j + 1]).copyTo(ept_1);  //under camera frames
-                        new_Vertices.col(neighbor_faces[i][j + 2]).copyTo(ept_2);
-
-                        cv::Point2d prjpt_1 = reproject(ept_1, P);
-                        cv::Point2d prjpt_2 = reproject(ept_2, P);
-
-                        cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
-
-                    }
-
-
-                }
-
-            }
-
-
-        }
-    }
-
-};
-
-/* This is the original tool configuration */
-void ToolModel::Compute_Silhouette_Body(const std::vector<std::vector<int> > &input_faces,
-                                   const std::vector<std::vector<int> > &neighbor_faces,
-                                   const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
-                                   cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
-                                   const cv::Mat &P, cv::OutputArray jac) {
-
-    cv::Mat new_Vertices = transformPoints(input_Vmat, rvec, tvec);
-    new_Vertices = camTransformMats(CamMat, new_Vertices); //transform every point under camera frame
-
-    cv::Mat new_Normals = transformPoints(input_Nmat, rvec, tvec);
-    new_Normals = camTransformMats(CamMat, new_Normals); //transform every surface normal under camera frame
-
-    unsigned long neighbor_num = 0;
-    cv::Mat temp(4, 1, CV_64FC1);
-
-    cv::Mat ept_1(4, 1, CV_64FC1);
-    cv::Mat ept_2(4, 1, CV_64FC1);
-
-    for (int i = 0; i < input_faces.size(); ++i) {
-        // ROS_INFO_STREAM("i "<< i);
-        neighbor_num = (neighbor_faces[i].size()) / 3;  //each neighbor has two vertices
-
-        if (neighbor_num > 0) {
-            int v1 = input_faces[i][0];
-            int v2 = input_faces[i][1];
-            int v3 = input_faces[i][2];
-            int n1 = input_faces[i][3];
-            int n2 = input_faces[i][4];
-            int n3 = input_faces[i][5];
-
-            new_Vertices.col(v1).copyTo(temp.col(0));
-            cv::Point3d pt1 = convert_MattoPts(temp);
-            new_Vertices.col(v2).copyTo(temp.col(0));
-            cv::Point3d pt2 = convert_MattoPts(temp);
-            new_Vertices.col(v3).copyTo(temp.col(0));
-            cv::Point3d pt3 = convert_MattoPts(temp);
-
-            new_Normals.col(n1).copyTo(temp.col(0));
-            cv::Point3d vn1 = convert_MattoPts(temp);
-            new_Normals.col(n2).copyTo(temp.col(0));
-            cv::Point3d vn2 = convert_MattoPts(temp);
-            new_Normals.col(n3).copyTo(temp.col(0));
-            cv::Point3d vn3 = convert_MattoPts(temp);
-
-            cv::Point3d fnormal = FindFaceNormal(pt1, pt2, pt3, vn1, vn2, vn3); //knowing the direction and normalized
-            cv::Point3d face_point_i = pt1 + pt2 + pt3;
-            face_point_i.x = face_point_i.x / 3;
-            face_point_i.y = face_point_i.y / 3;
-            face_point_i.z = face_point_i.z / 3;
-
-            double isfront_i = dotProduct(fnormal, face_point_i);
-            if (isfront_i < 0.00000) {
-                for (int neighbor_count = 0; neighbor_count < neighbor_num; ++neighbor_count) {  //notice: cannot use J here, since the last j will not be counted
-                    int j = 3 * neighbor_count;
-                    int v1_ = input_faces[neighbor_faces[i][j]][0];
-                    int v2_ = input_faces[neighbor_faces[i][j]][1];
-                    int v3_ = input_faces[neighbor_faces[i][j]][2];
-
-                    int n1_ = input_faces[neighbor_faces[i][j]][3];
-                    int n2_ = input_faces[neighbor_faces[i][j]][4];
-                    int n3_ = input_faces[neighbor_faces[i][j]][5];
 
                     new_Vertices.col(v1_).copyTo(temp.col(0));
                     cv::Point3d pt1_ = convert_MattoPts(temp);
@@ -962,9 +850,6 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     inputModel.tvec_elp(1) = q_temp.at<double>(1, 0);
     inputModel.tvec_elp(2) = q_temp.at<double>(2, 0);
 
-
-
-
     inputModel.rvec_elp(0) = inputModel.rvec_cyl(0) + theta_ellipse; //roll angle should be the same.
     inputModel.rvec_elp(1) = inputModel.rvec_cyl(1); //pitch angle should be the same.
     inputModel.rvec_elp(2) = inputModel.rvec_cyl(2);// + theta_ellipse; //yaw angle is plus the theta_ellipse
@@ -1242,7 +1127,6 @@ float ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segme
     float matchingScore;
 
     /*** When ROI is an empty rec, the position of tool is simply just not match, return 0 matching score ***/
-    //if (ROI.area() != 0) {
     cv::Mat ROI_toolImage = toolImage.clone(); //(ROI); //crop tool image
     cv::Mat segImageGrey = segmentedImage.clone(); //(ROI); //crop segmented image, notice the size of the segmented image
 
@@ -1264,10 +1148,6 @@ float ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segme
 
     cv::matchTemplate(segImgBlur, toolImFloat, result, CV_TM_CCORR_NORMED); //seg, toolImg
     matchingScore = static_cast<float> (result.at<float>(0));
-
-//    } else {
-//        ROS_INFO("EMPTY ROI, zero matching score");
-//    }
 
     return matchingScore;
 }
