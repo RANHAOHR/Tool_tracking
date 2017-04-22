@@ -5,12 +5,9 @@
 #include <tool_tracking/kalman_filter.h>
 
 bool freshImage;
-bool freshCameraInfo;
 
 using namespace std;
 using namespace cv_projective;
-
-std::vector<cv::Mat> trackingImgs;  ///this should be CV_32F
 
 void newImageCallback(const sensor_msgs::ImageConstPtr &msg, cv::Mat *outputImage) {
 	cv_bridge::CvImagePtr cv_ptr;
@@ -26,30 +23,6 @@ void newImageCallback(const sensor_msgs::ImageConstPtr &msg, cv::Mat *outputImag
 	}
 }
 
-cv::Mat segmentation(cv::Mat &InputImg) {
-
-	cv::Mat src, src_gray;
-	cv::Mat grad;
-
-	cv::Mat res;
-	src = InputImg;
-
-	cv::resize(src, src, cv::Size(), 1, 1);
-
-	double lowThresh = 43;
-
-	cv::cvtColor(src, src_gray, CV_BGR2GRAY);
-
-	cv::blur(src_gray, src_gray, cv::Size(3, 3));
-
-	cv::Canny(src_gray, grad, lowThresh, 4 * lowThresh, 3); //use Canny segmentation
-
-	grad.convertTo(res, CV_32FC1);
-
-	return res;
-
-}
-
 int main(int argc, char **argv) {
 
 	ros::init(argc, argv, "tracking_node");
@@ -58,16 +31,7 @@ int main(int argc, char **argv) {
 	/******  initialization  ******/
 	KalmanFilter UKF(&nh);
 
-	freshCameraInfo = false;
-	freshImage = false;
 	//freshVelocity = false;//Moving all velocity-related things inside of the kalman.
-
-	cv::Mat seg_left  = cv::Mat::zeros(480, 640, CV_32FC1);
-	cv::Mat seg_right  = cv::Mat::zeros(480, 640, CV_32FC1);
-
-	trackingImgs.resize(2);
-
-	//TODO: get image size from camera model, or initialize segmented images,
 
 	cv::Mat rawImage_left = cv::Mat::zeros(480, 640, CV_32FC1);
 	cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_32FC1);
@@ -94,28 +58,15 @@ int main(int argc, char **argv) {
 	while (nh.ok()) {
 		ros::spinOnce();
 
-		if (freshImage ){
+		if (freshImage){
 
 			UKF.tool_rawImg_left = rawImage_left.clone();
 			UKF.tool_rawImg_right = rawImage_right.clone();
 
-			seg_left = segmentation(rawImage_left);
-			seg_right = segmentation(rawImage_right);
-			//ROS_INFO("AFTER SEG");
-//			cv::imshow("Cam L", rawImage_left);
-//			cv::imshow("Cam R", rawImage_right);`
-//			cv::imshow("Seg L", seg_left);
-//			cv::imshow("Seg R", seg_right);
-//			cv::waitKey(10);
-
-            UKF.UKF_double_arm(seg_left, seg_right);
-			//UKF.measureFunc(UKF.toolImage_left_arm_1, UKF.toolImage_right_arm_1, initial_test, seg_left, seg_right, UKF.Cam_left_arm_1, UKF.Cam_right_arm_1);
+            UKF.UKF_double_arm();
 
 			freshImage = false;
-            //ros::Duration(3).sleep();
 		}
-
-		//We want to update our filter whenever the robot is doing anything, not just when we are getting images.
 
         //	ToolModel::toolModel currentToolModel;
         //	convertToolModel(current_mu, currentToolModel,1);

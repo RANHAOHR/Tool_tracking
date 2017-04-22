@@ -39,22 +39,25 @@
 #define KALMANFILTER_H
 
 #include <vector>
-#include <stdio.h>
+
 #include <iostream>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 
 #include <string>
 #include <cstring>
 
 #include <tool_model_lib/tool_model.h>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
 
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
+
+#include <image_transport/image_transport.h>
 
 #include <vesselness_image_filter_cpu/vesselness_lib.h>
 #include <boost/random/normal_distribution.hpp>
@@ -145,12 +148,24 @@ private:
     cv::Mat P_left;
     cv::Mat P_right;
 
-    double matching_score(const cv::Mat & stat, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+    double matching_score(const cv::Mat & stat,cv::Mat &left_image,cv::Mat &right_image,
+						  cv::Mat &cam_left, cv::Mat &cam_right);
 	
 	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & zt);
 	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
     void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in,
-		const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+							  cv::Mat &left_image,cv::Mat &right_image,
+							  cv::Mat &cam_left, cv::Mat &cam_right);
+
+
+	/*****image subscribing part*****/
+	cv::Mat seg_left;
+	cv::Mat seg_right;
+
+	cv::Mat segmentation(cv::Mat &InputImg);
+
+	bool freshSegImage;
+	bool freshCameraInfo;
 
 public:
 
@@ -161,8 +176,6 @@ public:
     * The default constructor
     */
     KalmanFilter(ros::NodeHandle *nodehandle);
-
-    bool freshCameraInfo;
 
     /*
      * The deconstructor
@@ -178,9 +191,11 @@ public:
 
     void print_affine(Eigen::Affine3d &affine);
 
-	void UKF_double_arm(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+	void UKF_double_arm();
 
-    void update(std::vector <double> &sensor_data, cv::Mat & kalman_mu, cv::Mat & kalman_sigma, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+    void update(std::vector <double> &sensor_data, cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
+				cv::Mat &left_image,cv::Mat &right_image,
+				cv::Mat &cam_left, cv::Mat &cam_right);
 
     void convertToolModel(const cv::Mat & trans, ToolModel::toolModel &toolModel, double ja1, double ja2, double ja3);
     /*
@@ -193,7 +208,7 @@ public:
             cv::Mat &update_sigma,
             const cv::Mat &zt
     );
-    double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right, cv::Mat & rawImage_left,
+    double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, cv::Mat &Cam_left, cv::Mat &Cam_right, cv::Mat & rawImage_left,
 					   cv::Mat & rawImage_right);
 	double measureFuncSameCam(cv::Mat & toolImage_cam, ToolModel::toolModel &toolPose_left, ToolModel::toolModel &toolPose_right,
 											const cv::Mat &segmented_cam, const cv::Mat & Projection_mat, cv::Mat &raw_img, cv::Mat &Cam_matrix_tool_left, cv::Mat &Cam_matrix_tool_right);
