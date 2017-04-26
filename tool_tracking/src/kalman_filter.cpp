@@ -468,25 +468,25 @@ void KalmanFilter::update(std::vector <double> &sensor_data, cv::Mat & kalman_mu
 
 	/******Find and convert our various params and inputs******/
 
-	Eigen::Affine3d arm_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_data.data()));
+//	Eigen::Affine3d arm_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_data.data()));
+//	Eigen::Vector3d arm_trans = arm_pos.translation();
+//	cv::Mat arm_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+//	computeRodriguesVec(arm_pos, arm_rvec);
+
+	Eigen::Affine3d arm_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0], sensor_data[0] + DH_q_offset0 );
+	Eigen::Affine3d arm_pos_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1], sensor_data[1] + DH_q_offset1 );
+	Eigen::Affine3d arm_pos_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_data[2] + DH_q_offset2, DH_alpha_params[2], 0.0 );
+	Eigen::Affine3d arm_pos_4 = kinematics.computeAffineOfDH(DH_a_params[3], DH_d4, DH_alpha_params[3], sensor_data[3] + DH_q_offset3 );
+	Eigen::Affine3d arm_pos_5 = kinematics.computeAffineOfDH(DH_a_params[4], DH_d5, DH_alpha_params[4], sensor_data[4] + DH_q_offset4 );
+	Eigen::Affine3d arm_pos_6 = kinematics.computeAffineOfDH(DH_a_params[5], DH_d6, DH_alpha_params[5], sensor_data[5] + DH_q_offset5 );
+	Eigen::Affine3d arm_pos_7 = kinematics.computeAffineOfDH(DH_a_params[6], DH_d7, DH_alpha_params[6], sensor_data[6] + DH_q_offset6 );
+
+	Eigen::Affine3d arm_pos = kinematics.affine_frame0_wrt_base_ * arm_pos_1 * arm_pos_2 * arm_pos_3;// * a1_4 *a1_5 * a1_6 * a1_7 * kinematics.affine_gripper_wrt_frame6_ ;
 	Eigen::Vector3d arm_trans = arm_pos.translation();
-	cv::Mat arm_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+
+ 	cv::Mat arm_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+
 	computeRodriguesVec(arm_pos, arm_rvec);
-
-//	Eigen::Affine3d a1_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0], sensor_data[0] + DH_q_offset0 );
-//	Eigen::Affine3d a1_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1], sensor_data[1] + DH_q_offset1 );
-//	Eigen::Affine3d a1_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_data[2] + DH_q_offset2, DH_alpha_params[2], 0.0 );
-//	Eigen::Affine3d a1_4 = kinematics.computeAffineOfDH(DH_a_params[3], DH_d4, DH_alpha_params[3], sensor_data[3] + DH_q_offset3 );
-//	Eigen::Affine3d a1_5 = kinematics.computeAffineOfDH(DH_a_params[4], DH_d5, DH_alpha_params[4], sensor_data[4] + DH_q_offset4 );
-//	Eigen::Affine3d a1_6 = kinematics.computeAffineOfDH(DH_a_params[5], DH_d6, DH_alpha_params[5], sensor_data[5] + DH_q_offset5 );
-//	Eigen::Affine3d a1_7 = kinematics.computeAffineOfDH(DH_a_params[6], DH_d7, DH_alpha_params[6], sensor_data[6] + DH_q_offset6 );
-
-//	Eigen::Affine3d a1_pos = kinematics.affine_frame0_wrt_base_ * a1_1 * a1_2 * a1_3;// * a1_4 *a1_5 * a1_6 * a1_7 * kinematics.affine_gripper_wrt_frame6_ ;
-//	Eigen::Vector3d a1_trans = a1_pos.translation();
-//
-// 	cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-//
-//	computeRodriguesVec(a1_pos, a1_rvec);
 
 	cv::Mat zt = cv::Mat_<double>(L, 1);
 	zt.at<double>(0 , 0) = arm_trans[0];
@@ -569,10 +569,10 @@ void KalmanFilter::update(std::vector <double> &sensor_data, cv::Mat & kalman_mu
 	computeSigmaMeasures(mscores, sigma_pts_bar, left_image, right_image, cam_left, cam_right);
 
 	//debuging
-	for(int i = 0; i < mscores.size(); i++){
-		ROS_INFO("MSCORES %f", mscores[i]);
-//		ROS_WARN_STREAM("sigma_pts_bar " << sigma_pts_bar[i]);
-	}
+//	for(int i = 0; i < mscores.size(); i++){
+//		ROS_INFO("MSCORES %f", mscores[i]);
+////		ROS_WARN_STREAM("sigma_pts_bar " << sigma_pts_bar[i]);
+//	}
 
 	/*****Correction Step: Move the sigma points through the measurement function.*****/
 	std::vector<cv::Mat_<double> > Z_bar;
@@ -765,23 +765,23 @@ void KalmanFilter::convertToolModel(const cv::Mat & trans, ToolModel::toolModel 
 	//Eigen::Vector3d pos = trans.translation();
 	////Not use euler angles or Rodrigues angles
 
-	toolModel.tvec_grip1(0) = trans.at<double>(0,0);
-	toolModel.tvec_grip1(1) = trans.at<double>(1,0);
-	toolModel.tvec_grip1(2) = trans.at<double>(2,0);
-	toolModel.rvec_grip1(0) = trans.at<double>(3,0);
-	toolModel.rvec_grip1(1) = trans.at<double>(4,0);
-	toolModel.rvec_grip1(2) = trans.at<double>(5,0);
-
-	ukfToolModel.computeDavinciModel(toolModel, ja1, ja2, ja3);
-
-//	toolModel.tvec_cyl(0) = trans.at<double>(0,0);
-//	toolModel.tvec_cyl(1) = trans.at<double>(1,0);
-//	toolModel.tvec_cyl(2) = trans.at<double>(2,0);
-//	toolModel.rvec_cyl(0) = trans.at<double>(3,0);
-//	toolModel.rvec_cyl(1) = trans.at<double>(4,0);
-//	toolModel.rvec_cyl(2) = trans.at<double>(5,0);
+//	toolModel.tvec_grip1(0) = trans.at<double>(0,0);
+//	toolModel.tvec_grip1(1) = trans.at<double>(1,0);
+//	toolModel.tvec_grip1(2) = trans.at<double>(2,0);
+//	toolModel.rvec_grip1(0) = trans.at<double>(3,0);
+//	toolModel.rvec_grip1(1) = trans.at<double>(4,0);
+//	toolModel.rvec_grip1(2) = trans.at<double>(5,0);
 //
-//	ukfToolModel.computeEllipsePose(toolModel, ja1, ja2, ja3);
+//	ukfToolModel.computeDavinciModel(toolModel, ja1, ja2, ja3);
+
+	toolModel.tvec_cyl(0) = trans.at<double>(0,0);
+	toolModel.tvec_cyl(1) = trans.at<double>(1,0);
+	toolModel.tvec_cyl(2) = trans.at<double>(2,0);
+	toolModel.rvec_cyl(0) = trans.at<double>(3,0);
+	toolModel.rvec_cyl(1) = trans.at<double>(4,0);
+	toolModel.rvec_cyl(2) = trans.at<double>(5,0);
+
+	ukfToolModel.computeEllipsePose(toolModel, ja1, ja2, ja3);
 
 };
 

@@ -178,12 +178,12 @@ void ParticleFilter::initializeParticles() {
     computeRodriguesVec(a2_pos, a2_rvec);
 
 	/*** first arm particles initialization ***/
-	initial.tvec_grip2(0) = a1_trans[0];  //left and right (image frame)
-	initial.tvec_grip2(1) = a1_trans[1];  //up and down
-	initial.tvec_grip2(2) = a1_trans[2];
-	initial.rvec_grip2(0) = a1_rvec.at<double>(0,0);
-	initial.rvec_grip2(1) = a1_rvec.at<double>(1,0);
-	initial.rvec_grip2(2) = a1_rvec.at<double>(2,0);
+	initial.tvec_grip1(0) = a1_trans[0];  //left and right (image frame)
+	initial.tvec_grip1(1) = a1_trans[1];  //up and down
+	initial.tvec_grip1(2) = a1_trans[2];
+	initial.rvec_grip1(0) = a1_rvec.at<double>(0,0);
+	initial.rvec_grip1(1) = a1_rvec.at<double>(1,0);
+	initial.rvec_grip1(2) = a1_rvec.at<double>(2,0);
 
     double theta_cylinder = tmp[0][4]; //initial guess
     double theta_oval = tmp[0][5]; //initial guess
@@ -194,12 +194,12 @@ void ParticleFilter::initializeParticles() {
 	}
 
 	/*** second arm particles initialization ***/
-	initial.tvec_grip2(0) = a2_trans[0];  //left and right (image frame)
-	initial.tvec_grip2(1) = a2_trans[1];  //up and down
-	initial.tvec_grip2(2) = a2_trans[2];
-	initial.rvec_grip2(0) = a2_rvec.at<double>(0,0);
-	initial.rvec_grip2(1) = a2_rvec.at<double>(1,0);
-	initial.rvec_grip2(2) = a2_rvec.at<double>(2,0);
+	initial.tvec_grip1(0) = a2_trans[0];  //left and right (image frame)
+	initial.tvec_grip1(1) = a2_trans[1];  //up and down
+	initial.tvec_grip1(2) = a2_trans[2];
+	initial.rvec_grip1(0) = a2_rvec.at<double>(0,0);
+	initial.rvec_grip1(1) = a2_rvec.at<double>(1,0);
+	initial.rvec_grip1(2) = a2_rvec.at<double>(2,0);
 
 	theta_cylinder = tmp[1][4]; //initial guess
 	theta_oval = tmp[1][5]; //initial guess
