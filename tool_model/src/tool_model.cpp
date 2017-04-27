@@ -51,13 +51,13 @@ boost::mt19937 rng((const uint32_t &) time(0));
 //constructor
 ToolModel::ToolModel() {
 
-//    offset_body = 0.451;//0.4535;  //0.3429, this doesn't matter when using from the tip (compensation), but matters when using from the cylinder
-//    offset_ellipse = 0.4635;//0.45352716;
-//    offset_gripper = 0.4642; //0.4253,0.46118
+    offset_body = 0.451;//0.4535;  //0.3429, this doesn't matter when using from the tip (compensation), but matters when using from the cylinder
+    offset_ellipse = 0.4567;//0.45352716;
+    offset_gripper = offset_ellipse;// + 0.0003; //0.4253,0.46118
 
-    offset_body = 0.3429; //this doesn't matter when using from the tip (compensation), but matters when using from the cylinder
-    offset_ellipse = 0.45352716;//0.45352716;
-    offset_gripper = 0.46118; //0.4253,0.46118
+//    offset_body = 0.3429; //this doesn't matter when using from the tip (compensation), but matters when using from the cylinder
+//    offset_ellipse = 0.45352716;//0.45352716;
+//    offset_gripper = 0.46118; //0.4253,0.46118
 
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
@@ -332,15 +332,15 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                                    cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
                                    const cv::Mat &P, cv::OutputArray jac) {
 
-    cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << -1,0,0,0,
-    0,0,1,0,
-    0,1,0,0,
-    0,0,0,1); //tip
+//    cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << -1,0,0,0,
+//    0,0,1,0,
+//    0,1,0,0,
+//    0,0,0,1); //tip
 
-//    cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << 0,0,1,0,
-//            1,0,0,0,
-//            0,1,0,0,
-//            0,0,0,1);
+    cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << 0,0,1,0,
+            1,0,0,0,
+            0,1,0,0,
+            0,0,0,1);
 
 
     cv::Mat temp_input_Vmat = adjoint_mat * input_Vmat;
@@ -711,33 +711,33 @@ ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder,
     toolModel newTool = seeds;  //BODY part is done here
 
     ///what if generate seeding group
-    double step = 0.0012;
+    double step = 0.0015;
     double dev = randomNumber(step, 0);
 
-    newTool.tvec_grip1(0) = seeds.tvec_grip1(0) + dev;
+    newTool.tvec_cyl(0) = seeds.tvec_cyl(0) + dev;
 
     dev = randomNumber(step, 0);
-    newTool.tvec_grip1(1) = seeds.tvec_grip1(1) + dev;
+    newTool.tvec_cyl(1) = seeds.tvec_cyl(1) + dev;
 
     dev = randomNumber(step, 0);
-    newTool.tvec_grip1(2) = seeds.tvec_grip1(2)+ dev;
+    newTool.tvec_cyl(2) = seeds.tvec_cyl(2)+ dev;
 
     dev = randomNumber(step, 0);
-    newTool.rvec_grip1(0) = seeds.rvec_grip1(0)+ dev;
+    newTool.rvec_cyl(0) = seeds.rvec_cyl(0)+ dev;
 
     dev = randomNumber(step, 0);
-    newTool.rvec_grip1(1) = seeds.rvec_grip1(1)+ dev;
+    newTool.rvec_cyl(1) = seeds.rvec_cyl(1)+ dev;
 
     dev = randomNumber(step, 0);
-    newTool.rvec_grip1(2) = seeds.rvec_grip1(2)+ dev;
+    newTool.rvec_cyl(2) = seeds.rvec_cyl(2)+ dev;
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    double theta_1 = theta_cylinder + randomNumber(0.001, 0);   // tool rotation
-    double theta_grip_1 = theta_oval + randomNumber(0.001, 0); // oval rotation
-    double theta_grip_2 = theta_open + randomNumber(0.001, 0);
+    double theta_1 = theta_cylinder + randomNumber(0.0001, 0);   // tool rotation
+    double theta_grip_1 = theta_oval + randomNumber(0.0001, 0); // oval rotation
+    double theta_grip_2 = theta_open + randomNumber(0.0001, 0);
 
-    computeDavinciModel(newTool, theta_1, theta_grip_1, theta_grip_2);
+    computeEllipsePose(newTool, theta_1, theta_grip_1, theta_grip_2);
 
     return newTool;
 };
@@ -748,30 +748,30 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, doub
 
     //gaussianTool = max_pose;
     //create normally distributed random samples
-    step = 0.0012;  ////currently make it stable
+    step = 0.0015;  ////currently make it stable
     double dev = randomNumber(step, 0);
-    gaussianTool.tvec_elp(0) = max_pose.tvec_elp(0)+ dev;
+    gaussianTool.tvec_cyl(0) = max_pose.tvec_cyl(0)+ dev;
 
     dev = randomNumber(step, 0);
-    gaussianTool.tvec_elp(1) = max_pose.tvec_elp(1)+ dev;
+    gaussianTool.tvec_cyl(1) = max_pose.tvec_cyl(1)+ dev;
 
     dev = randomNumber(step, 0);
-    gaussianTool.tvec_elp(2) = max_pose.tvec_elp(2)+ dev;// + dev;
+    gaussianTool.tvec_cyl(2) = max_pose.tvec_cyl(2)+ dev;// + dev;
 
     dev = randomNumber(step, 0);
-    gaussianTool.rvec_elp(0) = max_pose.rvec_elp(0)+ dev;
+    gaussianTool.rvec_cyl(0) = max_pose.rvec_cyl(0)+ dev;
 
     dev = randomNumber(step, 0);
-    gaussianTool.rvec_elp(1) = max_pose.rvec_elp(1)+ dev;
+    gaussianTool.rvec_cyl(1) = max_pose.rvec_cyl(1)+ dev;
 
     dev = randomNumber(step, 0);
-    gaussianTool.rvec_elp(2) = max_pose.rvec_elp(2)+ dev;
+    gaussianTool.rvec_cyl(2) = max_pose.rvec_cyl(2)+ dev;
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    double theta_ = randomNumber(step, 0);    //-90,90
-    double theta_grip_1 = randomNumber(step, 0);
-    double theta_grip_2 = randomNumber(step, 0);
+    double theta_ = randomNumber(0.0001, 0);    //-90,90
+    double theta_grip_1 = randomNumber(0.0001, 0);
+    double theta_grip_2 = randomNumber(0.0001, 0);
 
     computeRandomPose(max_pose, gaussianTool, theta_, theta_grip_1, theta_grip_2);
     //computeModelPose(gaussianTool, theta_, theta_grip_1, theta_grip_2);
@@ -785,33 +785,43 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
 
     cv::Mat I = cv::Mat::eye(3, 3, CV_64FC1);
 
-    /*********** computations for ellipse kinematics **********/
+    ///take cylinder part as the origin
     cv::Mat q_temp(4, 1, CV_64FC1);
 
-    inputModel.rvec_cyl(0) = inputModel.rvec_elp(0); //roll angle should be the same.
-    inputModel.rvec_cyl(1) = seed_pose.rvec_cyl(1)+ theta_tool; //pitch angle here changed
+    cv::Mat q_ellipse_ = cv::Mat(4, 1, CV_64FC1);
+    q_ellipse_.at<double>(0, 0) = 0;
+    q_ellipse_.at<double>(1, 0) = 0;//
+    q_ellipse_.at<double>(2, 0) = (offset_ellipse - offset_body);
+    q_ellipse_.at<double>(3, 0) = 1;
 
-    inputModel.rvec_cyl(2) = inputModel.rvec_elp(2); //yaw angle is plus the theta_ellipse
+    q_temp = transformPoints(q_ellipse_, cv::Mat(inputModel.rvec_cyl),
+                             cv::Mat(inputModel.tvec_cyl)); //transform the ellipse coord according to cylinder pose
 
-    cv::Mat temp_q_ellipse = cv::Mat(4, 1, CV_64FC1);
-    temp_q_ellipse.at<double>(0, 0) = 0;
-    temp_q_ellipse.at<double>(1, 0) = 0;
-    temp_q_ellipse.at<double>(2, 0) = -(offset_ellipse - offset_body);
-    temp_q_ellipse.at<double>(3, 0) = 1;
+    inputModel.tvec_elp(0) = q_temp.at<double>(0, 0);
+    inputModel.tvec_elp(1) = q_temp.at<double>(1, 0);
+    inputModel.tvec_elp(2) = q_temp.at<double>(2, 0);
 
-    q_temp = transformPoints( temp_q_ellipse, cv::Mat(inputModel.rvec_cyl),
-                              cv::Mat(inputModel.tvec_elp)); //transform the ellipse coord according to cylinder pose
+    /*********** computations for oval kinematics **********/
+    /*oval part using the best particle pose */
+    cv::Mat rot_ellipse(3,3,CV_64FC1);
+    cv::Rodrigues(seed_pose.rvec_elp, rot_ellipse);
 
-    inputModel.tvec_cyl(0) = q_temp.at<double>(0, 0);
-    inputModel.tvec_cyl(1) = q_temp.at<double>(1, 0);
-    inputModel.tvec_cyl(2) = q_temp.at<double>(2, 0);
+    double cos_theta = cos(theta_tool);
+    double sin_theta = sin(theta_tool);
+
+    cv::Mat g_ellipse = (cv::Mat_<double>(3,3) << 1, 0, 0,
+            0, cos_theta, -sin_theta,
+            0,sin_theta, cos_theta);
+
+    cv::Mat rot_new = g_ellipse * rot_ellipse;
+    cv::Mat temp_vec(3,1,CV_64FC1);
+    cv::Rodrigues(rot_new, inputModel.rvec_elp);
 
     /*********** computations for gripper kinematics **********/
     cv::Mat test_gripper(3, 1, CV_64FC1);
     test_gripper.at<double>(0, 0) = 0;
     test_gripper.at<double>(1, 0) = 0;  //
-    test_gripper.at<double>(2, 0) = (offset_gripper - offset_ellipse);
-
+    test_gripper.at<double>(2, 0) = offset_gripper - offset_ellipse;
 
     cv::Mat rot_elp(3, 3, CV_64FC1);
     cv::Rodrigues(inputModel.rvec_elp, rot_elp);  // get rotation mat of the ellipse
@@ -823,18 +833,42 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
     inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
     inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
 
-    inputModel.rvec_grip1(0) = inputModel.rvec_elp(0) + theta_grip_1 + theta_grip_2;  //roll angle is plus the theta_gripper
-    inputModel.rvec_grip1(1) = inputModel.rvec_elp(1);
-    inputModel.rvec_grip1(2) = inputModel.rvec_elp(2);
-
-    /*gripper 2*/
     inputModel.tvec_grip2(0) = inputModel.tvec_grip1(0);
     inputModel.tvec_grip2(1) = inputModel.tvec_grip1(1);
     inputModel.tvec_grip2(2) = inputModel.tvec_grip1(2);
 
-    inputModel.rvec_grip2(0) = inputModel.rvec_elp(0) + theta_grip_2;  //roll angle is plus the theta_gripper
-    inputModel.rvec_grip2(1) = inputModel.rvec_elp(1);
-    inputModel.rvec_grip2(2) = inputModel.rvec_elp(2);
+    /**** orientation ***/
+
+    double grip_1_delta = theta_grip_1 - theta_grip_2/2;
+    double grip_2_delta = theta_grip_1 + theta_grip_2/2;
+
+    cos_theta = cos(grip_1_delta);
+    sin_theta = sin(-grip_1_delta);
+
+    cv::Mat gripper_1_ = (cv::Mat_<double>(3,3) << cos_theta, 0, sin_theta,
+            0,1,0,
+            -sin_theta, 0, cos_theta);
+
+    cv::Mat rot_grip_1(3,3,CV_64FC1);
+    cv::Rodrigues(seed_pose.rvec_grip1, rot_grip_1);
+    rot_grip_1 = gripper_1_ * rot_grip_1;
+
+    cv::Rodrigues(rot_grip_1, inputModel.rvec_grip1 );
+
+
+    /*gripper 2*/
+    cos_theta = cos(grip_2_delta);
+    sin_theta = sin(-grip_2_delta);
+
+    cv::Mat gripper_2_ = (cv::Mat_<double>(3,3) << cos_theta, 0, sin_theta,
+            0,1,0,
+            -sin_theta, 0, cos_theta);
+
+    cv::Mat rot_grip_2(3,3,CV_64FC1);
+    cv::Rodrigues(seed_pose.rvec_grip2, rot_grip_2);
+    rot_grip_2 = gripper_2_ * rot_grip_2;
+
+    cv::Rodrigues(rot_grip_2, inputModel.rvec_grip2 );
 
 };
 
@@ -923,61 +957,6 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
 
 };
 
-/*using ellipse pose to compute cylinder pose*/
-void ToolModel::computeModelPose(toolModel &inputModel, const double &theta_tool, const double &theta_grip_1,
-                                 const double &theta_grip_2) {
-
-    /*********** computations for ellipse kinematics **********/
-    cv::Mat q_temp(4, 1, CV_64FC1);
-
-    inputModel.rvec_cyl(0) = inputModel.rvec_elp(0); //roll angle should be the same.
-    inputModel.rvec_cyl(1) = inputModel.rvec_elp(1); //pitch angle should be the same.
-    inputModel.rvec_cyl(2) = inputModel.rvec_elp(2) + theta_tool; //yaw angle is plus the theta_ellipse
-
-    cv::Mat q_ellipse_ = cv::Mat(4, 1, CV_64FC1);
-    q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0;//
-    q_ellipse_.at<double>(2, 0) = (offset_ellipse - offset_body);
-    q_ellipse_.at<double>(3, 0) = 1;
-
-    q_temp = transformPoints( q_ellipse_, cv::Mat(inputModel.rvec_cyl),
-                              cv::Mat(inputModel.tvec_elp)); //transform the ellipse coord according to cylinder pose
-
-    inputModel.tvec_cyl(0) = q_temp.at<double>(0, 0);
-    inputModel.tvec_cyl(1) = q_temp.at<double>(1, 0);
-    inputModel.tvec_cyl(2) = q_temp.at<double>(2, 0);
-
-    /*********** computations for gripper kinematics **********/
-    cv::Mat test_gripper(3, 1, CV_64FC1);
-    test_gripper.at<double>(0, 0) = 0;
-    test_gripper.at<double>(1, 0) = offset_gripper - 0.4522;
-    test_gripper.at<double>(2, 0) = 0;
-
-    cv::Mat rot_elp(3, 3, CV_64FC1);
-    cv::Rodrigues(inputModel.rvec_elp, rot_elp);  // get rotation mat of the ellipse
-
-    cv::Mat q_rot(3, 1, CV_64FC1);
-    q_rot = rot_elp * test_gripper;
-
-    inputModel.tvec_grip1(0) = q_rot.at<double>(0, 0) + inputModel.tvec_elp(0);
-    inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
-    inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
-
-    inputModel.rvec_grip1(0) = inputModel.rvec_elp(0) + theta_grip_1;  //roll angle is plus the theta_gripper
-    inputModel.rvec_grip1(1) = inputModel.rvec_elp(1);
-    inputModel.rvec_grip1(2) = inputModel.rvec_elp(2);
-
-    /*gripper 2*/
-    inputModel.tvec_grip2(0) = inputModel.tvec_grip1(0);
-    inputModel.tvec_grip2(1) = inputModel.tvec_grip1(1);
-    inputModel.tvec_grip2(2) = inputModel.tvec_grip1(2);
-
-    inputModel.rvec_grip2(0) = inputModel.rvec_elp(0) + theta_grip_2;  //roll angle is plus the theta_gripper
-    inputModel.rvec_grip2(1) = inputModel.rvec_elp(1);
-    inputModel.rvec_grip2(2) = inputModel.rvec_elp(2);
-
-};
-
 void ToolModel::computeDavinciModel(toolModel &inputModel, const double &theta_tool, const double &theta_grip_1,
                                  const double &theta_grip_2) {
 
@@ -1009,11 +988,7 @@ void ToolModel::computeDavinciModel(toolModel &inputModel, const double &theta_t
 
     cv::Mat rot_new = rot_ellipse * g_ellipse;
     cv::Mat temp_vec(3,1,CV_64FC1);
-    cv::Rodrigues(rot_new, temp_vec);
-
-    inputModel.rvec_elp(0) = temp_vec.at<double>(0,0); //or maybe the negative of the theta
-    inputModel.rvec_elp(1) = temp_vec.at<double>(1,0);// + theta_grip_1; //pitch angle should be the same.
-    inputModel.rvec_elp(2) = temp_vec.at<double>(2,0); //yaw angle is plus the theta_ellipse
+    cv::Rodrigues(rot_new, inputModel.rvec_elp);
 
     cv::Mat q_ellipse_ = cv::Mat(4, 1, CV_64FC1);
     q_ellipse_.at<double>(0, 0) = 0;
@@ -1216,9 +1191,8 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
     cv::distanceTransform(segImgGrey, distance_img, CV_DIST_L2, 3);
     cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
 
-
 //    cv::imshow("Normalized img", normDIST);
-//    cv::imshow("distance_img", distance_img);
+//    //cv::imshow("distance_img", distance_img);
 //    cv::waitKey();
 
 //    /***multiplication process**/

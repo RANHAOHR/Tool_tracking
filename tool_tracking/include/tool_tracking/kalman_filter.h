@@ -192,6 +192,7 @@ public:
     void print_affine(Eigen::Affine3d &affine);
 
 	void UKF_double_arm();
+	void getSquareRootCov(cv::Mat &sigma_cov, cv::Mat &square_root);
 
     void update(std::vector <double> &sensor_data, cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 				cv::Mat &left_image,cv::Mat &right_image,

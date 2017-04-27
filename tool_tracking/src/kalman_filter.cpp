@@ -509,23 +509,19 @@ void KalmanFilter::update(std::vector <double> &sensor_data, cv::Mat & kalman_mu
 	double gamma = sqrt(L + lambda);
 
 	///get the square root for sigma point generation using SVD decomposition
-	cv::Mat root_sigma_t_last = cv::Mat_<double>::zeros(L, 1);
+	cv::Mat root_sigma_t_last = cv::Mat_<double>::zeros(L, L);
 
-	cv::Mat s = cv::Mat_<double>::zeros(L, 1);  //allocate space for SVD
-	cv::Mat vt = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
-	cv::Mat u = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
+	getSquareRootCov(sigma_t_last, root_sigma_t_last);
 
-	cv::SVD::compute(sigma_t_last, s, u, vt);//The actual square root gets saved into s
-
-	root_sigma_t_last = s.clone(); //store that back into the designated square root term
 	//Populate the sigma points:
 	std::vector<cv::Mat_<double> > sigma_pts_last;
 	sigma_pts_last.resize(2*L + 1);
 
 	sigma_pts_last[0] = mu_t_last.clone();//X_0
 	for (int i = 1; i <= L; i++) {
-		sigma_pts_last[i] = sigma_pts_last[0] + (gamma * root_sigma_t_last);
-		sigma_pts_last[i + L] = sigma_pts_last[0] - (gamma * root_sigma_t_last);
+		cv::Mat square_root_sigma = root_sigma_t_last.col(i-1);
+		sigma_pts_last[i] = sigma_pts_last[0] + (gamma * square_root_sigma );
+		sigma_pts_last[i + L] = sigma_pts_last[0] - (gamma * square_root_sigma);
 	}
 
 	//Compute their weights:
@@ -610,37 +606,7 @@ void KalmanFilter::update(std::vector <double> &sensor_data, cv::Mat & kalman_mu
 };
 
 void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & zt){
-	/*cv::Mat delta_1 = cv::Mat_<double>::zeros(6, 1);
-	cv::Mat delta_2 = cv::Mat_<double>::zeros(6, 1);
-	if(fvc_1){
-		cv::Mat sensor_1 = cv::Mat_<double>::zeros(6, 1);
-		sensor_1.at<double>(0, 0) = sigma_point_in.at<double>(0, 0);
-		sensor_1.at<double>(1, 0) = sigma_point_in.at<double>(1, 0);
-		sensor_1.at<double>(2, 0) = sigma_point_in.at<double>(2, 0);
-		sensor_1.at<double>(3, 0) = sigma_point_in.at<double>(3, 0);
-		sensor_1.at<double>(4, 0) = sigma_point_in.at<double>(4, 0);
-		sensor_1.at<double>(5, 0) = sigma_point_in.at<double>(5, 0);
-		delta_1 = (sensor_1 - cmd_1);
-		//ROS_INFO("GREEN DELTAS %f %f %f %f %f %f", delta_green.at<double>(0, 0), delta_green.at<double>(1, 0), delta_green.at<double>(2, 0), delta_green.at<double>(3, 0), delta_green.at<double>(4, 0), delta_green.at<double>(5, 0));
-	}
-	if(fvc_2){
-		cv::Mat sensor_2 = cv::Mat_<double>::zeros(6, 1);
-		sensor_2.at<double>(0, 0) = sigma_point_in.at<double>(6 , 0);
-		sensor_2.at<double>(1, 0) = sigma_point_in.at<double>(7 , 0);
-		sensor_2.at<double>(2, 0) = sigma_point_in.at<double>(8 , 0);
-		sensor_2.at<double>(3, 0) = sigma_point_in.at<double>(9 , 0);
-		sensor_2.at<double>(4, 0) = sigma_point_in.at<double>(10, 0);
-		sensor_2.at<double>(5, 0) = sigma_point_in.at<double>(11, 0);
-		delta_2 = (sensor_2 - cmd_2);
-		//ROS_INFO("YELLOW DELTAS %f %f %f %f %f %f", delta_yellow.at<double>(0, 0), delta_yellow.at<double>(1, 0), delta_yellow.at<double>(2, 0), delta_yellow.at<double>(3, 0), delta_yellow.at<double>(4, 0), delta_yellow.at<double>(5, 0));
-	}
-	cv::Mat delta_all = cv::Mat_<double>::zeros(12, 1);
-	vconcat(delta_1, delta_2, delta_all);
 
-	//sigma_point_out = sigma_point_in.clone();
-	sigma_point_out = sigma_point_in - (delta_all * (ros::Time::now().toSec() - last_update));
-	//last_call = ros::Time::now().toSec();
-	//sigma_point_out = zt.clone();*/
 	sigma_point_out = sigma_point_in - zt;
 };
 
@@ -807,7 +773,20 @@ void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat ro
 	//ROS_INFO_STREAM("rot_vec " << rot_vec);
 };
 
+void KalmanFilter::getSquareRootCov(cv::Mat &sigma_cov, cv::Mat &square_root){
 
+	cv::Mat s = cv::Mat_<double>::zeros(L, 1);  //allocate space for SVD
+	cv::Mat vt = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
+	cv::Mat u = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
+
+	cv::SVD::compute(sigma_cov, s, u, vt);//The actual square root gets saved into s
+
+
+	for (int i = 0; i < L; ++i) {
+		square_root.at<double>(i,i) = s.at<double>(i,0);
+	}
+
+}
 cv::Mat KalmanFilter::segmentation(cv::Mat &InputImg) {
 
 	cv::Mat src, src_gray;
