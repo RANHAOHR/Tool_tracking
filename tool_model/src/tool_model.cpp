@@ -51,7 +51,7 @@ boost::mt19937 rng((const uint32_t &) time(0));
 //constructor
 ToolModel::ToolModel() {
 
-    offset_body = 0.451;//0.4535;  //0.3429, this doesn't matter when using from the tip (compensation), but matters when using from the cylinder
+    offset_body = 0.45;//0.4535;  //0.3429, this doesn't matter when using from the tip (compensation), but matters when using from the cylinder
     offset_ellipse = 0.4567;//0.45352716;
     offset_gripper = offset_ellipse;// + 0.0003; //0.4253,0.46118
 

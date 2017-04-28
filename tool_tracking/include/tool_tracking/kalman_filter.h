@@ -213,8 +213,16 @@ public:
 					   cv::Mat & rawImage_right);
 	double measureFuncSameCam(cv::Mat & toolImage_cam, ToolModel::toolModel &toolPose_left, ToolModel::toolModel &toolPose_right,
 											const cv::Mat &segmented_cam, const cv::Mat & Projection_mat, cv::Mat &raw_img, cv::Mat &Cam_matrix_tool_left, cv::Mat &Cam_matrix_tool_right);
+
+	double tempmeasureFunc(const cv::Mat &stat,
+										 cv::Mat & toolImage_left,
+										 cv::Mat & toolImage_right,
+										 cv::Mat &Cam_left,
+										 cv::Mat &Cam_right);
+
 	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
     void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
+	void Cholesky( const cv::Mat& A, cv::Mat& S );
 
 };
 #endif
