@@ -101,24 +101,6 @@ private:
     const static double k = 0.0; //TODO: how much?
     const static double beta = 2;
 
-    ros::Subscriber com_s1;
-    ros::Subscriber com_s2;
-
-    void newCommandCallback1(const sensor_msgs::JointState::ConstPtr &incoming);
-    void newCommandCallback2(const sensor_msgs::JointState::ConstPtr &incoming);
-
-	double last_update;
-
-    cv::Mat cmd_1;
-    cv::Mat cmd_2;
-
-    double cmd_time_1;
-    double cmd_time_2;
-    cv::Mat cmd_1_old;
-    cv::Mat cmd_2_old;
-    double cmd_time_1_old;
-    double cmd_time_2_old;
-
 	bool fvc_1;
 	bool fvc_2;
 
@@ -131,6 +113,8 @@ private:
 
 	cv::Mat kalman_mu_arm2;
 	cv::Mat kalman_sigma_arm2;
+
+	cv::Mat zt;
 
     Davinci_fwd_solver kinematics;
 
@@ -151,9 +135,9 @@ private:
     double matching_score(const cv::Mat & stat,cv::Mat &left_image,cv::Mat &right_image,
 						  cv::Mat &cam_left, cv::Mat &cam_right);
 	
-	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & zt);
+	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & delta_zt);
 	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
-    void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in,
+    void computeSigmaMeasures(std::vector<double> & measureWeights, cv::Mat & zt, const std::vector<cv::Mat_<double> > & sigma_point_in,
 							  cv::Mat &left_image,cv::Mat &right_image,
 							  cv::Mat &cam_left, cv::Mat &cam_right);
 
@@ -194,7 +178,7 @@ public:
 	void UKF_double_arm();
 	void getSquareRootCov(cv::Mat &sigma_cov, cv::Mat &square_root);
 
-    void update(std::vector <double> &sensor_data, cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
+    void update(std::vector <double> &sensor_data, cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &zt,
 				cv::Mat &left_image,cv::Mat &right_image,
 				cv::Mat &cam_left, cv::Mat &cam_right);
 

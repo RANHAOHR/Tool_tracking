@@ -1159,7 +1159,7 @@ float ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segme
     return matchingScore;
 }
 
-/*chamfer matching algorithm*/
+/*chamfer matching, this in kalman filter has different iamge size make sure to change it back*/
 float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmentedImage) {
 
     float output = 0;
