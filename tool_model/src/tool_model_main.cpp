@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
 
     Cam.at<double>(0, 3) = 0.0;   //should be in meters
     Cam.at<double>(1, 3) = 0.0;
-    Cam.at<double>(2, 3) = 0.2;  // cannot have z = 0 for reprojection, camera_z must be always point to object
+    Cam.at<double>(2, 3) = 0.16;  // cannot have z = 0 for reprojection, camera_z must be always point to object
     Cam.at<double>(3, 3) = 1;
 
     ToolModel newToolModel;
@@ -79,14 +79,17 @@ int main(int argc, char **argv) {
     initial.tvec_elp(0) = 0.0;  //left and right (image frame)
     initial.tvec_elp(1) = 0.0;  //up and down
     initial.tvec_elp(2) = -0.03;
-    initial.rvec_elp(0) = 0.0;
-    initial.rvec_elp(1) = 0.0;
+    initial.rvec_elp(0) = -0.5;
+    initial.rvec_elp(1) = -0.8;
     initial.rvec_elp(2) = -1;
 
     ToolModel::toolModel newTool;
 
-    newToolModel.computeModelPose(initial, 0.1, 0.3, 0.1 );
+    newToolModel.computeModelPose(initial, 0.1, 0.8, 0.1 );
     newToolModel.renderTool(testImg, initial, Cam, P);
+
+    cv::imshow("rendered image: ", testImg);
+    cv::waitKey();
 
     //cv::imwrite("/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/new.png", testImg);
 

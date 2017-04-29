@@ -956,12 +956,12 @@ ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, co
     /** approach 1: using Vertices mat and normal mat **/
     Compute_Silhouette(body_faces, body_neighbors, body_Vmat, body_Nmat, CamMat, image, cv::Mat(tool.rvec_cyl),
                        cv::Mat(tool.tvec_cyl), P, jac);
-//    Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image,
-//                       cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac);
-//    Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat, gripper1_Nmat, CamMat, image,
-//                       cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac);
-//    Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image,
-//                       cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac);
+    Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image,
+                       cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac);
+    Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat, gripper1_Nmat, CamMat, image,
+                       cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac);
+    Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image,
+                       cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac);
 
     /*approach 2: using Face info mat*/
     // Compute_Silhouette(body_faces, body_neighbors, body_Vmat,bodyFace_normal, bodyFace_centroid, CamMat, image, cv::Mat(tool.rvec_cyl), cv::Mat(tool.tvec_cyl), P, jac, XY_max, XY_min );
