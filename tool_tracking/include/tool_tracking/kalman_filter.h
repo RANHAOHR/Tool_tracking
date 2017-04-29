@@ -190,6 +190,8 @@ public:
             cv::Mat &update_sigma,
             const cv::Mat &zt
     );
+
+    void getCourseEstimation();  ///for dynamic tracking
     double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, cv::Mat &Cam_left, cv::Mat &Cam_right, cv::Mat & rawImage_left,
 					   cv::Mat & rawImage_right);
 	double measureFuncSameCam(cv::Mat & toolImage_cam, ToolModel::toolModel &toolPose_left, ToolModel::toolModel &toolPose_right,
@@ -203,7 +205,7 @@ public:
 
 	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
     void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
-	void Cholesky( const cv::Mat& A, cv::Mat& S );
+	void Cholesky( const cv::Mat& A, cv::Mat& S );  //this is not working
 
 };
 #endif

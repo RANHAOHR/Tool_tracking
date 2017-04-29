@@ -149,13 +149,10 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 		kalman_sigma_arm1.at<double>(j,j) = dev_ang; //gaussian generator
 	}
 
-	ROS_INFO_STREAM("kalman_sigma_arm1: " << kalman_sigma_arm1);
-
 	kalman_sigma_arm2 = (cv::Mat_<double>::eye(L, L));
 	for (int j = 0; j < L; ++j) {
 		kalman_sigma_arm2.at<double>(j,j) = ukfToolModel.randomNumber(0.38,0); //gaussian generator
 	}
-
 
 	freshCameraInfo = false; //should be left and right
 	
@@ -396,7 +393,68 @@ double KalmanFilter::measureFuncSameCam(cv::Mat & toolImage_cam, ToolModel::tool
 	return matchingScore;
 };
 
-void KalmanFilter::UKF_double_arm(){
+/*
+ * get a course estimation for dynamic tracking TODO:
+ */
+void KalmanFilter::getCourseEstimation(){
+
+    std::vector<std::vector<double> > tmp;
+
+    tmp.resize(2);
+    if(davinci_interface::get_fresh_robot_pos(tmp)){
+        sensor_1 = tmp[0];
+        sensor_2 = tmp[1];
+    }
+
+    //	Eigen::Affine3d arm_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_data.data()));
+//	Eigen::Vector3d arm_trans = arm_pos.translation();
+//	cv::Mat arm_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+//	computeRodriguesVec(arm_pos, arm_rvec);
+
+    Eigen::Affine3d arm_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0], sensor_1[0] + DH_q_offset0 );
+    Eigen::Affine3d arm_pos_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1], sensor_1[1] + DH_q_offset1 );
+    Eigen::Affine3d arm_pos_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_1[2] + DH_q_offset2, DH_alpha_params[2], 0.0 );
+
+    Eigen::Affine3d arm_pos = kinematics.affine_frame0_wrt_base_ * arm_pos_1 * arm_pos_2 * arm_pos_3;// * a1_4 *a1_5 * a1_6 * a1_7 * kinematics.affine_gripper_wrt_frame6_ ;
+    Eigen::Vector3d arm_trans = arm_pos.translation();
+
+    cv::Mat arm_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+
+    computeRodriguesVec(arm_pos, arm_rvec);
+
+    kalman_mu_arm1 = cv::Mat_<double>::zeros(L, 1);
+
+    kalman_mu_arm1.at<double>(0 , 0) = arm_trans[0];
+    kalman_mu_arm1.at<double>(1 , 0) = arm_trans[1];
+    kalman_mu_arm1.at<double>(2 , 0) = arm_trans[2];
+    kalman_mu_arm1.at<double>(3 , 0) = arm_rvec.at<double>(0,0);
+    kalman_mu_arm1.at<double>(4 , 0) = arm_rvec.at<double>(1,0);
+    kalman_mu_arm1.at<double>(5 , 0) = arm_rvec.at<double>(2,0);
+    kalman_mu_arm1.at<double>(6 , 0) = tmp[0][4];
+    kalman_mu_arm1.at<double>(7 , 0) = tmp[0][5];
+    kalman_mu_arm1.at<double>(8 , 0) = tmp[0][6];
+
+    zt  = cv::Mat_<double>::zeros(L, 1);
+    zt = kalman_mu_arm1.clone();    //initialization for maeasurement
+
+    double dev_pos = ukfToolModel.randomNum(0.6, 0.4);  ///deviation for position
+    double dev_ori = ukfToolModel.randomNum(0.8, 0.7);  ///deviation for orientation
+    double dev_ang = ukfToolModel.randomNum(0.2, 0); ///deviation for joint angles
+
+    kalman_sigma_arm1 = (cv::Mat_<double>::eye(L, L));
+    for (int j = 0; j < 3; ++j) {
+        kalman_sigma_arm1.at<double>(j,j) = dev_pos; //gaussian generator
+    }
+    for (int j = 3; j < 6; ++j) {
+        kalman_sigma_arm1.at<double>(j,j) = dev_ori; //gaussian generator
+    }
+    for (int j = 6; j < 9; ++j) {
+        kalman_sigma_arm1.at<double>(j,j) = dev_ang; //gaussian generator
+    }
+
+};
+
+void KalmanFilter::UKF_double_arm(){ //well, currently just one......
 
 	seg_left = segmentation(tool_rawImg_left);
 	seg_right = segmentation(tool_rawImg_right);
@@ -409,7 +467,6 @@ void KalmanFilter::UKF_double_arm(){
 	}
 
 	ROS_INFO("--------------ARM 1 : --------------");
-	ROS_INFO_STREAM("BEFORE zt: " << zt);
 	ROS_INFO_STREAM("BEFORE kalman_mu_arm1: " << kalman_mu_arm1);
 	update(sensor_1, kalman_mu_arm1, kalman_sigma_arm1, zt, toolImage_left_arm_1,
 		   toolImage_right_arm_1, Cam_left_arm_1, Cam_right_arm_1);
@@ -435,37 +492,6 @@ void KalmanFilter::update(std::vector <double> &sensor_data, cv::Mat & kalman_mu
 						  cv::Mat &cam_left, cv::Mat &cam_right){
 
 	/******Find and convert our various params and inputs******/
-
-//	Eigen::Affine3d arm_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_data.data()));
-//	Eigen::Vector3d arm_trans = arm_pos.translation();
-//	cv::Mat arm_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-//	computeRodriguesVec(arm_pos, arm_rvec);
-
-	Eigen::Affine3d arm_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0], sensor_data[0] + DH_q_offset0 );
-	Eigen::Affine3d arm_pos_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1], sensor_data[1] + DH_q_offset1 );
-	Eigen::Affine3d arm_pos_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_data[2] + DH_q_offset2, DH_alpha_params[2], 0.0 );
-
-	Eigen::Affine3d arm_pos = kinematics.affine_frame0_wrt_base_ * arm_pos_1 * arm_pos_2 * arm_pos_3;// * a1_4 *a1_5 * a1_6 * a1_7 * kinematics.affine_gripper_wrt_frame6_ ;
-	Eigen::Vector3d arm_trans = arm_pos.translation();
-
- 	cv::Mat arm_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-
-	computeRodriguesVec(arm_pos, arm_rvec);
-
-	cv::Mat coarse_guess = cv::Mat_<double>(L, 1);
-	coarse_guess.at<double>(0 , 0) = arm_trans[0];
-	coarse_guess.at<double>(1 , 0) = arm_trans[1];
-	coarse_guess.at<double>(2 , 0) = arm_trans[2];
-	coarse_guess.at<double>(3 , 0) = arm_rvec.at<double>(0,0);
-	coarse_guess.at<double>(4 , 0) = arm_rvec.at<double>(1,0);
-	coarse_guess.at<double>(5 , 0) = arm_rvec.at<double>(2,0);
-	coarse_guess.at<double>(6 , 0) = sensor_data[4];
-	coarse_guess.at<double>(7 , 0) = sensor_data[5];
-	coarse_guess.at<double>(8 , 0) = sensor_data[6];
-
-	ROS_INFO("SENSOR data AT (%f %f %f): %f %f %f, joints: %f %f %f ",coarse_guess.at<double>(0, 0), coarse_guess.at<double>(1, 0),coarse_guess.at<double>(2, 0),
-			 coarse_guess.at<double>(3, 0),coarse_guess.at<double>(4, 0), coarse_guess.at<double>(5, 0), coarse_guess.at<double>(6, 0), coarse_guess.at<double>(7, 0),coarse_guess.at<double>(8, 0));
-
 	cv::Mat sigma_t_last = kalman_sigma.clone();
 	// cv::Mat mu_t_last = kalman_mu.clone(); this gives to sigma_pts_last[0]
 
@@ -735,8 +761,6 @@ void KalmanFilter::convertToolModel(const cv::Mat & trans, ToolModel::toolModel 
 };
 
 void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec){
-//	Eigen::Vector3d rpy = trans.rotation().eulerAngles(0, 1, 2);
-//	ROS_INFO_STREAM("RPY " << rpy);
 
 	Eigen::Matrix3d rot_affine = trans.rotation();
 
@@ -764,21 +788,11 @@ void KalmanFilter::getSquareRootCov(cv::Mat &sigma_cov, cv::Mat &square_root){
 
 	cv::SVD::compute(sigma_cov, s, u, vt);//The actual square root gets saved into s
 
-
 	for (int i = 0; i < L; ++i) {
 		square_root.at<double>(i,i) = s.at<double>(i,0);
 	}
+};
 
-//	/**cholesky***/
-//	cv::Mat sigma_cov_test = sigma_cov.clone();
-//
-//	cv::Mat test_result(L,L,CV_64FC1);
-//	Cholesky( sigma_cov_test, test_result );
-//	ROS_INFO_STREAM("test_result " << test_result);
-//	//square_root = test_result.t();
-
-
-}
 cv::Mat KalmanFilter::segmentation(cv::Mat &InputImg) {
 
 	cv::Mat src, src_gray;
