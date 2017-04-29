@@ -97,8 +97,8 @@ private:
 
     int L;  ///DOF for both arms.
 
-    const static double alpha = 0.01;
-    const static double k = 0.5; //TODO: how much?
+    const static double alpha = 0.005;
+    const static double k = 0.1; //TODO: how much?
     const static double beta = 2;
 
 	/************using variables*************/
@@ -111,7 +111,7 @@ private:
 	cv::Mat kalman_mu_arm2;
 	cv::Mat kalman_sigma_arm2;
 
-	cv::Mat zt;
+	cv::Mat zt_arm1;
 
     Davinci_fwd_solver kinematics;
 
@@ -175,7 +175,7 @@ public:
 	void UKF_double_arm();
 	void getSquareRootCov(cv::Mat &sigma_cov, cv::Mat &square_root);
 
-    void update(std::vector <double> &sensor_data, cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &zt,
+    void update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &zt,
 				cv::Mat &left_image,cv::Mat &right_image,
 				cv::Mat &cam_left, cv::Mat &cam_right);
 

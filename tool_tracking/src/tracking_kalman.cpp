@@ -37,16 +37,9 @@ int main(int argc, char **argv) {
 	cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_32FC1);
 
 	image_transport::ImageTransport it(nh);
-	image_transport::Subscriber img_sub_l = it.subscribe(
-		"/davinci_endo/left/image_raw",
-		1,
-		boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_left))
-	);
-	image_transport::Subscriber img_sub_r = it.subscribe(
-		"/davinci_endo/right/image_raw",
-		1,
-		boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_right))
-	);
+	image_transport::Subscriber img_sub_l = it.subscribe("/davinci_endo/left/image_raw", 1,boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_left)));
+
+	image_transport::Subscriber img_sub_r = it.subscribe("/davinci_endo/right/image_raw", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_right)));
 
 	ROS_INFO("---- done subscribe -----");
 
@@ -55,6 +48,7 @@ int main(int argc, char **argv) {
 
 	ros::Duration(2).sleep();
 
+	int tracking_iteration = 0;
 	while (nh.ok()) {
 		ros::spinOnce();
 
@@ -66,12 +60,16 @@ int main(int argc, char **argv) {
             UKF.UKF_double_arm();
 
 			freshImage = false;
+			tracking_iteration +=1;
 		}
 
-        //	ToolModel::toolModel currentToolModel;
-        //	convertToolModel(current_mu, currentToolModel,1);
-        //	measureFunc(currentToolModel, segmented_left, segmented_right, zt);
+		//get ready for dynamic tracking:temp solution or can use client goal
+		if(tracking_iteration == 5){  //takes 5 iterations to converge
+			ROS_INFO("INSIDE dynamic ");
+			UKF.getCourseEstimation();
+			tracking_iteration = 0;
+		}
 
-		loop_rate.sleep();  //or cv::waitKey(10);
+		//loop_rate.sleep();  //or cv::waitKey(10);
 	}
 }

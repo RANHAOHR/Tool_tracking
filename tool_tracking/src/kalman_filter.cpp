@@ -119,8 +119,8 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	kalman_mu_arm1.at<double>(7 , 0) = tmp[0][5];
 	kalman_mu_arm1.at<double>(8 , 0) = tmp[0][6];
 
-	zt  = cv::Mat_<double>::zeros(L, 1);
-	zt = kalman_mu_arm1.clone();    //initialization for maeasurement
+    zt_arm1 = cv::Mat_<double>::zeros(L, 1);
+    zt_arm1 = kalman_mu_arm1.clone();    //initialization for maeasurement
 
 	kalman_mu_arm2 = cv::Mat_<double>::zeros(L, 1);
 
@@ -134,8 +134,8 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	kalman_mu_arm2.at<double>(16, 0) = tmp[1][5];
 	kalman_mu_arm2.at<double>(17, 0) = tmp[1][6];
 
-	double dev_pos = ukfToolModel.randomNum(0.6, 0.4);  ///deviation for position
-	double dev_ori = ukfToolModel.randomNum(0.8, 0.7);  ///deviation for orientation
+	double dev_pos = ukfToolModel.randomNum(0.6, 0.2);  ///deviation for position
+	double dev_ori = ukfToolModel.randomNum(0.8, 0.5);  ///deviation for orientation
 	double dev_ang = ukfToolModel.randomNum(0.2, 0); ///deviation for joint angles
 
 	kalman_sigma_arm1 = (cv::Mat_<double>::eye(L, L));
@@ -173,7 +173,7 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	P_l.at<double>(2, 1) = 0;
 
 	P_l.at<double>(0, 2) = 300.5; // horiz
-	P_l.at<double>(1, 2) = 100.5; //verticle
+	P_l.at<double>(1, 2) = 150.5; //verticle
 	P_l.at<double>(2, 2) = 1;
 
 	P_l.at<double>(0, 3) = 0;
@@ -192,7 +192,7 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	P_r.at<double>(2, 1) = 0;
 
 	P_r.at<double>(0, 2) = 300.5; // horiz
-	P_r.at<double>(1, 2) = 100.5; //verticle
+	P_r.at<double>(1, 2) = 150.5; //verticle
 	P_r.at<double>(2, 2) = 1;
 
 	P_r.at<double>(0, 3) = 5.1043338082362135;
@@ -434,11 +434,11 @@ void KalmanFilter::getCourseEstimation(){
     kalman_mu_arm1.at<double>(7 , 0) = tmp[0][5];
     kalman_mu_arm1.at<double>(8 , 0) = tmp[0][6];
 
-    zt  = cv::Mat_<double>::zeros(L, 1);
-    zt = kalman_mu_arm1.clone();    //initialization for maeasurement
+    zt_arm1  = cv::Mat_<double>::zeros(L, 1);
+    zt_arm1 = kalman_mu_arm1.clone();    //initialization for maeasurement
 
-    double dev_pos = ukfToolModel.randomNum(0.6, 0.4);  ///deviation for position
-    double dev_ori = ukfToolModel.randomNum(0.8, 0.7);  ///deviation for orientation
+    double dev_pos = ukfToolModel.randomNum(0.6, 0.2);  ///deviation for position
+    double dev_ori = ukfToolModel.randomNum(0.8, 0.6);  ///deviation for orientation
     double dev_ang = ukfToolModel.randomNum(0.2, 0); ///deviation for joint angles
 
     kalman_sigma_arm1 = (cv::Mat_<double>::eye(L, L));
@@ -459,16 +459,9 @@ void KalmanFilter::UKF_double_arm(){ //well, currently just one......
 	seg_left = segmentation(tool_rawImg_left);
 	seg_right = segmentation(tool_rawImg_right);
 
-	std::vector<std::vector<double> > tmp;
-	tmp.resize(2);
-	if(davinci_interface::get_fresh_robot_pos(tmp)){
-		sensor_1 = tmp[0];
-		sensor_2 = tmp[1];
-	}
-
 	ROS_INFO("--------------ARM 1 : --------------");
 	ROS_INFO_STREAM("BEFORE kalman_mu_arm1: " << kalman_mu_arm1);
-	update(sensor_1, kalman_mu_arm1, kalman_sigma_arm1, zt, toolImage_left_arm_1,
+	update(kalman_mu_arm1, kalman_sigma_arm1, zt_arm1, toolImage_left_arm_1,
 		   toolImage_right_arm_1, Cam_left_arm_1, Cam_right_arm_1);
 
 	//ROS_INFO("--------------ARM 2 : --------------");
@@ -487,13 +480,12 @@ void KalmanFilter::UKF_double_arm(){ //well, currently just one......
 	cv::waitKey(10);
 };
 
-void KalmanFilter::update(std::vector <double> &sensor_data, cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &zt,
+void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &zt,
 						  cv::Mat &left_image,cv::Mat &right_image,
 						  cv::Mat &cam_left, cv::Mat &cam_right){
 
 	/******Find and convert our various params and inputs******/
 	cv::Mat sigma_t_last = kalman_sigma.clone();
-	// cv::Mat mu_t_last = kalman_mu.clone(); this gives to sigma_pts_last[0]
 
 	//****Generate the sigma points.****
 	double lambda = alpha * alpha * (L + k) - L;
@@ -504,7 +496,6 @@ void KalmanFilter::update(std::vector <double> &sensor_data, cv::Mat & kalman_mu
 
 	getSquareRootCov(sigma_t_last, root_sigma_t_last);
 	ROS_INFO_STREAM(" root_sigma_t_last" << root_sigma_t_last);
-	ROS_INFO_STREAM(" gamma" << gamma);
 	//Populate the sigma points:
 	std::vector<cv::Mat_<double> > sigma_pts_last;
 	sigma_pts_last.resize(2*L + 1);
