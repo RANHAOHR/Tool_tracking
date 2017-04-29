@@ -105,7 +105,7 @@ double ToolModel::randomNumber(double stdev, double mean) {
 };
 
 /*generate random number in a certain range, uniform distribution*/
-double ToolModel::randomNum(double min, double max) {
+double ToolModel::randomNum(double min, double max){
 
     /// srand((unsigned) time( NULL));  //do this in main or constructor
     int N = 999;

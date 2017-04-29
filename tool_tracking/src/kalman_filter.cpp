@@ -134,9 +134,9 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	kalman_mu_arm2.at<double>(16, 0) = tmp[1][5];
 	kalman_mu_arm2.at<double>(17, 0) = tmp[1][6];
 
-	double dev_pos = ukfToolModel.randomNumber(0.4, 0);  ///deviation for position
-	double dev_ori = ukfToolModel.randomNumber(0.4, 0);  ///deviation for orientation
-	double dev_ang = ukfToolModel.randomNumber(0.2, 0); ///deviation for joint angles
+	double dev_pos = ukfToolModel.randomNum(0.6, 0.4);  ///deviation for position
+	double dev_ori = ukfToolModel.randomNum(0.8, 0.7);  ///deviation for orientation
+	double dev_ang = ukfToolModel.randomNum(0.2, 0); ///deviation for joint angles
 
 	kalman_sigma_arm1 = (cv::Mat_<double>::eye(L, L));
 	for (int j = 0; j < 3; ++j) {
@@ -318,10 +318,10 @@ double KalmanFilter::measureFunc(
 	/***do the sampling and get the matching score***/
 	//first get the rendered image using 3d model of the tool
 	ukfToolModel.renderTool(toolImage_left, toolPose, Cam_left, P_left);
-	double left = ukfToolModel.calculateChamferScore(toolImage_left, seg_left);  //get the matching score
+	double left = ukfToolModel.calculateMatchingScore(toolImage_left, seg_left);  //get the matching score
 
 	ukfToolModel.renderTool(toolImage_right, toolPose, Cam_right, P_right);
-	double right = ukfToolModel.calculateChamferScore(toolImage_right, seg_right);
+	double right = ukfToolModel.calculateMatchingScore(toolImage_right, seg_right);
 
 	ukfToolModel.renderTool(rawImage_left, toolPose, Cam_left, P_left);
 	ukfToolModel.renderTool(rawImage_right, toolPose, Cam_right, P_right);
@@ -368,10 +368,10 @@ double KalmanFilter::tempmeasureFunc(const cv::Mat &stat,
 		/***do the sampling and get the matching score***/
 		//first get the rendered image using 3d model of the tool
 		ukfToolModel.renderTool(toolImage_left, arm_1, Cam_left, P_left);
-		double left = ukfToolModel.calculateMatchingScore(toolImage_left, seg_left);  //get the matching score
+		double left = ukfToolModel.calculateChamferScore(toolImage_left, seg_left);  //get the matching score
 
 		ukfToolModel.renderTool(toolImage_right, arm_1, Cam_right, P_right);
-		double right = ukfToolModel.calculateMatchingScore(toolImage_right, seg_right);
+		double right = ukfToolModel.calculateChamferScore(toolImage_right, seg_right);
 
 		double matchingScore_arm_1 = sqrt(pow(left, 2) + pow(right, 2));
 
@@ -427,7 +427,6 @@ void KalmanFilter::UKF_double_arm(){
 	cv::imshow("Real Left Cam", tool_rawImg_left);
 	cv::imshow("Real Right Cam", tool_rawImg_right);
 
-
 	cv::waitKey(10);
 };
 
@@ -478,12 +477,14 @@ void KalmanFilter::update(std::vector <double> &sensor_data, cv::Mat & kalman_mu
 	cv::Mat root_sigma_t_last = cv::Mat_<double>::zeros(L, L);
 
 	getSquareRootCov(sigma_t_last, root_sigma_t_last);
-	//ROS_INFO_STREAM(" root_sigma_t_last" << root_sigma_t_last);
+	ROS_INFO_STREAM(" root_sigma_t_last" << root_sigma_t_last);
+	ROS_INFO_STREAM(" gamma" << gamma);
 	//Populate the sigma points:
 	std::vector<cv::Mat_<double> > sigma_pts_last;
 	sigma_pts_last.resize(2*L + 1);
 
 	sigma_pts_last[0] = kalman_mu.clone();//X_0
+
 	for (int i = 1; i <= L; i++) {
 		cv::Mat square_root_sigma = root_sigma_t_last.col(i - 1);
 		sigma_pts_last[i] = sigma_pts_last[0] + (gamma * square_root_sigma );
@@ -508,6 +509,7 @@ void KalmanFilter::update(std::vector <double> &sensor_data, cv::Mat & kalman_mu
 
 	for(int i = 0; i < 2 * L + 1; i++){
 		g(sigma_pts_bar[i], sigma_pts_last[i], sigma_pts_last[0] - zt); //no gaussian here,
+		//ROS_INFO_STREAM("sigma_pts_last[i]: " << sigma_pts_last[i]);
 	}
 
 	/*****Create the predicted mus and sigmas.*****/
@@ -528,10 +530,10 @@ void KalmanFilter::update(std::vector <double> &sensor_data, cv::Mat & kalman_mu
 
 	computeSigmaMeasures(mscores, zt, sigma_pts_bar, left_image, right_image, cam_left, cam_right);
 
-	for(int i = 0; i < mscores.size(); i++){
-		ROS_INFO("MSCORES %f", mscores[i]);
-//		ROS_WARN_STREAM("sigma_pts_bar " << sigma_pts_bar[i]);
-	}
+//	for(int i = 0; i < mscores.size(); i++){
+//		ROS_INFO("MSCORES %f", mscores[i]);
+////		ROS_WARN_STREAM("sigma_pts_bar " << sigma_pts_bar[i]);
+//	}
 
 	/*****Correction Step: Move the sigma points through the measurement function.*****/
 	std::vector<cv::Mat_<double> > Z_bar;

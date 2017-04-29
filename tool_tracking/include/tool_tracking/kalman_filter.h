@@ -97,12 +97,9 @@ private:
 
     int L;  ///DOF for both arms.
 
-    const static double alpha = 0.005;
-    const static double k = 0.0; //TODO: how much?
+    const static double alpha = 0.01;
+    const static double k = 0.5; //TODO: how much?
     const static double beta = 2;
-
-	bool fvc_1;
-	bool fvc_2;
 
 	/************using variables*************/
     std::vector<double> sensor_1;
