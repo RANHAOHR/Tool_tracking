@@ -62,10 +62,10 @@ ToolModel::ToolModel() {
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
 
-    std::string cylinder = tool_model_pkg + "/tool_parts/refine_cylinder_3.obj"; //"/tool_parts/refine_cylinder_3.obj";
-    std::string ellipse = tool_model_pkg + "/tool_parts/refine_ellipse_3.obj";
-    std::string gripper1 = tool_model_pkg + "/tool_parts/gripper2_1.obj";
-    std::string gripper2 = tool_model_pkg + "/tool_parts/gripper2_2.obj";
+    std::string cylinder = "/home/rxh349/ros_ws/src/Tool_tracking/tool_model/tool_parts/refine_cylinder_3.obj"; //"/tool_parts/refine_cylinder_3.obj";
+    std::string ellipse = "/home/rxh349/ros_ws/src/Tool_tracking/tool_model/tool_parts/refine_ellipse_3.obj";
+    std::string gripper1 = "/home/rxh349/ros_ws/src/Tool_tracking/tool_model/tool_parts/gripper2_1.obj";
+    std::string gripper2 = "/home/rxh349/ros_ws/src/Tool_tracking/tool_model/tool_parts/gripper2_2.obj";
 
     load_model_vertices(cylinder.c_str(),
                         body_vertices, body_Vnormal, body_faces, body_neighbors);
@@ -330,7 +330,7 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                                    const std::vector<std::vector<int> > &neighbor_faces,
                                    const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
                                    cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
-                                   const cv::Mat &P, cv::OutputArray jac) {
+                                   const cv::Mat &P, const cv::Mat &g_error) {
 
 //    cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << -1,0,0,0,
 //    0,0,1,0,
@@ -342,23 +342,20 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
             0,1,0,0,
             0,0,0,1);
 
-
     cv::Mat temp_input_Vmat = adjoint_mat * input_Vmat;
     cv::Mat temp_input_Nmat = adjoint_mat * input_Nmat;
-//
-//    cv::Mat new_Vertices = g_trans * temp_input_Vmat;
-    cv::Mat new_Vertices = transformPoints(temp_input_Vmat, rvec, tvec);
 
+    cv::Mat new_Vertices = transformPoints(temp_input_Vmat, rvec, tvec);
 
     new_Vertices = camTransformMats(CamMat, new_Vertices); //transform every point under camera frame
 
+    new_Vertices = g_error * new_Vertices;
 
-    //cv::Mat new_Normals = g_trans * temp_input_Nmat;
     cv::Mat new_Normals = transformPoints(temp_input_Nmat, rvec, tvec);
-
 
     new_Normals = camTransformMats(CamMat, new_Normals); //transform every surface normal under camera frame
 
+    new_Normals = g_error * new_Normals;
 
     unsigned long neighbor_num = 0;
     cv::Mat temp(4, 1, CV_64FC1);
@@ -405,11 +402,9 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                     int v1_ = input_faces[neighbor_faces[i][j]][0];
                     int v2_ = input_faces[neighbor_faces[i][j]][1];
                     int v3_ = input_faces[neighbor_faces[i][j]][2];
-
                     int n1_ = input_faces[neighbor_faces[i][j]][3];
                     int n2_ = input_faces[neighbor_faces[i][j]][4];
                     int n3_ = input_faces[neighbor_faces[i][j]][5];
-
 
                     new_Vertices.col(v1_).copyTo(temp.col(0));
                     cv::Point3d pt1_ = convert_MattoPts(temp);
@@ -419,10 +414,13 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                     cv::Point3d pt3_ = convert_MattoPts(temp);
 
                     new_Normals.col(n1_).copyTo(temp.col(0));
+
                     cv::Point3d vn1_ = convert_MattoPts(temp);
                     new_Normals.col(n2_).copyTo(temp.col(0));
+
                     cv::Point3d vn2_ = convert_MattoPts(temp);
                     new_Normals.col(n3_).copyTo(temp.col(0));
+
                     cv::Point3d vn3_ = convert_MattoPts(temp);
 
                     cv::Point3d fnormal_n = FindFaceNormal(pt1_, pt2_, pt3_, vn1_, vn2_, vn3_);
@@ -446,12 +444,9 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                         cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
 
                     }
-
-
                 }
 
             }
-
 
         }
     }
@@ -705,77 +700,77 @@ void ToolModel::modify_model_(std::vector<glm::vec3> &input_vertices, std::vecto
 /*This function is to generate a tool model, contains the following info:
 translation, rotation, new z axis, new x axis*/
 //TODO:
-ToolModel::toolModel
-ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder, const double &theta_oval, const double &theta_open){
-
-    toolModel newTool = seeds;  //BODY part is done here
+cv::Mat ToolModel::setRandomConfig(double &theta_cylinder, double &theta_oval, double &theta_open){
 
     ///what if generate seeding group
-    double step = 0.0015;
-    double dev = randomNumber(step, 0);
+    double step = 0.002;
 
-    newTool.tvec_cyl(0) = seeds.tvec_cyl(0) + dev;
+    cv::Mat particle(9,1,CV_64FC1);
+    particle.at<double>(0,0) = randomNumber(step, 0);
+    particle.at<double>(1,0) = randomNumber(step, 0);
+    particle.at<double>(2,0) = randomNumber(step, 0);
 
-    dev = randomNumber(step, 0);
-    newTool.tvec_cyl(1) = seeds.tvec_cyl(1) + dev;
-
-    dev = randomNumber(step, 0);
-    newTool.tvec_cyl(2) = seeds.tvec_cyl(2)+ dev;
-
-    dev = randomNumber(step, 0);
-    newTool.rvec_cyl(0) = seeds.rvec_cyl(0)+ dev;
-
-    dev = randomNumber(step, 0);
-    newTool.rvec_cyl(1) = seeds.rvec_cyl(1)+ dev;
-
-    dev = randomNumber(step, 0);
-    newTool.rvec_cyl(2) = seeds.rvec_cyl(2)+ dev;
+    particle.at<double>(3,0) = randomNumber(step, 0);
+    particle.at<double>(4,0) = randomNumber(step, 0);
+    particle.at<double>(5,0) = randomNumber(step, 0);
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    double theta_1 = theta_cylinder + randomNumber(0.0001, 0);   // tool rotation
-    double theta_grip_1 = theta_oval + randomNumber(0.0001, 0); // oval rotation
-    double theta_grip_2 = theta_open + randomNumber(0.0001, 0);
+    particle.at<double>(6,0) = theta_cylinder + randomNumber(0.0001, 0);   // tool rotation
+    particle.at<double>(7,0) = theta_oval + randomNumber(0.0001, 0); // oval rotation
+    particle.at<double>(8,0) = theta_open + randomNumber(0.0001, 0);
 
-    computeEllipsePose(newTool, theta_1, theta_grip_1, theta_grip_2);
+    return particle;
 
-    return newTool;
 };
 
-ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, double step){
+void ToolModel::setGErrorToolModel(const cv::Mat &inputparticle, toolModel &generatedTool, cv::Mat &g_error){
 
-    toolModel gaussianTool;  //new sample
+    cv::Mat rot_vec(3,1,CV_64FC1);
+    rot_vec.at<double>(0,0) = inputparticle.at<double>(3,0);
+    rot_vec.at<double>(1,0) = inputparticle.at<double>(4,0);
+    rot_vec.at<double>(2,0) = inputparticle.at<double>(5,0);
 
-    //gaussianTool = max_pose;
-    //create normally distributed random samples
-    step = 0.0015;  ////currently make it stable
-    double dev = randomNumber(step, 0);
-    gaussianTool.tvec_cyl(0) = max_pose.tvec_cyl(0)+ dev;
+    cv::Mat rotation(3,3,CV_64FC1);
+    cv::Rodrigues(rot_vec, rotation);
 
-    dev = randomNumber(step, 0);
-    gaussianTool.tvec_cyl(1) = max_pose.tvec_cyl(1)+ dev;
+    g_error = cv::Mat::eye(4,4,CV_64FC1);
+    rotation.copyTo(g_error.colRange(0,3).rowRange(0,3));
 
-    dev = randomNumber(step, 0);
-    gaussianTool.tvec_cyl(2) = max_pose.tvec_cyl(2)+ dev;// + dev;
+    g_error.at<double>(0,3) = inputparticle.at<double>(0,0); //x
+    g_error.at<double>(1,3) = inputparticle.at<double>(1,0); //y
+    g_error.at<double>(2,3) = inputparticle.at<double>(2,0); //z
 
-    dev = randomNumber(step, 0);
-    gaussianTool.rvec_cyl(0) = max_pose.rvec_cyl(0)+ dev;
+    double theta_oval = inputparticle.at<double>(6,0);
+    double theta_grip = inputparticle.at<double>(7,0);
+    double theta_open = inputparticle.at<double>(8,0);
 
-    dev = randomNumber(step, 0);
-    gaussianTool.rvec_cyl(1) = max_pose.rvec_cyl(1)+ dev;
+    computeEllipsePose(generatedTool, theta_oval, theta_grip, theta_open);
+};
 
-    dev = randomNumber(step, 0);
-    gaussianTool.rvec_cyl(2) = max_pose.rvec_cyl(2)+ dev;
+cv::Mat ToolModel::gaussianSampling(const cv::Mat &max_pose){
+
+    cv::Mat particle(9,1,CV_64FC1);
+
+    double dev_pos = 0.001;
+    double dev_ori = 0.001;
+    double dev_theta = 0.0001;
+
+    particle.at<double>(0,0) = max_pose.at<double>(0,0) + randomNumber(dev_pos, 0);
+    particle.at<double>(1,0) = max_pose.at<double>(1,0) + randomNumber(dev_pos, 0);
+    particle.at<double>(2,0) = max_pose.at<double>(2,0) + randomNumber(dev_pos, 0);
+
+    particle.at<double>(3,0) = max_pose.at<double>(3,0) + randomNumber(dev_ori, 0);
+    particle.at<double>(4,0) = max_pose.at<double>(4,0) + randomNumber(dev_ori, 0);
+    particle.at<double>(5,0) = max_pose.at<double>(5,0) + randomNumber(dev_ori, 0);
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    double theta_ = randomNumber(0.0001, 0);    //-90,90
-    double theta_grip_1 = randomNumber(0.0001, 0);
-    double theta_grip_2 = randomNumber(0.0001, 0);
+    particle.at<double>(6,0) = max_pose.at<double>(6,0) + randomNumber(dev_theta, 0);
+    particle.at<double>(7,0) = max_pose.at<double>(7,0) + randomNumber(dev_theta, 0);
+    particle.at<double>(8,0) = max_pose.at<double>(8,0) + randomNumber(dev_theta, 0);
 
-    computeRandomPose(max_pose, gaussianTool, theta_, theta_grip_1, theta_grip_2);
-    //computeModelPose(gaussianTool, theta_, theta_grip_1, theta_grip_2);
-    return gaussianTool;
+    return particle;
 
 };
 
@@ -1110,21 +1105,20 @@ void ToolModel::computeInvSE(const cv::Mat &inputMat, cv::Mat &outputMat){
 }
 
 /****render a rectangle contains the tool model, TODO:*****/
-void
-ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P, cv::OutputArray jac) {
+void ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P, const cv::Mat &g_error) {
 
     /** approach 1: using Vertices mat and normal mat **/
     Compute_Silhouette(body_faces, body_neighbors, body_Vmat, body_Nmat, CamMat, image, cv::Mat(tool.rvec_cyl),
-                       cv::Mat(tool.tvec_cyl), P, jac);
+                       cv::Mat(tool.tvec_cyl), P, g_error);
 
     Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image,
-                       cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac);
+                       cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, g_error);
 
     Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat, gripper1_Nmat, CamMat, image,
-                       cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac);
+                       cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, g_error);
 
     Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image,
-                       cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac);
+                       cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, g_error);
 
 };
 

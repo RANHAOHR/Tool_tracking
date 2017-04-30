@@ -77,9 +77,7 @@ private:
 
 	ros::NodeHandle node_handle;
 
-	///ros::Timer timer;
-
-	ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
+	ToolModel particleToolModel;  /// it should be set up the first time, probably need updates of the camera poses
 
 	ToolModel::toolModel initial; //initial configuration
 
@@ -99,11 +97,14 @@ private:
 	std::vector<double> matchingScores_arm_1; // particle scores (matching scores)
 	std::vector<double> matchingScores_arm_2; // particle scores (matching scores)
 
-	std::vector<ToolModel::toolModel> particles_arm_1; // particles
+	std::vector<cv::Mat_<double> > particles_arm_1; // particles
+    std::vector<ToolModel::toolModel> toolParticles;
 	std::vector<double> particleWeights_arm_1; // particle weights calculated from matching scores
 
 	std::vector<ToolModel::toolModel> particles_arm_2; // particles
 	std::vector<double> particleWeights_arm_2; // particle weights calculated from matching scores
+
+    std::vector<cv::Mat_<double> > g_error_arm_1; // particles
 
     cv::Mat Cam_left_arm_1;
     cv::Mat Cam_right_arm_1;
@@ -158,27 +159,25 @@ public:
 	/*
 	 * resampling method
 	 */
-/*	void
-	resampleLowVariance(const std::vector<ToolModel::toolModel> &initial, const std::vector<double> &particleWeight,
-						std::vector<ToolModel::toolModel> &results);*/
-	void resamplingParticles(const std::vector<ToolModel::toolModel> &sampleModel,
+
+	void resamplingParticles(const std::vector<cv::Mat_<double> > &sampleModel,
 							 const std::vector<double> &particleWeight,
-							 std::vector<ToolModel::toolModel> &update_particles);
+							 std::vector<cv::Mat_<double> > &update_particles);
 
 	/*
 	 * get measuerment for two tools
 	 */
 	double measureFuncSameCam(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose,
-							  const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right);
+							  const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right,cv::Mat &g_error);
 	/*
 	 * update particles
 	 */
 	void updateSamples(const cv::Mat &bodyVel, double &updateRate, std::vector<ToolModel::toolModel> particles);
 
-	void updateParticles(std::vector<ToolModel::toolModel> &updateParticles, const ToolModel::toolModel &bestParticle);
+    void updateParticles(std::vector<cv::Mat_<double> > &updatedParticles,
+                                         const cv::Mat &bestParticle);
 
-
-	cv::Mat adjoint(cv::Mat &G);
+    cv::Mat adjoint(cv::Mat &G);
     void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
     void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 

@@ -72,7 +72,8 @@ int main(int argc, char **argv) {
 
 
     newToolModel.computeDavinciModel(initial, 0.0, 0.0, 0.0 );
-    newToolModel.renderTool(testImg, initial, Cam, P);
+    cv::Mat g_error = cv::Mat::eye(4,4,CV_64FC1);
+    newToolModel.renderTool(testImg, initial, Cam, P, g_error);
 
 //    initial.tvec_cyl(0) = 0.01;// +0.4  //left and right (image frame)
 //    initial.tvec_cyl(1) = 0.0;  //up and down
