@@ -43,8 +43,6 @@
 #include <iostream>
 
 #include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
 #include <stdlib.h>
 #include <math.h>
 
@@ -64,6 +62,12 @@
 #include <geometry_msgs/Transform.h>
 #include <cwru_davinci_interface/davinci_interface.h>
 
+#include <tf/transform_listener.h>
+#include <cwru_davinci_interface/davinci_interface.h>
+#include <cwru_davinci_kinematics/davinci_kinematics.h>
+
+#include <cwru_xform_utils/xform_utils.h>
+//#include <xform_utils/xform_utils.h>
 
 class ParticleFilter {
 
@@ -71,7 +75,7 @@ private:
 	cv::Mat Cam_left;
 	cv::Mat Cam_right;
 
-	ros::NodeHandle nh_;  //may need this
+	ros::NodeHandle node_handle;
 
 	///ros::Timer timer;
 
@@ -79,37 +83,54 @@ private:
 
 	ToolModel::toolModel initial; //initial configuration
 
-	unsigned int toolSize; //size of the needle to be rendered
 	double Downsample_rate;
 
 	unsigned int numParticles; //total number of particles
-	cv::Mat toolImage_left; //left rendered Image
-	cv::Mat toolImage_right; //right rendered Image
+
+	cv::Mat toolImage_left_arm_1; //left rendered Image for ARM 1
+	cv::Mat toolImage_right_arm_1; //right rendered Image for ARM 1
+
+	cv::Mat toolImage_left_arm_2; //left rendered Image for ARM 2
+	cv::Mat toolImage_right_arm_2; //right rendered Image for ARM 2
 
 	cv::Mat toolImage_left_temp; //left rendered Image
 	cv::Mat toolImage_right_temp; //right rendered Image
 
-	cv::Rect ROI_left; //ROI for the left image
-	cv::Rect ROI_right; //ROI for the right image
+	std::vector<double> matchingScores_arm_1; // particle scores (matching scores)
+	std::vector<double> matchingScores_arm_2; // particle scores (matching scores)
 
-	std::vector<ToolModel::toolModel> particles; // particles
-	std::vector<double> matchingScores; // particle scores (matching scores)
-	std::vector<double> particleWeights; // particle weights calculated from matching scores
+	std::vector<ToolModel::toolModel> particles_arm_1; // particles
+	std::vector<double> particleWeights_arm_1; // particle weights calculated from matching scores
 
-	int L;  ///DOF for one arm.
+	std::vector<ToolModel::toolModel> particles_arm_2; // particles
+	std::vector<double> particleWeights_arm_2; // particle weights calculated from matching scores
 
-	ros::Subscriber com_s1;
-	ros::Subscriber com_s2;
+    cv::Mat Cam_left_arm_1;
+    cv::Mat Cam_right_arm_1;
+    cv::Mat Cam_left_arm_2;
+    cv::Mat Cam_right_arm_2;
 
-	void newCommandCallback1(const sensor_msgs::JointState::ConstPtr &incoming);
+    Davinci_fwd_solver kinematics;
 
-	void newCommandCallback2(const sensor_msgs::JointState::ConstPtr &incoming);
+    Eigen::Affine3d arm_1__cam_l;
+    Eigen::Affine3d arm_2__cam_l;
+    Eigen::Affine3d arm_1__cam_r;
+    Eigen::Affine3d arm_2__cam_r;
 
-	std::vector<double> cmd_green;
-	std::vector<double> cmd_yellow;
+    std::vector<double> sensor_1;
+    std::vector<double> sensor_2;
 
 
 public:
+
+	/*
+	 * for comparing and testing
+	 */
+	cv::Mat raw_image_left; //left rendered Image
+	cv::Mat raw_image_right; //right rendered Image
+
+	cv::Mat P_left;
+	cv::Mat P_right;
 
 	/*
 	* The default constructor
@@ -133,9 +154,7 @@ public:
 	/*
 	 * This is the main function for tracking the needle. This function is called and it syncs all of the functions
 	*/
-	std::vector<cv::Mat>
-	trackingTool(const cv::Mat &bodyVel, const cv::Mat &segmented_left, const cv::Mat &segmented_right,
-				 const cv::Mat &P_left, const cv::Mat &P_right);
+	std::vector<cv::Mat> trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 	/*
 	 * resampling method
 	 */
@@ -147,18 +166,21 @@ public:
 							 std::vector<ToolModel::toolModel> &update_particles);
 
 	/*
+	 * get measuerment for two tools
+	 */
+	double measureFuncSameCam(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose,
+							  const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right);
+	/*
 	 * update particles
 	 */
-	void updateSamples(const cv::Mat &bodyVel, double &updateRate);
+	void updateSamples(const cv::Mat &bodyVel, double &updateRate, std::vector<ToolModel::toolModel> particles);
 
 	void updateParticles(std::vector<ToolModel::toolModel> &updateParticles, const ToolModel::toolModel &bestParticle);
-	/*
-	 * Uncented Kalman filter update
-	 */
-	void UnscentedKalmanFilter(const cv::Mat &mu, const cv::Mat &sigma, cv::Mat &update_mu, cv::Mat &update_sigma,
-							  cv::Mat &zt, cv::Mat &ut);
+
 
 	cv::Mat adjoint(cv::Mat &G);
+    void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
+    void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 
 };
 
