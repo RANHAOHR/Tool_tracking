@@ -100,35 +100,35 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     P_left = cv::Mat::zeros(3,4,CV_64FC1);
     P_right = cv::Mat::zeros(3,4,CV_64FC1);
 
-    P_left.at<double>(0, 0) = 880.0575531441748;
+    P_left.at<double>(0, 0) = 1034.473;
     P_left.at<double>(1, 0) = 0;
     P_left.at<double>(2, 0) = 0;
 
     P_left.at<double>(0, 1) = 0;
-    P_left.at<double>(1, 1) = 880.0575531441748;
+    P_left.at<double>(1, 1) = 1034.473;
     P_left.at<double>(2, 1) = 0;
 
-    P_left.at<double>(0, 2) = 300.5; // horiz
-    P_left.at<double>(1, 2) = 150.5; //verticle
+    P_left.at<double>(0, 2) = 320.5; // horiz
+    P_left.at<double>(1, 2) = 240.5; //verticle
     P_left.at<double>(2, 2) = 1;
 
     P_left.at<double>(0, 3) = 0;
     P_left.at<double>(1, 3) = 0;
     P_left.at<double>(2, 3) = 0;
 
-    P_right.at<double>(0, 0) = 880.0575531441748;
+    P_right.at<double>(0, 0) = 1034.473;
     P_right.at<double>(1, 0) = 0;
     P_right.at<double>(2, 0) = 0;
 
     P_right.at<double>(0, 1) = 0;
-    P_right.at<double>(1, 1) = 880.0575531441748;
+    P_right.at<double>(1, 1) = 1034.473;
     P_right.at<double>(2, 1) = 0;
 
-    P_right.at<double>(0, 2) = 300.5; // horiz
-    P_right.at<double>(1, 2) = 150.5; //verticle
+    P_right.at<double>(0, 2) = 320.5; // horiz
+    P_right.at<double>(1, 2) = 240.5; //verticle
     P_right.at<double>(2, 2) = 1;
 
-    P_right.at<double>(0, 3) = 5.1043338082362135;
+    P_right.at<double>(0, 3) = 1.732953897952732;
     P_right.at<double>(1, 3) = 0;
     P_right.at<double>(2, 3) = 0;
 

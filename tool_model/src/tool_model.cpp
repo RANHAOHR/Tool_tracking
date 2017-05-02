@@ -1067,7 +1067,6 @@ void ToolModel::computeDavinciModel(toolModel &inputModel, const double &theta_t
 
 };
 
-
 cv::Mat ToolModel::computeSkew(cv::Mat &w) {
     cv::Mat skew(3, 3, CV_64FC1);
     skew.at<double>(0, 0) = 0;
@@ -1083,7 +1082,6 @@ cv::Mat ToolModel::computeSkew(cv::Mat &w) {
     return skew;
 
 };
-
 
 void ToolModel::computeInvSE(const cv::Mat &inputMat, cv::Mat &outputMat){
 

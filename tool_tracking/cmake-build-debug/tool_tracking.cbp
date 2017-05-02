@@ -37,16 +37,6 @@
 					<DistClean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
-			<Target title="install/local">
-				<Option working_dir="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug"/>
-				<Option type="4"/>
-				<MakeCommands>
-					<Build command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 install/local"/>
-					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-				</MakeCommands>
-			</Target>
 			<Target title="cwru_opencv_common_generate_messages_lisp">
 				<Option working_dir="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug"/>
 				<Option type="4"/>
@@ -92,80 +82,6 @@
 				<Option type="4"/>
 				<MakeCommands>
 					<Build command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 std_msgs_generate_messages_lisp"/>
-					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-				</MakeCommands>
-			</Target>
-			<Target title="tracking_kalman">
-				<Option output="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/tool_tracking/tracking_kalman" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/tool_tracking"/>
-				<Option object_output="./"/>
-				<Option type="1"/>
-				<Option compiler="gcc"/>
-				<Compiler>
-					<Add option="-DROS_PACKAGE_NAME=&quot;tool_tracking&quot;"/>
-					<Add option="-DROSCONSOLE_BACKEND_LOG4CXX"/>
-					<Add directory="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/include"/>
-					<Add directory="/home/rxh349/ros_ws/devel/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/ros_libs/vision_opencv/cv_bridge/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_vision/cwru_opencv_common/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/vesselness_image_filter_common/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/Tool_tracking/tool_model/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_davinci/cwru_davinci_interface/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_davinci/cwru_davinci_kinematics/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_xform_utils/include"/>
-					<Add directory="/opt/ros/jade/include"/>
-					<Add directory="/usr/local/include/opencv"/>
-					<Add directory="/usr/local/include"/>
-					<Add directory="/usr/local/include/eigen3"/>
-					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include"/>
-					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed"/>
-					<Add directory="/usr/include/x86_64-linux-gnu"/>
-					<Add directory="/usr/include"/>
-					<Add directory="/usr/include/c++/4.8"/>
-					<Add directory="/usr/include/x86_64-linux-gnu/c++/4.8"/>
-					<Add directory="/usr/include/c++/4.8/backward"/>
-				</Compiler>
-				<MakeCommands>
-					<Build command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 tracking_kalman"/>
-					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-				</MakeCommands>
-			</Target>
-			<Target title="tracking_kalman/fast">
-				<Option output="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/tool_tracking/tracking_kalman" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/tool_tracking"/>
-				<Option object_output="./"/>
-				<Option type="1"/>
-				<Option compiler="gcc"/>
-				<Compiler>
-					<Add option="-DROS_PACKAGE_NAME=&quot;tool_tracking&quot;"/>
-					<Add option="-DROSCONSOLE_BACKEND_LOG4CXX"/>
-					<Add directory="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/include"/>
-					<Add directory="/home/rxh349/ros_ws/devel/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/ros_libs/vision_opencv/cv_bridge/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_vision/cwru_opencv_common/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/vesselness_image_filter_common/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/Tool_tracking/tool_model/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_davinci/cwru_davinci_interface/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_davinci/cwru_davinci_kinematics/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_xform_utils/include"/>
-					<Add directory="/opt/ros/jade/include"/>
-					<Add directory="/usr/local/include/opencv"/>
-					<Add directory="/usr/local/include"/>
-					<Add directory="/usr/local/include/eigen3"/>
-					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include"/>
-					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed"/>
-					<Add directory="/usr/include/x86_64-linux-gnu"/>
-					<Add directory="/usr/include"/>
-					<Add directory="/usr/include/c++/4.8"/>
-					<Add directory="/usr/include/x86_64-linux-gnu/c++/4.8"/>
-					<Add directory="/usr/include/c++/4.8/backward"/>
-				</Compiler>
-				<MakeCommands>
-					<Build command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 tracking_kalman/fast"/>
 					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
 					<Clean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 					<DistClean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
@@ -326,6 +242,16 @@
 				<Option type="4"/>
 				<MakeCommands>
 					<Build command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 _catkin_empty_exported_target"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="install/local">
+				<Option working_dir="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 install/local"/>
 					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
 					<Clean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 					<DistClean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
@@ -645,80 +571,6 @@
 					<DistClean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
-			<Target title="tool_tracking_kalman">
-				<Option output="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/libtool_tracking_kalman.so" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug"/>
-				<Option object_output="./"/>
-				<Option type="3"/>
-				<Option compiler="gcc"/>
-				<Compiler>
-					<Add option="-DROS_PACKAGE_NAME=&quot;tool_tracking&quot;"/>
-					<Add option="-DROSCONSOLE_BACKEND_LOG4CXX"/>
-					<Add directory="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/include"/>
-					<Add directory="/home/rxh349/ros_ws/devel/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/ros_libs/vision_opencv/cv_bridge/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_vision/cwru_opencv_common/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/vesselness_image_filter_common/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/Tool_tracking/tool_model/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_davinci/cwru_davinci_interface/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_davinci/cwru_davinci_kinematics/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_xform_utils/include"/>
-					<Add directory="/opt/ros/jade/include"/>
-					<Add directory="/usr/local/include/opencv"/>
-					<Add directory="/usr/local/include"/>
-					<Add directory="/usr/local/include/eigen3"/>
-					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include"/>
-					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed"/>
-					<Add directory="/usr/include/x86_64-linux-gnu"/>
-					<Add directory="/usr/include"/>
-					<Add directory="/usr/include/c++/4.8"/>
-					<Add directory="/usr/include/x86_64-linux-gnu/c++/4.8"/>
-					<Add directory="/usr/include/c++/4.8/backward"/>
-				</Compiler>
-				<MakeCommands>
-					<Build command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 tool_tracking_kalman"/>
-					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-				</MakeCommands>
-			</Target>
-			<Target title="tool_tracking_kalman/fast">
-				<Option output="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/libtool_tracking_kalman.so" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug"/>
-				<Option object_output="./"/>
-				<Option type="3"/>
-				<Option compiler="gcc"/>
-				<Compiler>
-					<Add option="-DROS_PACKAGE_NAME=&quot;tool_tracking&quot;"/>
-					<Add option="-DROSCONSOLE_BACKEND_LOG4CXX"/>
-					<Add directory="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/include"/>
-					<Add directory="/home/rxh349/ros_ws/devel/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/ros_libs/vision_opencv/cv_bridge/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_vision/cwru_opencv_common/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/vesselness_image_filter_common/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/Tool_tracking/tool_model/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_davinci/cwru_davinci_interface/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_davinci/cwru_davinci_kinematics/include"/>
-					<Add directory="/home/rxh349/ros_ws/src/cwru_xform_utils/include"/>
-					<Add directory="/opt/ros/jade/include"/>
-					<Add directory="/usr/local/include/opencv"/>
-					<Add directory="/usr/local/include"/>
-					<Add directory="/usr/local/include/eigen3"/>
-					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include"/>
-					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed"/>
-					<Add directory="/usr/include/x86_64-linux-gnu"/>
-					<Add directory="/usr/include"/>
-					<Add directory="/usr/include/c++/4.8"/>
-					<Add directory="/usr/include/x86_64-linux-gnu/c++/4.8"/>
-					<Add directory="/usr/include/c++/4.8/backward"/>
-				</Compiler>
-				<MakeCommands>
-					<Build command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 tool_tracking_kalman/fast"/>
-					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j4 -f &quot;/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-				</MakeCommands>
-			</Target>
 			<Target title="tracking_particle">
 				<Option output="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/tool_tracking/tracking_particle" prefix_auto="0" extension_auto="0"/>
 				<Option working_dir="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/tool_tracking"/>
@@ -906,14 +758,8 @@
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/src/kalman_filter.cpp">
-			<Option target="tool_tracking_kalman"/>
-		</Unit>
 		<Unit filename="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/src/particle_filter.cpp">
 			<Option target="tool_tracking_particle"/>
-		</Unit>
-		<Unit filename="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/src/tracking_kalman.cpp">
-			<Option target="tracking_kalman"/>
 		</Unit>
 		<Unit filename="/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/src/tracking_particle.cpp">
 			<Option target="tracking_particle"/>

@@ -109,7 +109,7 @@ if(NOT "/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/include " STREQUAL "
   endforeach()
 endif()
 
-set(libraries "tool_tracking_particle;tool_tracking_kalman")
+set(libraries "tool_tracking_particle")
 foreach(library ${libraries})
   # keep build configuration keywords, target names and absolute libraries as-is
   if("${library}" MATCHES "^(debug|optimized|general)$")
