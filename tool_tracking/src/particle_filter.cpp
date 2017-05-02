@@ -129,7 +129,7 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
 	P_right.at<double>(1, 2) = 240.5; //verticle
 	P_right.at<double>(2, 2) = 1;
 
-	P_right.at<double>(0, 3) = 4.732953897952732;
+	P_right.at<double>(0, 3) = 1.732953897952732;
 	P_right.at<double>(1, 3) = 0;
 	P_right.at<double>(2, 3) = 0;
 

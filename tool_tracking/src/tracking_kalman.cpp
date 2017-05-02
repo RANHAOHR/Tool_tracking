@@ -68,6 +68,7 @@ int main(int argc, char **argv) {
 			ROS_INFO("INSIDE dynamic ");
 			UKF.getCourseEstimation();
 			tracking_iteration = 0;
+            //cv::waitKey();
 		}
 
 		//loop_rate.sleep();  //or cv::waitKey(10);

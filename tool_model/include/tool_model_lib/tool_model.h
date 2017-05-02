@@ -207,10 +207,6 @@ public:
     cv::Point3d FindFaceNormal(cv::Point3d &input_v1, cv::Point3d &input_v2, cv::Point3d &input_v3,
                                cv::Point3d &input_n1, cv::Point3d &input_n2, cv::Point3d &input_n3);
 
-    cv::Point3d
-    getFaceNormal(const cv::Mat &pt1, const cv::Mat &pt2, const cv::Mat &pt3, const cv::Mat &vn1, const cv::Mat &vn2,
-                  const cv::Mat &vn3);
-
     int Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2, std::vector<int> &match_vec);
 
     void getFaceInfo(const std::vector<std::vector<int> > &input_faces, const std::vector<cv::Point3d> &input_vertices,

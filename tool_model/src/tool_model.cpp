@@ -342,23 +342,15 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
             0,1,0,0,
             0,0,0,1);
 
-
     cv::Mat temp_input_Vmat = adjoint_mat * input_Vmat;
     cv::Mat temp_input_Nmat = adjoint_mat * input_Nmat;
-//
-//    cv::Mat new_Vertices = g_trans * temp_input_Vmat;
-    cv::Mat new_Vertices = transformPoints(temp_input_Vmat, rvec, tvec);
 
+    cv::Mat new_Vertices = transformPoints(temp_input_Vmat, rvec, tvec);
 
     new_Vertices = camTransformMats(CamMat, new_Vertices); //transform every point under camera frame
 
-
-    //cv::Mat new_Normals = g_trans * temp_input_Nmat;
     cv::Mat new_Normals = transformPoints(temp_input_Nmat, rvec, tvec);
-
-
     new_Normals = camTransformMats(CamMat, new_Normals); //transform every surface normal under camera frame
-
 
     unsigned long neighbor_num = 0;
     cv::Mat temp(4, 1, CV_64FC1);
@@ -447,11 +439,9 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
 
                     }
 
-
                 }
 
             }
-
 
         }
     }
@@ -469,41 +459,6 @@ cv::Mat ToolModel::convert4to3(const cv::Mat &inputMat) {
 
 };
 
-cv::Point3d ToolModel::getFaceNormal(const cv::Mat &pt1, const cv::Mat &pt2, const cv::Mat &pt3, const cv::Mat &vn1,
-                                     const cv::Mat &vn2, const cv::Mat &vn3) { //should be 4 by 6
-
-    cv::Mat temp_v1(4, 1, CV_64FC1);
-    cv::Mat temp_v2(4, 1, CV_64FC1);
-
-    temp_v1 = pt1 - pt2;
-    temp_v2 = pt1 - pt3;
-
-    cv::Mat temp_v1_ = convert4to3(temp_v1);
-    cv::Mat temp_v2_ = convert4to3(temp_v2);
-
-    cv::Mat temp_n1 = convert4to3(vn1);
-    cv::Mat temp_n2 = convert4to3(vn2);
-    cv::Mat temp_n3 = convert4to3(vn3);
-
-    cv::Mat resNorm = temp_v1_.cross(temp_v2_);
-
-
-    double outward_normal_1 = resNorm.dot(temp_n1);
-    double outward_normal_2 = resNorm.dot(temp_n2);
-    double outward_normal_3 = resNorm.dot(temp_n3);
-
-    if ((outward_normal_1 < 0) || (outward_normal_2 < 0) || (outward_normal_3 < 0)) {
-        resNorm = -1 * resNorm;
-    }
-
-    //res = Normalize(res);
-    cv::Point3d res;
-    res.x = resNorm.at<double>(0, 0);
-    res.y = resNorm.at<double>(1, 0);
-    res.z = resNorm.at<double>(2, 0);
-    return res;  // knowing the direction
-
-};
 
 cv::Point3d ToolModel::convert_MattoPts(cv::Mat &input_Mat) { //should be a 4 by 1 mat
     cv::Point3d output_point;
@@ -894,7 +849,6 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     inputModel.tvec_elp(0) = q_temp.at<double>(0, 0);
     inputModel.tvec_elp(1) = q_temp.at<double>(1, 0);
     inputModel.tvec_elp(2) = q_temp.at<double>(2, 0);
-
 
     /*oval part*/
     cv::Mat rot_ellipse(3,3,CV_64FC1);

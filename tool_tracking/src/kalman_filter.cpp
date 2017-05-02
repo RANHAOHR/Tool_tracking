@@ -134,7 +134,7 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	kalman_mu_arm2.at<double>(16, 0) = tmp[1][5];
 	kalman_mu_arm2.at<double>(17, 0) = tmp[1][6];
 
-	double dev_pos = ukfToolModel.randomNum(0.6, 0.2);  ///deviation for position
+	double dev_pos = ukfToolModel.randomNum(0.7, 0.5);  ///deviation for position
 	double dev_ori = ukfToolModel.randomNum(0.8, 0.5);  ///deviation for orientation
 	double dev_ang = ukfToolModel.randomNum(0.2, 0); ///deviation for joint angles
 
@@ -163,45 +163,37 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	P_left = cv::Mat::zeros(3,4,CV_64FC1);
 	P_right = cv::Mat::zeros(3,4,CV_64FC1);
 
-	cv::Mat P_l(3, 4, CV_64FC1);
-	P_l.at<double>(0, 0) = 880.0575531441748;
-	P_l.at<double>(1, 0) = 0;
-	P_l.at<double>(2, 0) = 0;
+    P_left.at<double>(0, 0) = 1034.473;
+    P_left.at<double>(1, 0) = 0;
+    P_left.at<double>(2, 0) = 0;
 
-	P_l.at<double>(0, 1) = 0;
-	P_l.at<double>(1, 1) = 880.0575531441748;
-	P_l.at<double>(2, 1) = 0;
+    P_left.at<double>(0, 1) = 0;
+    P_left.at<double>(1, 1) = 1034.473;
+    P_left.at<double>(2, 1) = 0;
 
-	P_l.at<double>(0, 2) = 300.5; // horiz
-	P_l.at<double>(1, 2) = 150.5; //verticle
-	P_l.at<double>(2, 2) = 1;
+    P_left.at<double>(0, 2) = 320.5; // horiz
+    P_left.at<double>(1, 2) = 240.5; //verticle
+    P_left.at<double>(2, 2) = 1;
 
-	P_l.at<double>(0, 3) = 0;
-	P_l.at<double>(1, 3) = 0;
-	P_l.at<double>(2, 3) = 0;
+    P_left.at<double>(0, 3) = 0;
+    P_left.at<double>(1, 3) = 0;
+    P_left.at<double>(2, 3) = 0;
 
+    P_right.at<double>(0, 0) = 1034.473;
+    P_right.at<double>(1, 0) = 0;
+    P_right.at<double>(2, 0) = 0;
 
-	cv::Mat P_r(3, 4, CV_64FC1);
+    P_right.at<double>(0, 1) = 0;
+    P_right.at<double>(1, 1) = 1034.473;
+    P_right.at<double>(2, 1) = 0;
 
-	P_r.at<double>(0, 0) = 880.0575531441748;
-	P_r.at<double>(1, 0) = 0;
-	P_r.at<double>(2, 0) = 0;
+    P_right.at<double>(0, 2) = 320.5; // horiz
+    P_right.at<double>(1, 2) = 240.5; //verticle
+    P_right.at<double>(2, 2) = 1;
 
-	P_r.at<double>(0, 1) = 0;
-	P_r.at<double>(1, 1) = 880.0575531441748;
-	P_r.at<double>(2, 1) = 0;
-
-	P_r.at<double>(0, 2) = 300.5; // horiz
-	P_r.at<double>(1, 2) = 150.5; //verticle
-	P_r.at<double>(2, 2) = 1;
-
-	P_r.at<double>(0, 3) = 5.1043338082362135;
-	P_r.at<double>(1, 3) = 0;
-	P_r.at<double>(2, 3) = 0;
-
-	
-	P_left = P_l.clone();
-	P_right = P_r.clone();
+    P_right.at<double>(0, 3) = 1.732953897952732;
+    P_right.at<double>(1, 3) = 0;
+    P_right.at<double>(2, 3) = 0;
 
 	//Subscribe to the necessary transforms.
 	tf::StampedTransform arm_1__cam_l_st;
@@ -315,10 +307,10 @@ double KalmanFilter::measureFunc(
 	/***do the sampling and get the matching score***/
 	//first get the rendered image using 3d model of the tool
 	ukfToolModel.renderTool(toolImage_left, toolPose, Cam_left, P_left);
-	double left = ukfToolModel.calculateMatchingScore(toolImage_left, seg_left);  //get the matching score
+	double left = ukfToolModel.calculateChamferScore(toolImage_left, seg_left);  //get the matching score
 
 	ukfToolModel.renderTool(toolImage_right, toolPose, Cam_right, P_right);
-	double right = ukfToolModel.calculateMatchingScore(toolImage_right, seg_right);
+	double right = ukfToolModel.calculateChamferScore(toolImage_right, seg_right);
 
 	ukfToolModel.renderTool(rawImage_left, toolPose, Cam_left, P_left);
 	ukfToolModel.renderTool(rawImage_right, toolPose, Cam_right, P_right);
@@ -437,8 +429,8 @@ void KalmanFilter::getCourseEstimation(){
     zt_arm1  = cv::Mat_<double>::zeros(L, 1);
     zt_arm1 = kalman_mu_arm1.clone();    //initialization for maeasurement
 
-    double dev_pos = ukfToolModel.randomNum(0.6, 0.2);  ///deviation for position
-    double dev_ori = ukfToolModel.randomNum(0.8, 0.6);  ///deviation for orientation
+    double dev_pos = ukfToolModel.randomNum(0.7, 0.2);  ///deviation for position
+    double dev_ori = ukfToolModel.randomNum(0.7, 0.5);  ///deviation for orientation
     double dev_ang = ukfToolModel.randomNum(0.2, 0); ///deviation for joint angles
 
     kalman_sigma_arm1 = (cv::Mat_<double>::eye(L, L));
@@ -602,9 +594,12 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
 	double joint_grip_angle_1 = zt.at<double>(8 , 0);
 
 	convertToolModel(arm1, arm_1, joint_oval_1, joint_grip_dist_1, joint_grip_angle_1);
-	cv::Mat seg_test = left_image.clone();
-	ukfToolModel.renderTool(seg_test, arm_1, cam_left, P_left);
-	cv::imshow("test mu image: " , seg_test );
+	cv::Mat seg_test_l = seg_left.clone();
+    cv::Mat seg_test_r = seg_right.clone();
+	ukfToolModel.renderTool(seg_test_l, arm_1, cam_left, P_left);
+    ukfToolModel.renderTool(seg_test_r, arm_1, cam_right, P_right);
+	cv::imshow("seg kalman_mu left: " , seg_test_l );
+    cv::imshow("seg kalman_mu right: " , seg_test_r );
 	//cv::waitKey();
 
 };
