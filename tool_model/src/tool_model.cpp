@@ -716,7 +716,7 @@ cv::Mat ToolModel::setRandomConfig(double &theta_cylinder, double &theta_oval, d
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    particle.at<double>(6,0) = theta_cylinder + randomNumber(0.0001, 0);   // tool rotation
+    particle.at<double>(6,0) = theta_cylinder + randomNumber(0.001, 0);   // tool rotation
     particle.at<double>(7,0) = theta_oval + randomNumber(0.0001, 0); // oval rotation
     particle.at<double>(8,0) = theta_open + randomNumber(0.0001, 0);
 
@@ -752,7 +752,7 @@ cv::Mat ToolModel::gaussianSampling(const cv::Mat &max_pose){
 
     cv::Mat particle(9,1,CV_64FC1);
 
-    double dev_pos = 0.001;
+    double dev_pos = 0.002;
     double dev_ori = 0.001;
     double dev_theta = 0.0001;
 

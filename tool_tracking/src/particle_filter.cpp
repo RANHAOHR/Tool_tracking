@@ -245,7 +245,6 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 			maxScoreIdx_1 = i;
 		}
 		totalScore_1 += matchingScores_arm_1[i];
-
 	}
 
 	cv::imshow("temp image arm_1 left: " , toolImage_left_temp);
@@ -273,7 +272,6 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	trackingImages[1] = raw_image_right.clone();
 	cv::imshow("trackingImages left", trackingImages[0]);
 	cv::imshow("trackingImages right", trackingImages[1]);
-	//cv::imshow("best particle 2 in same loop",trackingImages[1]);
 
 	cv::waitKey(15);
 
@@ -281,7 +279,6 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	std::vector<cv::Mat_<double> > oldParticles = particles_arm_1;
 	resamplingParticles(oldParticles, particleWeights_arm_1, particles_arm_1);
 
-	//std::vector<ToolModel::toolModel> updatedParticles = particles;
 	updateParticles(particles_arm_1, best_particle);
 
 	return trackingImages;
