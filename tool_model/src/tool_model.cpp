@@ -51,13 +51,9 @@ boost::mt19937 rng((const uint32_t &) time(0));
 //constructor
 ToolModel::ToolModel() {
 
-    offset_body = 0.45;//0.4535;  //0.3429, this doesn't matter when using from the tip (compensation), but matters when using from the cylinder
-    offset_ellipse = 0.4567;//0.45352716;
-    offset_gripper = offset_ellipse;// + 0.0003; //0.4253,0.46118
-
-//    offset_body = 0.3429; //this doesn't matter when using from the tip (compensation), but matters when using from the cylinder
-//    offset_ellipse = 0.45352716;//0.45352716;
-//    offset_gripper = 0.46118; //0.4253,0.46118
+    offset_body = 0.46;//0.4535;  //0.3429,
+    offset_ellipse = offset_body + 0.003;// + 0.010;//0.45352716;
+    offset_gripper = offset_ellipse - 0.003;// + 0.009;// + 0.003; //0.4253,0.46118
 
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");

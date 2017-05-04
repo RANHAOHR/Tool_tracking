@@ -89,7 +89,6 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 //	Eigen::Vector3d a1_trans = a1_pos.translation();
 //	cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
 //	computeRodriguesVec(a1_pos, a1_rvec);
-//
 
 	Eigen::Affine3d a2_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_2.data()));
 	Eigen::Vector3d a2_trans = a2_pos.translation();
@@ -157,8 +156,8 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	freshCameraInfo = false; //should be left and right
 	
 	//The projection matrix from the simulation does not accurately reflect the Da Vinci robot. We are hardcoding the matrix from the da vinci itself.
-//	projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
-//	projectionMat_subscriber_l = nh_.subscribe("/davinci_endo/left/camera_info", 1, &KalmanFilter::projectionLeftCB, this);
+	projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
+	projectionMat_subscriber_l = nh_.subscribe("/davinci_endo/left/camera_info", 1, &KalmanFilter::projectionLeftCB, this);
 
 	P_left = cv::Mat::zeros(3,4,CV_64FC1);
 	P_right = cv::Mat::zeros(3,4,CV_64FC1);
@@ -191,7 +190,7 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
     P_right.at<double>(1, 2) = 240.5; //verticle
     P_right.at<double>(2, 2) = 1;
 
-    P_right.at<double>(0, 3) = 1.732953897952732;
+    P_right.at<double>(0, 3) = 5.9999;
     P_right.at<double>(1, 3) = 0;
     P_right.at<double>(2, 3) = 0;
 
@@ -223,8 +222,6 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	arm_1__cam_r = xfu.transformTFToAffine3d(arm_1__cam_r_st);//.inverse();
 	arm_2__cam_l = xfu.transformTFToAffine3d(arm_2__cam_l_st);//.inverse();
 	arm_2__cam_r = xfu.transformTFToAffine3d(arm_2__cam_r_st);//.inverse();
-
-//	print_affine(arm_l__cam_l);
 
 	convertEigenToMat(arm_1__cam_l, Cam_left_arm_1);
 	convertEigenToMat(arm_1__cam_r, Cam_right_arm_1);
@@ -263,7 +260,7 @@ void KalmanFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &pr
 	P_right.at<double>(2,2) = projectionRight->P[10];
 	P_right.at<double>(2,3) = projectionRight->P[11];
 
-	ROS_INFO_STREAM("right: " << P_right);
+	//ROS_INFO_STREAM("right: " << P_right);
 	freshCameraInfo = true;
 };
 
@@ -284,7 +281,7 @@ void KalmanFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &pro
 	P_left.at<double>(2,2) = projectionLeft->P[10];
 	P_left.at<double>(2,3) = projectionLeft->P[11];
 
-	ROS_INFO_STREAM("left: " << P_left);
+	//ROS_INFO_STREAM("left: " << P_left);
 	freshCameraInfo = true;
 };
 
@@ -403,34 +400,34 @@ void KalmanFilter::getCourseEstimation(){
 //	cv::Mat arm_rvec = cv::Mat::zeros(3,1,CV_64FC1);
 //	computeRodriguesVec(arm_pos, arm_rvec);
 
-    Eigen::Affine3d arm_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0], sensor_1[0] + DH_q_offset0 );
-    Eigen::Affine3d arm_pos_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1], sensor_1[1] + DH_q_offset1 );
-    Eigen::Affine3d arm_pos_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_1[2] + DH_q_offset2, DH_alpha_params[2], 0.0 );
+//    Eigen::Affine3d arm_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0], sensor_1[0] + DH_q_offset0 );
+//    Eigen::Affine3d arm_pos_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1], sensor_1[1] + DH_q_offset1 );
+//    Eigen::Affine3d arm_pos_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_1[2] + DH_q_offset2, DH_alpha_params[2], 0.0 );
+//
+//    Eigen::Affine3d arm_pos = kinematics.affine_frame0_wrt_base_ * arm_pos_1 * arm_pos_2 * arm_pos_3;// * a1_4 *a1_5 * a1_6 * a1_7 * kinematics.affine_gripper_wrt_frame6_ ;
+//    Eigen::Vector3d arm_trans = arm_pos.translation();
+//
+//    cv::Mat arm_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+//
+//    computeRodriguesVec(arm_pos, arm_rvec);
+//
+//    kalman_mu_arm1 = cv::Mat_<double>::zeros(L, 1);
+//
+//    kalman_mu_arm1.at<double>(0 , 0) = arm_trans[0];
+//    kalman_mu_arm1.at<double>(1 , 0) = arm_trans[1];
+//    kalman_mu_arm1.at<double>(2 , 0) = arm_trans[2];
+//    kalman_mu_arm1.at<double>(3 , 0) = arm_rvec.at<double>(0,0);
+//    kalman_mu_arm1.at<double>(4 , 0) = arm_rvec.at<double>(1,0);
+//    kalman_mu_arm1.at<double>(5 , 0) = arm_rvec.at<double>(2,0);
+//    kalman_mu_arm1.at<double>(6 , 0) = tmp[0][4];
+//    kalman_mu_arm1.at<double>(7 , 0) = tmp[0][5];
+//    kalman_mu_arm1.at<double>(8 , 0) = tmp[0][6];
+//
+//    zt_arm1  = cv::Mat_<double>::zeros(L, 1);
+//    zt_arm1 = kalman_mu_arm1.clone();    //initialization for maeasurement
 
-    Eigen::Affine3d arm_pos = kinematics.affine_frame0_wrt_base_ * arm_pos_1 * arm_pos_2 * arm_pos_3;// * a1_4 *a1_5 * a1_6 * a1_7 * kinematics.affine_gripper_wrt_frame6_ ;
-    Eigen::Vector3d arm_trans = arm_pos.translation();
-
-    cv::Mat arm_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-
-    computeRodriguesVec(arm_pos, arm_rvec);
-
-    kalman_mu_arm1 = cv::Mat_<double>::zeros(L, 1);
-
-    kalman_mu_arm1.at<double>(0 , 0) = arm_trans[0];
-    kalman_mu_arm1.at<double>(1 , 0) = arm_trans[1];
-    kalman_mu_arm1.at<double>(2 , 0) = arm_trans[2];
-    kalman_mu_arm1.at<double>(3 , 0) = arm_rvec.at<double>(0,0);
-    kalman_mu_arm1.at<double>(4 , 0) = arm_rvec.at<double>(1,0);
-    kalman_mu_arm1.at<double>(5 , 0) = arm_rvec.at<double>(2,0);
-    kalman_mu_arm1.at<double>(6 , 0) = tmp[0][4];
-    kalman_mu_arm1.at<double>(7 , 0) = tmp[0][5];
-    kalman_mu_arm1.at<double>(8 , 0) = tmp[0][6];
-
-    zt_arm1  = cv::Mat_<double>::zeros(L, 1);
-    zt_arm1 = kalman_mu_arm1.clone();    //initialization for maeasurement
-
-    double dev_pos = ukfToolModel.randomNum(0.7, 0.2);  ///deviation for position
-    double dev_ori = ukfToolModel.randomNum(0.7, 0.5);  ///deviation for orientation
+    double dev_pos = ukfToolModel.randomNum(0.5, 0.2);  ///deviation for position
+    double dev_ori = ukfToolModel.randomNum(0.5, 0.2);  ///deviation for orientation
     double dev_ang = ukfToolModel.randomNum(0.2, 0); ///deviation for joint angles
 
     kalman_sigma_arm1 = (cv::Mat_<double>::eye(L, L));
@@ -452,19 +449,13 @@ void KalmanFilter::UKF_double_arm(){ //well, currently just one......
 	seg_right = segmentation(tool_rawImg_right);
 
 	ROS_INFO("--------------ARM 1 : --------------");
-	ROS_INFO_STREAM("BEFORE kalman_mu_arm1: " << kalman_mu_arm1);
+	//ROS_INFO_STREAM("BEFORE kalman_mu_arm1: " << kalman_mu_arm1);
 	update(kalman_mu_arm1, kalman_sigma_arm1, zt_arm1, toolImage_left_arm_1,
 		   toolImage_right_arm_1, Cam_left_arm_1, Cam_right_arm_1);
 
 	//ROS_INFO("--------------ARM 2 : --------------");
 	//update(sensor_2, kalman_mu_arm2, kalman_sigma_arm2, toolImage_left_arm_2,
 	//toolImage_right_arm_2, Cam_left_arm_2, Cam_right_arm_2);
-
-//	cv::imshow("Render arm 1 Left cam" ,toolImage_left_arm_1 );
-//	cv::imshow("Render arm 1 Right cam" ,toolImage_right_arm_1 );
-
-//	cv::imshow("Render arm 2 Left cam" ,toolImage_left_arm_2 );
-//	cv::imshow("Render arm 2 Right cam" ,toolImage_right_arm_2 );
 
 	cv::imshow("Real Left Cam", tool_rawImg_left);
 	cv::imshow("Real Right Cam", tool_rawImg_right);
@@ -517,14 +508,14 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
 	sigma_pts_bar.resize(2*L + 1);
 
 	for(int i = 0; i < 2 * L + 1; i++){
-		g(sigma_pts_bar[i], sigma_pts_last[i], sigma_pts_last[0] - zt); //no gaussian here,
+		g(sigma_pts_bar[i], sigma_pts_last[i], sigma_pts_last[0] - zt); // left everyone go to mu
 		//ROS_INFO_STREAM("sigma_pts_last[i]: " << sigma_pts_last[i]);
 	}
 
 	/*****Create the predicted mus and sigmas.*****/
 	cv::Mat mu_bar = cv::Mat_<double>::zeros(L, 1);
 	for(int i = 0; i < 2 * L + 1; i++){
-		mu_bar = mu_bar + w_m[i] * sigma_pts_bar[i]; //seems like every time is the corse guess
+		mu_bar = mu_bar + w_m[i] * sigma_pts_bar[i]; //seems like every time is the coarse guess
 
 	}
 	cv::Mat sigma_bar = cv::Mat_<double>::zeros(L, L);
@@ -532,32 +523,47 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
 		sigma_bar = sigma_bar + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((sigma_pts_bar[i] - mu_bar).t());
 	}
 
+//	double dev_pos = ukfToolModel.randomNum(0.06, 0.00);  ///deviation for position
+//	double dev_ori = ukfToolModel.randomNum(0.08, 0.00);  ///deviation for orientation
+//	double dev_ang = ukfToolModel.randomNum(0.001, 0); ///deviation for joint angles
+//
+//	for (int j = 0; j < 3; ++j) {
+//		//double dev_pos = ukfToolModel.randomNum(0.06, 0.00);
+//		sigma_bar.at<double>(j,j) = sigma_bar.at<double>(j,j) + dev_pos;//gaussian generator
+//	}
+//	for (int j = 3; j < 6; ++j) {
+//		//double dev_ori = ukfToolModel.randomNum(0.08, 0.00);
+//		sigma_bar.at<double>(j,j) = sigma_bar.at<double>(j,j) + dev_ori;//gaussian generator
+//	}
+//	for (int j = 6; j < 9; ++j) {
+//		//double dev_ang = ukfToolModel.randomNum(0.001, 0);
+//		sigma_bar.at<double>(j,j) = sigma_bar.at<double>(j,j) + dev_ang;//gaussian generator
+//	}
+
 	/*****Render each sigma point and compute its matching score.*****/
 
 	std::vector<double> mscores;
 	mscores.resize(2*L + 1);
 
 	computeSigmaMeasures(mscores, zt, sigma_pts_bar, left_image, right_image, cam_left, cam_right);
-
 //	for(int i = 0; i < mscores.size(); i++){
 //		ROS_INFO("MSCORES %f", mscores[i]);
 ////		ROS_WARN_STREAM("sigma_pts_bar " << sigma_pts_bar[i]);
 //	}
 
-	/*****Correction Step: Move the sigma points through the measurement function.*****/
+	/***** Correction Step: Move the sigma points through the measurement function *****/
 	std::vector<cv::Mat_<double> > Z_bar;
 	Z_bar.resize(2 * L + 1);
 	for(int i = 0; i < 2 * L + 1; i++){
 		h(Z_bar[i], sigma_pts_bar[i]);
 	}
 
-	/*****Calculate derived variance statistics.*****/
+	/***** Calculate derived variance statistics *****/
 	cv::Mat z_caret = cv::Mat_<double>::zeros(L, 1);
 	for(int i = 0; i < 2 * L + 1; i++){
 		z_caret = z_caret + w_m[i] * mscores[i] * Z_bar[i];
 	}
 
-	//ROS_INFO_STREAM("correction? " << zt - z_caret);
 	cv::Mat S = cv::Mat_<double>::zeros(L, L);
 	for(int i = 0; i < 2 * L + 1; i++){
 		S = S + mscores[i] * w_c[i] * (Z_bar[i] - z_caret) * ((Z_bar[i] - z_caret).t());
@@ -569,8 +575,9 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
 	}
 
 	cv::Mat K = sigma_xz * S.inv();
-	/*****Update our mu and sigma.*****/
-	//ROS_INFO_STREAM("mu_bar" << mu_bar);
+	/***** Update our mu and sigma *****/
+//	ROS_INFO_STREAM("mu_bar" << mu_bar);
+//	ROS_INFO_STREAM("zt" << zt);
 	kalman_mu = mu_bar + K * (zt - z_caret);
 	kalman_sigma = sigma_bar - K * S * K.t();
 
@@ -600,14 +607,27 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
     ukfToolModel.renderTool(seg_test_r, arm_1, cam_right, P_right);
 	cv::imshow("seg kalman_mu left: " , seg_test_l );
     cv::imshow("seg kalman_mu right: " , seg_test_r );
-	//cv::waitKey();
+
+	double dev_pos = ukfToolModel.randomNum(0.03, 0.00);  ///deviation for position
+	double dev_ori = ukfToolModel.randomNum(0.03, 0.00);  ///deviation for orientation
+	double dev_ang = ukfToolModel.randomNum(0.001, 0); ///deviation for joint angles
+
+	for (int j = 0; j < 3; ++j) {
+		kalman_sigma.at<double>(j,j) = kalman_sigma.at<double>(j,j) + dev_pos;//gaussian generator
+	}
+	for (int j = 3; j < 6; ++j) {
+		kalman_sigma.at<double>(j,j) = kalman_sigma.at<double>(j,j) + dev_ori;//gaussian generator
+	}
+	for (int j = 6; j < 9; ++j) {
+		kalman_sigma.at<double>(j,j) = kalman_sigma.at<double>(j,j) + dev_ang;//gaussian generator
+	}
+
 
 };
 
 void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & delta_zt){
 
 	 sigma_point_out = sigma_point_in - delta_zt;
-
 };
 
 /***this function should compute the matching score for all of the sigma points****/
@@ -629,7 +649,7 @@ void KalmanFilter::computeSigmaMeasures(std::vector<double> & measureWeights, cv
 	if(total != 0.0){
 		//normalization of measurement weights
 		for (int j = 0; j < sigma_point_in.size(); j++) {
-			measureWeights[j] = (measureWeights[j] / total);// * (2*L + 1); //NORMALIZE here as the dimension of the size of sigma points, because is too small
+			measureWeights[j] = (measureWeights[j] / total);//(2*L + 1); //NORMALIZE here as the dimension of the size of sigma points, because is too small
 		}
 	}else{
 		ROS_ERROR("Cannot find good measurement scores");

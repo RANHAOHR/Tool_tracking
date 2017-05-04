@@ -41,7 +41,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-        node_handle(*nodehandle), numParticles(200), Downsample_rate(0.02){
+        node_handle(*nodehandle), numParticles(150), Downsample_rate(0.02){
 
 	/****need to subscribe this***/
     tf::StampedTransform arm_1__cam_l_st;
@@ -129,7 +129,7 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
 	P_right.at<double>(1, 2) = 240.5; //verticle
 	P_right.at<double>(2, 2) = 1;
 
-	P_right.at<double>(0, 3) = 1.732953897952732;
+	P_right.at<double>(0, 3) = 1.03;
 	P_right.at<double>(1, 3) = 0;
 	P_right.at<double>(2, 3) = 0;
 
