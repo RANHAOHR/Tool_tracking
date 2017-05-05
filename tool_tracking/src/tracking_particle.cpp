@@ -99,44 +99,8 @@ int main(int argc, char **argv) {
 
     ROS_INFO("---- done subscribe -----");
 
-    /*** Timer set up ***/
-    ros::Rate loop_rate(50);
-
     ros::Duration(2).sleep();
 	/****TODO: Temp Projection matrices****/
-//	cv::Mat P_l(3, 4, CV_64FC1);
-//    cv::Mat P_r(3, 4, CV_64FC1);
-//	P_l.at<double>(0, 0) = 893.7852590197848;
-//	P_l.at<double>(1, 0) = 0;
-//	P_l.at<double>(2, 0) = 0;
-//
-//	P_l.at<double>(0, 1) = 0;
-//	P_l.at<double>(1, 1) = 893.7852590197848;
-//	P_l.at<double>(2, 1) = 0;
-//
-//	P_l.at<double>(0, 2) = 288.4443244934082; // horiz
-//	P_l.at<double>(1, 2) = 259.7727756500244; //verticle
-//	P_l.at<double>(2, 2) = 1;
-//
-//	P_l.at<double>(0, 3) = 0;
-//	P_l.at<double>(1, 3) = 0;
-//	P_l.at<double>(2, 3) = 0;
-//
-//	P_r.at<double>(0, 0) = 893.7852590197848;
-//	P_r.at<double>(1, 0) = 0;
-//	P_r.at<double>(2, 0) = 0;
-//
-//	P_r.at<double>(0, 1) = 0;
-//	P_r.at<double>(1, 1) = 893.7852590197848;
-//	P_r.at<double>(2, 1) = 0;
-//
-//	P_r.at<double>(0, 2) = 288.4443244934082; // horiz
-//	P_r.at<double>(1, 2) = 259.7727756500244; //verticle
-//	P_r.at<double>(2, 2) = 1;
-//
-//	P_r.at<double>(0, 3) = 4.732953897952732;
-//	P_r.at<double>(1, 3) = 0;
-//	P_r.at<double>(2, 3) = 0;
 
 	while (nh.ok()) {
 		ros::spinOnce();
@@ -157,7 +121,6 @@ int main(int argc, char **argv) {
 			freshVelocity = false;
 		}
 
-		loop_rate.sleep();  //or cv::waitKey(10);
 	}
 
 }
