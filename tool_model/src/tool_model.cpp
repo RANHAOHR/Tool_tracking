@@ -52,8 +52,8 @@ boost::mt19937 rng((const uint32_t &) time(0));
 ToolModel::ToolModel() {
 
     offset_body = 0.46;//0.4535;  //0.3429,
-    offset_ellipse = offset_body + 0.003;// + 0.010;//0.45352716;
-    offset_gripper = offset_ellipse - 0.003;// + 0.009;// + 0.003; //0.4253,0.46118
+    offset_ellipse = offset_body + 0.003;// + 0.010;
+    offset_gripper = offset_ellipse - 0.003;// + 0.009;// + 0.003;
 
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
