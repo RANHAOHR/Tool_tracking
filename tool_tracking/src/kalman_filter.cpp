@@ -780,6 +780,7 @@ void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat ro
 
 void KalmanFilter::getSquareRootCov(cv::Mat &sigma_cov, cv::Mat &square_root){
 
+	/** get square root of the covariance **/
 //	cv::Mat s = cv::Mat_<double>::zeros(L, 1);  //allocate space for SVD
 //	cv::Mat vt = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
 //	cv::Mat u = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
@@ -790,6 +791,7 @@ void KalmanFilter::getSquareRootCov(cv::Mat &sigma_cov, cv::Mat &square_root){
 //		square_root.at<double>(i,i) = s.at<double>(i,0);
 //	}
 
+	/** cholesky decomposition **/
 	cv::Mat chol_mat(L,L,CV_64FC1);
 	Cholesky( sigma_cov, chol_mat );
 
