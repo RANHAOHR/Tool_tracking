@@ -97,8 +97,8 @@ private:
 
     int L;  ///DOF for both arms.
 
-    const static double alpha = 0.005;
-    const static double k = 0.1; //TODO: how much?
+    const static double alpha = 0.0005;
+    const static double k = 0.0; //TODO: how much?
     const static double beta = 2;
 
 	/************using variables*************/

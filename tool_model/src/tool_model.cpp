@@ -693,39 +693,36 @@ ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder,
     return newTool;
 };
 
-ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, double step){
+ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose){
 
     toolModel gaussianTool;  //new sample
 
-    //gaussianTool = max_pose;
-    //create normally distributed random samples
-    step = 0.0015;  ////currently make it stable
-    double dev = randomNumber(step, 0);
-    gaussianTool.tvec_cyl(0) = max_pose.tvec_cyl(0)+ dev;
+    double dev_pos = randomNumber(0.0008, 0);
+    gaussianTool.tvec_cyl(0) = max_pose.tvec_cyl(0)+ dev_pos;
 
-    dev = randomNumber(step, 0);
-    gaussianTool.tvec_cyl(1) = max_pose.tvec_cyl(1)+ dev;
+    dev_pos = randomNumber(0.0008, 0);
+    gaussianTool.tvec_cyl(1) = max_pose.tvec_cyl(1)+ dev_pos;
 
-    dev = randomNumber(step, 0);
-    gaussianTool.tvec_cyl(2) = max_pose.tvec_cyl(2)+ dev;// + dev;
+    dev_pos = randomNumber(0.0008, 0);
+    gaussianTool.tvec_cyl(2) = max_pose.tvec_cyl(2)+ dev_pos;
 
-    dev = randomNumber(step, 0);
-    gaussianTool.rvec_cyl(0) = max_pose.rvec_cyl(0)+ dev;
+    double dev_ori = randomNumber(0.01, 0);
+    gaussianTool.rvec_cyl(0) = max_pose.rvec_cyl(0)+ dev_ori;
 
-    dev = randomNumber(step, 0);
-    gaussianTool.rvec_cyl(1) = max_pose.rvec_cyl(1)+ dev;
+    dev_ori = randomNumber(0.01, 0);
+    gaussianTool.rvec_cyl(1) = max_pose.rvec_cyl(1)+ dev_ori;
 
-    dev = randomNumber(step, 0);
-    gaussianTool.rvec_cyl(2) = max_pose.rvec_cyl(2)+ dev;
+    dev_ori = randomNumber(0.01, 0);
+    gaussianTool.rvec_cyl(2) = max_pose.rvec_cyl(2)+ dev_ori;
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    double theta_ = randomNumber(0.0001, 0);    //-90,90
-    double theta_grip_1 = randomNumber(0.0001, 0);
-    double theta_grip_2 = randomNumber(0.0001, 0);
+    double theta_ = randomNumber(0.001, 0);    //-90,90
+    double theta_grip_1 = randomNumber(0.001, 0);
+    double theta_grip_2 = randomNumber(0.001, 0);
 
     computeRandomPose(max_pose, gaussianTool, theta_, theta_grip_1, theta_grip_2);
-    //computeModelPose(gaussianTool, theta_, theta_grip_1, theta_grip_2);
+
     return gaussianTool;
 
 };
@@ -1141,25 +1138,14 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
     cv::distanceTransform(segImgGrey, distance_img, CV_DIST_L2, 3);
     cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
 
+//    cv::imshow("segImgGrey img", segImgGrey);
 //    cv::imshow("Normalized img", normDIST);
-//    //cv::imshow("distance_img", distance_img);
+//    cv::imshow("distance_img", distance_img);
 //    cv::waitKey();
 
-//    /***multiplication process**/
+    /***multiplication process**/
     cv::Mat resultImg; //initialize
-//ROS_INFO_STREAM("normDIST" <<  normDIST.)
-    cv::multiply(normDIST, BinaryImg, resultImg/*, 1.00/255*/);
-
-    float total = 0;
-    for (int l = 0; l < BinaryImg.rows; ++l) {
-        for (int i = 0; i < BinaryImg.cols; ++i) {
-
-            float tool_pixel = BinaryImg.at<float>(l,i);
-            if(tool_pixel > 0.5)
-                //ROS_INFO_STREAM("binary img pixel: " << tool_pixel);
-                total += tool_pixel;
-        }
-    }
+    cv::multiply(normDIST, BinaryImg, resultImg);
 
     for (int k = 0; k < resultImg.rows; ++k) {
         for (int i = 0; i < resultImg.cols; ++i) {

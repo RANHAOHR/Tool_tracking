@@ -41,7 +41,9 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-        node_handle(*nodehandle), numParticles(150), Downsample_rate(0.02){
+        node_handle(*nodehandle), numParticles(150){
+
+	initializeParticles();
 
 	/****need to subscribe this***/
     tf::StampedTransform arm_1__cam_l_st;
@@ -82,7 +84,8 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
     ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
 
-	initializeParticles();
+	projectionMat_subscriber_r = node_handle.subscribe("/davinci_endo/right/camera_info", 1, &ParticleFilter::projectionRightCB, this);
+	projectionMat_subscriber_l = node_handle.subscribe("/davinci_endo/left/camera_info", 1, &ParticleFilter::projectionLeftCB, this);
 
 	// initialization, just basic black image ??? how to get the size of the image
 	toolImage_left_arm_1 = cv::Mat::zeros(480, 640, CV_8UC3);
@@ -97,42 +100,10 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
 	raw_image_left = cv::Mat::zeros(480, 640, CV_8UC3);
 	raw_image_right = cv::Mat::zeros(480, 640, CV_8UC3);
 
-
 	P_left = cv::Mat::zeros(3,4,CV_64FC1);
 	P_right = cv::Mat::zeros(3,4,CV_64FC1);
 
-	P_left.at<double>(0, 0) = 1034.473;
-	P_left.at<double>(1, 0) = 0;
-	P_left.at<double>(2, 0) = 0;
-
-	P_left.at<double>(0, 1) = 0;
-	P_left.at<double>(1, 1) = 1034.473;
-	P_left.at<double>(2, 1) = 0;
-
-	P_left.at<double>(0, 2) = 320.5; // horiz
-	P_left.at<double>(1, 2) = 240.5; //verticle
-	P_left.at<double>(2, 2) = 1;
-
-	P_left.at<double>(0, 3) = 0;
-	P_left.at<double>(1, 3) = 0;
-	P_left.at<double>(2, 3) = 0;
-
-	P_right.at<double>(0, 0) = 1034.473;
-	P_right.at<double>(1, 0) = 0;
-	P_right.at<double>(2, 0) = 0;
-
-	P_right.at<double>(0, 1) = 0;
-	P_right.at<double>(1, 1) = 1034.473;
-	P_right.at<double>(2, 1) = 0;
-
-	P_right.at<double>(0, 2) = 320.5; // horiz
-	P_right.at<double>(1, 2) = 240.5; //verticle
-	P_right.at<double>(2, 2) = 1;
-
-	P_right.at<double>(0, 3) = 1.03;
-	P_right.at<double>(1, 3) = 0;
-	P_right.at<double>(2, 3) = 0;
-
+	freshCameraInfo = false;
 };
 
 ParticleFilter::~ParticleFilter() {
@@ -160,7 +131,7 @@ void ParticleFilter::initializeParticles() {
     std::vector<std::vector<double> > tmp;
     tmp.resize(2);
     if(davinci_interface::get_fresh_robot_pos(tmp)){
-        sensor_1 = tmp[0];
+		sensor_1 = tmp[0];
         sensor_2 = tmp[1];
     }
 
@@ -174,10 +145,6 @@ void ParticleFilter::initializeParticles() {
 	Eigen::Affine3d a1_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0], sensor_1[0] + DH_q_offset0 );
 	Eigen::Affine3d a1_pos_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1], sensor_1[1] + DH_q_offset1 );
 	Eigen::Affine3d a1_pos_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_1[2] + DH_q_offset2, DH_alpha_params[2], 0.0 );
-	Eigen::Affine3d a1_pos_4 = kinematics.computeAffineOfDH(DH_a_params[3], DH_d4, DH_alpha_params[3], sensor_1[3] + DH_q_offset3 );
-	Eigen::Affine3d a1_pos_5 = kinematics.computeAffineOfDH(DH_a_params[4], DH_d5, DH_alpha_params[4], sensor_1[4] + DH_q_offset4 );
-	Eigen::Affine3d a1_pos_6 = kinematics.computeAffineOfDH(DH_a_params[5], DH_d6, DH_alpha_params[5], sensor_1[5] + DH_q_offset5 );
-	Eigen::Affine3d a1_pos_7 = kinematics.computeAffineOfDH(DH_a_params[6], DH_d7, DH_alpha_params[6], sensor_1[6] + DH_q_offset6 );
 
 	Eigen::Affine3d a1_pos = kinematics.affine_frame0_wrt_base_ * a1_pos_1 * a1_pos_2 * a1_pos_3;// * a1_4 *a1_5 * a1_6 * a1_7 * kinematics.affine_gripper_wrt_frame6_ ;
 	Eigen::Vector3d a1_trans = a1_pos.translation();
@@ -186,11 +153,10 @@ void ParticleFilter::initializeParticles() {
 
 	computeRodriguesVec(a1_pos, a1_rvec);
 
-
-    Eigen::Affine3d a2_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_2.data()));
-    Eigen::Vector3d a2_trans = a2_pos.translation();
-    cv::Mat a2_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-    computeRodriguesVec(a2_pos, a2_rvec);
+//    Eigen::Affine3d a2_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_2.data()));
+//    Eigen::Vector3d a2_trans = a2_pos.translation();
+//    cv::Mat a2_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+//    computeRodriguesVec(a2_pos, a2_rvec);
 
 	/*** first arm particles initialization ***/
 	initial.tvec_cyl(0) = a1_trans[0];  //left and right (image frame)
@@ -207,25 +173,65 @@ void ParticleFilter::initializeParticles() {
 	for (int i = 0; i < numParticles; i++) {
 		particles_arm_1[i] = newToolModel.setRandomConfig(initial, theta_cylinder, theta_oval, theta_open );
 	}
-
-	/*** second arm particles initialization ***/
-	initial.tvec_grip1(0) = a2_trans[0];  //left and right (image frame)
-	initial.tvec_grip1(1) = a2_trans[1];  //up and down
-	initial.tvec_grip1(2) = a2_trans[2];
-	initial.rvec_grip1(0) = a2_rvec.at<double>(0,0);
-	initial.rvec_grip1(1) = a2_rvec.at<double>(1,0);
-	initial.rvec_grip1(2) = a2_rvec.at<double>(2,0);
-
-	theta_cylinder = tmp[1][4]; //initial guess
-	theta_oval = tmp[1][5]; //initial guess
-	theta_open = tmp[1][6]; //initial guess
-
-	for (int i = 0; i < numParticles; i++) {
-		particles_arm_2[i] = newToolModel.setRandomConfig(initial, theta_cylinder, theta_oval, theta_open );
-	}
+//	/*** second arm particles initialization ***/
+//	initial.tvec_grip1(0) = a2_trans[0];  //left and right (image frame)
+//	initial.tvec_grip1(1) = a2_trans[1];  //up and down
+//	initial.tvec_grip1(2) = a2_trans[2];
+//	initial.rvec_grip1(0) = a2_rvec.at<double>(0,0);
+//	initial.rvec_grip1(1) = a2_rvec.at<double>(1,0);
+//	initial.rvec_grip1(2) = a2_rvec.at<double>(2,0);
+//
+//	theta_cylinder = tmp[1][4]; //initial guess
+//	theta_oval = tmp[1][5]; //initial guess
+//	theta_open = tmp[1][6]; //initial guess
+//
+//	for (int i = 0; i < numParticles; i++) {
+//		particles_arm_2[i] = newToolModel.setRandomConfig(initial, theta_cylinder, theta_oval, theta_open );
+//	}
 
 };
 
+void ParticleFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight){
+
+	P_right.at<double>(0,0) = projectionRight->P[0];
+	P_right.at<double>(0,1) = projectionRight->P[1];
+	P_right.at<double>(0,2) = projectionRight->P[2];
+	P_right.at<double>(0,3) = projectionRight->P[3];
+
+	P_right.at<double>(1,0) = projectionRight->P[4];
+	P_right.at<double>(1,1) = projectionRight->P[5];
+	P_right.at<double>(1,2) = projectionRight->P[6];
+	P_right.at<double>(1,3) = projectionRight->P[7];
+
+	P_right.at<double>(2,0) = projectionRight->P[8];
+	P_right.at<double>(2,1) = projectionRight->P[9];
+	P_right.at<double>(2,2) = projectionRight->P[10];
+	P_right.at<double>(2,3) = projectionRight->P[11];
+
+	//ROS_INFO_STREAM("right: " << P_right);
+	freshCameraInfo = true;
+};
+
+void ParticleFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft){
+
+	P_left.at<double>(0,0) = projectionLeft->P[0];
+	P_left.at<double>(0,1) = projectionLeft->P[1];
+	P_left.at<double>(0,2) = projectionLeft->P[2];
+	P_left.at<double>(0,3) = projectionLeft->P[3];
+
+	P_left.at<double>(1,0) = projectionLeft->P[4];
+	P_left.at<double>(1,1) = projectionLeft->P[5];
+	P_left.at<double>(1,2) = projectionLeft->P[6];
+	P_left.at<double>(1,3) = projectionLeft->P[7];
+
+	P_left.at<double>(2,0) = projectionLeft->P[8];
+	P_left.at<double>(2,1) = projectionLeft->P[9];
+	P_left.at<double>(2,2) = projectionLeft->P[10];
+	P_left.at<double>(2,3) = projectionLeft->P[11];
+
+	//ROS_INFO_STREAM("left: " << P_left);
+	freshCameraInfo = true;
+};
 
 std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right) {
 
@@ -255,8 +261,6 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 
 		matchingScores_arm_1[i] = measureFuncSameCam(toolImage_left_arm_1,toolImage_right_arm_1,particles_arm_1[i],segmented_left, segmented_right,Cam_left_arm_1,Cam_right_arm_1);
 
-		//matchingScores_arm_2[i] = measureFuncSameCam(toolImage_left_arm_2,toolImage_right_arm_2,particles_arm_2[i],segmented_left, segmented_right,Cam_left_arm_2,Cam_right_arm_2);
-
 		newToolModel.renderTool(toolImage_left_temp, particles_arm_1[i], Cam_left_arm_1, P_left);
 		newToolModel.renderTool(toolImage_right_temp, particles_arm_1[i], Cam_right_arm_1, P_right);
 
@@ -266,12 +270,6 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 			maxScoreIdx_1 = i;
 		}
 		totalScore_1 += matchingScores_arm_1[i];
-
-//			if (matchingScores_arm_2[i] >= maxScore_2) {
-//				maxScore_2 = matchingScores_arm_2[i];
-//				maxScoreIdx_2 = i;
-//			}
-//			totalScore_2 += matchingScores_arm_2[i];
 
 	}
 
@@ -316,16 +314,12 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedParticles,
 								   const ToolModel::toolModel &bestParticle) {
 
-	double sampleStep = 0.00001;
-
-	Downsample_rate -= sampleStep;
-
 	updatedParticles.clear();
     updatedParticles.resize(numParticles);
     ///every loop should generate different particle from one base particle k
 	updatedParticles[0] = bestParticle;
     for (int i = 1; i < numParticles; ++i) {
-        updatedParticles[i] = newToolModel.gaussianSampling(bestParticle, Downsample_rate);
+        updatedParticles[i] = newToolModel.gaussianSampling(bestParticle);
 
     }
 

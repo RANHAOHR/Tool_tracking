@@ -78,7 +78,6 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	//Pull in our first round of sensor data.
 	davinci_interface::init_joint_feedback(nh_);
 	std::vector<std::vector<double> > tmp;
-
 	tmp.resize(2);
 	if(davinci_interface::get_fresh_robot_pos(tmp)){
 		sensor_1 = tmp[0];
@@ -162,38 +161,6 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	P_left = cv::Mat::zeros(3,4,CV_64FC1);
 	P_right = cv::Mat::zeros(3,4,CV_64FC1);
 
-    P_left.at<double>(0, 0) = 1034.473;
-    P_left.at<double>(1, 0) = 0;
-    P_left.at<double>(2, 0) = 0;
-
-    P_left.at<double>(0, 1) = 0;
-    P_left.at<double>(1, 1) = 1034.473;
-    P_left.at<double>(2, 1) = 0;
-
-    P_left.at<double>(0, 2) = 320.5; // horiz
-    P_left.at<double>(1, 2) = 240.5; //verticle
-    P_left.at<double>(2, 2) = 1;
-
-    P_left.at<double>(0, 3) = 0;
-    P_left.at<double>(1, 3) = 0;
-    P_left.at<double>(2, 3) = 0;
-
-    P_right.at<double>(0, 0) = 1034.473;
-    P_right.at<double>(1, 0) = 0;
-    P_right.at<double>(2, 0) = 0;
-
-    P_right.at<double>(0, 1) = 0;
-    P_right.at<double>(1, 1) = 1034.473;
-    P_right.at<double>(2, 1) = 0;
-
-    P_right.at<double>(0, 2) = 320.5; // horiz
-    P_right.at<double>(1, 2) = 240.5; //verticle
-    P_right.at<double>(2, 2) = 1;
-
-    P_right.at<double>(0, 3) = 5.9999;
-    P_right.at<double>(1, 3) = 0;
-    P_right.at<double>(2, 3) = 0;
-
 	//Subscribe to the necessary transforms.
 	tf::StampedTransform arm_1__cam_l_st;
 	tf::StampedTransform arm_2__cam_l_st;
@@ -228,10 +195,20 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	convertEigenToMat(arm_2__cam_l, Cam_left_arm_2);
 	convertEigenToMat(arm_2__cam_r, Cam_right_arm_2);
 
+//	Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.9999999999863094, -3.726808388799082e-06, 3.673205103273929e-06, -0.20049000899903854,
+//			-3.726781403852194e-06, 0.9999999999660707, 7.346410206619205e-06, -0.021046118487469873,
+//			-3.673232481812485e-06, 7.346396517286155e-06, -0.999999999966269, 0.05029912523761887,
+//			0, 0, 0, 1);
+//
+//	Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.9999999999863094, -3.726808388799082e-06, 3.673205103273929e-06, -0.1949000899905203,
+//			-3.726781403852194e-06, 0.9999999999660707, 7.346410206619205e-06, -0.021046081755553767,
+//			-3.673232481812485e-06, 7.346396517286155e-06, -0.999999999966269, 0.05029916196993972,
+//			0, 0, 0, 1);
+
 	ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
 	ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
-	ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
-	ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
+//	ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
+//	ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
 
 	ros::spinOnce();
 };
@@ -388,7 +365,6 @@ double KalmanFilter::measureFuncSameCam(cv::Mat & toolImage_cam, ToolModel::tool
 void KalmanFilter::getCourseEstimation(){
 
     std::vector<std::vector<double> > tmp;
-
     tmp.resize(2);
     if(davinci_interface::get_fresh_robot_pos(tmp)){
         sensor_1 = tmp[0];
@@ -437,8 +413,8 @@ void KalmanFilter::getCourseEstimation(){
 	zt_arm1.at<double>(8 , 0) = tmp[0][6];
 
 
-    double dev_pos = ukfToolModel.randomNum(0.3, 0.2);  ///deviation for position
-    double dev_ori = ukfToolModel.randomNum(0.3, 0.2);  ///deviation for orientation
+    double dev_pos = ukfToolModel.randomNum(0.003, 0.0002);  ///deviation for position
+    double dev_ori = ukfToolModel.randomNum(0.003, 0.0002);  ///deviation for orientation
 
 
     kalman_sigma_arm1 = (cv::Mat_<double>::eye(L, L));
@@ -449,10 +425,10 @@ void KalmanFilter::getCourseEstimation(){
         kalman_sigma_arm1.at<double>(j,j) = dev_ori; //gaussian generator
     }
 
-	double dev_ang = ukfToolModel.randomNum(0.3, 0); ///deviation for joint angles
+	double dev_ang = ukfToolModel.randomNum(0.0003, 0); ///deviation for joint angles
 	kalman_sigma_arm1.at<double>(6,6) = dev_ang; //gaussian generator
 
-	dev_ang = ukfToolModel.randomNum(0.2, 0); ///deviation for joint angles
+	dev_ang = ukfToolModel.randomNum(0.002, 0); ///deviation for joint angles
 	kalman_sigma_arm1.at<double>(7,7) = dev_ang; //gaussian generator
 	kalman_sigma_arm1.at<double>(8,8) = dev_ang; //gaussian generator
 
@@ -475,7 +451,7 @@ void KalmanFilter::UKF_double_arm(){ //well, currently just one......
 	cv::imshow("Real Left Cam", tool_rawImg_left);
 	cv::imshow("Real Right Cam", tool_rawImg_right);
 
-	cv::waitKey(10);
+	cv::waitKey(15);
 };
 
 void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &zt,
@@ -538,25 +514,24 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
 		sigma_bar = sigma_bar + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((sigma_pts_bar[i] - mu_bar).t());
 	}
 
-//	double dev_pos = ukfToolModel.randomNum(0.06, 0.00);  ///deviation for position
-//	double dev_ori = ukfToolModel.randomNum(0.08, 0.00);  ///deviation for orientation
-//	double dev_ang = ukfToolModel.randomNum(0.001, 0); ///deviation for joint angles
-//
-//	for (int j = 0; j < 3; ++j) {
-//		//double dev_pos = ukfToolModel.randomNum(0.06, 0.00);
-//		sigma_bar.at<double>(j,j) = sigma_bar.at<double>(j,j) + dev_pos;//gaussian generator
-//	}
-//	for (int j = 3; j < 6; ++j) {
-//		//double dev_ori = ukfToolModel.randomNum(0.08, 0.00);
-//		sigma_bar.at<double>(j,j) = sigma_bar.at<double>(j,j) + dev_ori;//gaussian generator
-//	}
-//	for (int j = 6; j < 9; ++j) {
-//		//double dev_ang = ukfToolModel.randomNum(0.001, 0);
-//		sigma_bar.at<double>(j,j) = sigma_bar.at<double>(j,j) + dev_ang;//gaussian generator
-//	}
+	double dev_pos = ukfToolModel.randomNum(0.006, 0.00);  ///deviation for position
+	double dev_ori = ukfToolModel.randomNum(0.008, 0.00);  ///deviation for orientation
+	double dev_ang = ukfToolModel.randomNum(0.0001, 0); ///deviation for joint angles
+
+	for (int j = 0; j < 3; ++j) {
+		//double dev_pos = ukfToolModel.randomNum(0.06, 0.00);
+		sigma_bar.at<double>(j,j) = sigma_bar.at<double>(j,j) + dev_pos;//gaussian generator
+	}
+	for (int j = 3; j < 6; ++j) {
+		//double dev_ori = ukfToolModel.randomNum(0.08, 0.00);
+		sigma_bar.at<double>(j,j) = sigma_bar.at<double>(j,j) + dev_ori;//gaussian generator
+	}
+	for (int j = 6; j < 9; ++j) {
+		//double dev_ang = ukfToolModel.randomNum(0.001, 0);
+		sigma_bar.at<double>(j,j) = sigma_bar.at<double>(j,j) + dev_ang;//gaussian generator
+	}
 
 	/*****Render each sigma point and compute its matching score.*****/
-
 	std::vector<double> mscores;
 	mscores.resize(2*L + 1);
 
@@ -583,6 +558,23 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
 	for(int i = 0; i < 2 * L + 1; i++){
 		S = S + mscores[i] * w_c[i] * (Z_bar[i] - z_caret) * ((Z_bar[i] - z_caret).t());
 	}
+
+//	dev_pos = ukfToolModel.randomNum(0.006, 0.00);  ///deviation for position
+//	dev_ori = ukfToolModel.randomNum(0.004, 0.00);  ///deviation for orientation
+//
+//	for (int j = 0; j < 3; ++j) {
+//		S.at<double>(j,j) = S.at<double>(j,j) + dev_pos;//gaussian generator
+//	}
+//	for (int j = 3; j < 6; ++j) {
+//		S.at<double>(j,j) = S.at<double>(j,j) + dev_ori;//gaussian generator
+//	}
+//
+//	dev_ang = ukfToolModel.randomNum(0.0002, 0.0); ///deviation for joint angles
+//	S.at<double>(6,6) = S.at<double>(6,6) + dev_ang; //gaussian generator
+//
+//	dev_ang = ukfToolModel.randomNum(0.00002, 0); ///deviation for joint angles
+//	S.at<double>(7,7) = S.at<double>(7,7) + dev_ang; //gaussian generator
+//	S.at<double>(8,8) = S.at<double>(8,8) + dev_ang; //gaussian generator
 
 	cv::Mat sigma_xz = cv::Mat_<double>::zeros(L, L);
 	for(int i = 0; i < 2 * L + 1; i++){
@@ -622,23 +614,6 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
     ukfToolModel.renderTool(seg_test_r, arm_1, cam_right, P_right);
 	cv::imshow("seg kalman_mu left: " , seg_test_l );
     cv::imshow("seg kalman_mu right: " , seg_test_r );
-
-	double dev_pos = ukfToolModel.randomNum(0.06, 0.00);  ///deviation for position
-	double dev_ori = ukfToolModel.randomNum(0.04, 0.00);  ///deviation for orientation
-
-	for (int j = 0; j < 3; ++j) {
-		kalman_sigma.at<double>(j,j) = kalman_sigma.at<double>(j,j) + dev_pos;//gaussian generator
-	}
-	for (int j = 3; j < 6; ++j) {
-		kalman_sigma.at<double>(j,j) = kalman_sigma.at<double>(j,j) + dev_ori;//gaussian generator
-	}
-
-	double dev_ang = ukfToolModel.randomNum(0.02, 0.0); ///deviation for joint angles
-	kalman_sigma.at<double>(6,6) = kalman_sigma.at<double>(6,6) + dev_ang; //gaussian generator
-
-	dev_ang = ukfToolModel.randomNum(0.02, 0); ///deviation for joint angles
-	kalman_sigma.at<double>(7,7) = kalman_sigma.at<double>(7,7) + dev_ang; //gaussian generator
-	kalman_sigma.at<double>(8,8) = kalman_sigma.at<double>(8,8) + dev_ang; //gaussian generator
 
 };
 
@@ -805,15 +780,21 @@ void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat ro
 
 void KalmanFilter::getSquareRootCov(cv::Mat &sigma_cov, cv::Mat &square_root){
 
-	cv::Mat s = cv::Mat_<double>::zeros(L, 1);  //allocate space for SVD
-	cv::Mat vt = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
-	cv::Mat u = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
+//	cv::Mat s = cv::Mat_<double>::zeros(L, 1);  //allocate space for SVD
+//	cv::Mat vt = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
+//	cv::Mat u = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
+//
+//	cv::SVD::compute(sigma_cov, s, u, vt);//The actual square root gets saved into s
+//
+//	for (int i = 0; i < L; ++i) {
+//		square_root.at<double>(i,i) = s.at<double>(i,0);
+//	}
 
-	cv::SVD::compute(sigma_cov, s, u, vt);//The actual square root gets saved into s
+	cv::Mat chol_mat(L,L,CV_64FC1);
+	Cholesky( sigma_cov, chol_mat );
 
-	for (int i = 0; i < L; ++i) {
-		square_root.at<double>(i,i) = s.at<double>(i,0);
-	}
+	square_root = chol_mat.clone();
+
 };
 
 cv::Mat KalmanFilter::segmentation(cv::Mat &InputImg) {

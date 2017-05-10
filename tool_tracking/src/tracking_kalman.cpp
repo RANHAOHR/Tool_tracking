@@ -75,13 +75,13 @@ int main(int argc, char **argv) {
 			tracking_iteration += 1;
 		}
 
-		//get ready for dynamic tracking:temp solution or can use client goal
-		if(tracking_iteration == 11){  //takes 5 iterations to converge
-			ROS_INFO("INSIDE dynamic ");
-			UKF.getCourseEstimation();
-			tracking_iteration = 0;
-            //cv::waitKey();
-		}
+//		//get ready for dynamic tracking:temp solution or can use client goal
+//		if(tracking_iteration == 11){  //takes 5 iterations to converge
+//			ROS_INFO("INSIDE dynamic ");
+//			UKF.getCourseEstimation();
+//			tracking_iteration = 0;
+//            //cv::waitKey();
+//		}
 
 	}
 }

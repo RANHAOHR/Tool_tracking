@@ -80,10 +80,7 @@ private:
 	///ros::Timer timer;
 
 	ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
-
 	ToolModel::toolModel initial; //initial configuration
-
-	double Downsample_rate;
 
 	unsigned int numParticles; //total number of particles
 
@@ -120,6 +117,12 @@ private:
     std::vector<double> sensor_1;
     std::vector<double> sensor_2;
 
+	void projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight);
+	void projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft);
+
+	ros::Subscriber projectionMat_subscriber_r;
+	ros::Subscriber projectionMat_subscriber_l;
+	bool freshCameraInfo;
 
 public:
 
