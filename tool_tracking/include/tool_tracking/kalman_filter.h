@@ -97,8 +97,8 @@ private:
 
     int L;  ///DOF for both arms.
 
-    const static double alpha = 0.005;
-    const static double k = 0.1; //TODO: how much?
+    const static double alpha = 0.0005;
+    const static double k = 0.0; //TODO: how much?
     const static double beta = 2;
 
 	/************using variables*************/
@@ -133,7 +133,10 @@ private:
 						  cv::Mat &cam_left, cv::Mat &cam_right);
 	
 	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & delta_zt);
-	void h(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
+	void h(cv::Mat & sigma_point_out, const cv::Mat_<double> & sigma_point_in,
+			cv::Mat &left_image,cv::Mat &right_image,
+			cv::Mat &cam_left, cv::Mat &cam_right);
+
     void computeSigmaMeasures(std::vector<double> & measureWeights, cv::Mat & zt, const std::vector<cv::Mat_<double> > & sigma_point_in,
 							  cv::Mat &left_image,cv::Mat &right_image,
 							  cv::Mat &cam_left, cv::Mat &cam_right);
@@ -179,7 +182,7 @@ public:
 				cv::Mat &left_image,cv::Mat &right_image,
 				cv::Mat &cam_left, cv::Mat &cam_right);
 
-    void convertToolModel(const cv::Mat & trans, ToolModel::toolModel &toolModel, double ja1, double ja2, double ja3);
+    void convertToolModel(const cv::Mat & trans, ToolModel::toolModel &toolModel);
     /*
      * Unscented Kalman filter update
      */
@@ -194,17 +197,14 @@ public:
     void getCourseEstimation();  ///for dynamic tracking
     double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, cv::Mat &Cam_left, cv::Mat &Cam_right, cv::Mat & rawImage_left,
 					   cv::Mat & rawImage_right);
-	double measureFuncSameCam(cv::Mat & toolImage_cam, ToolModel::toolModel &toolPose_left, ToolModel::toolModel &toolPose_right,
-											const cv::Mat &segmented_cam, const cv::Mat & Projection_mat, cv::Mat &raw_img, cv::Mat &Cam_matrix_tool_left, cv::Mat &Cam_matrix_tool_right);
 
-	double tempmeasureFunc(const cv::Mat &stat,
-										 cv::Mat & toolImage_left,
-										 cv::Mat & toolImage_right,
-										 cv::Mat &Cam_left,
-										 cv::Mat &Cam_right);
+	void getMeasurementModel(const cv::Mat & coarse_guess_vector,
+							 cv::Mat &Cam_left,
+							 cv::Mat &Cam_right,
+							 cv::Mat & rawImage_left,
+							 cv::Mat & rawImage_right);
 
 	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
-    void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 	void Cholesky( const cv::Mat& A, cv::Mat& S );  //this is not working
 
 };

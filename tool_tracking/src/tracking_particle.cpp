@@ -54,7 +54,7 @@ cv::Mat segmentation(cv::Mat &InputImg) {
 
 	resize(src, src, cv::Size(), 1, 1);
 
-	double lowThresh = 43;
+	double lowThresh = 20;
 
 	cv::cvtColor(src, src_gray, CV_BGR2GRAY);
 
@@ -87,8 +87,8 @@ int main(int argc, char **argv) {
 
     //TODO: get image size from camera model, or initialize segmented images,
 
-    cv::Mat rawImage_left = cv::Mat::zeros(640, 800, CV_32FC1);
-    cv::Mat rawImage_right = cv::Mat::zeros(640, 800, CV_32FC1);
+    cv::Mat rawImage_left = cv::Mat::zeros(480, 640, CV_8UC3);//CV_32FC1
+    cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
 
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber img_sub_l = it.subscribe(
@@ -99,44 +99,8 @@ int main(int argc, char **argv) {
 
     ROS_INFO("---- done subscribe -----");
 
-    /*** Timer set up ***/
-    ros::Rate loop_rate(50);
-
     ros::Duration(2).sleep();
 	/****TODO: Temp Projection matrices****/
-//	cv::Mat P_l(3, 4, CV_64FC1);
-//    cv::Mat P_r(3, 4, CV_64FC1);
-//	P_l.at<double>(0, 0) = 893.7852590197848;
-//	P_l.at<double>(1, 0) = 0;
-//	P_l.at<double>(2, 0) = 0;
-//
-//	P_l.at<double>(0, 1) = 0;
-//	P_l.at<double>(1, 1) = 893.7852590197848;
-//	P_l.at<double>(2, 1) = 0;
-//
-//	P_l.at<double>(0, 2) = 288.4443244934082; // horiz
-//	P_l.at<double>(1, 2) = 259.7727756500244; //verticle
-//	P_l.at<double>(2, 2) = 1;
-//
-//	P_l.at<double>(0, 3) = 0;
-//	P_l.at<double>(1, 3) = 0;
-//	P_l.at<double>(2, 3) = 0;
-//
-//	P_r.at<double>(0, 0) = 893.7852590197848;
-//	P_r.at<double>(1, 0) = 0;
-//	P_r.at<double>(2, 0) = 0;
-//
-//	P_r.at<double>(0, 1) = 0;
-//	P_r.at<double>(1, 1) = 893.7852590197848;
-//	P_r.at<double>(2, 1) = 0;
-//
-//	P_r.at<double>(0, 2) = 288.4443244934082; // horiz
-//	P_r.at<double>(1, 2) = 259.7727756500244; //verticle
-//	P_r.at<double>(2, 2) = 1;
-//
-//	P_r.at<double>(0, 3) = 4.732953897952732;
-//	P_r.at<double>(1, 3) = 0;
-//	P_r.at<double>(2, 3) = 0;
 
 	while (nh.ok()) {
 		ros::spinOnce();
@@ -151,13 +115,14 @@ int main(int argc, char **argv) {
             seg_left = segmentation(rawImage_left);  //or use image_vessselness
             seg_right = segmentation(rawImage_right);
 
+			//cv::imshow("seg left ", seg_left);
+
             trackingImgs = Particles.trackingTool(seg_left, seg_right); //with rendered tool and segmented img
 
 			freshImage = false;
 			freshVelocity = false;
 		}
 
-		loop_rate.sleep();  //or cv::waitKey(10);
 	}
 
 }

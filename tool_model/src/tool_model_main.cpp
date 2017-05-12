@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
     ROS_INFO("After Loading Model and Initialization, please press ENTER to go on");
     cin.ignore();
 
-    cv::Mat testImg = cv::Mat::zeros(800, 1020, CV_8UC3); //CV_8UC3
+    cv::Mat testImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3
     cv::Mat P(3, 4, CV_64FC1);
 
 //    cv::Size size(640, 480);
@@ -63,29 +63,54 @@ int main(int argc, char **argv) {
 
     ToolModel::toolModel initial;
 
-    initial.tvec_grip1(0) = 0.02;// +0.4  //left and right (image frame)
-    initial.tvec_grip1(1) = 0.0;  //up and down
-    initial.tvec_grip1(2) = 0.0;
-    initial.rvec_grip1(0) = 0;
-    initial.rvec_grip1(1) = 0.0;
-    initial.rvec_grip1(2) = 0.0;
-
-
-    newToolModel.computeDavinciModel(initial, 0.0, 0.0, 0.0 );
-    cv::Mat g_error = cv::Mat::eye(4,4,CV_64FC1);
-    newToolModel.renderTool(testImg, initial, Cam, P, g_error);
-
-//    initial.tvec_cyl(0) = 0.01;// +0.4  //left and right (image frame)
-//    initial.tvec_cyl(1) = 0.0;  //up and down
-//    initial.tvec_cyl(2) = 0.04;
-//    initial.rvec_cyl(0) = 0.2;
-//    initial.rvec_cyl(1) = 1.4;
-//    initial.rvec_cyl(2) = 0.2;
-//
-//
-//    newToolModel.computeEllipsePose(initial, 0.0, 0.0, 0.0 );
+//    initial.tvec_grip1(0) = 0.02;// +0.4  //left and right (image frame)
+//    initial.tvec_grip1(1) = 0.0;  //up and down
+//    initial.tvec_grip1(2) = 0.0;
+//    initial.rvec_grip1(0) = 0;
+//    initial.rvec_grip1(1) = 0.0;
+//    initial.rvec_grip1(2) = 0.0;
+//    newToolModel.computeDavinciModel(initial, 0.0, 0.0, 0.0 );
 //    newToolModel.renderTool(testImg, initial, Cam, P);
 
+   //Testing:
+//    cv::Mat temp_point = cv::Mat(1,2,CV_64FC1);
+//    temp_point.at<double>(0,0) = 0.1;
+//    temp_point.at<double>(0,1) = 0.3;
+//
+////    cv::Mat tool_point(1,2,CV_64FC1);
+////    tool_point.push_back(temp_point);
+////
+////    ROS_INFO_STREAM("tool_point " << tool_point);
+//    cv::Mat temp(1,2,CV_64FC1);
+//    cv::normalize(temp_point, temp);
+//    temp_point = temp.clone();
+//    ROS_INFO_STREAM("temp_point " << temp_point);
+
+    initial.tvec_cyl(0) = 0.01;// +0.4  //left and right (image frame)
+    initial.tvec_cyl(1) = 0.0;  //up and down
+    initial.tvec_cyl(2) = 0.04;
+    initial.rvec_cyl(0) = 0.0;
+    initial.rvec_cyl(1) = 1.4;
+    initial.rvec_cyl(2) = 0.2;
+
+
+    newToolModel.computeEllipsePose(initial, 0.0, 0.0, 0.0 );
+
+    cv::Mat temp_point = cv::Mat(1,2,CV_64FC1);
+    cv::Mat temp_normal = cv::Mat(1,2,CV_64FC1);
+    newToolModel.renderToolUKF(testImg, initial, Cam, P, temp_point, temp_normal);
+
+    ROS_INFO_STREAM("temp_point row: " << temp_point.rows );
+    ROS_INFO_STREAM("temp_normal row: " << temp_normal.rows );
+    cv::Mat new_temp(temp_point.rows, 1, CV_64FC1);
+    for (int i = 0; i <temp_point.rows ; ++i) {
+        cv::Mat normal = temp_normal.row(i);
+        cv::Mat pixel = temp_point.row(i);
+        double dot_product = normal.dot(pixel);
+        new_temp.at<double>(i,0) = dot_product;
+
+    }
+    //ROS_INFO_STREAM("new_temp" << new_temp);
     cv::imshow("tool image: ",testImg );
     //cv::imshow("segImg : ",segImg );
 

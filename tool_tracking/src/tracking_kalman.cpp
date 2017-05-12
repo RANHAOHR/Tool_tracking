@@ -1,7 +1,6 @@
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
-#include <cwru_opencv_common/projective_geometry.h>
 #include <tool_tracking/kalman_filter.h>
 
 bool freshImage;
@@ -48,6 +47,18 @@ int main(int argc, char **argv) {
 
 	ros::Duration(2).sleep();
 
+
+//	cv::Size size(640, 475);
+//	std::string package = ros::package::getPath("tool_tracking"); ////warning: do not have one package with the same name
+//	//seg_left = cv::imread(package + "/left.png", CV_LOAD_IMAGE_GRAYSCALE );
+//	seg_left = cv::imread(package + "/new.png", CV_LOAD_IMAGE_GRAYSCALE );  //testing image
+//	seg_right = cv::imread(package + "/right.png", CV_LOAD_IMAGE_GRAYSCALE );
+//
+//	cv::Mat new_seg_left = seg_left.rowRange(5,480);
+//	cv::Mat new_seg_right = seg_right.rowRange(5,480);
+//
+//	cv::resize(new_seg_left, new_seg_left,size );
+//	cv::resize(new_seg_right, new_seg_right,size );
 	int tracking_iteration = 0;
 	while (nh.ok()) {
 		ros::spinOnce();
@@ -60,16 +71,8 @@ int main(int argc, char **argv) {
             UKF.UKF_double_arm();
 
 			freshImage = false;
-			tracking_iteration +=1;
+			tracking_iteration += 1;
 		}
 
-		//get ready for dynamic tracking:temp solution or can use client goal
-		if(tracking_iteration == 5){  //takes 5 iterations to converge
-			ROS_INFO("INSIDE dynamic ");
-			UKF.getCourseEstimation();
-			tracking_iteration = 0;
-		}
-
-		//loop_rate.sleep();  //or cv::waitKey(10);
 	}
 }
