@@ -176,6 +176,7 @@ void ToolModel::load_model_vertices(const char *path, std::vector<glm::vec3> &ou
                 ROS_ERROR("File can't be read by our simple parser : ( Try exporting with other options\n");
             }
 
+            /* this mean for later use, just in case */
             vertexIndices.push_back(vertexIndex[0]);
             vertexIndices.push_back(vertexIndex[1]);
             vertexIndices.push_back(vertexIndex[2]);
@@ -203,27 +204,28 @@ void ToolModel::load_model_vertices(const char *path, std::vector<glm::vec3> &ou
 
     for (int i = 0; i < neighbor_faces.size(); ++i) {
         /*********find the neighbor faces************/
-        for (int j = 0; j < neighbor_faces.size(); ++j) {
-            if (j != i) {
+        for (int j = 0; j < out_faces.size(); ++j) {
+            if (j != i) {  //don't repeate yourself
                 int match = Compare_vertex(out_faces[i], out_faces[j], temp_vec);
 
                 if (match == 2) //so face i and face j share an edge
                 {
                     //ROS_INFO_STREAM("SIZE FO THE TEMP VEC: " << temp_vec.size() );
                     neighbor_faces[i].push_back(j); // mark the neighbor face index
-                    neighbor_faces[i].push_back(temp_vec[0]);
-                    neighbor_faces[i].push_back(temp_vec[1]);
+                    neighbor_faces[i].push_back(temp_vec[0]);  //first vertex
+                    neighbor_faces[i].push_back(temp_vec[1]);  //corresponding normal
+                    neighbor_faces[i].push_back(temp_vec[2]);  //second vertex
+                    neighbor_faces[i].push_back(temp_vec[3]);  //corresponding normal
+                    //ROS_INFO_STREAM("neighbor_faces[i]" << neighbor_faces[i].size());
                 }
-
                 temp_vec.clear();
             }
 
         }
+
     }
 
     printf("loaded file %s successfully.\n", path);
-//    ROS_INFO_STREAM(" neighbor_faces[11][0]: " <<  neighbor_faces[11][0]);
-//    ROS_INFO_STREAM(" neighbor_faces[11][2]: " <<  neighbor_faces[11][3]);
     /*debug for faces*/
     // for (int i = 0; i < 10; ++i)
     // {
@@ -321,7 +323,7 @@ cv::Point3d ToolModel::camTransformVec(cv::Mat &cam_mat, cv::Point3d &input_vec)
     return output_vec;
 };
 
-/*************** Approach 1: using Vertices Mat and normal Mat *******************/
+/*************** using Vertices to draw the contour *******************/
 void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_faces,
                                    const std::vector<std::vector<int> > &neighbor_faces,
                                    const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
@@ -355,7 +357,7 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
     cv::Mat ept_2(4, 1, CV_64FC1);
 
     for (int i = 0; i < input_faces.size(); ++i) {
-        neighbor_num = (neighbor_faces[i].size()) / 3;  //each neighbor has two vertices
+        neighbor_num = (neighbor_faces[i].size()) / 5;  //each neighbor has two vertices, used to be 3 when normals
 
         if (neighbor_num > 0) {
             int v1 = input_faces[i][0];
@@ -386,63 +388,195 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
             face_point_i.z = face_point_i.z / 3;
 
             double isfront_i = dotProduct(fnormal, face_point_i);
-            if (isfront_i < 0.00000) {
-                for (int neighbor_count = 0; neighbor_count <
-                                             neighbor_num; ++neighbor_count) {  //notice: cannot use J here, since the last j will not be counted
-                    int j = 3 * neighbor_count;
-                    int v1_ = input_faces[neighbor_faces[i][j]][0];
-                    int v2_ = input_faces[neighbor_faces[i][j]][1];
-                    int v3_ = input_faces[neighbor_faces[i][j]][2];
+            //if (isfront_i < 0.00000) {
+            for (int neighbor_count = 0; neighbor_count <
+                                         neighbor_num; ++neighbor_count) {  //notice: cannot use J here, since the last j will not be counted
+                int j = 5 * neighbor_count;
+                int v1_ = input_faces[neighbor_faces[i][j]][0];
+                int v2_ = input_faces[neighbor_faces[i][j]][1];
+                int v3_ = input_faces[neighbor_faces[i][j]][2];
 
-                    int n1_ = input_faces[neighbor_faces[i][j]][3];
-                    int n2_ = input_faces[neighbor_faces[i][j]][4];
-                    int n3_ = input_faces[neighbor_faces[i][j]][5];
+                int n1_ = input_faces[neighbor_faces[i][j]][3];
+                int n2_ = input_faces[neighbor_faces[i][j]][4];
+                int n3_ = input_faces[neighbor_faces[i][j]][5];
 
 
-                    new_Vertices.col(v1_).copyTo(temp.col(0));
-                    cv::Point3d pt1_ = convert_MattoPts(temp);
-                    new_Vertices.col(v2_).copyTo(temp.col(0));
-                    cv::Point3d pt2_ = convert_MattoPts(temp);
-                    new_Vertices.col(v3_).copyTo(temp.col(0));
-                    cv::Point3d pt3_ = convert_MattoPts(temp);
+                new_Vertices.col(v1_).copyTo(temp.col(0));
+                cv::Point3d pt1_ = convert_MattoPts(temp);
+                new_Vertices.col(v2_).copyTo(temp.col(0));
+                cv::Point3d pt2_ = convert_MattoPts(temp);
+                new_Vertices.col(v3_).copyTo(temp.col(0));
+                cv::Point3d pt3_ = convert_MattoPts(temp);
 
-                    new_Normals.col(n1_).copyTo(temp.col(0));
-                    cv::Point3d vn1_ = convert_MattoPts(temp);
-                    new_Normals.col(n2_).copyTo(temp.col(0));
-                    cv::Point3d vn2_ = convert_MattoPts(temp);
-                    new_Normals.col(n3_).copyTo(temp.col(0));
-                    cv::Point3d vn3_ = convert_MattoPts(temp);
+                new_Normals.col(n1_).copyTo(temp.col(0));
+                cv::Point3d vn1_ = convert_MattoPts(temp);
+                new_Normals.col(n2_).copyTo(temp.col(0));
+                cv::Point3d vn2_ = convert_MattoPts(temp);
+                new_Normals.col(n3_).copyTo(temp.col(0));
+                cv::Point3d vn3_ = convert_MattoPts(temp);
 
-                    cv::Point3d fnormal_n = FindFaceNormal(pt1_, pt2_, pt3_, vn1_, vn2_, vn3_);
+                cv::Point3d fnormal_n = FindFaceNormal(pt1_, pt2_, pt3_, vn1_, vn2_, vn3_);
 
-                    cv::Point3d face_point_j = pt1_ + pt2_ + pt3_;
-                    face_point_j.x = face_point_j.x / 3;
-                    face_point_j.y = face_point_j.y / 3;
-                    face_point_j.z = face_point_j.z / 3;
+                cv::Point3d face_point_j = pt1_ + pt2_ + pt3_;
+                face_point_j.x = face_point_j.x / 3;
+                face_point_j.y = face_point_j.y / 3;
+                face_point_j.z = face_point_j.z / 3;
 
-                    double isfront_j = dotProduct(fnormal_n, face_point_j);
+                double isfront_j = dotProduct(fnormal_n, face_point_j);
 
-                    if (isfront_i * isfront_j < 0.0) // one is front, another is back
-                    {
-                        /*finish finding, drawing the image*/
-                        new_Vertices.col(neighbor_faces[i][j + 1]).copyTo(ept_1);  //under camera frames
-                        new_Vertices.col(neighbor_faces[i][j + 2]).copyTo(ept_2);
+                if (isfront_i * isfront_j < 0.0) // one is front, another is back
+                {
+                    /*finish finding, drawing the image*/
+                    new_Vertices.col(neighbor_faces[i][j + 1]).copyTo(ept_1);  //under camera frames
+                    new_Vertices.col(neighbor_faces[i][j + 3]).copyTo(ept_2);
 
-                        cv::Point2d prjpt_1 = reproject(ept_1, P);
-                        cv::Point2d prjpt_2 = reproject(ept_2, P);
+                    cv::Point2d prjpt_1 = reproject(ept_1, P);
+                    cv::Point2d prjpt_2 = reproject(ept_2, P);
 
-                        cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
-
-                    }
-
+                    cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
                 }
-
             }
-
+            //}
         }
     }
 
 };
+
+/*************** extract contour and the vertex normal for measurement model *******************/
+void ToolModel::Compute_Silhouette_UKF(const std::vector<std::vector<int> > &input_faces,
+                                   const std::vector<std::vector<int> > &neighbor_faces,
+                                   const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
+                                   cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
+                                   const cv::Mat &P, cv::Mat &tool_points, cv::Mat &tool_normals, cv::OutputArray jac){
+
+    cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << 0,0,1,0,
+            1,0,0,0,
+            0,1,0,0,
+            0,0,0,1);
+
+    cv::Mat temp_input_Vmat = adjoint_mat * input_Vmat;
+    cv::Mat temp_input_Nmat = adjoint_mat * input_Nmat;
+
+    cv::Mat new_Vertices = transformPoints(temp_input_Vmat, rvec, tvec);
+
+    new_Vertices = camTransformMats(CamMat, new_Vertices); //transform every point under camera frame
+
+    cv::Mat new_Normals = transformPoints(temp_input_Nmat, rvec, tvec);
+    new_Normals = camTransformMats(CamMat, new_Normals); //transform every surface normal under camera frame
+
+    unsigned long neighbor_num = 0;
+    cv::Mat temp(4, 1, CV_64FC1);
+
+    cv::Mat ept_1(4, 1, CV_64FC1);
+    cv::Mat ept_2(4, 1, CV_64FC1);
+
+    for (int i = 0; i < input_faces.size(); ++i) {
+        neighbor_num = (neighbor_faces[i].size()) / 5;  //each neighbor has two vertices, used to be 3 when normals
+
+        if (neighbor_num > 0) {
+            int v1 = input_faces[i][0];
+            int v2 = input_faces[i][1];
+            int v3 = input_faces[i][2];
+            int n1 = input_faces[i][3];
+            int n2 = input_faces[i][4];
+            int n3 = input_faces[i][5];
+
+            new_Vertices.col(v1).copyTo(temp.col(0));
+            cv::Point3d pt1 = convert_MattoPts(temp);
+            new_Vertices.col(v2).copyTo(temp.col(0));
+            cv::Point3d pt2 = convert_MattoPts(temp);
+            new_Vertices.col(v3).copyTo(temp.col(0));
+            cv::Point3d pt3 = convert_MattoPts(temp);
+
+            new_Normals.col(n1).copyTo(temp.col(0));
+            cv::Point3d vn1 = convert_MattoPts(temp);
+            new_Normals.col(n2).copyTo(temp.col(0));
+            cv::Point3d vn2 = convert_MattoPts(temp);
+            new_Normals.col(n3).copyTo(temp.col(0));
+            cv::Point3d vn3 = convert_MattoPts(temp);
+
+            cv::Point3d fnormal = FindFaceNormal(pt1, pt2, pt3, vn1, vn2, vn3); //knowing the direction and normalized
+            cv::Point3d face_point_i = pt1 + pt2 + pt3;
+            face_point_i.x = face_point_i.x / 3;
+            face_point_i.y = face_point_i.y / 3;
+            face_point_i.z = face_point_i.z / 3;
+
+            double isfront_i = dotProduct(fnormal, face_point_i);
+
+            for (int neighbor_count = 0; neighbor_count <
+                                         neighbor_num; ++neighbor_count) {  //notice: cannot use J here, since the last j will not be counted
+                int j = 5 * neighbor_count;
+                int v1_ = input_faces[neighbor_faces[i][j]][0];
+                int v2_ = input_faces[neighbor_faces[i][j]][1];
+                int v3_ = input_faces[neighbor_faces[i][j]][2];
+
+                int n1_ = input_faces[neighbor_faces[i][j]][3];
+                int n2_ = input_faces[neighbor_faces[i][j]][4];
+                int n3_ = input_faces[neighbor_faces[i][j]][5];
+
+
+                new_Vertices.col(v1_).copyTo(temp.col(0));
+                cv::Point3d pt1_ = convert_MattoPts(temp);
+                new_Vertices.col(v2_).copyTo(temp.col(0));
+                cv::Point3d pt2_ = convert_MattoPts(temp);
+                new_Vertices.col(v3_).copyTo(temp.col(0));
+                cv::Point3d pt3_ = convert_MattoPts(temp);
+
+                new_Normals.col(n1_).copyTo(temp.col(0));
+                cv::Point3d vn1_ = convert_MattoPts(temp);
+                new_Normals.col(n2_).copyTo(temp.col(0));
+                cv::Point3d vn2_ = convert_MattoPts(temp);
+                new_Normals.col(n3_).copyTo(temp.col(0));
+                cv::Point3d vn3_ = convert_MattoPts(temp);
+
+                cv::Point3d fnormal_n = FindFaceNormal(pt1_, pt2_, pt3_, vn1_, vn2_, vn3_);
+
+                cv::Point3d face_point_j = pt1_ + pt2_ + pt3_;
+                face_point_j.x = face_point_j.x / 3;
+                face_point_j.y = face_point_j.y / 3;
+                face_point_j.z = face_point_j.z / 3;
+
+                double isfront_j = dotProduct(fnormal_n, face_point_j);
+
+                if (isfront_i * isfront_j < 0.0) // one is front, another is back
+                {
+                    /*finish finding, drawing the image*/
+                    new_Vertices.col(neighbor_faces[i][j + 1]).copyTo(ept_1);  //under camera frames
+                    new_Vertices.col(neighbor_faces[i][j + 3]).copyTo(ept_2);
+
+                    cv::Point2d prjpt_1 = reproject(ept_1, P);
+                    cv::Point2d prjpt_2 = reproject(ept_2, P);
+
+                    cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
+
+                    /**get normals for UKF**/
+                    cv::Mat temp_vertex_normal(1,2,CV_64FC1);
+                    temp_vertex_normal.at<double>(0,0) = prjpt_1.x;
+                    temp_vertex_normal.at<double>(0,1) = prjpt_1.y;
+
+                    tool_points.push_back(temp_vertex_normal);
+                    temp_vertex_normal.at<double>(0,0) = prjpt_2.x;
+                    temp_vertex_normal.at<double>(0,1) = prjpt_2.y;
+                    tool_points.push_back(temp_vertex_normal);
+
+                    cv::Mat temp_normal = new_Normals.col(neighbor_faces[i][j + 2]).clone();
+                    //an image normal, need only x an y
+                    temp_vertex_normal.at<double>(0,0) = temp_normal.at<double>(0,0); //x
+                    temp_vertex_normal.at<double>(0,1) = temp_normal.at<double>(1,0); //y
+                    tool_normals.push_back(temp_vertex_normal);
+
+                    temp_normal = new_Normals.col(neighbor_faces[i][j + 4]).clone();
+
+                    temp_vertex_normal.at<double>(0,0) = temp_normal.at<double>(0,0);
+                    temp_vertex_normal.at<double>(0,1) = temp_normal.at<double>(1,0);
+                    tool_normals.push_back(temp_vertex_normal);
+
+                }
+            }
+
+        }
+    }
+}
 
 cv::Mat ToolModel::convert4to3(const cv::Mat &inputMat) {
 
@@ -579,7 +713,7 @@ cv::Point3d ToolModel::FindFaceNormal(cv::Point3d &input_v1, cv::Point3d &input_
 
 int ToolModel::Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2, std::vector<int> &match_vec) {
     int match_count = 0;
-    //std::vector<int> match_vec;   //mat/home/ranhao/ros_ws/src/Tool_tracking/tool_modelch_vec should contain both the matching count and the matched vertices
+    //std::vector<int> match_vec;   //match_vec should contain both the matching count and the matched vertices
 
     if (vec1.size() != vec2.size())  ///face vectors
     {
@@ -588,7 +722,8 @@ int ToolModel::Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2, st
         for (int j = 0; j < 3; ++j) {
             if (vec1[0] == vec2[j]) {
                 match_count += 1;
-                match_vec.push_back(vec1[0]);
+                match_vec.push_back(vec1[0]);   //vertex
+                match_vec.push_back(vec1[3]);  // corresponding vertex normal
 
             }
 
@@ -598,6 +733,7 @@ int ToolModel::Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2, st
             if (vec1[1] == vec2[j]) {
                 match_count += 1;
                 match_vec.push_back(vec1[1]);
+                match_vec.push_back(vec1[4]);  // corresponding vertex normal
 
             }
 
@@ -607,6 +743,7 @@ int ToolModel::Compare_vertex(std::vector<int> &vec1, std::vector<int> &vec2, st
             if (vec1[2] == vec2[j]) {
                 match_count += 1;
                 match_vec.push_back(vec1[2]);
+                match_vec.push_back(vec1[5]);  // corresponding vertex normal
 
             }
 
@@ -1073,6 +1210,41 @@ ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, co
 
     Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image,
                        cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac);
+
+};
+
+/*** difference: give tool_normals ***/
+void ToolModel::renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P,
+                         cv::Mat &tool_points, cv::Mat &tool_normals, cv::OutputArray jac) {
+
+    Compute_Silhouette_UKF(body_faces, body_neighbors, body_Vmat, body_Nmat, CamMat, image, cv::Mat(tool.rvec_cyl),
+                       cv::Mat(tool.tvec_cyl), P, tool_points, tool_normals, jac);
+
+//    Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image,
+//                       cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac);
+//
+//    Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat, gripper1_Nmat, CamMat, image,
+//                       cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac);
+//
+//    Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image,
+//                       cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac);
+
+
+    int point_size = tool_points.rows;
+
+    tool_points = tool_points.rowRange(1, point_size);
+    tool_normals = tool_normals.rowRange(1, point_size);
+
+//    ROS_INFO_STREAM("tool_points: " << tool_points);
+//    ROS_INFO_STREAM("tool_normals: " << tool_normals);
+    ////normalize the normal
+    for (int i = 0; i < point_size-1 ; ++i) {
+        cv::Mat temp(1,2,CV_64FC1);
+        cv::normalize(tool_normals.row(i), temp);
+        temp.copyTo(tool_normals.row(i));
+    }
+
+//    ROS_INFO_STREAM("tool_normals NEW: " << tool_normals);
 
 };
 

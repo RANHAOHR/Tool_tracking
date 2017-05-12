@@ -153,7 +153,7 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	}
 
 	freshCameraInfo = false; //should be left and right
-	
+
 	//The projection matrix from the simulation does not accurately reflect the Da Vinci robot. We are hardcoding the matrix from the da vinci itself.
 	projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
 	projectionMat_subscriber_l = nh_.subscribe("/davinci_endo/left/camera_info", 1, &KalmanFilter::projectionLeftCB, this);
@@ -161,8 +161,8 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	P_left = cv::Mat::zeros(3,4,CV_64FC1);
 	P_right = cv::Mat::zeros(3,4,CV_64FC1);
 
-	//Subscribe to the necessary transforms.
-	tf::StampedTransform arm_1__cam_l_st;
+	////Subscribe to the necessary transforms, this is for gazebo
+/*	tf::StampedTransform arm_1__cam_l_st;
 	tf::StampedTransform arm_2__cam_l_st;
 	tf::StampedTransform arm_1__cam_r_st;
 	tf::StampedTransform arm_2__cam_r_st;
@@ -193,17 +193,17 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	convertEigenToMat(arm_1__cam_l, Cam_left_arm_1);
 	convertEigenToMat(arm_1__cam_r, Cam_right_arm_1);
 	convertEigenToMat(arm_2__cam_l, Cam_left_arm_2);
-	convertEigenToMat(arm_2__cam_r, Cam_right_arm_2);
+	convertEigenToMat(arm_2__cam_r, Cam_right_arm_2);*/
 
-//	Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.9999999999863094, -3.726808388799082e-06, 3.673205103273929e-06, -0.20049000899903854,
-//			-3.726781403852194e-06, 0.9999999999660707, 7.346410206619205e-06, -0.021046118487469873,
-//			-3.673232481812485e-06, 7.346396517286155e-06, -0.999999999966269, 0.05029912523761887,
-//			0, 0, 0, 1);
-//
-//	Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.9999999999863094, -3.726808388799082e-06, 3.673205103273929e-06, -0.1949000899905203,
-//			-3.726781403852194e-06, 0.9999999999660707, 7.346410206619205e-06, -0.021046081755553767,
-//			-3.673232481812485e-06, 7.346396517286155e-06, -0.999999999966269, 0.05029916196993972,
-//			0, 0, 0, 1);
+	Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.9999999999863094, -3.726808388799082e-06, 3.673205103273929e-06, -0.20049000899903854,
+			-3.726781403852194e-06, 0.9999999999660707, 7.346410206619205e-06, -0.021046118487469873,
+			-3.673232481812485e-06, 7.346396517286155e-06, -0.999999999966269, 0.05029912523761887,
+			0, 0, 0, 1);
+
+	Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.9999999999863094, -3.726808388799082e-06, 3.673205103273929e-06, -0.1949000899905203,
+			-3.726781403852194e-06, 0.9999999999660707, 7.346410206619205e-06, -0.021046081755553767,
+			-3.673232481812485e-06, 7.346396517286155e-06, -0.999999999966269, 0.05029916196993972,
+			0, 0, 0, 1);
 
 	ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
 	ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
@@ -514,8 +514,8 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
 		sigma_bar = sigma_bar + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((sigma_pts_bar[i] - mu_bar).t());
 	}
 
-	double dev_pos = ukfToolModel.randomNum(0.006, 0.00);  ///deviation for position
-	double dev_ori = ukfToolModel.randomNum(0.008, 0.00);  ///deviation for orientation
+	double dev_pos = ukfToolModel.randomNum(0.0006, 0.00);  ///deviation for position
+	double dev_ori = ukfToolModel.randomNum(0.0008, 0.00);  ///deviation for orientation
 	double dev_ang = ukfToolModel.randomNum(0.0001, 0); ///deviation for joint angles
 
 	for (int j = 0; j < 3; ++j) {
@@ -822,6 +822,10 @@ cv::Mat KalmanFilter::segmentation(cv::Mat &InputImg) {
 	freshSegImage = true;
 
 	return res;
+
+};
+
+void KalmanFilter::getMeasurementModel(cv::Mat &toolImage, const cv::Mat &segmentedImage){
 
 };
 

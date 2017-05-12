@@ -45,7 +45,7 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
 
 	initializeParticles();
 
-	/****need to subscribe this***/
+	/**** need to subscribe this for simulation ***/
     tf::StampedTransform arm_1__cam_l_st;
     tf::StampedTransform arm_2__cam_l_st;
     tf::StampedTransform arm_1__cam_r_st;
@@ -83,6 +83,19 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
     ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
     ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
+
+//	Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.9999999999863094, -3.726808388799082e-06, 3.673205103273929e-06, -0.20049000899903854,
+//			-3.726781403852194e-06, 0.9999999999660707, 7.346410206619205e-06, -0.021046118487469873,
+//			-3.673232481812485e-06, 7.346396517286155e-06, -0.999999999966269, 0.05029912523761887,
+//			0, 0, 0, 1);
+//
+//	Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.9999999999863094, -3.726808388799082e-06, 3.673205103273929e-06, -0.1949000899905203,
+//			-3.726781403852194e-06, 0.9999999999660707, 7.346410206619205e-06, -0.021046081755553767,
+//			-3.673232481812485e-06, 7.346396517286155e-06, -0.999999999966269, 0.05029916196993972,
+//			0, 0, 0, 1);
+//
+//	ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
+//	ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
 
 	projectionMat_subscriber_r = node_handle.subscribe("/davinci_endo/right/camera_info", 1, &ParticleFilter::projectionRightCB, this);
 	projectionMat_subscriber_l = node_handle.subscribe("/davinci_endo/left/camera_info", 1, &ParticleFilter::projectionLeftCB, this);
