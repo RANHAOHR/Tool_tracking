@@ -51,9 +51,9 @@ boost::mt19937 rng((const uint32_t &) time(0));
 //constructor
 ToolModel::ToolModel() {
 
-    offset_body = 0.46;//0.4535;  //0.3429,
-    offset_ellipse = offset_body + 0.003;// + 0.010;
-    offset_gripper = offset_ellipse - 0.003;// + 0.009;// + 0.003;
+    offset_body = 0.4529;//0.4535;  //0.3429,
+    offset_ellipse = offset_body + 0.003;
+    offset_gripper = offset_ellipse + 0.003;// + 0.009;// + 0.003;
 
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
@@ -388,7 +388,6 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
             face_point_i.z = face_point_i.z / 3;
 
             double isfront_i = dotProduct(fnormal, face_point_i);
-            //if (isfront_i < 0.00000) {
             for (int neighbor_count = 0; neighbor_count <
                                          neighbor_num; ++neighbor_count) {  //notice: cannot use J here, since the last j will not be counted
                 int j = 5 * neighbor_count;
@@ -433,10 +432,15 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                     cv::Point2d prjpt_1 = reproject(ept_1, P);
                     cv::Point2d prjpt_2 = reproject(ept_2, P);
 
-                    cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
+                    //cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
+                    if(((prjpt_1.x <= 0 && prjpt_2.x <= 0) || (prjpt_1.x >= 640 && prjpt_2.x >= 640)) || ((prjpt_1.y <= 0 && prjpt_2.y <= 0) || (prjpt_1.y >= 480 && prjpt_2.y >= 480))){
+                        //this is not suppose to be in the image
+                    }else {
+                        cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
+                    }
                 }
             }
-            //}
+
         }
     }
 
@@ -539,37 +543,42 @@ void ToolModel::Compute_Silhouette_UKF(const std::vector<std::vector<int> > &inp
                 double isfront_j = dotProduct(fnormal_n, face_point_j);
 
                 if (isfront_i * isfront_j < 0.0) // one is front, another is back
-                {
-                    /*finish finding, drawing the image*/
+                {   /*finish finding, drawing the image*/
                     new_Vertices.col(neighbor_faces[i][j + 1]).copyTo(ept_1);  //under camera frames
                     new_Vertices.col(neighbor_faces[i][j + 3]).copyTo(ept_2);
 
                     cv::Point2d prjpt_1 = reproject(ept_1, P);
                     cv::Point2d prjpt_2 = reproject(ept_2, P);
 
-                    cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
+                    if(((prjpt_1.x <= 0 && prjpt_2.x <= 0) || (prjpt_1.x >= 640 && prjpt_2.x >= 640)) || ((prjpt_1.y <= 0 && prjpt_2.y <= 0) || (prjpt_1.y >= 480 && prjpt_2.y >= 480))){
+                        //this is not suppose to be in the image
+                    }else{
+//                        ROS_INFO_STREAM("prjpt_1 " << prjpt_1);
+//                        ROS_INFO_STREAM("prjpt_2 " << prjpt_2);
+                        cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
 
-                    /**get normals for UKF**/
-                    cv::Mat temp_vertex_normal(1,2,CV_64FC1);
-                    temp_vertex_normal.at<double>(0,0) = prjpt_1.x;
-                    temp_vertex_normal.at<double>(0,1) = prjpt_1.y;
+                        /**get normals for UKF**/
+                        cv::Mat temp_vertex_normal(1,2,CV_64FC1);
+                        temp_vertex_normal.at<double>(0,0) = prjpt_1.x;
+                        temp_vertex_normal.at<double>(0,1) = prjpt_1.y;
 
-                    tool_points.push_back(temp_vertex_normal);
-                    temp_vertex_normal.at<double>(0,0) = prjpt_2.x;
-                    temp_vertex_normal.at<double>(0,1) = prjpt_2.y;
-                    tool_points.push_back(temp_vertex_normal);
+                        tool_points.push_back(temp_vertex_normal);
+                        temp_vertex_normal.at<double>(0,0) = prjpt_2.x;
+                        temp_vertex_normal.at<double>(0,1) = prjpt_2.y;
+                        tool_points.push_back(temp_vertex_normal);
 
-                    cv::Mat temp_normal = new_Normals.col(neighbor_faces[i][j + 2]).clone();
-                    //an image normal, need only x an y
-                    temp_vertex_normal.at<double>(0,0) = temp_normal.at<double>(0,0); //x
-                    temp_vertex_normal.at<double>(0,1) = temp_normal.at<double>(1,0); //y
-                    tool_normals.push_back(temp_vertex_normal);
+                        cv::Mat temp_normal = new_Normals.col(neighbor_faces[i][j + 2]).clone();
+                        //an image normal, need only x an y
+                        temp_vertex_normal.at<double>(0,0) = temp_normal.at<double>(0,0); //x
+                        temp_vertex_normal.at<double>(0,1) = temp_normal.at<double>(1,0); //y
+                        tool_normals.push_back(temp_vertex_normal);
 
-                    temp_normal = new_Normals.col(neighbor_faces[i][j + 4]).clone();
+                        temp_normal = new_Normals.col(neighbor_faces[i][j + 4]).clone();
 
-                    temp_vertex_normal.at<double>(0,0) = temp_normal.at<double>(0,0);
-                    temp_vertex_normal.at<double>(0,1) = temp_normal.at<double>(1,0);
-                    tool_normals.push_back(temp_vertex_normal);
+                        temp_vertex_normal.at<double>(0,0) = temp_normal.at<double>(0,0);
+                        temp_vertex_normal.at<double>(0,1) = temp_normal.at<double>(1,0);
+                        tool_normals.push_back(temp_vertex_normal);
+                    }
 
                 }
             }
@@ -949,6 +958,7 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
             0,1,0,
             -sin_theta, 0, cos_theta);
 
+
     cv::Mat rot_grip_2(3,3,CV_64FC1);
     cv::Rodrigues(seed_pose.rvec_grip2, rot_grip_2);
     rot_grip_2 = gripper_2_ * rot_grip_2;
@@ -987,11 +997,19 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     double cos_theta = cos(theta_ellipse);
     double sin_theta = sin(theta_ellipse);
 
+    /*** why the hell this works in simulation ?? ***/
     cv::Mat g_ellipse = (cv::Mat_<double>(3,3) << 1, 0, 0,
     0, cos_theta, -sin_theta,
     0,sin_theta, cos_theta);
 
-    cv::Mat rot_new =  rot_ellipse * g_ellipse;
+    cos_theta = cos(0);
+    sin_theta = sin(0);
+
+    cv::Mat adjust = (cv::Mat_<double>(3,3) << cos_theta, 0, sin_theta,
+            0, 1, 0,
+            -sin_theta,0, cos_theta);
+
+    cv::Mat rot_new =  rot_ellipse * g_ellipse * adjust ;
     cv::Mat temp_vec(3,1,CV_64FC1);
     cv::Rodrigues(rot_new, inputModel.rvec_elp);
 
@@ -1220,23 +1238,22 @@ void ToolModel::renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &Ca
     Compute_Silhouette_UKF(body_faces, body_neighbors, body_Vmat, body_Nmat, CamMat, image, cv::Mat(tool.rvec_cyl),
                        cv::Mat(tool.tvec_cyl), P, tool_points, tool_normals, jac);
 
-//    Compute_Silhouette(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image,
-//                       cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, jac);
+//    Compute_Silhouette_UKF(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image,
+//                       cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, tool_points, tool_normals, jac);
+
+//    Compute_Silhouette_UKF(griper1_faces, griper1_neighbors, gripper1_Vmat, gripper1_Nmat, CamMat, image,
+//                       cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, tool_points, tool_normals, jac);
 //
-//    Compute_Silhouette(griper1_faces, griper1_neighbors, gripper1_Vmat, gripper1_Nmat, CamMat, image,
-//                       cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, jac);
-//
-//    Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image,
-//                       cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac);
+//    Compute_Silhouette_UKF(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image,
+//                       cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, tool_points, tool_normals, jac);
 
 
     int point_size = tool_points.rows;
-
+    ROS_INFO_STREAM("tool_points: " << tool_points);
+//    ROS_INFO_STREAM("tool_normals: " << tool_normals);
     tool_points = tool_points.rowRange(1, point_size);
     tool_normals = tool_normals.rowRange(1, point_size);
 
-//    ROS_INFO_STREAM("tool_points: " << tool_points);
-//    ROS_INFO_STREAM("tool_normals: " << tool_normals);
     ////normalize the normal
     for (int i = 0; i < point_size-1 ; ++i) {
         cv::Mat temp(1,2,CV_64FC1);
@@ -1244,8 +1261,7 @@ void ToolModel::renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &Ca
         temp.copyTo(tool_normals.row(i));
     }
 
-//    ROS_INFO_STREAM("tool_normals NEW: " << tool_normals);
-
+    ROS_INFO_STREAM("tool_normals: " << tool_normals);
 };
 
 float ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage) {

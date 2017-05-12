@@ -54,7 +54,7 @@ cv::Mat segmentation(cv::Mat &InputImg) {
 
 	resize(src, src, cv::Size(), 1, 1);
 
-	double lowThresh = 43;
+	double lowThresh = 20;
 
 	cv::cvtColor(src, src_gray, CV_BGR2GRAY);
 
@@ -87,8 +87,8 @@ int main(int argc, char **argv) {
 
     //TODO: get image size from camera model, or initialize segmented images,
 
-    cv::Mat rawImage_left = cv::Mat::zeros(640, 800, CV_32FC1);
-    cv::Mat rawImage_right = cv::Mat::zeros(640, 800, CV_32FC1);
+    cv::Mat rawImage_left = cv::Mat::zeros(480, 640, CV_8UC3);//CV_32FC1
+    cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
 
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber img_sub_l = it.subscribe(
@@ -114,6 +114,8 @@ int main(int argc, char **argv) {
 
             seg_left = segmentation(rawImage_left);  //or use image_vessselness
             seg_right = segmentation(rawImage_right);
+
+			//cv::imshow("seg left ", seg_left);
 
             trackingImgs = Particles.trackingTool(seg_left, seg_right); //with rendered tool and segmented img
 

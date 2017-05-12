@@ -1,7 +1,6 @@
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
-#include <cwru_opencv_common/projective_geometry.h>
 #include <tool_tracking/kalman_filter.h>
 
 bool freshImage;
@@ -74,14 +73,6 @@ int main(int argc, char **argv) {
 			freshImage = false;
 			tracking_iteration += 1;
 		}
-
-//		//get ready for dynamic tracking:temp solution or can use client goal
-//		if(tracking_iteration == 11){  //takes 5 iterations to converge
-//			ROS_INFO("INSIDE dynamic ");
-//			UKF.getCourseEstimation();
-//			tracking_iteration = 0;
-//            //cv::waitKey();
-//		}
 
 	}
 }

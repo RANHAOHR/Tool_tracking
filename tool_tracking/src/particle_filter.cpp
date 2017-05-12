@@ -40,8 +40,8 @@
 
 using namespace std;
 
-ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-        node_handle(*nodehandle), numParticles(150){
+ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
+        node_handle(*nodehandle), numParticles(200){
 
 	initializeParticles();
 
@@ -83,19 +83,19 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
     ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
     ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
+//
+//	Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.8361,0.5340, 0.1264, -0.1142,
+//	0.5132, 0.8424, -0.1641, -0.0262,
+//	-0.1942, -0.0723, -0.9783, 0.1273,
+//	0,0, 0,1.0000);
+//
+//	Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.8361,0.5340, 0.1264, -0.1192,
+//			0.5132, 0.8424, -0.1641, -0.0262,
+//			-0.1942, -0.0723, -0.9783, 0.1273,
+//			0,0, 0,1.0000);
 
-//	Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.9999999999863094, -3.726808388799082e-06, 3.673205103273929e-06, -0.20049000899903854,
-//			-3.726781403852194e-06, 0.9999999999660707, 7.346410206619205e-06, -0.021046118487469873,
-//			-3.673232481812485e-06, 7.346396517286155e-06, -0.999999999966269, 0.05029912523761887,
-//			0, 0, 0, 1);
-//
-//	Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.9999999999863094, -3.726808388799082e-06, 3.673205103273929e-06, -0.1949000899905203,
-//			-3.726781403852194e-06, 0.9999999999660707, 7.346410206619205e-06, -0.021046081755553767,
-//			-3.673232481812485e-06, 7.346396517286155e-06, -0.999999999966269, 0.05029916196993972,
-//			0, 0, 0, 1);
-//
-//	ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
-//	ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
+	ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
+	ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
 
 	projectionMat_subscriber_r = node_handle.subscribe("/davinci_endo/right/camera_info", 1, &ParticleFilter::projectionRightCB, this);
 	projectionMat_subscriber_l = node_handle.subscribe("/davinci_endo/left/camera_info", 1, &ParticleFilter::projectionLeftCB, this);
@@ -145,7 +145,7 @@ void ParticleFilter::initializeParticles() {
     tmp.resize(2);
     if(davinci_interface::get_fresh_robot_pos(tmp)){
 		sensor_1 = tmp[0];
-        sensor_2 = tmp[1];
+		sensor_2 = tmp[1];
     }
 
 //    Eigen::Affine3d a1_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_1.data()));
@@ -171,6 +171,7 @@ void ParticleFilter::initializeParticles() {
 //    cv::Mat a2_rvec = cv::Mat::zeros(3,1,CV_64FC1);
 //    computeRodriguesVec(a2_pos, a2_rvec);
 
+
 	/*** first arm particles initialization ***/
 	initial.tvec_cyl(0) = a1_trans[0];  //left and right (image frame)
 	initial.tvec_cyl(1) = a1_trans[1];  //up and down
@@ -179,7 +180,12 @@ void ParticleFilter::initializeParticles() {
 	initial.rvec_cyl(1) = a1_rvec.at<double>(1,0);
 	initial.rvec_cyl(2) = a1_rvec.at<double>(2,0);
 
+	ROS_INFO_STREAM("FORWARD initial t : " << initial.tvec_cyl);
+	ROS_INFO_STREAM("FORWARD initial r: " << initial.rvec_cyl);
+
     double theta_cylinder = tmp[0][4]; //initial guess
+
+	ROS_INFO_STREAM("FORWARD theta_cylinder : " << theta_cylinder);
     double theta_oval = tmp[0][5]; //initial guess
     double theta_open = tmp[0][6]; //initial guess
 
@@ -221,7 +227,7 @@ void ParticleFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &
 	P_right.at<double>(2,2) = projectionRight->P[10];
 	P_right.at<double>(2,3) = projectionRight->P[11];
 
-	//ROS_INFO_STREAM("right: " << P_right);
+	ROS_INFO_STREAM("right: " << P_right);
 	freshCameraInfo = true;
 };
 
@@ -242,7 +248,7 @@ void ParticleFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &p
 	P_left.at<double>(2,2) = projectionLeft->P[10];
 	P_left.at<double>(2,3) = projectionLeft->P[11];
 
-	//ROS_INFO_STREAM("left: " << P_left);
+	ROS_INFO_STREAM("left: " << P_left);
 	freshCameraInfo = true;
 };
 
