@@ -41,7 +41,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
-        node_handle(*nodehandle), numParticles(200){
+        node_handle(*nodehandle), numParticles(300){
 
 	initializeParticles();
 
@@ -50,8 +50,8 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
 	-0.1942, -0.0723, -0.9783, 0.1273,
 	0,0, 0,1.0000);
 
-	Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.8361,0.5340, 0.1264, -0.1192,
-			0.5132, 0.8424, -0.1641, -0.0262,
+	Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.8361,0.5340, 0.1264, -0.139,
+			0.5132, 0.8424, -0.1641, -0.024,
 			-0.1942, -0.0723, -0.9783, 0.1273,
 			0,0, 0,1.0000);
 
@@ -225,7 +225,7 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	/***Update according to the max score***/
 
 	double maxScore_1 = 0.0;
-	double maxScore_2 = 0.0;
+	double maxScore_2 = 0.0; //for aarm 2
 
 	int maxScoreIdx_1 = -1; //maximum scored particle index
 	int maxScoreIdx_2 = -1; //maximum scored particle index
@@ -265,7 +265,6 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	}
 
 	ToolModel::toolModel best_particle = particles_arm_1[maxScoreIdx_1];
-
 	///showing results for each iteration here
 	//render in segmented image
 	newToolModel.renderTool(raw_image_left, particles_arm_1[maxScoreIdx_1], Cam_left_arm_1, P_left);
@@ -275,9 +274,8 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	trackingImages[1] = raw_image_right.clone();
 	cv::imshow("trackingImages left", trackingImages[0]);
 	cv::imshow("trackingImages right", trackingImages[1]);
-	//cv::imshow("best particle 2 in same loop",trackingImages[1]);
 
-	cv::waitKey(15);
+	cv::waitKey(20);
 
 	//each time will clear the particles and resample them, resample using low variance resampling method
 	std::vector<ToolModel::toolModel> oldParticles = particles_arm_1;
@@ -304,7 +302,6 @@ void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedP
     }
 
 };
-
 
 double ParticleFilter::measureFuncSameCam(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose,
 		const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right) {
@@ -362,15 +359,12 @@ void ParticleFilter::resamplingParticles(const std::vector<ToolModel::toolModel>
 			idx += 1;
 			w = w + particleWeight[idx];
 		}
-
 		update_particles.push_back(sampleModel[idx]);
 	}
 
 };
 
 void ParticleFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec){
-//	Eigen::Vector3d rpy = trans.rotation().eulerAngles(0, 1, 2);
-//	ROS_INFO_STREAM("RPY " << rpy);
 
     Eigen::Matrix3d rot_affine = trans.rotation();
 
@@ -388,40 +382,6 @@ void ParticleFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat 
     rot_vec = cv::Mat::zeros(3,1, CV_64FC1);
     cv::Rodrigues(rot, rot_vec );
     //ROS_INFO_STREAM("rot_vec " << rot_vec);
-};
-
-/******from eigen to opencv matrix****/
-void ParticleFilter::convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix){
-
-    outputMatrix = cv::Mat::eye(4,4,CV_64FC1);
-
-    Eigen::Vector3d pos = trans.translation();
-    Eigen::Matrix3d rot = trans.linear();
-
-    //this is the last col, translation
-    outputMatrix.at<double>(0,3) = pos(0);
-    outputMatrix.at<double>(1,3) = pos(1);
-    outputMatrix.at<double>(2,3) = pos(2);
-
-    Eigen::Vector3d col_0, col_1, col_2;
-    //this is the first col, rotation x
-    col_0 = rot.col(0);
-    outputMatrix.at<double>(0,0) = col_0(0);
-    outputMatrix.at<double>(1,0) = col_0(1);
-    outputMatrix.at<double>(2,0) = col_0(2);
-
-    //this is the second col, rotation y
-    col_1 = rot.col(1);
-    outputMatrix.at<double>(0,1) = col_1(0);
-    outputMatrix.at<double>(1,1) = col_1(1);
-    outputMatrix.at<double>(2,1) = col_1(2);
-
-    //this is the third col, rotation z
-    col_2 = rot.col(2);
-    outputMatrix.at<double>(0,2) = col_2(0);
-    outputMatrix.at<double>(1,2) = col_2(1);
-    outputMatrix.at<double>(2,2) = col_2(2);
-
 };
 
 /*** one possible motion model for tool in image frame, update particles based on given spatial velocity ***/
@@ -495,6 +455,5 @@ void ParticleFilter::updateSamples(const cv::Mat &bodyVel, double &updateRate, s
 
 		/***according to the cylinder pose, update ellipse and grippers pose***/
 		//newToolModel.computeDavinciPose(particles[k], 0.0, 0.0, 0.0); // no need to change relative angles??? TODO:
-
 	}
 };

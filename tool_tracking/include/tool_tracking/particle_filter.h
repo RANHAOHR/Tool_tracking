@@ -180,10 +180,8 @@ public:
 
 	void updateParticles(std::vector<ToolModel::toolModel> &updateParticles, const ToolModel::toolModel &bestParticle);
 
-
 	cv::Mat adjoint(cv::Mat &G);
     void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
-    void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 
 };
 

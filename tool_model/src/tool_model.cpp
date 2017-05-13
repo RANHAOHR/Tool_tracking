@@ -53,7 +53,7 @@ ToolModel::ToolModel() {
 
     offset_body = 0.4429;//0.4535;  //0.3429,
     offset_ellipse = offset_body + 0.01;
-    offset_gripper = offset_ellipse - 0.003;// + 0.009;// + 0.003;
+    offset_gripper = offset_ellipse - 0.01;// + 0.003;
 
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
@@ -808,7 +808,7 @@ ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder,
     toolModel newTool = seeds;  //BODY part is done here
 
     ///what if generate seeding group
-    double step = 0.0015;
+    double step = 0.005;
     double dev = randomNumber(step, 0);
 
     newTool.tvec_cyl(0) = seeds.tvec_cyl(0) + dev;
@@ -843,13 +843,13 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose){
 
     toolModel gaussianTool;  //new sample
 
-    double dev_pos = randomNumber(0.0008, 0);
+    double dev_pos = randomNumber(0.003, 0);
     gaussianTool.tvec_cyl(0) = max_pose.tvec_cyl(0)+ dev_pos;
 
-    dev_pos = randomNumber(0.0008, 0);
+    dev_pos = randomNumber(0.0003, 0);
     gaussianTool.tvec_cyl(1) = max_pose.tvec_cyl(1)+ dev_pos;
 
-    dev_pos = randomNumber(0.0008, 0);
+    dev_pos = randomNumber(0.0003, 0);
     gaussianTool.tvec_cyl(2) = max_pose.tvec_cyl(2)+ dev_pos;
 
     double dev_ori = randomNumber(0.01, 0);
@@ -863,7 +863,7 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose){
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    double theta_ = randomNumber(0.001, 0);    //-90,90
+    double theta_ = randomNumber(0.01, 0);    //-90,90
     double theta_grip_1 = randomNumber(0.001, 0);
     double theta_grip_2 = randomNumber(0.001, 0);
 
@@ -1000,12 +1000,12 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
             0, 1, 0,
             -sin_theta,0, cos_theta);
 
-    cos_theta = cos(0);
-    sin_theta = sin(0);
+    cos_theta = cos(-0.5);
+    sin_theta = sin(-0.5);
 
     cv::Mat adjust = (cv::Mat_<double>(3,3) << cos_theta, 0, sin_theta,
             0, 1, 0,
-            -sin_theta,0, cos_theta);
+            -sin_theta,0, cos_theta); //correction for model error
 
     cv::Mat rot_new =  rot_ellipse * g_ellipse * adjust ;
     cv::Mat temp_vec(3,1,CV_64FC1);

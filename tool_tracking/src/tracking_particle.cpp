@@ -115,7 +115,8 @@ int main(int argc, char **argv) {
             seg_left = segmentation(rawImage_left);  //or use image_vessselness
             seg_right = segmentation(rawImage_right);
 
-			//cv::imshow("seg left ", seg_left);
+			cv::imshow("seg left ", seg_left);
+            cv::imshow("seg right ", seg_right);
 
             trackingImgs = Particles.trackingTool(seg_left, seg_right); //with rendered tool and segmented img
 
