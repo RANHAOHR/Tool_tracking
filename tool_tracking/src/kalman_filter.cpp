@@ -248,16 +248,59 @@ void KalmanFilter::getMeasurementModel(const cv::Mat & coarse_guess_vector,
 //	ROS_INFO_STREAM("temp_normal row: " << temp_normal.rows );
 
 	int measurement_dim = temp_point.rows;
-	zt_arm1 = cv::Mat_<double>::zeros(measurement_dim, 1);  //don't forget this
+    cv::Mat measurement_points = cv::Mat_<double>::zeros(measurement_dim, 2);
+	int radius = 20;
 
-	double radius = 1.0;
+    double max_intensity = -0.1;
+//TODO: NEED TEST!
+	for (int i = 0; i < measurement_dim; ++i) {
+        double x = temp_point.at<double>(i,0);
+        double y = temp_point.at<double>(i,1);
 
-//	for (int i = 0; i < ; ++i) {
-//
-//	}
+
+        //if the normal is steep
+        if(temp_normal.at<double>(i,0) == 0.0000){   //avoid core dump
+
+            double target_x = x;
+            for (int j = -radius ; j < radius ; ++j) {  //j = delta_y
+                double target_y = y + j;
+                cv::Scalar intensity_vec = segImgBlur.at<uchar>(target_x, target_y );
+                double intensity = intensity_vec.val[0];
+                if(intensity > max_intensity ){   //didn't test yet
+                    max_intensity = intensity;
+                    measurement_points.at<double>(i,0) = target_x;
+                    measurement_points.at<double>(i,1) = target_y;
+                }
+            }
 
 
+        }else{
 
+            double k = temp_normal.at<double>(i,1) /temp_normal.at<double>(i,0);
+            for (int j = -radius ; j < radius ; ++j) {  //j = delta_x
+                double target_x = x + j;
+                double target_y = y + k * j;
+
+                cv::Scalar intensity_vec = segImgBlur.at<uchar>(target_x, target_y );
+                double intensity = intensity_vec.val[0];
+                if(intensity > max_intensity ){
+                    max_intensity = intensity;
+                    measurement_points.at<double>(i,0) = target_x;
+                    measurement_points.at<double>(i,1) = target_y;
+                }
+
+            }
+        }
+
+	}
+
+    zt_arm1 = cv::Mat_<double>::zeros(measurement_dim, 1);  //don't forget this
+    for (int i = 0; i <measurement_dim; ++i) {
+        cv::Mat normal = temp_normal.row(i);
+        cv::Mat pixel = measurement_points.row(i);
+        double dot_product = normal.dot(pixel);  //n^T * x
+        zt_arm1.at<double>(i,0) = dot_product;
+    }
 
 };
 

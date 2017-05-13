@@ -1261,7 +1261,7 @@ void ToolModel::renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &Ca
         temp.copyTo(tool_normals.row(i));
     }
 
-    ROS_INFO_STREAM("tool_normals: " << tool_normals);
+   // ROS_INFO_STREAM("tool_normals: " << tool_normals);
 };
 
 float ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage) {
@@ -1277,12 +1277,23 @@ float ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segme
     cv::GaussianBlur(segImageGrey,segImgBlur, cv::Size(9,9),4,4);
     segImgBlur /= 255; //scale the blurred image
 
-//    cv::imshow("segImgBlur", segImgBlur);
-//    cv::waitKey(0);
+////testing
+//    for (int i = 0; i < segImgBlur.rows; i++) {
+//        for (int j = 0; j < segImgBlur.cols; j++) {
+//            cv::Scalar temp = segImgBlur.at<uchar>(i,j);
+//            double inense = temp.val[0];
+//            ROS_INFO_STREAM("inense: " << inense );
+//        }
+//    }
+
+    cv::imshow("segImgBlur", segImgBlur);
+    cv::waitKey();
+
+
     cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
     cv::Mat toolImFloat; //Float data type of grey scale tool image
 
-    cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
+    //cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
 
     toolImageGrey.convertTo(toolImFloat, CV_32FC1); // convert grey scale to float
 
@@ -1317,7 +1328,7 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
     for (int i = 0; i < segImgGrey.rows; i++) {
         for (int j = 0; j < segImgGrey.cols; j++) {
             segImgGrey.at<uchar>(i,j) = 255 - segImgGrey.at<uchar>(i,j);
-            // ROS_INFO_STREAM("segImgGrey: " << segImgGrey.at<float>(i,j) );
+
         }
     }
 
@@ -1326,10 +1337,10 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
     cv::distanceTransform(segImgGrey, distance_img, CV_DIST_L2, 3);
     cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
 
-//    cv::imshow("segImgGrey img", segImgGrey);
-//    cv::imshow("Normalized img", normDIST);
+    cv::imshow("segImgGrey img", segImgGrey);
+    cv::imshow("Normalized img", normDIST);
 //    cv::imshow("distance_img", distance_img);
-//    cv::waitKey();
+    cv::waitKey();
 
     /***multiplication process**/
     cv::Mat resultImg; //initialize

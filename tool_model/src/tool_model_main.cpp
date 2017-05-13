@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
     ROS_INFO("After Loading Model and Initialization, please press ENTER to go on");
     cin.ignore();
 
-    cv::Mat testImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3
+    cv::Mat testImg = cv::Mat::zeros(480, 640, CV_8UC1); //CV_8UC3
     cv::Mat P(3, 4, CV_64FC1);
 
 //    cv::Size size(640, 480);
@@ -110,9 +110,11 @@ int main(int argc, char **argv) {
         new_temp.at<double>(i,0) = dot_product;
 
     }
+
+
+    double score = newToolModel.calculateMatchingScore(testImg, testImg );
     //ROS_INFO_STREAM("new_temp" << new_temp);
     cv::imshow("tool image: ",testImg );
-    //cv::imshow("segImg : ",segImg );
 
     cv::waitKey(0);
 
