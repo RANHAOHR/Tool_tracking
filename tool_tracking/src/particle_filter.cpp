@@ -41,7 +41,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
-        node_handle(*nodehandle), numParticles(300){
+        node_handle(*nodehandle), numParticles(200){
 
 	initializeParticles();
 
@@ -108,7 +108,6 @@ void ParticleFilter::initializeParticles() {
 		sensor_1 = tmp[0];
 		sensor_2 = tmp[1];
     }
-
 //    Eigen::Affine3d a1_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_1.data()));
 //
 //    Eigen::Vector3d a1_trans = a1_pos.translation();
@@ -127,12 +126,6 @@ void ParticleFilter::initializeParticles() {
 
 	computeRodriguesVec(a1_pos, a1_rvec);
 
-//    Eigen::Affine3d a2_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_2.data()));
-//    Eigen::Vector3d a2_trans = a2_pos.translation();
-//    cv::Mat a2_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-//    computeRodriguesVec(a2_pos, a2_rvec);
-
-
 	/*** first arm particles initialization ***/
 	initial.tvec_cyl(0) = a1_trans[0];  //left and right (image frame)
 	initial.tvec_cyl(1) = a1_trans[1];  //up and down
@@ -141,17 +134,18 @@ void ParticleFilter::initializeParticles() {
 	initial.rvec_cyl(1) = a1_rvec.at<double>(1,0);
 	initial.rvec_cyl(2) = a1_rvec.at<double>(2,0);
 
-	ROS_INFO_STREAM("FORWARD initial t : " << initial.tvec_cyl);
-	ROS_INFO_STREAM("FORWARD initial r: " << initial.rvec_cyl);
 
-    double theta_cylinder = tmp[0][4]; //initial guess
-
-	ROS_INFO_STREAM("FORWARD theta_cylinder : " << theta_cylinder);
+    double theta_cylinder = tmp[0][3]; //initial guess
+    ROS_INFO_STREAM("theta_cylinder" << theta_cylinder);
+    double theta_ellipse = tmp[0][4]; //initial guess
     double theta_oval = tmp[0][5]; //initial guess
     double theta_open = tmp[0][6]; //initial guess
 
+    ROS_INFO_STREAM("theta_oval" << theta_oval);
+    ROS_INFO_STREAM("theta_open" << theta_open);
+
 	for (int i = 0; i < numParticles; i++) {
-		particles_arm_1[i] = newToolModel.setRandomConfig(initial, theta_cylinder, theta_oval, theta_open );
+		particles_arm_1[i] = newToolModel.setRandomConfig(initial, theta_cylinder, theta_ellipse, theta_oval, theta_open );
 	}
 //	/*** second arm particles initialization ***/
 //	initial.tvec_grip1(0) = a2_trans[0];  //left and right (image frame)

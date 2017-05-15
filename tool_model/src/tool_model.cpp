@@ -803,7 +803,7 @@ void ToolModel::modify_model_(std::vector<glm::vec3> &input_vertices, std::vecto
 translation, rotation, new z axis, new x axis*/
 //TODO:
 ToolModel::toolModel
-ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder, const double &theta_oval, const double &theta_open){
+ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder, const double &theta_ellipse, const double &theta_oval, const double &theta_open){
 
     toolModel newTool = seeds;  //BODY part is done here
 
@@ -830,11 +830,12 @@ ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder,
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    double theta_1 = theta_cylinder + randomNumber(0.0001, 0);   // tool rotation
+    double theta_roll = theta_cylinder + randomNumber(0.0001, 0);   // tool rotation
+    double theta_elp = theta_ellipse + randomNumber(0.0001, 0);   // tool rotation
     double theta_grip_1 = theta_oval + randomNumber(0.0001, 0); // oval rotation
     double theta_grip_2 = theta_open + randomNumber(0.0001, 0);
 
-    computeEllipsePose(newTool, theta_1, theta_grip_1, theta_grip_2);
+    computeEllipsePose(newTool,theta_roll, theta_elp, theta_grip_1, theta_grip_2);
 
     return newTool;
 };
@@ -932,7 +933,6 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
     inputModel.tvec_grip2(2) = inputModel.tvec_grip1(2);
 
     /**** orientation ***/
-
     double grip_1_delta = theta_grip_1 - theta_grip_2/2;
     double grip_2_delta = theta_grip_1 + theta_grip_2/2;
 
@@ -967,7 +967,7 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
 };
 
 /*using cylinder pose to compute rest pose*/
-void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_ellipse, const double &theta_grip_1,
+void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_cylinder, const double &theta_ellipse, const double &theta_grip_1,
                                    const double &theta_grip_2) {
 
     cv::Mat I = cv::Mat::eye(3, 3, CV_64FC1);
@@ -989,25 +989,26 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     inputModel.tvec_elp(1) = q_temp.at<double>(1, 0);
     inputModel.tvec_elp(2) = q_temp.at<double>(2, 0);
 
-    /*oval part*/
+
+    /*oval part orientation */
     cv::Mat rot_ellipse(3,3,CV_64FC1);
     cv::Rodrigues(inputModel.rvec_cyl, rot_ellipse);
 
-    double cos_theta = cos(theta_ellipse);
-    double sin_theta = sin(theta_ellipse);
+    double cos_theta = cos(theta_cylinder);
+    double sin_theta = sin(theta_cylinder);
+
+    cv::Mat g_roll = (cv::Mat_<double>(3,3) << 1,0,0,
+            0,cos_theta, -sin_theta,
+            0,sin_theta,cos_theta);
+
+    cos_theta = cos(theta_ellipse);
+    sin_theta = sin(theta_ellipse);
 
     cv::Mat g_ellipse = (cv::Mat_<double>(3,3) << cos_theta, 0, sin_theta,
-            0, 1, 0,
-            -sin_theta,0, cos_theta);
+            0,1,0,
+            -sin_theta, 0, cos_theta);
 
-    cos_theta = cos(-0.5);
-    sin_theta = sin(-0.5);
-
-    cv::Mat adjust = (cv::Mat_<double>(3,3) << cos_theta, 0, sin_theta,
-            0, 1, 0,
-            -sin_theta,0, cos_theta); //correction for model error
-
-    cv::Mat rot_new =  rot_ellipse * g_ellipse * adjust ;
+    cv::Mat rot_new = rot_ellipse *g_roll *  g_ellipse;
     cv::Mat temp_vec(3,1,CV_64FC1);
     cv::Rodrigues(rot_new, inputModel.rvec_elp);
 

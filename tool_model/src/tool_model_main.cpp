@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
     initial.rvec_cyl(2) = 0.2;
 
 
-    newToolModel.computeEllipsePose(initial, 0.0, 0.0, 0.0 );
+    newToolModel.computeEllipsePose(initial, 0.0 , 0.0, 0.0, 0.0 );
 
     cv::Mat temp_point = cv::Mat(1,2,CV_64FC1);
     cv::Mat temp_normal = cv::Mat(1,2,CV_64FC1);
