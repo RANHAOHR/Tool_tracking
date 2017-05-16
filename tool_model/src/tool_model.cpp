@@ -58,7 +58,7 @@ ToolModel::ToolModel() {
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
 
-    std::string cylinder = tool_model_pkg + "/tool_parts/refine_cylinder_3.obj"; //"/tool_parts/refine_cylinder_3.obj";
+    std::string cylinder = tool_model_pkg + "/tool_parts/test-cylinder.obj"; //"/tool_parts/refine_cylinder_3.obj";
     std::string ellipse = tool_model_pkg + "/tool_parts/refine_ellipse_3.obj";
     std::string gripper1 = tool_model_pkg + "/tool_parts/gripper2_1.obj";
     std::string gripper2 = tool_model_pkg + "/tool_parts/gripper2_2.obj";
