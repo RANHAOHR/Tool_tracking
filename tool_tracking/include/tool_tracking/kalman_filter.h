@@ -174,6 +174,7 @@ public:
     */
 
     void print_affine(Eigen::Affine3d &affine);
+    void showNormals(cv::Mat &temp_point, cv::Mat &temp_normal, cv::Mat &inputImage );
 
 	void UKF_double_arm();
 	void getSquareRootCov(cv::Mat &sigma_cov, cv::Mat &square_root);
@@ -203,7 +204,7 @@ public:
 							 cv::Mat &Cam_right,
 							 cv::Mat & rawImage_left,
 							 cv::Mat & rawImage_right);
-
+    void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
 	void Cholesky( const cv::Mat& A, cv::Mat& S );  //this is not working
 

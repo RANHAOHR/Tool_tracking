@@ -93,26 +93,25 @@ int main(int argc, char **argv) {
     initial.rvec_cyl(1) = 1.4;
     initial.rvec_cyl(2) = 0.2;
 
-
     newToolModel.computeEllipsePose(initial, 0.0, 0.0, 0.0 );
 
     cv::Mat temp_point = cv::Mat(1,2,CV_64FC1);
     cv::Mat temp_normal = cv::Mat(1,2,CV_64FC1);
     newToolModel.renderToolUKF(testImg, initial, Cam, P, temp_point, temp_normal);
 
-    ROS_INFO_STREAM("temp_point row: " << temp_point.rows );
-    ROS_INFO_STREAM("temp_normal row: " << temp_normal.rows );
-    cv::Mat new_temp(temp_point.rows, 1, CV_64FC1);
-    for (int i = 0; i <temp_point.rows ; ++i) {
-        cv::Mat normal = temp_normal.row(i);
-        cv::Mat pixel = temp_point.row(i);
-        double dot_product = normal.dot(pixel);
-        new_temp.at<double>(i,0) = dot_product;
+//    ROS_INFO_STREAM("temp_point row: " << temp_point.rows );
+//    ROS_INFO_STREAM("temp_normal row: " << temp_normal.rows );
+//    cv::Mat new_temp(temp_point.rows, 1, CV_64FC1);
+//    for (int i = 0; i <temp_point.rows ; ++i) {
+//        cv::Mat normal = temp_normal.row(i);
+//        cv::Mat pixel = temp_point.row(i);
+//        double dot_product = normal.dot(pixel);
+//        new_temp.at<double>(i,0) = dot_product;
+//
+//    }
 
-    }
 
-
-    double score = newToolModel.calculateMatchingScore(testImg, testImg );
+    //double score = newToolModel.calculateMatchingScore(testImg, testImg );
     //ROS_INFO_STREAM("new_temp" << new_temp);
     cv::imshow("tool image: ",testImg );
 

@@ -205,7 +205,7 @@ void ToolModel::load_model_vertices(const char *path, std::vector<glm::vec3> &ou
     for (int i = 0; i < neighbor_faces.size(); ++i) {
         /*********find the neighbor faces************/
         for (int j = 0; j < out_faces.size(); ++j) {
-            if (j != i) {  //don't repeate yourself
+            if (j != i) {  //don't repeat yourself
                 int match = Compare_vertex(out_faces[i], out_faces[j], temp_vec);
 
                 if (match == 2) //so face i and face j share an edge
@@ -1249,7 +1249,7 @@ void ToolModel::renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &Ca
 
 
     int point_size = tool_points.rows;
-    ROS_INFO_STREAM("tool_points: " << tool_points);
+//    ROS_INFO_STREAM("tool_points: " << tool_points);
 //    ROS_INFO_STREAM("tool_normals: " << tool_normals);
     tool_points = tool_points.rowRange(1, point_size);
     tool_normals = tool_normals.rowRange(1, point_size);
@@ -1276,18 +1276,6 @@ float ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segme
     cv::Mat segImgBlur;
     cv::GaussianBlur(segImageGrey,segImgBlur, cv::Size(9,9),4,4);
     segImgBlur /= 255; //scale the blurred image
-
-////testing
-//    for (int i = 0; i < segImgBlur.rows; i++) {
-//        for (int j = 0; j < segImgBlur.cols; j++) {
-//            cv::Scalar temp = segImgBlur.at<uchar>(i,j);
-//            double inense = temp.val[0];
-//            ROS_INFO_STREAM("inense: " << inense );
-//        }
-//    }
-
-    cv::imshow("segImgBlur", segImgBlur);
-    cv::waitKey();
 
 
     cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels

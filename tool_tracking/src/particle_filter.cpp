@@ -180,12 +180,8 @@ void ParticleFilter::initializeParticles() {
 	initial.rvec_cyl(1) = a1_rvec.at<double>(1,0);
 	initial.rvec_cyl(2) = a1_rvec.at<double>(2,0);
 
-	ROS_INFO_STREAM("FORWARD initial t : " << initial.tvec_cyl);
-	ROS_INFO_STREAM("FORWARD initial r: " << initial.rvec_cyl);
 
     double theta_cylinder = tmp[0][4]; //initial guess
-
-	ROS_INFO_STREAM("FORWARD theta_cylinder : " << theta_cylinder);
     double theta_oval = tmp[0][5]; //initial guess
     double theta_open = tmp[0][6]; //initial guess
 
