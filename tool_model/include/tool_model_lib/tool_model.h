@@ -194,7 +194,7 @@ public:
                                            const std::vector<std::vector<int> > &neighbor_faces,
                                            const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
                                            cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
-                                           const cv::Mat &P, cv::Mat &tool_points, cv::Mat &tool_normals,
+                                           const cv::Mat &P, std::vector<std::vector<double> > &vertices_vector,
                                            cv::OutputArray jac);
 
     /**********************math computation*******************/
@@ -231,6 +231,7 @@ public:
 
     cv::Mat camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat);
 
+    void reorganizeVertices(std::vector< std::vector<double> > &tool_vertices_normals, cv::Mat &tool_points, cv::Mat &tool_normals);
 
 };
 

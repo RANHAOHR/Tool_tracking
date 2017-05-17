@@ -99,6 +99,9 @@ int main(int argc, char **argv) {
     cv::Mat temp_normal = cv::Mat(1,2,CV_64FC1);
     newToolModel.renderToolUKF(testImg, initial, Cam, P, temp_point, temp_normal);
 
+    ROS_INFO_STREAM("tool_points " << temp_point);
+    ROS_INFO_STREAM("tool_normals " << temp_normal);
+
 //    ROS_INFO_STREAM("temp_point row: " << temp_point.rows );
 //    ROS_INFO_STREAM("temp_normal row: " << temp_normal.rows );
 //    cv::Mat new_temp(temp_point.rows, 1, CV_64FC1);

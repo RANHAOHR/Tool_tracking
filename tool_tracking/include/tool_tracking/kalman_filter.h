@@ -97,6 +97,8 @@ private:
 
     int L;  ///DOF for both arms.
 
+	int measurement_dim;
+
     const static double alpha = 0.0005;
     const static double k = 0.0; //TODO: how much?
     const static double beta = 2;
@@ -137,7 +139,7 @@ private:
 			cv::Mat &left_image,cv::Mat &right_image,
 			cv::Mat &cam_left, cv::Mat &cam_right);
 
-    void computeSigmaMeasures(std::vector<double> & measureWeights, cv::Mat & zt, const std::vector<cv::Mat_<double> > & sigma_point_in,
+    void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in,
 							  cv::Mat &left_image,cv::Mat &right_image,
 							  cv::Mat &cam_left, cv::Mat &cam_right);
 
