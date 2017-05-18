@@ -58,7 +58,7 @@ ToolModel::ToolModel() {
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
 
-    std::string cylinder = tool_model_pkg + "/tool_parts/test-cylinder.obj"; //"/tool_parts/refine_cylinder_3.obj";
+    std::string cylinder = tool_model_pkg + "/tool_parts/tense_cylinde_2.obj"; //"/tool_parts/refine_cylinder_3.obj";
     std::string ellipse = tool_model_pkg + "/tool_parts/refine_ellipse_3.obj";
     std::string gripper1 = tool_model_pkg + "/tool_parts/gripper2_1.obj";
     std::string gripper2 = tool_model_pkg + "/tool_parts/gripper2_2.obj";
@@ -559,28 +559,31 @@ void ToolModel::Compute_Silhouette_UKF(const std::vector<std::vector<int> > &inp
 //                            ROS_INFO_STREAM("prjpt_2 " << prjpt_2);
                             cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
 
-                            /**get normals for UKF**/
+                            /**get measurement points for UKF**/
                             std::vector<double> vertex_vector;
                             vertex_vector.resize(4); // vertices, normals
 
-                            vertex_vector[0] = prjpt_1.x;
-                            vertex_vector[1] = prjpt_1.y;
+                            if(prjpt_1.x >= 0 && prjpt_1.x <=640 && prjpt_1.y >= 0 && prjpt_1.y <= 480){
+                                vertex_vector[0] = prjpt_1.x;
+                                vertex_vector[1] = prjpt_1.y;
 
-                            cv::Mat temp_normal = new_Normals.col(neighbor_faces[i][j + 2]).clone();
-                            vertex_vector[2] = temp_normal.at<double>(0,0);
-                            vertex_vector[3] = temp_normal.at<double>(1,0);
-                            vertices_vector.push_back(vertex_vector);
+                                cv::Mat temp_normal = new_Normals.col(neighbor_faces[i][j + 2]).clone();
+                                vertex_vector[2] = temp_normal.at<double>(0,0);
+                                vertex_vector[3] = temp_normal.at<double>(1,0);
+                                vertices_vector.push_back(vertex_vector);
+                            }
 
                             //////second point
-                            vertex_vector[0] = prjpt_2.x;
-                            vertex_vector[1] = prjpt_2.y;
+                            if(prjpt_2.x >= 0 && prjpt_2.x <=640 && prjpt_2.y >= 0 && prjpt_2.y <= 480){
+                                vertex_vector[0] = prjpt_2.x;
+                                vertex_vector[1] = prjpt_2.y;
 
-                            temp_normal = new_Normals.col(neighbor_faces[i][j + 4]).clone();
-                            vertex_vector[2] = temp_normal.at<double>(0,0);
-                            vertex_vector[3] = temp_normal.at<double>(1,0);
+                                cv::Mat temp_normal = new_Normals.col(neighbor_faces[i][j + 4]).clone();
+                                vertex_vector[2] = temp_normal.at<double>(0,0);
+                                vertex_vector[3] = temp_normal.at<double>(1,0);
 
-                            vertices_vector.push_back(vertex_vector);
-
+                                vertices_vector.push_back(vertex_vector);
+                            }
                         }
 
                     }
@@ -1262,25 +1265,39 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
 
     std::sort(tool_vertices_normals.begin(), tool_vertices_normals.end());
     tool_vertices_normals.erase(std::unique(tool_vertices_normals.begin(), tool_vertices_normals.end()), tool_vertices_normals.end());
-//    ROS_INFO("--------------------");
-//    for (int i = 0; i <tool_vertices_normals.size() ; ++i) {
+
+//    for (int i = 0; i <tool_vertices_normals.size(); ++i) {
 //        ROS_INFO("tool_vertices_normals i: %d, %f, %f,%f,%f ", i, tool_vertices_normals[i][0], tool_vertices_normals[i][1],tool_vertices_normals[i][2],tool_vertices_normals[i][3]);
+//
+//    }
+    //ROS_INFO("--------------------");
+    int count  = 0;
+    std::vector< std::vector<double> > temp_tool_vector = tool_vertices_normals;
+    for (int k = 0; k < tool_vertices_normals.size()-1; ++k) {
+        if((tool_vertices_normals[k][0] == tool_vertices_normals[k+1][0]) && (tool_vertices_normals[k][1] == tool_vertices_normals[k+1][1]) ){
+            temp_tool_vector.erase(temp_tool_vector.begin() + k -count, temp_tool_vector.begin() + k+1-count);
+            count = count +1;
+        }
+
+    }
+
+//    for (int i = 0; i <temp_tool_vector.size(); ++i) {
+//        ROS_INFO("temp_tool_vector i: %d, %f, %f,%f,%f ", i, temp_tool_vector[i][0], temp_tool_vector[i][1],temp_tool_vector[i][2],temp_tool_vector[i][3]);
 //    }
 
-    int point_dim = tool_vertices_normals.size();
+    int point_dim = temp_tool_vector.size();
     tool_points = cv::Mat::zeros(point_dim, 2,CV_64FC1);
     tool_normals = cv::Mat::zeros(point_dim, 2,CV_64FC1);
 
     for (int j = 0; j < point_dim ; ++j) {
-        tool_points.at<double>(j,0) = tool_vertices_normals[j][0];
-        tool_points.at<double>(j,1) = tool_vertices_normals[j][1];
+        tool_points.at<double>(j,0) = temp_tool_vector[j][0];
+        tool_points.at<double>(j,1) = temp_tool_vector[j][1];
 
-        tool_normals.at<double>(j,0) = tool_vertices_normals[j][2];
-        tool_normals.at<double>(j,1) = tool_vertices_normals[j][3];
+        tool_normals.at<double>(j,0) = temp_tool_vector[j][2];
+        tool_normals.at<double>(j,1) = temp_tool_vector[j][3];
     }
 //    ROS_INFO_STREAM("tool_points " << tool_points);
 //    ROS_INFO_STREAM("tool_normals " << tool_normals);
-
 
         for (int i = 0; i < point_dim ; ++i) {
         cv::Mat temp(1,2,CV_64FC1);
@@ -1305,14 +1322,12 @@ float ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segme
     cv::GaussianBlur(segImageGrey,segImgBlur, cv::Size(9,9),4,4);
     segImgBlur /= 255; //scale the blurred image
 
-
     cv::Mat toolImageGrey; //grey scale of toolImage since tool image has 3 channels
     cv::Mat toolImFloat; //Float data type of grey scale tool image
 
-    //cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
+    cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
 
     toolImageGrey.convertTo(toolImFloat, CV_32FC1); // convert grey scale to float
-
     cv::Mat result(1, 1, CV_32FC1);
 
     cv::matchTemplate(segImgBlur, toolImFloat, result, CV_TM_CCORR_NORMED); //seg, toolImg

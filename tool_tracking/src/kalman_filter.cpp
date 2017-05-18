@@ -225,15 +225,21 @@ void KalmanFilter::getMeasurementModel(const cv::Mat & coarse_guess_vector,
 		cv::Mat &Cam_left, cv::Mat &Cam_right, cv::Mat & rawImage_left, cv::Mat & rawImage_right)
 {
 
-	/*** blur the segmentation image ***/
+	/*** blur the segmentation image: distance transformation ***/
 	cv::Mat segImageGrey = seg_left.clone(); //(ROI); //crop segmented image, notice the size of the segmented image
+	segImageGrey.convertTo(segImageGrey, CV_8UC1);
+	/***segmented image process**/
+	for (int i = 0; i < segImageGrey.rows; i++) {
+		for (int j = 0; j < segImageGrey.cols; j++) {
+			segImageGrey.at<uchar>(i,j) = 255 - segImageGrey.at<uchar>(i,j);
 
-	segImageGrey.convertTo(segImageGrey, CV_32FC1);
+		}
+	}
 
-	cv::Mat segImgBlur;  //inquiry image, don't render on this
-	cv::GaussianBlur(segImageGrey,segImgBlur, cv::Size(9,9),4,4);
-
-	segImgBlur /= 255; //scale the blurred image
+	cv::Mat segImgBlur;
+	cv::Mat distance_img;
+	cv::distanceTransform(segImageGrey, distance_img, CV_DIST_L2, 3);
+	cv::normalize(distance_img, segImgBlur, 0.00, 1.00, cv::NORM_MINMAX);
 
 	cv::imshow("segImgBlur", segImgBlur);
 
@@ -242,69 +248,90 @@ void KalmanFilter::getMeasurementModel(const cv::Mat & coarse_guess_vector,
 	cv::Mat temp_normal = cv::Mat(1,2,CV_64FC1);
 
 	cv::Mat rendered_image = seg_left.clone();
+
 	ToolModel::toolModel coarse_tool;
 	convertToolModel(coarse_guess_vector, coarse_tool);
 	ukfToolModel.renderToolUKF(rendered_image, coarse_tool, Cam_left, P_left, temp_point, temp_normal);
 
-//	ROS_INFO_STREAM("temp_point row: " << temp_point.rows );
 	ROS_INFO_STREAM("temp_normal row: " << temp_normal.rows );
 
 	ROS_INFO_STREAM("temp_point : " << temp_point );
 	ROS_INFO_STREAM("temp_normal : " << temp_normal );
 
 	showNormals(temp_point, temp_normal, rendered_image );
-
 	cv::imshow("rendered_image:", rendered_image);
 
 	measurement_dim = temp_point.rows;
 
     cv::Mat measurement_points = cv::Mat_<double>::zeros(measurement_dim, 2);
-	int radius = 10;
+	int radius = 40;
 
 	//TODO: NEED TEST!
+	cv::Mat test_measurement = seg_left.clone();
+	ukfToolModel.renderToolUKF(test_measurement, coarse_tool, Cam_left, P_left, temp_point, temp_normal);
+
+	cv::Mat temp_show = segImgBlur.clone();
 	for (int i = 0; i < measurement_dim; ++i) {  //each vertex
 
-		double max_intensity = -0.1;
+		float max_intensity = 100.0;// -1.0;
 		double x = temp_point.at<double>(i, 0);
 		double y = temp_point.at<double>(i, 1);
+
+		ROS_INFO_STREAM("point x " << x);
+		ROS_INFO_STREAM("point y " << y);
 
 		double x_normal = temp_normal.at<double>(i, 0);
 		double y_normal = temp_normal.at<double>(i, 1);
 
 		double theta = atan2(y_normal, x_normal);
 
-		for (int j = -radius; j < radius; ++j) {
+		for (int j = -radius; j < radius + 10; ++j) {
 
-			double target_x = x + j * cos(theta);
-			double target_y = y + j * sin(theta);
+			double delta_x =(x + j * cos(theta));
+			double delta_y = (y + j * sin(theta));
 
-			cv::Scalar intensity_vec = segImgBlur.at<uchar>(target_x, target_y);
-			double intensity = intensity_vec.val[0];
-			if (intensity > max_intensity) {
+//			/** testing **/
+//			ROS_INFO_STREAM("double target_x " << delta_x);
+//			ROS_INFO_STREAM("double target_y " << delta_y);
+//
+//			cv::Point2d prjpt_1;
+//			prjpt_1.x = delta_x;
+//			prjpt_1.y = delta_y;
+//
+//			cv::Point2d prjpt_2;
+//
+//			double new_delta_x = (x + (j+1) * cos(theta));
+//			double new_delta_y = (y + (j+1) * sin(theta));
+//
+//			prjpt_2.x = new_delta_x;
+//			prjpt_2.y = new_delta_y;
+//			cv::line(temp_show, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
+//			cv::imshow("temp image show the search range:", temp_show);
+
+			float intensity = segImgBlur.at<float>(cv::Point2d(delta_x, delta_y));
+
+			if (intensity < max_intensity) {
 				max_intensity = intensity;
-				measurement_points.at<double>(i, 0) = target_x;
-				measurement_points.at<double>(i, 1) = target_y;
+				measurement_points.at<double>(i, 0) = delta_x;
+				measurement_points.at<double>(i, 1) = delta_y;
 			}
-
+//			ROS_INFO_STREAM("intensity: " << intensity);
+//			ROS_INFO_STREAM("max_intensity: " << max_intensity);
+//			cv::waitKey();
 		}
-	}
-
-	////testing
-	cv::Mat test_measurement = cv::Mat::zeros(480, 640, CV_8UC3);
-	for (int l = 0; l < measurement_dim; ++l) {
-
+		//ROS_INFO_STREAM("temp_point: " << temp_point.at<double>(i, 0 ) << ", " << temp_point.at<double>(i, 1) );
 		cv::Point2d prjpt_1;
-		prjpt_1.x = temp_point.at<double>(l, 0);
-		prjpt_1.y = temp_point.at<double>(l, 1);
+		prjpt_1.x = temp_point.at<double>(i, 0);
+		prjpt_1.y = temp_point.at<double>(i, 1);
 		cv::Point2d prjpt_2;
-		prjpt_2.x = measurement_points.at<double>(l, 0);
-		prjpt_2.y = measurement_points.at<double>(l, 1);
-
+		prjpt_2.x = measurement_points.at<double>(i, 0);
+		prjpt_2.y = measurement_points.at<double>(i, 1);
+		ROS_INFO_STREAM("measurement_points: " << measurement_points.at<double>(i, 0) <<", "<< measurement_points.at<double>(i, 1) );
 		cv::line(test_measurement, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
-
+		cv::imshow("test_measurement", test_measurement);
+		cv::waitKey();
 	}
 
-	cv::imshow("test_measurement", test_measurement);
 //	ROS_INFO_STREAM("measurement_points " << measurement_points);
     zt_arm1 = cv::Mat_<double>::zeros(measurement_dim, 1);  //don't forget this
     for (int i = 0; i <measurement_dim; ++i) {
@@ -313,8 +340,6 @@ void KalmanFilter::getMeasurementModel(const cv::Mat & coarse_guess_vector,
         double dot_product = normal.dot(pixel);  //n^T * x
         zt_arm1.at<double>(i,0) = dot_product;
     }
-
-
 };
 
 /*
@@ -396,10 +421,9 @@ void KalmanFilter::showNormals(cv::Mat &temp_point, cv::Mat &temp_normal, cv::Ma
 		prjpt_2.x = prjpt_1.x  + r * cos(theta);
 		prjpt_2.y = prjpt_1.y  + r * sin(theta);
 		cv::line(inputImage, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
-//		cv::imshow("rendered_image:", inputImage);
-//		cv::waitKey();
+		cv::imshow("rendered_image:", inputImage);
+		cv::waitKey();
 	}
-
 
 };
 
@@ -532,7 +556,7 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
 	for(int i = 0; i < 2 * L + 1; i++){
 		ROS_INFO_STREAM(" Z_bar[i] - z_caret " <<Z_bar[i] - z_caret);
 		S = S + w_c[i] * (Z_bar[i] - z_caret) * ((Z_bar[i] - z_caret).t());
-		ROS_INFO_STREAM(" S inv  " << S.inv());
+		//ROS_INFO_STREAM(" S inv  " << S.inv());
 		cv::waitKey();
 	}
 
