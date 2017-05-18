@@ -99,7 +99,7 @@ private:
 
 	int measurement_dim;
 
-    const static double alpha = 0.0005;
+    const static double alpha = 0.0001;
     const static double k = 0.0; //TODO: how much?
     const static double beta = 2;
 

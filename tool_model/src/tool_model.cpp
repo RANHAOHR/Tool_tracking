@@ -1285,7 +1285,7 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
 //        ROS_INFO("temp_tool_vector i: %d, %f, %f,%f,%f ", i, temp_tool_vector[i][0], temp_tool_vector[i][1],temp_tool_vector[i][2],temp_tool_vector[i][3]);
 //    }
 
-    int point_dim = temp_tool_vector.size();
+    int point_dim = temp_tool_vector.size() -6;
     tool_points = cv::Mat::zeros(point_dim, 2,CV_64FC1);
     tool_normals = cv::Mat::zeros(point_dim, 2,CV_64FC1);
 

@@ -224,7 +224,6 @@ double KalmanFilter::measureFunc(
 void KalmanFilter::getMeasurementModel(const cv::Mat & coarse_guess_vector,
 		cv::Mat &Cam_left, cv::Mat &Cam_right, cv::Mat & rawImage_left, cv::Mat & rawImage_right)
 {
-
 	/*** blur the segmentation image: distance transformation ***/
 	cv::Mat segImageGrey = seg_left.clone(); //(ROI); //crop segmented image, notice the size of the segmented image
 	segImageGrey.convertTo(segImageGrey, CV_8UC1);
@@ -277,8 +276,8 @@ void KalmanFilter::getMeasurementModel(const cv::Mat & coarse_guess_vector,
 		double x = temp_point.at<double>(i, 0);
 		double y = temp_point.at<double>(i, 1);
 
-		ROS_INFO_STREAM("point x " << x);
-		ROS_INFO_STREAM("point y " << y);
+//		ROS_INFO_STREAM("point x " << x);
+//		ROS_INFO_STREAM("point y " << y);
 
 		double x_normal = temp_normal.at<double>(i, 0);
 		double y_normal = temp_normal.at<double>(i, 1);
@@ -326,12 +325,13 @@ void KalmanFilter::getMeasurementModel(const cv::Mat & coarse_guess_vector,
 		cv::Point2d prjpt_2;
 		prjpt_2.x = measurement_points.at<double>(i, 0);
 		prjpt_2.y = measurement_points.at<double>(i, 1);
-		ROS_INFO_STREAM("measurement_points: " << measurement_points.at<double>(i, 0) <<", "<< measurement_points.at<double>(i, 1) );
+		//ROS_INFO_STREAM("measurement_points: " << measurement_points.at<double>(i, 0) <<", "<< measurement_points.at<double>(i, 1) );
 		cv::line(test_measurement, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
-		cv::imshow("test_measurement", test_measurement);
-		cv::waitKey();
-	}
 
+	}
+	cv::imshow("test_measurement", test_measurement);
+
+//	ROS_INFO_STREAM("temp_normal " << temp_normal);
 //	ROS_INFO_STREAM("measurement_points " << measurement_points);
     zt_arm1 = cv::Mat_<double>::zeros(measurement_dim, 1);  //don't forget this
     for (int i = 0; i <measurement_dim; ++i) {
@@ -380,8 +380,8 @@ void KalmanFilter::getCourseEstimation(){
     kalman_mu_arm1.at<double>(7 , 0) = tmp[0][5];
     kalman_mu_arm1.at<double>(8 , 0) = tmp[0][6];
 
-    double dev_pos = ukfToolModel.randomNum(0.0003, 0.002);  ///deviation for position
-    double dev_ori = ukfToolModel.randomNum(0.0003, 0.002);  ///deviation for orientation
+    double dev_pos = ukfToolModel.randomNum(0.001, 0.0);  ///deviation for position
+    double dev_ori = ukfToolModel.randomNum(0.001, 0.0);  ///deviation for orientation
 
     kalman_sigma_arm1 = (cv::Mat_<double>::eye(L, L));
 
@@ -392,10 +392,10 @@ void KalmanFilter::getCourseEstimation(){
         kalman_sigma_arm1.at<double>(j,j) = dev_ori; //gaussian generator
     }
 
-	double dev_ang = ukfToolModel.randomNum(0.0003, 0); ///deviation for joint angles
+	double dev_ang = ukfToolModel.randomNum(0.0001, 0); ///deviation for joint angles
 	kalman_sigma_arm1.at<double>(6,6) = dev_ang; //gaussian generator
 
-	dev_ang = ukfToolModel.randomNum(0.002, 0); ///deviation for joint angles
+	dev_ang = ukfToolModel.randomNum(0.0001, 0); ///deviation for joint angles
 	kalman_sigma_arm1.at<double>(7,7) = dev_ang; //gaussian generator
 	kalman_sigma_arm1.at<double>(8,8) = dev_ang; //gaussian generator
 
@@ -410,14 +410,12 @@ void KalmanFilter::showNormals(cv::Mat &temp_point, cv::Mat &temp_normal, cv::Ma
 		prjpt_1.x = temp_point.at<double>(i,0);
 		prjpt_1.y = temp_point.at<double>(i,1);
 
-
 		double y_k = temp_normal.at<double>(i,1);
 		double x_k = temp_normal.at<double>(i,0);
 		double theta = atan2(y_k, x_k);
 		double r = 40;
 
 		cv::Point2d prjpt_2;
-
 		prjpt_2.x = prjpt_1.x  + r * cos(theta);
 		prjpt_2.y = prjpt_1.y  + r * sin(theta);
 		cv::line(inputImage, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
@@ -441,7 +439,7 @@ void KalmanFilter::UKF_double_arm(){ //well, currently just one......
 						tool_rawImg_left, tool_rawImg_right);  ///get zt_arm measurement model
 
 	ROS_INFO_STREAM("zt_arm1 " << zt_arm1);
-	cv::waitKey();
+	//cv::waitKey();
 
 	update(kalman_mu_arm1, kalman_sigma_arm1, zt_arm1, toolImage_left_arm_1,
 		   toolImage_right_arm_1, Cam_left_arm_1, Cam_right_arm_1);
@@ -462,6 +460,7 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
 
 	//****Generate the sigma points.****
 	double lambda = alpha * alpha * (L + k) - L;
+	//ROS_INFO_STREAM("lambda " <<  lambda);
 	double gamma = sqrt(L + lambda);
 
 	///get the square root for sigma point generation using SVD decomposition
@@ -487,12 +486,13 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
 	std::vector<double> w_c;
 	w_c.resize(2*L + 1);
 	w_m[0] = lambda / (L + lambda);
+	//ROS_INFO_STREAM("w_m[0] " << w_m[0]);
 	w_c[0] = lambda / (L + lambda) + (1.0 - (alpha * alpha) + beta);
 	for(int i = 1; i < 2 * L + 1; i++){
 		w_m[i] = 1.0 / (2.0 * (L + lambda));
 		w_c[i] = 1.0 / (2.0 * (L + lambda));
 	}
-
+	//ROS_INFO_STREAM("w_m[i] " << w_m[1]);
 	/*****Update sigma points based on motion model******/
 	std::vector<cv::Mat_<double> > sigma_pts_bar;
 	sigma_pts_bar.resize(2*L + 1);
@@ -509,7 +509,6 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
 		ukfToolModel.renderToolUKF(render_test, test_arm, Cam_left_arm_1, P_left,temp_point_test, temp_normal_test );
 	}
 	cv::imshow(" test tun: " , render_test);
-
 	//cv::waitKey();
 	/*****Create the predicted mus and sigmas.*****/
 	cv::Mat mu_bar = cv::Mat_<double>::zeros(L, 1);
@@ -523,59 +522,32 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
 	}
 	//ROS_INFO_STREAM(" sigma_bar" << sigma_bar);
 
-	/*****Render each sigma point and compute its matching score.*****/
-//	std::vector<double> mscores;
-//	mscores.resize(2*L + 1);
-
-//	computeSigmaMeasures(mscores, sigma_pts_bar, left_image, right_image, cam_left, cam_right);
-////	for(int i = 0; i < mscores.size(); i++){
-////		ROS_INFO("MSCORES %f", mscores[i]);
-//////		ROS_WARN_STREAM("sigma_pts_bar " << sigma_pts_bar[i]);
-////	}
-
 	/***** Correction Step: Move the sigma points through the measurement function *****/
 	std::vector<cv::Mat_<double> > Z_bar;
 	Z_bar.resize(2 * L + 1);
 
 	//cv::Mat test_z_bar(measurement_dim, 2 * L + 1, CV_64FC1);
+	//ROS_INFO_STREAM(" ZT " << zt);
 	for(int i = 0; i < 2 * L + 1; i++){
 		//h(Z_bar[i], sigma_pts_bar[i]);
 		h(Z_bar[i], sigma_pts_bar[i], left_image, right_image, cam_left, cam_right);
-		//Z_bar[i].copyTo(test_z_bar.colRange(i,i+1));
+		//ROS_INFO_STREAM(" Z_bar[i]  " <<Z_bar[i] );
 	}
 
 	/***** Calculate derived variance statistics *****/
 	int measurement_dimension = Z_bar[0].rows;
-	ROS_INFO_STREAM("measurement_dimension " << measurement_dimension);
 	cv::Mat z_caret = cv::Mat_<double>::zeros(measurement_dimension, 1);
 	for(int i = 0; i < 2 * L + 1; i++){
 		z_caret = z_caret + w_m[i] * Z_bar[i];
 	}
-
+	//ROS_INFO_STREAM("z_caret " << z_caret);
 	cv::Mat S = cv::Mat_<double>::zeros(measurement_dimension, measurement_dimension);
 	for(int i = 0; i < 2 * L + 1; i++){
-		ROS_INFO_STREAM(" Z_bar[i] - z_caret " <<Z_bar[i] - z_caret);
+		//ROS_INFO_STREAM(" Z_bar[i] - z_caret " <<Z_bar[i] - z_caret);
 		S = S + w_c[i] * (Z_bar[i] - z_caret) * ((Z_bar[i] - z_caret).t());
 		//ROS_INFO_STREAM(" S inv  " << S.inv());
-		cv::waitKey();
+		//cv::waitKey();
 	}
-
-//	double dev_pos = ukfToolModel.randomNum(0.001, 0.00);  ///deviation for position
-//	double dev_ori = ukfToolModel.randomNum(0.001, 0.00);  ///deviation for orientation
-//	double dev_ang = ukfToolModel.randomNum(0.0001, 0); ///deviation for joint angles
-//
-//	for (int j = 0; j < 3; ++j) {
-//		//double dev_pos = ukfToolModel.randomNum(0.06, 0.00);
-//		S.at<double>(j,j) = S.at<double>(j,j) + dev_pos;//gaussian generator
-//	}
-//	for (int j = 3; j < 6; ++j) {
-//		//double dev_ori = ukfToolModel.randomNum(0.08, 0.00);
-//		S.at<double>(j,j) = S.at<double>(j,j) + dev_ori;//gaussian generator
-//	}
-//	for (int j = 6; j < 9; ++j) {
-//		//double dev_ang = ukfToolModel.randomNum(0.001, 0);
-//		S.at<double>(j,j) = S.at<double>(j,j) + dev_ang;//gaussian generator
-//	}
 
 	cv::Mat sigma_xz = cv::Mat_<double>::zeros(L, measurement_dimension);
 	for(int i = 0; i < 2 * L + 1; i++){
@@ -583,19 +555,16 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
 	}
 
 //	ROS_INFO_STREAM(" sigma_xz" << sigma_xz);
-
-
 	cv::Mat K = sigma_xz * S.inv();
-	ROS_INFO_STREAM(" K" << K);
+	//ROS_INFO_STREAM(" K" << K);
 
 	/***** Update our mu and sigma *****/
-	ROS_INFO_STREAM("mu_bar" << mu_bar);
-	ROS_INFO_STREAM("zt - z_caret" << zt - z_caret);
+	//ROS_INFO_STREAM("mu_bar" << mu_bar);
+	//ROS_INFO_STREAM("zt - z_caret" << zt - z_caret);
 	kalman_mu = mu_bar + K * (zt - z_caret);
 	kalman_sigma = sigma_bar - K * S * K.t();
 
 	ROS_WARN("KALMAN ARM AT (%f %f %f): %f %f %f, joints: %f %f %f ",kalman_mu.at<double>(0, 0), kalman_mu.at<double>(1, 0),kalman_mu.at<double>(2, 0),kalman_mu.at<double>(3, 0),kalman_mu.at<double>(4, 0), kalman_mu.at<double>(5, 0), kalman_mu.at<double>(6, 0), kalman_mu.at<double>(7, 0),kalman_mu.at<double>(8, 0));
-	ROS_INFO_STREAM("kalman_mu_arm1" << kalman_mu_arm1);
 
 	//Convert them into tool models
 	ToolModel::toolModel show_arm;
@@ -607,18 +576,17 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &z
     //ukfToolModel.renderTool(seg_test_r, show_arm, cam_right, P_right);
 	cv::imshow("kalman_mu left: " , test_l );
     //cv::imshow("seg kalman_mu right: " , seg_test_r );
-
 };
 
 //TODO:
 void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & delta_zt){
 
 	 //sigma_point_out = sigma_point_in - delta_zt;
-	sigma_point_out = sigma_point_in.clone();
+	sigma_point_out = delta_zt.clone();
 
-	double dev_pos = ukfToolModel.randomNum(0.001, 0.00);  ///deviation for position
-	double dev_ori = ukfToolModel.randomNum(0.001, 0.00);  ///deviation for orientation
-	double dev_ang = ukfToolModel.randomNum(0.0001, 0); ///deviation for joint angles
+	double dev_pos = ukfToolModel.randomNum(0.0004, 0.00);  ///deviation for position
+	double dev_ori = ukfToolModel.randomNum(0.0004, 0.00);  ///deviation for orientation
+	double dev_ang = ukfToolModel.randomNum(0.00001, 0); ///deviation for joint angles
 
 	for (int j = 0; j < 3; ++j) {
 		//double dev_pos = ukfToolModel.randomNum(0.06, 0.00);
