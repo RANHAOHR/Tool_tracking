@@ -69,8 +69,8 @@
 #include <sensor_msgs/image_encodings.h>
 #include <cwru_opencv_common/projective_geometry.h>
 
-#include <cwru_xform_utils/xform_utils.h>
-//#include <xform_utils/xform_utils.h>
+//#include <cwru_xform_utils/xform_utils.h>
+#include <xform_utils/xform_utils.h>
 
 class KalmanFilter {
 
@@ -137,7 +137,7 @@ private:
 	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & delta_zt);
 	void h(cv::Mat & sigma_point_out, const cv::Mat_<double> & sigma_point_in,
 			cv::Mat &left_image,cv::Mat &right_image,
-			cv::Mat &cam_left, cv::Mat &cam_right);
+			cv::Mat &cam_left, cv::Mat &cam_right, cv::Mat &normal_measurement);
 
     void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in,
 							  cv::Mat &left_image,cv::Mat &right_image,
@@ -183,7 +183,7 @@ public:
 
     void update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &zt,
 				cv::Mat &left_image,cv::Mat &right_image,
-				cv::Mat &cam_left, cv::Mat &cam_right);
+				cv::Mat &cam_left, cv::Mat &cam_right, cv::Mat &normal_measurement);
 
     void convertToolModel(const cv::Mat & trans, ToolModel::toolModel &toolModel);
     /*
@@ -205,7 +205,8 @@ public:
 							 cv::Mat &Cam_left,
 							 cv::Mat &Cam_right,
 							 cv::Mat & rawImage_left,
-							 cv::Mat & rawImage_right);
+							 cv::Mat & rawImage_right,
+                             cv::Mat &normal_measurement);
     void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
 	void Cholesky( const cv::Mat& A, cv::Mat& S );  //this is not working
