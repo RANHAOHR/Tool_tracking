@@ -99,7 +99,7 @@ private:
 
 	int measurement_dim;
 
-    const static double alpha = 0.0001;
+    const static double alpha = 0.001;
     const static double k = 0.0; //TODO: how much?
     const static double beta = 2;
 
@@ -181,23 +181,17 @@ public:
 	void UKF_double_arm();
 	void getSquareRootCov(cv::Mat &sigma_cov, cv::Mat &square_root);
 
-    void update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &zt,
+	/*
+	 * Unscented Kalman filter update
+	 */
+    void update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 				cv::Mat &left_image,cv::Mat &right_image,
-				cv::Mat &cam_left, cv::Mat &cam_right, cv::Mat &normal_measurement);
+				cv::Mat &cam_left, cv::Mat &cam_right);
 
     void convertToolModel(const cv::Mat & trans, ToolModel::toolModel &toolModel);
-    /*
-     * Unscented Kalman filter update
-     */
-    void UnscentedKalmanFilter(
-            const cv::Mat &mu,
-            const cv::Mat &sigma,
-            cv::Mat &update_mu,
-            cv::Mat &update_sigma,
-            const cv::Mat &zt
-    );
 
-    void getCourseEstimation();  ///for dynamic tracking
+
+    void getCourseEstimation();
     double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, cv::Mat &Cam_left, cv::Mat &Cam_right, cv::Mat & rawImage_left,
 					   cv::Mat & rawImage_right);
 
@@ -205,8 +199,8 @@ public:
 							 cv::Mat &Cam_left,
 							 cv::Mat &Cam_right,
 							 cv::Mat & rawImage_left,
-							 cv::Mat & rawImage_right,
-                             cv::Mat &normal_measurement);
+							 cv::Mat & rawImage_right, cv::Mat &zt, cv::Mat &normal_measurement);
+
     void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
 	void Cholesky( const cv::Mat& A, cv::Mat& S );  //this is not working
