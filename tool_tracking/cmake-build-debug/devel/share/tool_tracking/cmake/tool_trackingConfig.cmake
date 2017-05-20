@@ -67,8 +67,8 @@ set(tool_tracking_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
 if("TRUE" STREQUAL "TRUE")
-  set(tool_tracking_SOURCE_PREFIX /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking)
-  set(tool_tracking_DEVEL_PREFIX /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel)
+  set(tool_tracking_SOURCE_PREFIX /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking)
+  set(tool_tracking_DEVEL_PREFIX /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel)
   set(tool_tracking_INSTALL_PREFIX "")
   set(tool_tracking_PREFIX ${tool_tracking_DEVEL_PREFIX})
 else()
@@ -91,9 +91,9 @@ endif()
 # flag project as catkin-based to distinguish if a find_package()-ed project is a catkin project
 set(tool_tracking_FOUND_CATKIN_PROJECT TRUE)
 
-if(NOT "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/include " STREQUAL " ")
+if(NOT "/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/include " STREQUAL " ")
   set(tool_tracking_INCLUDE_DIRS "")
-  set(_include_dirs "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/include")
+  set(_include_dirs "/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/include")
   foreach(idir ${_include_dirs})
     if(IS_ABSOLUTE ${idir} AND IS_DIRECTORY ${idir})
       set(include ${idir})
@@ -103,7 +103,7 @@ if(NOT "/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/include " STREQUAL "
         message(FATAL_ERROR "Project 'tool_tracking' specifies '${idir}' as an include dir, which is not found.  It does not exist in '${include}'.  Ask the maintainer 'rxh349 <rxh349@case.edu>' to fix it.")
       endif()
     else()
-      message(FATAL_ERROR "Project 'tool_tracking' specifies '${idir}' as an include dir, which is not found.  It does neither exist as an absolute directory nor in '/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/${idir}'.  Ask the maintainer 'rxh349 <rxh349@case.edu>' to fix it.")
+      message(FATAL_ERROR "Project 'tool_tracking' specifies '${idir}' as an include dir, which is not found.  It does neither exist as an absolute directory nor in '/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/${idir}'.  Ask the maintainer 'rxh349 <rxh349@case.edu>' to fix it.")
     endif()
     _list_append_unique(tool_tracking_INCLUDE_DIRS ${include})
   endforeach()
@@ -122,7 +122,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib;/home/ranhao/ros_ws/devel/lib;/opt/ros/indigo/lib)
+    foreach(path /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib;/home/rxh349/ros_ws/devel/lib;/opt/ros/jade/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
@@ -153,7 +153,7 @@ foreach(t ${tool_tracking_EXPORTED_TARGETS})
   endif()
 endforeach()
 
-set(depends "cv_bridge;image_transport;roscpp;sensor_msgs;std_msgs;message_runtime;cwru_opencv_common;vesselness_image_filter;tool_model;geometry_msgs;cwru_davinci_interface;cwru_davinci_kinematics;xform_utils")
+set(depends "cv_bridge;image_transport;roscpp;sensor_msgs;std_msgs;message_runtime;cwru_opencv_common;vesselness_image_filter;tool_model;geometry_msgs;cwru_davinci_interface;cwru_davinci_kinematics;cwru_xform_utils")
 foreach(depend ${depends})
   string(REPLACE " " ";" depend_list ${depend})
   # the package name of the dependency must be kept in a unique variable so that it is not overwritten in recursive calls
