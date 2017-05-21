@@ -58,7 +58,7 @@ ToolModel::ToolModel() {
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
 
-    std::string cylinder = tool_model_pkg + "/tool_parts/tense_cylinder_new.obj"; //"/tool_parts/refine_cylinder_3.obj";
+    std::string cylinder = tool_model_pkg + "/tool_parts/tense_cylinde_2.obj"; //"/tool_parts/refine_cylinder_3.obj";
     std::string ellipse = tool_model_pkg + "/tool_parts/refine_ellipse_3.obj";
     std::string gripper1 = tool_model_pkg + "/tool_parts/gripper2_1.obj";
     std::string gripper2 = tool_model_pkg + "/tool_parts/gripper2_2.obj";
@@ -339,6 +339,7 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
             1,0,0,0,
             0,1,0,0,
             0,0,0,1);
+
 
     cv::Mat temp_input_Vmat = adjoint_mat * input_Vmat;
     cv::Mat temp_input_Nmat = adjoint_mat * input_Nmat;
