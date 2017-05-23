@@ -113,6 +113,25 @@ int main(int argc, char **argv) {
 //
 //    }
 
+    int dim = temp_point.rows;
+    for (int i = 0; i < dim; ++i) {
+
+        cv::Point2d prjpt_1;
+        prjpt_1.x = temp_point.at<double>(i,0);
+        prjpt_1.y = temp_point.at<double>(i,1);
+
+        double y_k = temp_normal.at<double>(i,1);
+        double x_k = temp_normal.at<double>(i,0);
+        double theta = atan2(y_k, x_k);
+        double r = 40;
+
+        cv::Point2d prjpt_2;
+        prjpt_2.x = prjpt_1.x  + r * cos(theta);
+        prjpt_2.y = prjpt_1.y  + r * sin(theta);
+        cv::line(testImg, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
+//		cv::imshow("rendered_image:", inputImage);
+//		cv::waitKey();
+    }
 
     //double score = newToolModel.calculateMatchingScore(testImg, testImg );
     //ROS_INFO_STREAM("new_temp" << new_temp);

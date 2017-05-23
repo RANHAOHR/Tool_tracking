@@ -302,27 +302,6 @@ cv::Point3d ToolModel::camTransformPoint(cv::Mat &cam_mat, cv::Point3d &input_ve
 
 };
 
-cv::Point3d ToolModel::camTransformVec(cv::Mat &cam_mat, cv::Point3d &input_vec) {
-    /*cam mat should be a 4x4*/
-    cv::Mat temp(4, 1, CV_64FC1);
-    cv::Mat Inv = cam_mat.inv();
-
-    cv::Point3d output_vec;
-
-    temp.at<double>(0, 0) = input_vec.x;
-    temp.at<double>(1, 0) = input_vec.y;
-    temp.at<double>(2, 0) = input_vec.z;
-    temp.at<double>(3, 0) = 0;  //vec
-
-    temp = Inv * temp; //transform the obj to camera frames
-
-    output_vec.x = temp.at<double>(0, 0);
-    output_vec.y = temp.at<double>(1, 0);
-    output_vec.z = temp.at<double>(2, 0);
-
-    return output_vec;
-};
-
 /*************** using Vertices to draw the contour *******************/
 void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_faces,
                                    const std::vector<std::vector<int> > &neighbor_faces,
@@ -556,33 +535,42 @@ void ToolModel::Compute_Silhouette_UKF(const std::vector<std::vector<int> > &inp
                         if(((prjpt_1.x <= 0 && prjpt_2.x <= 0) || (prjpt_1.x >= 640 && prjpt_2.x >= 640)) || ((prjpt_1.y <= 0 && prjpt_2.y <= 0) || (prjpt_1.y >= 480 && prjpt_2.y >= 480))){
                             //this is not suppose to be in the image
                         }else{
-//                            ROS_INFO_STREAM("prjpt_1 " << prjpt_1);
-//                            ROS_INFO_STREAM("prjpt_2 " << prjpt_2);
+
                             cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
+                            /**** get new vertex ****/
+                            cv::Point2d mid_vertex = prjpt_1 + prjpt_2;
+                            mid_vertex.x = mid_vertex.x / 2;
+                            mid_vertex.y = mid_vertex.y / 2;
+
+                            double delta_y = prjpt_2.y - prjpt_1.y;
+                            double delta_x = prjpt_2.x - prjpt_1.x;
+
+                            double k  = delta_y / delta_x;
+                            cv::Mat temp_normal(1,2,CV_64FC1);
+                            temp_normal.at<double>(0,0) = -1.0 * k;   //n_x
+                            temp_normal.at<double>(0,1) = 1.0 ;     //n_y
+
+                            cv::Mat Vnormal_1 = new_Normals.col(neighbor_faces[i][j + 2]).clone();
+                            cv::Mat Vnormal_2 = new_Normals.col(neighbor_faces[i][j + 4]).clone();
+
+                            cv::Mat mid_normal(1,2,CV_64FC1);
+                            mid_normal.at<double>(0,0) = 0.5 * (Vnormal_1.at<double>(0,0) + Vnormal_2.at<double>(0,0));
+                            mid_normal.at<double>(0,1) = 0.5 * (Vnormal_1.at<double>(1,0) + Vnormal_2.at<double>(1,0));
+
+                            double dot_normal = mid_normal.dot(temp_normal);
+                            if(dot_normal < 0.0){
+                                temp_normal = -1.0 * temp_normal;   //flip?
+                            }
 
                             /**get measurement points for UKF**/
                             std::vector<double> vertex_vector;
                             vertex_vector.resize(4); // vertices, normals
 
-                            if(prjpt_1.x >= 0 && prjpt_1.x <=640 && prjpt_1.y >= 0 && prjpt_1.y <= 480){
-                                vertex_vector[0] = prjpt_1.x;
-                                vertex_vector[1] = prjpt_1.y;
-
-                                cv::Mat temp_normal = new_Normals.col(neighbor_faces[i][j + 2]).clone();
+                            if(mid_vertex.x >= 0 && mid_vertex.x <=640 && mid_vertex.y >= 0 && mid_vertex.y <= 480){
+                                vertex_vector[0] = mid_vertex.x;
+                                vertex_vector[1] = mid_vertex.y;
                                 vertex_vector[2] = temp_normal.at<double>(0,0);
-                                vertex_vector[3] = temp_normal.at<double>(1,0);
-                                vertices_vector.push_back(vertex_vector);
-                            }
-
-                            //////second point
-                            if(prjpt_2.x >= 0 && prjpt_2.x <=640 && prjpt_2.y >= 0 && prjpt_2.y <= 480){
-                                vertex_vector[0] = prjpt_2.x;
-                                vertex_vector[1] = prjpt_2.y;
-
-                                cv::Mat temp_normal = new_Normals.col(neighbor_faces[i][j + 4]).clone();
-                                vertex_vector[2] = temp_normal.at<double>(0,0);
-                                vertex_vector[3] = temp_normal.at<double>(1,0);
-
+                                vertex_vector[3] = temp_normal.at<double>(0,1);
                                 vertices_vector.push_back(vertex_vector);
                             }
                         }
@@ -592,19 +580,7 @@ void ToolModel::Compute_Silhouette_UKF(const std::vector<std::vector<int> > &inp
             }
         }
     }
-}
-
-cv::Mat ToolModel::convert4to3(const cv::Mat &inputMat) {
-
-    cv::Mat res_mat(3, 1, CV_64FC1);
-    res_mat.at<double>(0, 0) = inputMat.at<double>(0, 0);
-    res_mat.at<double>(1, 0) = inputMat.at<double>(1, 0);
-    res_mat.at<double>(2, 0) = inputMat.at<double>(2, 0);
-
-    return res_mat;
-
 };
-
 
 cv::Point3d ToolModel::convert_MattoPts(cv::Mat &input_Mat) { //should be a 4 by 1 mat
     cv::Point3d output_point;
@@ -1286,7 +1262,7 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
 //        ROS_INFO("temp_tool_vector i: %d, %f, %f,%f,%f ", i, temp_tool_vector[i][0], temp_tool_vector[i][1],temp_tool_vector[i][2],temp_tool_vector[i][3]);
 //    }
 
-    int point_dim = temp_tool_vector.size() -5;
+    int point_dim = temp_tool_vector.size();
     tool_points = cv::Mat::zeros(point_dim, 2,CV_64FC1);
     tool_normals = cv::Mat::zeros(point_dim, 2,CV_64FC1);
 

@@ -177,7 +177,7 @@ public:
                        cv::Mat &tool_points, cv::Mat &tool_normals, cv::OutputArray = cv::noArray());
 
 
-        cv::Point2d reproject(const cv::Mat &point, const cv::Mat &P);
+    cv::Point2d reproject(const cv::Mat &point, const cv::Mat &P);
 
     ///measurement for perception model
     float calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage);
@@ -212,8 +212,6 @@ public:
 
     cv::Point3d convert_MattoPts(cv::Mat &input_Mat);
 
-    cv::Mat convert4to3(const cv::Mat &inputMat);
-
     void computeInvSE(const cv::Mat &inputMat, cv::Mat &outputMat);
     /****************Face editing and info**********************/
     cv::Point3d FindFaceNormal(cv::Point3d &input_v1, cv::Point3d &input_v2, cv::Point3d &input_v3,
@@ -226,8 +224,6 @@ public:
 
     /*************camera transforms************************/
     cv::Point3d camTransformPoint(cv::Mat &cam_mat, cv::Point3d &input_vertex);
-
-    cv::Point3d camTransformVec(cv::Mat &cam_mat, cv::Point3d &input_vec);
 
     cv::Mat camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat);
 
