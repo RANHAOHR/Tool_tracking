@@ -49,7 +49,7 @@ The cameras, conversely, are to be referred to *ONLY* by 'left' and 'right'- nev
 **********************************************/
 
 KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
-		nh_(*nodehandle), L(6){
+		nh_(*nodehandle), L(12){
 
 	ROS_INFO("Initializing UKF...");
 
@@ -276,9 +276,6 @@ void KalmanFilter::getMeasurementModel(const cv::Mat & coarse_guess_vector,
 		double x = temp_point.at<double>(i, 0);
 		double y = temp_point.at<double>(i, 1);
 
-//		ROS_INFO_STREAM("point x " << x);
-//		ROS_INFO_STREAM("point y " << y);
-
 		double x_normal = temp_normal.at<double>(i, 0);
 		double y_normal = temp_normal.at<double>(i, 1);
 
@@ -380,6 +377,8 @@ void KalmanFilter::getCourseEstimation(){
     kalman_mu_arm1.at<double>(3 , 0) = arm_rvec.at<double>(0,0);
     kalman_mu_arm1.at<double>(4 , 0) = arm_rvec.at<double>(1,0);
     kalman_mu_arm1.at<double>(5 , 0) = arm_rvec.at<double>(2,0);
+
+
 //    kalman_mu_arm1.at<double>(6 , 0) = tmp[0][4];
 //    kalman_mu_arm1.at<double>(7 , 0) = tmp[0][5];
 //    kalman_mu_arm1.at<double>(8 , 0) = tmp[0][6];
@@ -395,6 +394,17 @@ void KalmanFilter::getCourseEstimation(){
     for (int j = 3; j < 6; ++j) {
         kalman_sigma_arm1.at<double>(j,j) = dev_ori; //gaussian generator
     }
+
+	dev_pos = ukfToolModel.randomNum(0.0001, 0.0);  ///deviation for position
+	dev_ori = ukfToolModel.randomNum(0.0001, 0.0);  ///deviation for orientation
+
+
+	for (int j = 6; j < 9; ++j) {
+		kalman_sigma_arm1.at<double>(j,j) = dev_pos; //gaussian generator
+	}
+	for (int j = 10; j < 12; ++j) {
+		kalman_sigma_arm1.at<double>(j,j) = dev_ori; //gaussian generator
+	}
 
 //	double dev_ang = ukfToolModel.randomNum(0.0001, 0); ///deviation for joint angles
 //	kalman_sigma_arm1.at<double>(6,6) = dev_ang; //gaussian generator
@@ -488,7 +498,17 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 		w_m[i] = 1.0 / (2.0 * (L + lambda));
 		w_c[i] = 1.0 / (2.0 * (L + lambda));
 	}
-	//ROS_INFO_STREAM("w_m[i] " << w_m[1]);
+
+	/**** get measurement model ****/
+	cv::Mat normal_measurement;
+	cv::Mat zt;
+	getMeasurementModel(kalman_mu, Cam_left_arm_1, Cam_right_arm_1,
+						tool_rawImg_left, tool_rawImg_right, zt, normal_measurement);  ///get zt_arm measurement model
+	ROS_INFO_STREAM("zt " << zt);
+
+	double normalizer = 1.0/measurement_dim;
+	ROS_INFO_STREAM("normal_measurement " << normal_measurement);
+	cv::waitKey();
 	/*****Update sigma points based on motion model******/
 	std::vector<cv::Mat_<double> > sigma_pts_bar;
 	sigma_pts_bar.resize(2*L + 1);
@@ -510,20 +530,6 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 		cv::waitKey();
 	}
 	cv::imshow(" test tun: " , render_test);
-
-	cv::Mat normal_measurement;
-	cv::Mat zt;
-	getMeasurementModel(sigma_pts_bar[0], Cam_left_arm_1, Cam_right_arm_1,
-						tool_rawImg_left, tool_rawImg_right, zt, normal_measurement);  ///get zt_arm measurement model
-	ROS_INFO_STREAM("sigma_pts_bar[0] " << sigma_pts_bar[0]);
-	ROS_INFO_STREAM("zt " << zt);
-
-	double normalizer = 1.0/measurement_dim;
-	ROS_INFO_STREAM("normalizer " << normalizer);
-//	zt = normalizer * zt;
-//	ROS_INFO_STREAM("zt " << zt);
-	ROS_INFO_STREAM("normal_measurement " << normal_measurement);
-	cv::waitKey();
 
 	/*****Create the predicted mus and sigmas.*****/
 	cv::Mat mu_bar = cv::Mat_<double>::zeros(L, 1);
@@ -570,19 +576,6 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 		//cv::waitKey();
 	}
 
-//	dev_pos = ukfToolModel.randomNumber(0.01, 0.00);  ///deviation for position
-//	dev_ori = ukfToolModel.randomNumber(0.01, 0.00);  ///deviation for orientation
-//	//double dev_ang = ukfToolModel.randomNum(0.00001, 0); ///deviation for	//cv::waitKey(); joint angles
-//
-//	for (int j = 0; j < 3; ++j) {
-//		//double dev_pos = ukfToolModel.randomNum(0.06, 0.00);
-//		S.at<double>(j,j) = dev_pos;//gaussian generator
-//	}
-//	for (int j = 3; j < 6; ++j) {
-//		//double dev_ori = ukfToolModel.randomNum(0.08, 0.00);
-//		S.at<double>(j,j) = dev_ori;//gaussian generator
-//	}
-
 	ROS_INFO_STREAM(" S inv  " << S.inv());
 	cv::waitKey();
 	cv::Mat sigma_xz = cv::Mat_<double>::zeros(L, measurement_dimension);
@@ -622,13 +615,13 @@ void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, 
 
 	double dev_pos = ukfToolModel.randomNum(0.0001, 0.00);  ///deviation for position
 	double dev_ori = ukfToolModel.randomNum(0.0001, 0.00);  ///deviation for orientation
-	//double dev_ang = ukfToolModel.randomNum(0.00001, 0); ///deviation for	//cv::waitKey(); joint angles
+	double dev_ang = ukfToolModel.randomNum(0.00001, 0); ///deviation for	//cv::waitKey(); joint angles
 
-	for (int j = 0; j < 3; ++j) {
+	for (int j = 6; j < 9; ++j) {
 		//double dev_pos = ukfToolModel.randomNum(0.06, 0.00);
 		sigma_point_out.at<double>(j,0) = sigma_point_in.at<double>(j,0) + dev_pos;//gaussian generator
 	}
-	for (int j = 3; j < 6; ++j) {
+	for (int j = 9; j < 12; ++j) {
 		//double dev_ori = ukfToolModel.randomNum(0.08, 0.00);
 		sigma_point_out.at<double>(j,0) = sigma_point_in.at<double>(j,0) + dev_ori;//gaussian generator
 	}
