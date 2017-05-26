@@ -42,11 +42,7 @@ int main(int argc, char **argv) {
 
 	ROS_INFO("---- done subscribe -----");
 
-	/*** Timer set up ***/
-	ros::Rate loop_rate(50);
-
 	ros::Duration(3).sleep();
-
 
 //	cv::Size size(640, 475);
 //	std::string package = ros::package::getPath("tool_tracking"); ////warning: do not have one package with the same name
@@ -59,8 +55,8 @@ int main(int argc, char **argv) {
 //
 //	cv::resize(new_seg_left, new_seg_left,size );
 //	cv::resize(new_seg_right, new_seg_right,size );
-	int tracking_iteration = 0;
 	while (nh.ok()) {
+
 		ros::spinOnce();
 
 		if (freshImage){
@@ -71,7 +67,6 @@ int main(int argc, char **argv) {
             UKF.UKF_double_arm();
 
 			freshImage = false;
-			tracking_iteration += 1;
 		}
 
 	}

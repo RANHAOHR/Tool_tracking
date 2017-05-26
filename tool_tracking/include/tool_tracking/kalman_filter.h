@@ -201,6 +201,8 @@ public:
 							 cv::Mat & rawImage_left,
 							 cv::Mat & rawImage_right, cv::Mat &zt, cv::Mat &normal_measurement);
 
+	void getStereoMeasurement(const cv::Mat & coarse_guess_vector, cv::Mat &zt, cv::Mat &normal_measurement);
+
     void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
 	void Cholesky( const cv::Mat& A, cv::Mat& S );  //this is not working

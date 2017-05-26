@@ -932,7 +932,6 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
 
     cv::Rodrigues(rot_grip_1, inputModel.rvec_grip1 );
 
-
     /*gripper 2*/
     cos_theta = cos(grip_2_delta);
     sin_theta = sin(-grip_2_delta);
@@ -940,7 +939,6 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
     cv::Mat gripper_2_ = (cv::Mat_<double>(3,3) << cos_theta, 0, sin_theta,
             0,1,0,
             -sin_theta, 0, cos_theta);
-
 
     cv::Mat rot_grip_2(3,3,CV_64FC1);
     cv::Rodrigues(seed_pose.rvec_grip2, rot_grip_2);
@@ -1037,14 +1035,13 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
             0,1,0,
             -sin_theta, 0, cos_theta);
 
-    cv::Mat rot_grip_2 = rot_elp * gripper_2_ ;
+    cv::Mat rot_grip_2 = rot_elp * gripper_2_;
     cv::Rodrigues(rot_grip_2, inputModel.rvec_grip2);
 
 };
 
 void ToolModel::computeDavinciModel(toolModel &inputModel, const double &theta_tool, const double &theta_grip_1,
                                  const double &theta_grip_2) {
-
 
     /***********************/
     cv::Mat q_temp(4, 1, CV_64FC1);
@@ -1262,25 +1259,55 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
 //        ROS_INFO("temp_tool_vector i: %d, %f, %f,%f,%f ", i, temp_tool_vector[i][0], temp_tool_vector[i][1],temp_tool_vector[i][2],temp_tool_vector[i][3]);
 //    }
 
-    int point_dim = temp_tool_vector.size();
+/*      int point_dim = temp_tool_vector.size();
+    tool_points = cv::Mat::zeros(point_dim, 2,CV_64FC1);
+    tool_normals = cv::Mat::zeros(point_dim, 2,CV_64FC1);
+ * for (int j = 0; j < point_dim ; ++j) {
+        tool_points.at<double>(j,0) = temp_tool_vector[j][0];
+        tool_points.at<double>(j,1) = temp_tool_vector[j][1];
+
+        tool_normals.at<double>(j,0) = temp_tool_vector[j][2];
+        tool_normals.at<double>(j,1) = temp_tool_vector[j][3];
+
+
+    }
+    for (int i = 0; i < point_dim ; ++i) {
+        cv::Mat temp(1,2,CV_64FC1);
+        cv::normalize(tool_normals.row(i), temp);
+        temp.copyTo(tool_normals.row(i));
+    }
+    */
+
+    int point_dim = temp_tool_vector.size() -2 ;
     tool_points = cv::Mat::zeros(point_dim, 2,CV_64FC1);
     tool_normals = cv::Mat::zeros(point_dim, 2,CV_64FC1);
 
-    for (int j = 0; j < point_dim ; ++j) {
+    for (int j = 0; j < 12 ; ++j) {
         tool_points.at<double>(j,0) = temp_tool_vector[j][0];
         tool_points.at<double>(j,1) = temp_tool_vector[j][1];
 
         tool_normals.at<double>(j,0) = temp_tool_vector[j][2];
         tool_normals.at<double>(j,1) = temp_tool_vector[j][3];
     }
-//    ROS_INFO_STREAM("tool_points " << tool_points);
-//    ROS_INFO_STREAM("tool_normals " << tool_normals);
 
-        for (int i = 0; i < point_dim ; ++i) {
+    for (int j = 12; j < point_dim ; ++j) {
+        tool_points.at<double>(j,0) = temp_tool_vector[j + 2][0];
+        tool_points.at<double>(j,1) = temp_tool_vector[j + 2][1];
+
+        tool_normals.at<double>(j,0) = temp_tool_vector[j + 2][2];
+        tool_normals.at<double>(j,1) = temp_tool_vector[j + 2][3];
+    }
+
+    for (int i = 0; i < point_dim; ++i) {
         cv::Mat temp(1,2,CV_64FC1);
         cv::normalize(tool_normals.row(i), temp);
         temp.copyTo(tool_normals.row(i));
     }
+
+//    ROS_INFO_STREAM("tool_points " << tool_points);
+//    ROS_INFO_STREAM("tool_normals " << tool_normals);
+
+
 //    ROS_INFO("--------------------");
 //    ROS_INFO_STREAM("tool_normals " << tool_normals);
 
@@ -1367,7 +1394,7 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
 
     return output;
 
-}
+};
 
 /*********** reproject a single point without rvec and tvec, and no jac, FOR THE BODY COORD TRANSFORMATION ***************/
 cv::Point2d ToolModel::reproject(const cv::Mat &point, const cv::Mat &P) {
