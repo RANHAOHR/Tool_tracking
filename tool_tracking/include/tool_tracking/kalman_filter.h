@@ -195,11 +195,7 @@ public:
     double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, cv::Mat &Cam_left, cv::Mat &Cam_right, cv::Mat & rawImage_left,
 					   cv::Mat & rawImage_right);
 
-	void getMeasurementModel(const cv::Mat & coarse_guess_vector,
-							 cv::Mat &Cam_left,
-							 cv::Mat &Cam_right,
-							 cv::Mat & rawImage_left,
-							 cv::Mat & rawImage_right, cv::Mat &zt, cv::Mat &normal_measurement);
+	void getMeasurementModel(const cv::Mat & coarse_guess_vector, const cv::Mat &segmentation_img, const cv::Mat &projection_mat, cv::Mat &Cam_matrix, cv::Mat & rawImage, cv::Mat &zt, cv::Mat &normal_measurement);
 
 	void getStereoMeasurement(const cv::Mat & coarse_guess_vector, cv::Mat &zt, cv::Mat &normal_measurement);
 

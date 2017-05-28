@@ -1259,16 +1259,15 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
 //        ROS_INFO("temp_tool_vector i: %d, %f, %f,%f,%f ", i, temp_tool_vector[i][0], temp_tool_vector[i][1],temp_tool_vector[i][2],temp_tool_vector[i][3]);
 //    }
 
-/*      int point_dim = temp_tool_vector.size();
-    tool_points = cv::Mat::zeros(point_dim, 2,CV_64FC1);
-    tool_normals = cv::Mat::zeros(point_dim, 2,CV_64FC1);
- * for (int j = 0; j < point_dim ; ++j) {
+     int point_dim = temp_tool_vector.size() - 6;
+     tool_points = cv::Mat::zeros(point_dim, 2,CV_64FC1);
+     tool_normals = cv::Mat::zeros(point_dim, 2,CV_64FC1);
+     for (int j = 0; j < point_dim ; ++j) {
         tool_points.at<double>(j,0) = temp_tool_vector[j][0];
         tool_points.at<double>(j,1) = temp_tool_vector[j][1];
 
         tool_normals.at<double>(j,0) = temp_tool_vector[j][2];
         tool_normals.at<double>(j,1) = temp_tool_vector[j][3];
-
 
     }
     for (int i = 0; i < point_dim ; ++i) {
@@ -1276,33 +1275,32 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
         cv::normalize(tool_normals.row(i), temp);
         temp.copyTo(tool_normals.row(i));
     }
-    */
 
-    int point_dim = temp_tool_vector.size() -2 ;
-    tool_points = cv::Mat::zeros(point_dim, 2,CV_64FC1);
-    tool_normals = cv::Mat::zeros(point_dim, 2,CV_64FC1);
-
-    for (int j = 0; j < 12 ; ++j) {
-        tool_points.at<double>(j,0) = temp_tool_vector[j][0];
-        tool_points.at<double>(j,1) = temp_tool_vector[j][1];
-
-        tool_normals.at<double>(j,0) = temp_tool_vector[j][2];
-        tool_normals.at<double>(j,1) = temp_tool_vector[j][3];
-    }
-
-    for (int j = 12; j < point_dim ; ++j) {
-        tool_points.at<double>(j,0) = temp_tool_vector[j + 2][0];
-        tool_points.at<double>(j,1) = temp_tool_vector[j + 2][1];
-
-        tool_normals.at<double>(j,0) = temp_tool_vector[j + 2][2];
-        tool_normals.at<double>(j,1) = temp_tool_vector[j + 2][3];
-    }
-
-    for (int i = 0; i < point_dim; ++i) {
-        cv::Mat temp(1,2,CV_64FC1);
-        cv::normalize(tool_normals.row(i), temp);
-        temp.copyTo(tool_normals.row(i));
-    }
+//    int point_dim = tool_vertices_normals.size() -2 ;
+//    tool_points = cv::Mat::zeros(point_dim, 2,CV_64FC1);
+//    tool_normals = cv::Mat::zeros(point_dim, 2,CV_64FC1);
+//
+//    for (int j = 0; j < 12 ; ++j) {
+//        tool_points.at<double>(j,0) = tool_vertices_normals[j][0];
+//        tool_points.at<double>(j,1) = tool_vertices_normals[j][1];
+//
+//        tool_normals.at<double>(j,0) = tool_vertices_normals[j][2];
+//        tool_normals.at<double>(j,1) = tool_vertices_normals[j][3];
+//    }
+//
+//    for (int j = 12; j < point_dim ; ++j) {
+//        tool_points.at<double>(j,0) = tool_vertices_normals[j + 2][0];
+//        tool_points.at<double>(j,1) = tool_vertices_normals[j + 2][1];
+//
+//        tool_normals.at<double>(j,0) = tool_vertices_normals[j + 2][2];
+//        tool_normals.at<double>(j,1) = tool_vertices_normals[j + 2][3];
+//    }
+//
+//    for (int i = 0; i < point_dim; ++i) {
+//        cv::Mat temp(1,2,CV_64FC1);
+//        cv::normalize(tool_normals.row(i), temp);
+//        temp.copyTo(tool_normals.row(i));
+//    }
 
 //    ROS_INFO_STREAM("tool_points " << tool_points);
 //    ROS_INFO_STREAM("tool_normals " << tool_normals);
