@@ -405,7 +405,7 @@ void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat_<double> & sigma_p
 	//ROS_INFO_STREAM("LEFT PREDICTED SIZE: " << temp_point_l.rows);
 	ROS_INFO_STREAM("left_pz " << left_pz);
 
-//	sigma_point_out = left_pz.clone(); ////don't forget this
+	sigma_point_out = left_pz.clone(); ////don't forget this
 
 	/*** right camera predicted measurement ***/
 	cv::Mat temp_point_r = cv::Mat(1,2,CV_64FC1);
@@ -417,6 +417,7 @@ void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat_<double> & sigma_p
 	int left_dim = temp_point_l.rows;
 	int right_dim = temp_normal_r.rows;
 
+	//int left_dim = 0;
 	for (int i = 0; i <temp_point_r.rows; ++i) {
 		cv::Mat normal = normal_measurement.row(i + left_dim);   //// if using temp_normal_r, there can be singularities for covariance matrix
 		cv::Mat pixel = temp_point_r.row(i);
@@ -425,6 +426,7 @@ void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat_<double> & sigma_p
 	}
 	//ROS_INFO_STREAM("RIGHT PREDICTED SIZE: " << temp_point_r.rows);
 	ROS_INFO_STREAM("right_pz " << right_pz);
+	//sigma_point_out = right_pz.clone(); ////don't forget this
 
 	sigma_point_out = cv::Mat_<double>::zeros(left_dim + right_dim, 1);
 
@@ -590,10 +592,11 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 	/**** get measurement model ****/
 	cv::Mat normal_measurement;
 	cv::Mat zt;
-	//getMeasurementModel(kalman_mu, seg_left, P_left,Cam_left_arm_1, tool_rawImg_left, zt, normal_measurement);
+	//getMeasurementModel(kalman_mu, seg_left, P_left,Cam_left_arm_1, tool_rawImg_left, zt, normal_measurement);   ///using left camera measurements
+	//getMeasurementModel(kalman_mu, seg_right, P_right,Cam_right_arm_1, tool_rawImg_right, zt, normal_measurement);    ////using right camera measurements
 	getStereoMeasurement(kalman_mu, zt, normal_measurement);
 
-	//ROS_INFO_STREAM(" zt: " << zt);
+	ROS_INFO_STREAM(" zt: " << zt);
 
 	//double normalizer = 1.0/measurement_dim;
 	//ROS_INFO_STREAM("normal_measurement " << normal_measurement);
