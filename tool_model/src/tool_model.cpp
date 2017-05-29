@@ -58,7 +58,7 @@ ToolModel::ToolModel() {
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
 
-    std::string cylinder = tool_model_pkg + "/tool_parts/test_cylinder_3.obj"; //"/tense_cylinde_2.obj", test_cylinder_3
+    std::string cylinder = tool_model_pkg + "/tool_parts/tense_cylinde_2.obj"; //"/tense_cylinde_2.obj", test_cylinder_3
     std::string ellipse = tool_model_pkg + "/tool_parts/refine_ellipse_3.obj";
     std::string gripper1 = tool_model_pkg + "/tool_parts/gripper2_1.obj";
     std::string gripper2 = tool_model_pkg + "/tool_parts/gripper2_2.obj";
@@ -1240,9 +1240,10 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
     std::sort(tool_vertices_normals.begin(), tool_vertices_normals.end());
     tool_vertices_normals.erase(std::unique(tool_vertices_normals.begin(), tool_vertices_normals.end()), tool_vertices_normals.end());
 
+
+    int point_dim = tool_vertices_normals.size();
     /****** this is to get modified normals, and also for single camera works pretty well ******/
-//    int point_dim = tool_vertices_normals.size();
-//    int actual_dim = point_dim -5;
+//    int actual_dim =point_dim - 6;   //need one more for other orientation
 //    tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
 //    tool_normals = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
 //
@@ -1253,54 +1254,66 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
 //        tool_normals.at<double>(j,0) = tool_vertices_normals[j][2];
 //        tool_normals.at<double>(j,1) = tool_vertices_normals[j][3];
 //    }
-//
-////    tool_points.at<double>(point_dim - 6,0) = tool_vertices_normals[point_dim - 6 + 2][0];
-////    tool_points.at<double>(point_dim - 6,1) = tool_vertices_normals[point_dim - 6 + 2][1];
-////
-////    tool_normals.at<double>(point_dim - 6,0) = tool_vertices_normals[point_dim - 6 + 2][2];
-////    tool_normals.at<double>(point_dim - 6,1) = tool_vertices_normals[point_dim - 6 + 2][3];
-////
-////    for (int j = point_dim - 5 ; j < actual_dim ; ++j) {
-////        tool_points.at<double>(j,0) = tool_vertices_normals[j + 3][0];
-////        tool_points.at<double>(j,1) = tool_vertices_normals[j + 3][1];
-////
-////        tool_normals.at<double>(j,0) = tool_vertices_normals[j + 3][2];
-////        tool_normals.at<double>(j,1) = tool_vertices_normals[j + 3][3];
-////    }
-//
-//    for (int j = point_dim - 6 ; j < actual_dim; ++j) {
-//        tool_points.at<double>(j,0) = tool_vertices_normals[j + 4][0];
-//        tool_points.at<double>(j,1) = tool_vertices_normals[j + 4][1];
-//
-//        tool_normals.at<double>(j,0) = tool_vertices_normals[j + 4][2];
-//        tool_normals.at<double>(j,1) = tool_vertices_normals[j + 4][3];
-//    }
 
-    /******* get less normals: for stereo vision, to simplify the measurement model *****/
-    int point_dim = tool_vertices_normals.size();
-    int actual_dim = point_dim - 5;
+//    tool_points.at<double>(actual_dim-3,0) = tool_vertices_normals[point_dim -4][0];
+//    tool_points.at<double>(actual_dim-3,1) = tool_vertices_normals[point_dim -4][1];
+//
+//    tool_normals.at<double>(actual_dim-3,0) = tool_vertices_normals[point_dim -4][2];
+//    tool_normals.at<double>(actual_dim-3,1) = tool_vertices_normals[point_dim -4][3];
+//    ////
+//    tool_points.at<double>(actual_dim-2,0) = tool_vertices_normals[point_dim -1][0];
+//    tool_points.at<double>(actual_dim-2,1) = tool_vertices_normals[point_dim -1][1];
+//
+//    tool_normals.at<double>(actual_dim-2,0) = tool_vertices_normals[point_dim -1][2];
+//    tool_normals.at<double>(actual_dim-2,1) = tool_vertices_normals[point_dim -1][3];
+//    ////last normal
+//    tool_points.at<double>(actual_dim-1,0) = tool_vertices_normals[point_dim -2][0];
+//    tool_points.at<double>(actual_dim-1,1) = tool_vertices_normals[point_dim -2][1];
+//
+//    tool_normals.at<double>(actual_dim-1,0) = tool_vertices_normals[point_dim -2][2];
+//    tool_normals.at<double>(actual_dim-1,1) = tool_vertices_normals[point_dim -2][3];
+
+    /******** using less side normals: current best using stereo ********/
+    std::vector< std::vector<double> > temp_vec_normals;
+    ///need adjust the first few normals
+    int k =0;
+    while(k < point_dim - 6){
+        temp_vec_normals.push_back(tool_vertices_normals[k]);
+        temp_vec_normals.push_back(tool_vertices_normals[k + 1]);
+
+        k+=4;
+    }
+
+    int actual_dim = temp_vec_normals.size() + 1;   //need one more for other orientation
     tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
     tool_normals = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
 
-    for (int j = 0; j < point_dim - 7 ; ++j) {
-        tool_points.at<double>(j,0) = tool_vertices_normals[j][0];
-        tool_points.at<double>(j,1) = tool_vertices_normals[j][1];
+    for (int j = 0; j < actual_dim - 1; ++j) {
+        tool_points.at<double>(j,0) = temp_vec_normals[j][0];
+        tool_points.at<double>(j,1) = temp_vec_normals[j][1];
 
-        tool_normals.at<double>(j,0) = tool_vertices_normals[j][2];
-        tool_normals.at<double>(j,1) = tool_vertices_normals[j][3];
+        tool_normals.at<double>(j,0) = temp_vec_normals[j][2];
+        tool_normals.at<double>(j,1) = temp_vec_normals[j][3];
+
     }
 
-    tool_points.at<double>(point_dim - 7,0) = tool_vertices_normals[point_dim - 3][0];
-    tool_points.at<double>(point_dim - 7,1) = tool_vertices_normals[point_dim - 3][1];
+    tool_points.at<double>(actual_dim-3,0) = tool_vertices_normals[point_dim -4][0];
+    tool_points.at<double>(actual_dim-3,1) = tool_vertices_normals[point_dim -4][1];
 
-    tool_normals.at<double>(point_dim - 7,0) = tool_vertices_normals[point_dim - 3][2];
-    tool_normals.at<double>(point_dim - 7,1) = tool_vertices_normals[point_dim - 3][3];
+    tool_normals.at<double>(actual_dim-3,0) = tool_vertices_normals[point_dim -4][2];
+    tool_normals.at<double>(actual_dim-3,1) = tool_vertices_normals[point_dim -4][3];
+    ////
+    tool_points.at<double>(actual_dim-2,0) = tool_vertices_normals[point_dim -1][0];
+    tool_points.at<double>(actual_dim-2,1) = tool_vertices_normals[point_dim -1][1];
 
-    tool_points.at<double>(point_dim - 6,0) = tool_vertices_normals[point_dim-1][0];
-    tool_points.at<double>(point_dim - 6,1) = tool_vertices_normals[point_dim-1][1];
+    tool_normals.at<double>(actual_dim-2,0) = tool_vertices_normals[point_dim -1][2];
+    tool_normals.at<double>(actual_dim-2,1) = tool_vertices_normals[point_dim -1][3];
+    ////last normal
+    tool_points.at<double>(actual_dim-1,0) = tool_vertices_normals[point_dim -2][0];
+    tool_points.at<double>(actual_dim-1,1) = tool_vertices_normals[point_dim -2][1];
 
-    tool_normals.at<double>(point_dim - 6,0) = tool_vertices_normals[point_dim-1][2];
-    tool_normals.at<double>(point_dim - 6,1) = tool_vertices_normals[point_dim-1][3];
+    tool_normals.at<double>(actual_dim-1,0) = tool_vertices_normals[point_dim -2][2];
+    tool_normals.at<double>(actual_dim-1,1) = tool_vertices_normals[point_dim -2][3];
 
     /***** normalize *****/
     for (int i = 0; i < actual_dim; ++i) {

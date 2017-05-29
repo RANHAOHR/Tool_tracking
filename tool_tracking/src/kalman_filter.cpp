@@ -260,7 +260,7 @@ void KalmanFilter::getMeasurementModel(const cv::Mat &coarse_guess_vector, const
 	measurement_dim = temp_point.rows;
 
     cv::Mat measurement_points = cv::Mat_<double>::zeros(measurement_dim, 2);
-	int radius = 45;
+	int radius = 40;
 
 	//TODO: NEED TEST!
 	cv::Mat test_measurement = segmentation_img.clone();
@@ -369,8 +369,6 @@ void KalmanFilter::getStereoMeasurement(const cv::Mat & coarse_guess_vector, cv:
 
 	normal_left.copyTo( normal_measurement.rowRange(0, left_dim));
 	normal_right.copyTo( normal_measurement.rowRange(left_dim, left_dim + right_dim));
-	ROS_INFO("-------------------------");
-	ROS_INFO_STREAM("zt" << zt);
 
 };
 
@@ -645,8 +643,8 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 	for(int i = 0; i < 2 * L + 1; i++){
 		//h(Z_bar[i], sigma_pts_bar[i]);
 		h(Z_bar[i], sigma_pts_bar[i], left_image, right_image, cam_left, cam_right, normal_measurement);
-		ROS_INFO_STREAM(" Z_bar[i]  " <<Z_bar[i]);
-		cv::waitKey();
+//		ROS_INFO_STREAM(" Z_bar[i]  " <<Z_bar[i]);
+//		cv::waitKey();
 	}
 
 	/***** Calculate derived variance statistics *****/
