@@ -1242,8 +1242,20 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
 
 
     int point_dim = tool_vertices_normals.size();
+
+//    int actual_dim = point_dim;   //need one more for other orientation
+//    tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
+//    tool_normals = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
+//
+//    for (int j = 0; j < point_dim; ++j) {
+//        tool_points.at<double>(j,0) = tool_vertices_normals[j][0];
+//        tool_points.at<double>(j,1) = tool_vertices_normals[j][1];
+//
+//        tool_normals.at<double>(j,0) = tool_vertices_normals[j][2];
+//        tool_normals.at<double>(j,1) = tool_vertices_normals[j][3];
+//    }
     /****** this is to get modified normals, and also for single camera works pretty well ******/
-//    int actual_dim =point_dim - 6;   //need one more for other orientation
+//    int actual_dim = point_dim - 6;   //need one more for other orientation
 //    tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
 //    tool_normals = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
 //
@@ -1276,12 +1288,12 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
     /******** using less side normals: current best using stereo ********/
     std::vector< std::vector<double> > temp_vec_normals;
     ///need adjust the first few normals
-    int k =0;
+    int k = 0;
     while(k < point_dim - 6){
         temp_vec_normals.push_back(tool_vertices_normals[k]);
         temp_vec_normals.push_back(tool_vertices_normals[k + 1]);
 
-        k+=4;
+        k+=6;
     }
 
     int actual_dim = temp_vec_normals.size() + 1;   //need one more for other orientation
