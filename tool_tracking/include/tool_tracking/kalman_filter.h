@@ -143,7 +143,6 @@ private:
 							  cv::Mat &left_image,cv::Mat &right_image,
 							  cv::Mat &cam_left, cv::Mat &cam_right);
 
-
 	/*****image subscribing part*****/
 	cv::Mat seg_left;
 	cv::Mat seg_right;
@@ -201,7 +200,9 @@ public:
 
     void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
-	void Cholesky( const cv::Mat& A, cv::Mat& S );  //this is not working
+	void Cholesky( const cv::Mat& A, cv::Mat& S );
+
+	void testRenderGazebo();
 
 };
 #endif
