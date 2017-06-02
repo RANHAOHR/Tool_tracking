@@ -178,7 +178,7 @@ public:
 	 */
 	void updateSamples(const cv::Mat &bodyVel, double &updateRate, std::vector<ToolModel::toolModel> particles);
 
-	void updateParticles(std::vector<ToolModel::toolModel> &updateParticles, const ToolModel::toolModel &bestParticle);
+	void updateParticles(std::vector<ToolModel::toolModel> &updateParticles);
 
 
 	cv::Mat adjoint(cv::Mat &G);

@@ -189,7 +189,8 @@ public:
 				cv::Mat &left_image,cv::Mat &right_image,
 				cv::Mat &cam_left, cv::Mat &cam_right);
 
-    void convertToolModel(const cv::Mat & trans, ToolModel::toolModel &toolModel);
+    void convertToolModel(const cv::Mat & trans, const double joint_1, const double joint_2, const double joint_3, ToolModel::toolModel &toolModel);
+	void convertToolModel(const cv::Mat & trans, ToolModel::toolModel &toolModel);
 
 
     void getCourseEstimation();

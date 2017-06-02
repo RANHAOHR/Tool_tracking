@@ -121,6 +121,8 @@ int main(int argc, char **argv) {
 
 			freshImage = false;
 			freshVelocity = false;
+
+			cv::waitKey(20);
 		}
 
 	}

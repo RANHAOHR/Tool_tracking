@@ -41,7 +41,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
-        node_handle(*nodehandle), numParticles(100){
+        node_handle(*nodehandle), numParticles(200){
 
 	initializeParticles();
 
@@ -79,10 +79,10 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
     convertEigenToMat(arm_2__cam_l, Cam_left_arm_2);
     convertEigenToMat(arm_2__cam_r, Cam_right_arm_2);
 
-    ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
-    ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
-    ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
-    ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
+//    ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
+//    ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
+//    ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
+//    ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
 //
 //	Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.8361,0.5340, 0.1264, -0.1142,
 //	0.5132, 0.8424, -0.1641, -0.0262,
@@ -154,7 +154,6 @@ void ParticleFilter::initializeParticles() {
 //    cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
 //    computeRodriguesVec(a1_pos, a1_rvec);
 
-
 	Eigen::Affine3d a1_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0], sensor_1[0] + DH_q_offset0 );
 	Eigen::Affine3d a1_pos_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1], sensor_1[1] + DH_q_offset1 );
 	Eigen::Affine3d a1_pos_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_1[2] + DH_q_offset2, DH_alpha_params[2], 0.0 );
@@ -164,14 +163,7 @@ void ParticleFilter::initializeParticles() {
 	Eigen::Vector3d a1_trans = a1_pos.translation();
 
 	cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-
 	computeRodriguesVec(a1_pos, a1_rvec);
-
-//    Eigen::Affine3d a2_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_2.data()));
-//    Eigen::Vector3d a2_trans = a2_pos.translation();
-//    cv::Mat a2_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-//    computeRodriguesVec(a2_pos, a2_rvec);
-
 
 	/*** first arm particles initialization ***/
 	initial.tvec_cyl(0) = a1_trans[0];  //left and right (image frame)
@@ -181,7 +173,6 @@ void ParticleFilter::initializeParticles() {
 	initial.rvec_cyl(1) = a1_rvec.at<double>(1,0);
 	initial.rvec_cyl(2) = a1_rvec.at<double>(2,0);
 
-
     double theta_cylinder = tmp[0][4]; //initial guess
     double theta_oval = tmp[0][5]; //initial guess
     double theta_open = tmp[0][6]; //initial guess
@@ -189,22 +180,6 @@ void ParticleFilter::initializeParticles() {
 	for (int i = 0; i < numParticles; i++) {
 		particles_arm_1[i] = newToolModel.setRandomConfig(initial, theta_cylinder, theta_oval, theta_open );
 	}
-//	/*** second arm particles initialization ***/
-//	initial.tvec_grip1(0) = a2_trans[0];  //left and right (image frame)
-//	initial.tvec_grip1(1) = a2_trans[1];  //up and down
-//	initial.tvec_grip1(2) = a2_trans[2];
-//	initial.rvec_grip1(0) = a2_rvec.at<double>(0,0);
-//	initial.rvec_grip1(1) = a2_rvec.at<double>(1,0);
-//	initial.rvec_grip1(2) = a2_rvec.at<double>(2,0);
-//
-//	theta_cylinder = tmp[1][4]; //initial guess
-//	theta_oval = tmp[1][5]; //initial guess
-//	theta_open = tmp[1][6]; //initial guess
-//
-//	for (int i = 0; i < numParticles; i++) {
-//		particles_arm_2[i] = newToolModel.setRandomConfig(initial, theta_cylinder, theta_oval, theta_open );
-//	}
-
 };
 
 void ParticleFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight){
@@ -224,7 +199,7 @@ void ParticleFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &
 	P_right.at<double>(2,2) = projectionRight->P[10];
 	P_right.at<double>(2,3) = projectionRight->P[11];
 
-	ROS_INFO_STREAM("right: " << P_right);
+	//ROS_INFO_STREAM("right: " << P_right);
 	freshCameraInfo = true;
 };
 
@@ -245,7 +220,7 @@ void ParticleFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &p
 	P_left.at<double>(2,2) = projectionLeft->P[10];
 	P_left.at<double>(2,3) = projectionLeft->P[11];
 
-	ROS_INFO_STREAM("left: " << P_left);
+	//ROS_INFO_STREAM("left: " << P_left);
 	freshCameraInfo = true;
 };
 
@@ -301,6 +276,7 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	}
 
 	ToolModel::toolModel best_particle = particles_arm_1[maxScoreIdx_1];
+	ROS_WARN("KALMAN ARM AT (%f %f %f): %f %f %f, ",best_particle.tvec_cyl(0), best_particle.tvec_cyl(1),best_particle.tvec_cyl(2),best_particle.rvec_cyl(0),best_particle.rvec_cyl(1), best_particle.rvec_cyl(2));
 
 	///showing results for each iteration here
 	//render in segmented image
@@ -311,33 +287,23 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	trackingImages[1] = raw_image_right.clone();
 	cv::imshow("trackingImages left", trackingImages[0]);
 	cv::imshow("trackingImages right", trackingImages[1]);
-	//cv::imshow("best particle 2 in same loop",trackingImages[1]);
-
-	cv::waitKey(15);
 
 	//each time will clear the particles and resample them, resample using low variance resampling method
 	std::vector<ToolModel::toolModel> oldParticles = particles_arm_1;
 	resamplingParticles(oldParticles, particleWeights_arm_1, particles_arm_1);
 
 	//std::vector<ToolModel::toolModel> updatedParticles = particles;
-	updateParticles(particles_arm_1, best_particle);
+	updateParticles(particles_arm_1);
 
 	return trackingImages;
 };
 
 
 /***** update particles to find and reach to the best pose ***/
-void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedParticles,
-								   const ToolModel::toolModel &bestParticle) {
-
-	//updatedParticles.clear();
-    //updatedParticles.resize(numParticles);
+void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedParticles) {
     ///every loop should generate different particle from one base particle k
-	updatedParticles[0] = bestParticle;
-    for (int i = 1; i < numParticles; ++i) {
-        //updatedParticles[i] = newToolModel.gaussianSampling(bestParticle);
-		updatedParticles[i] = newToolModel.gaussianSampling(updatedParticles[i]);
-
+    for (int i = 0; i < numParticles; ++i) {
+		updatedParticles[i] = newToolModel.gaussianSampling(updatedParticles[i]);  //generate new particles with new deviation
     }
 
 };
