@@ -52,8 +52,8 @@ boost::mt19937 rng((const uint32_t &) time(0));
 ToolModel::ToolModel() {
 
     offset_body = 0.4580;//0.4535;  //0.3429,
-    offset_ellipse = offset_body + 0.003;
-    offset_gripper = offset_ellipse + 0.003;// + 0.009;// + 0.003;
+    offset_ellipse = offset_body;
+    offset_gripper = offset_ellipse + 0.001;// + 0.003;
 
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
@@ -982,18 +982,11 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     double sin_theta = sin(theta_ellipse);
 
     /*** why the hell this works in simulation ?? ***/
-    cv::Mat g_ellipse = (cv::Mat_<double>(3,3) << 1, 0, 0,
-    0, cos_theta, -sin_theta,
-    0,sin_theta, cos_theta);
+    cv::Mat g_ellipse = (cv::Mat_<double>(3,3) << cos_theta, -sin_theta, 0,
+            sin_theta, cos_theta, 0,
+            0,0, 1);
 
-    cos_theta = cos(0);
-    sin_theta = sin(0);
-
-    cv::Mat adjust = (cv::Mat_<double>(3,3) << cos_theta, 0, sin_theta,
-            0, 1, 0,
-            -sin_theta,0, cos_theta);
-
-    cv::Mat rot_new =  rot_ellipse * g_ellipse * adjust ;
+    cv::Mat rot_new =  rot_ellipse * g_ellipse;
     cv::Mat temp_vec(3,1,CV_64FC1);
     cv::Rodrigues(rot_new, inputModel.rvec_elp);
 
@@ -1019,9 +1012,9 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     cos_theta = cos(grip_1_delta);
     sin_theta = sin(-grip_1_delta);
 
-    cv::Mat gripper_1_ = (cv::Mat_<double>(3,3) << cos_theta, 0, sin_theta,
-            0,1,0,
-            -sin_theta, 0, cos_theta);
+    cv::Mat gripper_1_ = (cv::Mat_<double>(3,3) << 1, 0, 0,
+            0,cos_theta,-sin_theta,
+            0, sin_theta, cos_theta);
 
     cv::Mat rot_grip_1 = rot_elp * gripper_1_ ;
     cv::Rodrigues(rot_grip_1, inputModel.rvec_grip1);
@@ -1034,9 +1027,9 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     cos_theta = cos(grip_2_delta);
     sin_theta = sin(-grip_2_delta);
 
-    cv::Mat gripper_2_ = (cv::Mat_<double>(3,3) << cos_theta, 0, sin_theta,
-            0,1,0,
-            -sin_theta, 0, cos_theta);
+    cv::Mat gripper_2_ = (cv::Mat_<double>(3,3) << 1, 0, 0,
+            0,cos_theta,-sin_theta,
+            0, sin_theta, cos_theta);
 
     cv::Mat rot_grip_2 = rot_elp * gripper_2_;
     cv::Rodrigues(rot_grip_2, inputModel.rvec_grip2);
@@ -1225,12 +1218,6 @@ void ToolModel::renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &Ca
 //    Compute_Silhouette_UKF(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image,
 //                       cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, tool_points, tool_normals, jac);
 
-//    Compute_Silhouette_UKF(griper1_faces, griper1_neighbors, gripper1_Vmat, gripper1_Nmat, CamMat, image,
-//                       cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, tool_points, tool_normals, jac);
-//
-//    Compute_Silhouette_UKF(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image,
-//                       cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, tool_points, tool_normals, jac);
-
 //    for (int i = 0; i <tool_vertices_normals.size() ; ++i) {
 //        ROS_INFO("tool_vertices_normals i: %d, %f, %f,%f,%f ", i, tool_vertices_normals[i][0], tool_vertices_normals[i][1],tool_vertices_normals[i][2],tool_vertices_normals[i][3]);
 //    }
@@ -1289,48 +1276,6 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
 //    tool_normals.at<double>(actual_dim-1,1) = tool_vertices_normals[point_dim -2][3];
 
     /******** using less side normals: current best using stereo ********/
-//    std::vector< std::vector<double> > temp_vec_normals;
-//    ///need adjust the first few normals
-//    int k = 0;
-//    while(k < point_dim - 6){
-//        temp_vec_normals.push_back(tool_vertices_normals[k]);
-//        temp_vec_normals.push_back(tool_vertices_normals[k + 1]);
-//
-//        k+=6;
-//    }
-//
-//    int actual_dim = temp_vec_normals.size() + 1;   //need one more for other orientation
-//    tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-//    tool_normals = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-//
-//    for (int j = 0; j < actual_dim - 1; ++j) {
-//        tool_points.at<double>(j,0) = temp_vec_normals[j][0];
-//        tool_points.at<double>(j,1) = temp_vec_normals[j][1];
-//
-//        tool_normals.at<double>(j,0) = temp_vec_normals[j][2];
-//        tool_normals.at<double>(j,1) = temp_vec_normals[j][3];
-//
-//    }
-//
-//    tool_points.at<double>(actual_dim-3,0) = tool_vertices_normals[point_dim -4][0];
-//    tool_points.at<double>(actual_dim-3,1) = tool_vertices_normals[point_dim -4][1];
-//
-//    tool_normals.at<double>(actual_dim-3,0) = tool_vertices_normals[point_dim -4][2];
-//    tool_normals.at<double>(actual_dim-3,1) = tool_vertices_normals[point_dim -4][3];
-//    ////
-//    tool_points.at<double>(actual_dim-2,0) = tool_vertices_normals[point_dim -1][0];
-//    tool_points.at<double>(actual_dim-2,1) = tool_vertices_normals[point_dim -1][1];
-//
-//    tool_normals.at<double>(actual_dim-2,0) = tool_vertices_normals[point_dim -1][2];
-//    tool_normals.at<double>(actual_dim-2,1) = tool_vertices_normals[point_dim -1][3];
-//    ////last normal
-//    tool_points.at<double>(actual_dim-1,0) = tool_vertices_normals[point_dim -2][0];
-//    tool_points.at<double>(actual_dim-1,1) = tool_vertices_normals[point_dim -2][1];
-//
-//    tool_normals.at<double>(actual_dim-1,0) = tool_vertices_normals[point_dim -2][2];
-//    tool_normals.at<double>(actual_dim-1,1) = tool_vertices_normals[point_dim -2][3];
-
-    /*****new try: *****/
     std::vector< std::vector<double> > temp_vec_normals;
     ///need adjust the first few normals
 
@@ -1342,15 +1287,15 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
     cylinder_norm.at<double>(0,0) = temp_vec_normals[0][2];
     cylinder_norm.at<double>(0,1) = temp_vec_normals[0][3];
     cv::normalize(cylinder_norm, cylinder_norm);
-    ROS_INFO_STREAM("cylinder_norm " << cylinder_norm);
+    //ROS_INFO_STREAM("cylinder_norm " << cylinder_norm);
     for (int l = point_dim - 9; l < point_dim; ++l) {
         cv::Mat temp(1,2,CV_64FC1);
         temp.at<double>(0,0) = tool_vertices_normals[l][2];
         temp.at<double>(0,1) = tool_vertices_normals[l][3];
         cv::normalize(temp, temp);
         double bar = cylinder_norm.dot(temp);
-
-        if(bar < 0.06 && bar > -0.06){
+        //ROS_INFO_STREAM("bar IS " << bar);
+        if(bar < 0.05 && bar > -0.05){
             temp_vec_normals.push_back(tool_vertices_normals[l]);
         }
     }
@@ -1366,8 +1311,6 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
         tool_normals.at<double>(j,1) = temp_vec_normals[j][3];
 
     }
-    ROS_INFO_STREAM("tool_normals " << tool_normals.rows);
-    ROS_INFO_STREAM("tool_points " << tool_points.rows);
     /***** normalize *****/
     for (int i = 0; i < actual_dim; ++i) {
         cv::Mat temp(1,2,CV_64FC1);

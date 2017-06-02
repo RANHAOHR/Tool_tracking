@@ -97,7 +97,7 @@ private:
 
     int L;  ///DOF for both arms.
 
-	int measurement_dim;
+	int measurement_dimension;
 
     const static double alpha = 0.001;
     const static double k = 0.0; //TODO: how much?
@@ -109,6 +109,8 @@ private:
 
     cv::Mat kalman_mu_arm1;
     cv::Mat kalman_sigma_arm1;
+
+	cv::Mat real_mu;
 
 	cv::Mat kalman_mu_arm2;
 	cv::Mat kalman_sigma_arm2;

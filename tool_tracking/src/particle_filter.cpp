@@ -41,7 +41,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
-        node_handle(*nodehandle), numParticles(200){
+        node_handle(*nodehandle), numParticles(100){
 
 	initializeParticles();
 
@@ -158,8 +158,9 @@ void ParticleFilter::initializeParticles() {
 	Eigen::Affine3d a1_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0], sensor_1[0] + DH_q_offset0 );
 	Eigen::Affine3d a1_pos_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1], sensor_1[1] + DH_q_offset1 );
 	Eigen::Affine3d a1_pos_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_1[2] + DH_q_offset2, DH_alpha_params[2], 0.0 );
+	Eigen::Affine3d a1_pos_4 = kinematics.computeAffineOfDH(DH_a_params[3],  DH_d4, DH_alpha_params[3], sensor_1[3] + DH_q_offset3 );
 
-	Eigen::Affine3d a1_pos = kinematics.affine_frame0_wrt_base_ * a1_pos_1 * a1_pos_2 * a1_pos_3;// * a1_4 *a1_5 * a1_6 * a1_7 * kinematics.affine_gripper_wrt_frame6_ ;
+	Eigen::Affine3d a1_pos = kinematics.affine_frame0_wrt_base_ * a1_pos_1 * a1_pos_2 * a1_pos_3* a1_pos_4;// *a1_5 * a1_6 * a1_7 * kinematics.affine_gripper_wrt_frame6_ ;
 	Eigen::Vector3d a1_trans = a1_pos.translation();
 
 	cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
@@ -329,12 +330,13 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedParticles,
 								   const ToolModel::toolModel &bestParticle) {
 
-	updatedParticles.clear();
-    updatedParticles.resize(numParticles);
+	//updatedParticles.clear();
+    //updatedParticles.resize(numParticles);
     ///every loop should generate different particle from one base particle k
 	updatedParticles[0] = bestParticle;
     for (int i = 1; i < numParticles; ++i) {
-        updatedParticles[i] = newToolModel.gaussianSampling(bestParticle);
+        //updatedParticles[i] = newToolModel.gaussianSampling(bestParticle);
+		updatedParticles[i] = newToolModel.gaussianSampling(updatedParticles[i]);
 
     }
 
