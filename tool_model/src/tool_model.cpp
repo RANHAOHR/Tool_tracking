@@ -17,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Case Western Reserve Univeristy, nor the names of its
+ *   * Neither the name of Case Western Reserve University, nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -60,7 +60,7 @@ ToolModel::ToolModel() {
     tool_model_pkg = ros::package::getPath("tool_model");
 
     std::string cylinder = tool_model_pkg + "/tool_parts/cyliner_tense_end_face.obj"; //"/tense_cylinde_2.obj", test_cylinder_3, cyliner_tense_end_face
-    std::string ellipse = tool_model_pkg + "/tool_parts/refine_ellipse_3.obj";
+    std::string ellipse = tool_model_pkg + "/tool_parts/refine_ellipse_3.obj"; //new_oval,  refine_ellipse_3
     std::string gripper1 = tool_model_pkg + "/tool_parts/gripper2_1.obj";
     std::string gripper2 = tool_model_pkg + "/tool_parts/gripper2_2.obj";
 
@@ -1093,13 +1093,16 @@ void ToolModel::renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &Ca
     Compute_Silhouette_UKF(body_faces, body_neighbors, body_Vmat, body_Nmat, CamMat, image, cv::Mat(tool.rvec_cyl),
                        cv::Mat(tool.tvec_cyl), P, tool_vertices_normals, jac);
 
+//    std::vector< std::vector<double> > tool_oval_normals;
 //    Compute_Silhouette_UKF(ellipse_faces, ellipse_neighbors, ellipse_Vmat, ellipse_Nmat, CamMat, image,
-//                       cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, tool_vertices_normals, jac);
+//                       cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, tool_oval_normals, jac);
 
 //    for (int i = 0; i <tool_vertices_normals.size() ; ++i) {
 //        ROS_INFO("tool_vertices_normals i: %d, %f, %f,%f,%f ", i, tool_vertices_normals[i][0], tool_vertices_normals[i][1],tool_vertices_normals[i][2],tool_vertices_normals[i][3]);
 //    }
     reorganizeVertices(tool_vertices_normals, tool_points, tool_normals);
+
+    //gatherNormals(tool_vertices_normals, tool_oval_normals, tool_points, tool_normals);
 
 };
 
@@ -1108,14 +1111,13 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
     std::sort(tool_vertices_normals.begin(), tool_vertices_normals.end());
     tool_vertices_normals.erase(std::unique(tool_vertices_normals.begin(), tool_vertices_normals.end()), tool_vertices_normals.end());
 
-
     int point_dim = tool_vertices_normals.size();
 
 //    int actual_dim = point_dim;   //need one more for other orientation
 //    tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
 //    tool_normals = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
 //
-//    for (int j = 0; j < point_dim; ++j) {
+//    for (int j = point_dim -20; j < point_dim; ++j) {
 //        tool_points.at<double>(j,0) = tool_vertices_normals[j][0];
 //        tool_points.at<double>(j,1) = tool_vertices_normals[j][1];
 //
@@ -1197,6 +1199,80 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
     }
 };
 
+void ToolModel::gatherNormals(std::vector< std::vector<double> > &part1_normals, std::vector< std::vector<double> > &part2_normals, cv::Mat &tool_points, cv::Mat &tool_normals){
+
+    std::sort(part1_normals.begin(), part1_normals.end());
+    part1_normals.erase(std::unique(part1_normals.begin(), part1_normals.end()), part1_normals.end());
+
+    std::sort(part2_normals.begin(), part2_normals.end());
+    part2_normals.erase(std::unique(part2_normals.begin(), part2_normals.end()), part2_normals.end());
+
+    int point_dim = part1_normals.size();
+
+    std::vector< std::vector<double> > temp_vec_normals;
+    ///need adjust the first few normals
+
+    for (int m = 0; m <point_dim - 9; ++m) {
+        temp_vec_normals.push_back(part1_normals[m]);
+    }
+
+    cv::Mat cylinder_norm(1,2,CV_64FC1);
+    cylinder_norm.at<double>(0,0) = temp_vec_normals[0][2];
+    cylinder_norm.at<double>(0,1) = temp_vec_normals[0][3];
+    cv::normalize(cylinder_norm, cylinder_norm);
+
+    //ROS_INFO_STREAM("cylinder_norm " << cylinder_norm);
+    for (int l = point_dim - 9; l < point_dim; ++l) {
+        cv::Mat temp(1,2,CV_64FC1);
+        temp.at<double>(0,0) = part1_normals[l][2];
+        temp.at<double>(0,1) = part1_normals[l][3];
+        cv::normalize(temp, temp);
+        double bar = cylinder_norm.dot(temp);
+        //ROS_INFO_STREAM("bar IS " << bar);
+        if(bar < 0.3 && bar > -0.1){
+            temp_vec_normals.push_back(part1_normals[l]);
+        }
+    }
+
+    int limit = temp_vec_normals.size() -1;
+    double x = temp_vec_normals[limit][0] ;
+    /****** oval part normals *****/
+    point_dim = part2_normals.size();
+    for (int i = 0; i < point_dim; ++i) {
+
+        if(x < part2_normals[i][0]){
+            cv::Mat temp(1,2,CV_64FC1);
+            temp.at<double>(0,0) = part2_normals[i][2];
+            temp.at<double>(0,1) = part2_normals[i][3];
+            cv::normalize(temp, temp);
+            double bar = cylinder_norm.dot(temp);
+            //ROS_INFO_STREAM("bar IS " << bar);
+            if(bar < 0.3 && bar > -0.1){
+                temp_vec_normals.push_back(part2_normals[i]);
+            }
+        }
+
+    }
+
+    int actual_dim = temp_vec_normals.size();   //need one more for other orientation
+    tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
+    tool_normals = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
+
+    for (int j = 0; j < actual_dim; ++j) {
+        tool_points.at<double>(j,0) = temp_vec_normals[j][0];
+        tool_points.at<double>(j,1) = temp_vec_normals[j][1];
+        tool_normals.at<double>(j,0) = temp_vec_normals[j][2];
+        tool_normals.at<double>(j,1) = temp_vec_normals[j][3];
+    }
+
+    /***** normalize *****/
+    for (int i = 0; i < actual_dim; ++i) {
+        cv::Mat temp(1,2,CV_64FC1);
+        cv::normalize(tool_normals.row(i), temp);
+        temp.copyTo(tool_normals.row(i));
+    }
+};
+
 float ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage) {
 
     float matchingScore;
@@ -1224,7 +1300,7 @@ float ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segme
     return matchingScore;
 }
 
-/*chamfer matching, this in kalman filter has different iamge size make sure to change it back*/
+/*** chamfer matching algorithm, using distance transform, generate measurement model for PF ***/
 float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmentedImage) {
 
     float output = 0;

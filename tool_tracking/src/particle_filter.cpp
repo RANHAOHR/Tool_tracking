@@ -37,11 +37,10 @@
  */
 
 #include <tool_tracking/particle_filter.h>  //everything inside here
-
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
-        node_handle(*nodehandle), numParticles(200){
+        node_handle(*nodehandle), numParticles(100){
 
 	initializeParticles();
 
@@ -137,15 +136,18 @@ void ParticleFilter::initializeParticles() {
     /******Find and convert our various params and inputs******/
     //Get sensor update.
     kinematics = Davinci_fwd_solver();
+    getCoarseGuess();
+};
 
+void ParticleFilter::getCoarseGuess(){
     //Pull in our first round of sensor data.
     davinci_interface::init_joint_feedback(node_handle);
 
     std::vector<std::vector<double> > tmp;
     tmp.resize(2);
     if(davinci_interface::get_fresh_robot_pos(tmp)){
-		sensor_1 = tmp[0];
-		sensor_2 = tmp[1];
+        sensor_1 = tmp[0];
+        sensor_2 = tmp[1];
     }
 
 //    Eigen::Affine3d a1_pos = kinematics.fwd_kin_solve(Vectorq7x1(sensor_1.data()));
@@ -154,34 +156,34 @@ void ParticleFilter::initializeParticles() {
 //    cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
 //    computeRodriguesVec(a1_pos, a1_rvec);
 
-	Eigen::Affine3d a1_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0], sensor_1[0] + DH_q_offset0 );
-	Eigen::Affine3d a1_pos_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1], sensor_1[1] + DH_q_offset1 );
-	Eigen::Affine3d a1_pos_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_1[2] + DH_q_offset2, DH_alpha_params[2], 0.0 );
-	Eigen::Affine3d a1_pos_4 = kinematics.computeAffineOfDH(DH_a_params[3],  DH_d4, DH_alpha_params[3], sensor_1[3] + DH_q_offset3 );
+    Eigen::Affine3d a1_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0], sensor_1[0] + DH_q_offset0 );
+    Eigen::Affine3d a1_pos_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1], sensor_1[1] + DH_q_offset1 );
+    Eigen::Affine3d a1_pos_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_1[2] + DH_q_offset2, DH_alpha_params[2], 0.0 );
+    Eigen::Affine3d a1_pos_4 = kinematics.computeAffineOfDH(DH_a_params[3],  DH_d4, DH_alpha_params[3], sensor_1[3] + DH_q_offset3 );
 
-	Eigen::Affine3d a1_pos = kinematics.affine_frame0_wrt_base_ * a1_pos_1 * a1_pos_2 * a1_pos_3* a1_pos_4;// *a1_5 * a1_6 * a1_7 * kinematics.affine_gripper_wrt_frame6_ ;
-	Eigen::Vector3d a1_trans = a1_pos.translation();
+    Eigen::Affine3d a1_pos = kinematics.affine_frame0_wrt_base_ * a1_pos_1 * a1_pos_2 * a1_pos_3* a1_pos_4;// *a1_5 * a1_6 * a1_7 * kinematics.affine_gripper_wrt_frame6_ ;
+    Eigen::Vector3d a1_trans = a1_pos.translation();
 
-	cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
-	computeRodriguesVec(a1_pos, a1_rvec);
+    cv::Mat a1_rvec = cv::Mat::zeros(3,1,CV_64FC1);
+    computeRodriguesVec(a1_pos, a1_rvec);
 
-	/*** first arm particles initialization ***/
-	initial.tvec_cyl(0) = a1_trans[0];  //left and right (image frame)
-	initial.tvec_cyl(1) = a1_trans[1];  //up and down
-	initial.tvec_cyl(2) = a1_trans[2];
-	initial.rvec_cyl(0) = a1_rvec.at<double>(0,0);
-	initial.rvec_cyl(1) = a1_rvec.at<double>(1,0);
-	initial.rvec_cyl(2) = a1_rvec.at<double>(2,0);
+    /*** first arm particles initialization ***/
+    initial.tvec_cyl(0) = a1_trans[0];  //left and right (image frame)
+    initial.tvec_cyl(1) = a1_trans[1];  //up and down
+    initial.tvec_cyl(2) = a1_trans[2];
+    initial.rvec_cyl(0) = a1_rvec.at<double>(0,0);
+    initial.rvec_cyl(1) = a1_rvec.at<double>(1,0);
+    initial.rvec_cyl(2) = a1_rvec.at<double>(2,0);
 
     double theta_cylinder = tmp[0][4]; //initial guess
     double theta_oval = tmp[0][5]; //initial guess
     double theta_open = tmp[0][6]; //initial guess
 
-	for (int i = 0; i < numParticles; i++) {
-		particles_arm_1[i] = newToolModel.setRandomConfig(initial, theta_cylinder, theta_oval, theta_open );
-	}
-};
+    for (int i = 0; i < numParticles; i++) {
+        particles_arm_1[i] = newToolModel.setRandomConfig(initial, theta_cylinder, theta_oval, theta_open );
+    }
 
+};
 void ParticleFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight){
 
 	P_right.at<double>(0,0) = projectionRight->P[0];
@@ -276,7 +278,7 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	}
 
 	ToolModel::toolModel best_particle = particles_arm_1[maxScoreIdx_1];
-	ROS_WARN("KALMAN ARM AT (%f %f %f): %f %f %f, ",best_particle.tvec_cyl(0), best_particle.tvec_cyl(1),best_particle.tvec_cyl(2),best_particle.rvec_cyl(0),best_particle.rvec_cyl(1), best_particle.rvec_cyl(2));
+	ROS_WARN("Particle ARM AT (%f %f %f): %f %f %f, ",best_particle.tvec_cyl(0), best_particle.tvec_cyl(1),best_particle.tvec_cyl(2),best_particle.rvec_cyl(0),best_particle.rvec_cyl(1), best_particle.rvec_cyl(2));
 
 	///showing results for each iteration here
 	//render in segmented image

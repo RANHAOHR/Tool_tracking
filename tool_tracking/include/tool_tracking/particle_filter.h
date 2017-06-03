@@ -146,10 +146,15 @@ public:
 	~ParticleFilter();
 
 	/*
-	* The initializeParticles initializes the particles by setting the total number of particles, initial
-	* guess and randomly generating the particles around the initial guess.
-	*/
+	 * The initializeParticles initializes the particles by setting the total number of particles, initial
+	 * guess and randomly generating the particles around the initial guess.
+	 */
 	void initializeParticles();
+
+    /*
+     * get coarse initialization
+     */
+    void getCoarseGuess();
 
 	/***consider getting a timer to debug***/
 	// void timerCallback(const ros::TimerEvent&);

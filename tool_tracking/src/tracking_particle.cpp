@@ -121,6 +121,7 @@ int main(int argc, char **argv) {
 
 			freshImage = false;
 			freshVelocity = false;
+            Particles.getCoarseGuess(); //get ready for next time step
 
 			cv::waitKey(20);
 		}

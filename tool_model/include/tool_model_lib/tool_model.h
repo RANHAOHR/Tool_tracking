@@ -224,6 +224,7 @@ public:
     cv::Mat camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat);
 
     void reorganizeVertices(std::vector< std::vector<double> > &tool_vertices_normals, cv::Mat &tool_points, cv::Mat &tool_normals);
+    void gatherNormals(std::vector< std::vector<double> > &part1_normals, std::vector< std::vector<double> > &part2_normals, cv::Mat &tool_points, cv::Mat &tool_normals);
 
 };
 
