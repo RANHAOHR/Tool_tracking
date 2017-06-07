@@ -192,34 +192,6 @@ KalmanFilter::~KalmanFilter() {
 
 };
 
-double KalmanFilter::measureFunc(
-	cv::Mat & toolImage_left,
-	cv::Mat & toolImage_right,
-	ToolModel::toolModel &toolPose,
-	cv::Mat &Cam_left,
-	cv::Mat &Cam_right,
-	cv::Mat & rawImage_left,
-	cv::Mat & rawImage_right){
-
-	toolImage_left.setTo(0);
-	toolImage_right.setTo(0);
-
-	/***do the sampling and get the matching score***/
-	//first get the rendered image using 3d model of the tool
-	ukfToolModel.renderTool(toolImage_left, toolPose, Cam_left, P_left);
-	double left = ukfToolModel.calculateChamferScore(toolImage_left, seg_left);  //get the matching score
-
-	ukfToolModel.renderTool(toolImage_right, toolPose, Cam_right, P_right);
-	double right = ukfToolModel.calculateChamferScore(toolImage_right, seg_right);
-
-	ukfToolModel.renderTool(rawImage_left, toolPose, Cam_left, P_left);
-	ukfToolModel.renderTool(rawImage_right, toolPose, Cam_right, P_right);
-
-	double matchingScore = sqrt(pow(left, 2) + pow(right, 2));
-
-	return matchingScore;
-};
-
 /*
  * get the measurement zt using coarse guess
  */
@@ -714,8 +686,7 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 	kalman_mu = mu_bar + K * (zt - z_caret);
 	kalman_sigma = sigma_bar - K * S * K.t();
 
-//	ROS_WARN("KALMAN ARM AT (%f %f %f): %f %f %f, joints: %f %f %f ",kalman_mu.at<double>(0, 0), kalman_mu.at<double>(1, 0),kalman_mu.at<double>(2, 0),kalman_mu.at<double>(3, 0),kalman_mu.at<double>(4, 0), kalman_mu.at<double>(5, 0), kalman_mu.at<double>(6, 0), kalman_mu.at<double>(7, 0),kalman_mu.at<double>(8, 0));
-	ROS_WARN("KALMAN ARM AT (%f %f %f): %f %f %f, ",kalman_mu.at<double>(0, 0), kalman_mu.at<double>(1, 0),kalman_mu.at<double>(2, 0),kalman_mu.at<double>(3, 0),kalman_mu.at<double>(4, 0), kalman_mu.at<double>(5, 0));
+	ROS_WARN("KALMAN ARM AT (%f %f %f): %f %f %f, %f ",kalman_mu.at<double>(0, 0), kalman_mu.at<double>(1, 0),kalman_mu.at<double>(2, 0),kalman_mu.at<double>(3, 0),kalman_mu.at<double>(4, 0), kalman_mu.at<double>(5, 0), kalman_mu.at<double>(6, 0));
 };
 
 //TODO:
@@ -739,50 +710,6 @@ void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, 
 //		//double dev_ang = ukfToolModel.randomNum(0.001, 0);
 //		sigma_point_out.at<double>(j,0) = delta_zt.at<double>(j,0) + dev_ang;//gaussian generator
 //	}
-
-};
-
-/***this function should compute the matching score for all of the sigma points****/
-void KalmanFilter::computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in,
-										cv::Mat &left_image,cv::Mat &right_image,
-										cv::Mat &cam_left, cv::Mat &cam_right){
-	double total = 0.0;
-
-	for (int i = 0; i < sigma_point_in.size() ; i++) {
-		measureWeights[i] = matching_score(sigma_point_in[i], left_image, right_image, cam_left, cam_right);
-		total += measureWeights[i];
-
-	}
-	if(total != 0.0){
-		//normalization of measurement weights
-		for (int j = 0; j < sigma_point_in.size(); j++) {
-			measureWeights[j] = (measureWeights[j] / total);//(2*L + 1); //NORMALIZE here as the dimension of the size of sigma points, because is too small
-		}
-	}else{
-		ROS_ERROR("Cannot find good measurement scores");
-		for (int j = 0; j < sigma_point_in.size(); j++) {
-			measureWeights[j] = 1.0;
-		}
-	}
-
-};
-
-/****using vision fucntions here careful with which image to use****/
-double KalmanFilter::matching_score(const cv::Mat &stat, cv::Mat &left_image,cv::Mat &right_image,
-									cv::Mat &cam_left, cv::Mat &cam_right){
-
-	//ROS_INFO_STREAM("stat IS: " << stat);
-	//Convert them into tool models
-	ToolModel::toolModel arm_1;
-
-	convertToolModel(stat, arm_1);
-
-	double matchingScore_arm_1 = measureFunc(left_image, right_image, arm_1,
-		cam_left, cam_right, tool_rawImg_left, tool_rawImg_right);
-
-	double result = matchingScore_arm_1;
-
-	return result;
 
 };
 
@@ -847,6 +774,7 @@ void KalmanFilter::convertToolModel(const cv::Mat & trans, const double joint_1,
 
 	ukfToolModel.computeEllipsePose(toolModel, joint_1, joint_2, joint_3);
 };
+
 void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec){
 
 	Eigen::Matrix3d rot_affine = trans.rotation();
@@ -869,18 +797,7 @@ void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat ro
 
 void KalmanFilter::getSquareRootCov(cv::Mat &sigma_cov, cv::Mat &square_root){
 
-	/** get square root of the covariance **/
-//	cv::Mat s = cv::Mat_<double>::zeros(L, 1);  //allocate space for SVD
-//	cv::Mat vt = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
-//	cv::Mat u = cv::Mat_<double>::zeros(L, L);  //allocate space for SVD
-//
-//	cv::SVD::compute(sigma_cov, s, u, vt);//The actual square root gets saved into s
-//
-//	for (int i = 0; i < L; ++i) {
-//		square_root.at<double>(i,i) = s.at<double>(i,0);
-//	}
-
-	/** cholesky decomposition **/
+	/** using cholesky decomposition **/
 	cv::Mat chol_mat(L,L,CV_64FC1);
 	Cholesky( sigma_cov, chol_mat );
 

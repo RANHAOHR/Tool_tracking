@@ -133,18 +133,11 @@ private:
 
     cv::Mat P_left;
     cv::Mat P_right;
-
-    double matching_score(const cv::Mat & stat,cv::Mat &left_image,cv::Mat &right_image,
-						  cv::Mat &cam_left, cv::Mat &cam_right);
 	
 	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & delta_zt);
 	void h(cv::Mat & sigma_point_out, const cv::Mat_<double> & sigma_point_in,
 			cv::Mat &left_image,cv::Mat &right_image,
 			cv::Mat &cam_left, cv::Mat &cam_right, cv::Mat &normal_measurement);
-
-    void computeSigmaMeasures(std::vector<double> & measureWeights, const std::vector<cv::Mat_<double> > & sigma_point_in,
-							  cv::Mat &left_image,cv::Mat &right_image,
-							  cv::Mat &cam_left, cv::Mat &cam_right);
 
 	/*****image subscribing part*****/
 	cv::Mat seg_left;
@@ -195,9 +188,6 @@ public:
 
 
     void getCourseEstimation();
-    double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, cv::Mat &Cam_left, cv::Mat &Cam_right, cv::Mat & rawImage_left,
-					   cv::Mat & rawImage_right);
-
 	void getMeasurementModel(const cv::Mat & coarse_guess_vector, const cv::Mat &segmentation_img, const cv::Mat &projection_mat, cv::Mat &Cam_matrix, cv::Mat & rawImage, cv::Mat &zt, cv::Mat &normal_measurement);
 
 	void getStereoMeasurement(const cv::Mat & coarse_guess_vector, cv::Mat &zt, cv::Mat &normal_measurement);
