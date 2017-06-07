@@ -95,6 +95,7 @@ private:
     cv::Mat Cam_left_arm_2;
     cv::Mat Cam_right_arm_2;
 
+    cv::Mat resulting_image;  //for showing test results;
     int L;  ///DOF for both arms.
 
 	int measurement_dimension;

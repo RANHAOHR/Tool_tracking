@@ -134,7 +134,20 @@ public:
     cv::Mat gripper1Face_centroid;
     cv::Mat gripper2Face_centroid;
 
-    /******************************************************************/
+    /* **to get the useful normal information from** */
+    std::vector<glm::vec3> oval_normal_vertices;
+    std::vector<glm::vec3> oval_normal_Vnormal;
+    std::vector<cv::Point3d> oval_normal_Vpts;
+    std::vector<cv::Point3d> oval_normal_Npts;
+    cv::Mat oval_normal_Vmat;
+    cv::Mat oval_normal_Nmat;
+
+    std::vector<std::vector<int> > oval_normal_faces;
+    std::vector<std::vector<int> > oval_normal_neighbors;
+    cv::Mat oval_normalFace_normal;
+    cv::Mat oval_normalFace_centroid;
+
+    /**************************** offset for modify model **************************************/
     double offset_body;
     double offset_ellipse; // all in meters
     double offset_gripper; //
@@ -219,8 +232,6 @@ public:
                      const std::vector<cv::Point3d> &input_Vnormal, cv::Mat &face_normals, cv::Mat &face_centroids);
 
     /*************camera transforms************************/
-    cv::Point3d camTransformPoint(cv::Mat &cam_mat, cv::Point3d &input_vertex);
-
     cv::Mat camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat);
 
     void reorganizeVertices(std::vector< std::vector<double> > &tool_vertices_normals, cv::Mat &tool_points, cv::Mat &tool_normals);
