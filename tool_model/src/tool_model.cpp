@@ -957,7 +957,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     /*********** computations for gripper kinematics **********/
     cv::Mat test_gripper(3, 1, CV_64FC1);
     test_gripper.at<double>(0, 0) = 0;
-    test_gripper.at<double>(1, 0) = offset_gripper - offset_ellipse;  //
+    test_gripper.at<double>(1, 0) = 0.006;//close to offset_gripper - offset_ellipse;
     test_gripper.at<double>(2, 0) = 0;
 
     cv::Mat rot_elp(3, 3, CV_64FC1);
@@ -970,8 +970,8 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
     inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
 
-    double grip_1_delta = theta_grip_1 - theta_grip_2/2;
-    double grip_2_delta = theta_grip_1 + theta_grip_2/2;
+    double grip_1_delta = theta_grip_1 - theta_grip_2;
+    double grip_2_delta = theta_grip_1 + theta_grip_2;
 
     cos_theta = cos(grip_1_delta);
     sin_theta = sin(-grip_1_delta);
@@ -1065,6 +1065,13 @@ void ToolModel::renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &Ca
     Compute_Silhouette_UKF(oval_normal_faces, oval_normal_neighbors, oval_normal_Vmat, oval_normal_Nmat, CamMat, image,
                        cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, tool_oval_normals, jac);
 
+    std::vector< std::vector<double> > tool_gripper_normals;
+    Compute_Silhouette_UKF(griper1_faces, griper1_neighbors, gripper1_Vmat, gripper1_Nmat, CamMat, image,
+                           cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, tool_gripper_normals, jac);
+
+    Compute_Silhouette_UKF(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image,
+                           cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, tool_gripper_normals, jac);
+
     int point_size = tool_oval_normals.size();
     for (int i = 0; i < point_size; ++i) {
         cv::Mat temp_normal(1,2,CV_64FC1);
@@ -1078,12 +1085,11 @@ void ToolModel::renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &Ca
 
     }
 
-
 //    for (int i = 0; i <tool_vertices_normals.size() ; ++i) {
 //        ROS_INFO("tool_vertices_normals i: %d, %f, %f,%f,%f ", i, tool_vertices_normals[i][0], tool_vertices_normals[i][1],tool_vertices_normals[i][2],tool_vertices_normals[i][3]);
 //    }
 //    reorganizeVertices(tool_vertices_normals, tool_points, tool_normals);
-    gatherNormals(tool_vertices_normals, tool_oval_normals, tool_points, tool_normals);
+    gatherNormals(tool_vertices_normals, tool_oval_normals, tool_gripper_normals, tool_points, tool_normals);
 
 };
 
@@ -1149,13 +1155,16 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
     }
 };
 
-void ToolModel::gatherNormals(std::vector< std::vector<double> > &part1_normals, std::vector< std::vector<double> > &part2_normals, cv::Mat &tool_points, cv::Mat &tool_normals){
+void ToolModel::gatherNormals(std::vector< std::vector<double> > &part1_normals, std::vector< std::vector<double> > &part2_normals, std::vector< std::vector<double> > &part3_normals, cv::Mat &tool_points, cv::Mat &tool_normals){
 
     std::sort(part1_normals.begin(), part1_normals.end());
     part1_normals.erase(std::unique(part1_normals.begin(), part1_normals.end()), part1_normals.end());
 
     std::sort(part2_normals.begin(), part2_normals.end());
     part2_normals.erase(std::unique(part2_normals.begin(), part2_normals.end()), part2_normals.end());
+
+    std::sort(part3_normals.begin(), part3_normals.end());
+    part3_normals.erase(std::unique(part3_normals.begin(), part3_normals.end()), part3_normals.end());
 
     int point_dim = part1_normals.size();
 
@@ -1186,6 +1195,14 @@ void ToolModel::gatherNormals(std::vector< std::vector<double> > &part1_normals,
     for (int i = 0; i < 2; ++i) { // here we really don't need too much normals
         temp_vec_normals.push_back(part2_normals[i]);
     }
+
+    /****** oval part normals *****/
+//    for (int i = 0; i < part3_normals.size(); ++i) { // here we really don't need too much normals
+//        temp_vec_normals.push_back(part3_normals[i]);
+//    }
+    temp_vec_normals.push_back(part3_normals[4]);
+    temp_vec_normals.push_back(part3_normals[7]);
+
 
     int actual_dim = temp_vec_normals.size();   //need one more for other orientation
     tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);

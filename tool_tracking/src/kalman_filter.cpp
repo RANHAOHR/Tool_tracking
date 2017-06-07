@@ -49,7 +49,7 @@ The cameras, conversely, are to be referred to *ONLY* by 'left' and 'right'- nev
 **********************************************/
 
 KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
-		nh_(*nodehandle), L(7){
+		nh_(*nodehandle), L(9){
 
 	ROS_INFO("Initializing UKF...");
 
@@ -59,9 +59,6 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 
 	toolImage_left_arm_2 = cv::Mat::zeros(480, 640, CV_8UC3);
 	toolImage_right_arm_2 = cv::Mat::zeros(480, 640, CV_8UC3);
-
-	toolImage_cam_left = cv::Mat::zeros(480, 640, CV_8UC3);
-	toolImage_cam_right = cv::Mat::zeros(480, 640, CV_8UC3);
 
 	tool_rawImg_left = cv::Mat::zeros(480, 640, CV_8UC3);
 	tool_rawImg_right =cv::Mat::zeros(480, 640, CV_8UC3);
@@ -111,10 +108,10 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 
 	//Convert to Affine3ds for storage, which is the format they will be used in for rendering.
 	XformUtils xfu;
-	arm_1__cam_l = xfu.transformTFToAffine3d(arm_1__cam_l_st);//.inverse();
-	arm_1__cam_r = xfu.transformTFToAffine3d(arm_1__cam_r_st);//.inverse();
-	arm_2__cam_l = xfu.transformTFToAffine3d(arm_2__cam_l_st);//.inverse();
-	arm_2__cam_r = xfu.transformTFToAffine3d(arm_2__cam_r_st);//.inverse();
+	arm_1__cam_l = xfu.transformTFToAffine3d(arm_1__cam_l_st);
+	arm_1__cam_r = xfu.transformTFToAffine3d(arm_1__cam_r_st);
+	arm_2__cam_l = xfu.transformTFToAffine3d(arm_2__cam_l_st);
+	arm_2__cam_r = xfu.transformTFToAffine3d(arm_2__cam_r_st);
 
 	convertEigenToMat(arm_1__cam_l, Cam_left_arm_1);
 	convertEigenToMat(arm_1__cam_r, Cam_right_arm_1);
@@ -189,7 +186,6 @@ void KalmanFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &pro
 };
 
 KalmanFilter::~KalmanFilter() {
-
 };
 
 /*
@@ -232,9 +228,8 @@ void KalmanFilter::getMeasurementModel(const cv::Mat &coarse_guess_vector, const
 	cv::imshow("rendered_image:", rendered_image);
 
 	int measurement_dim = temp_point.rows;
-
     cv::Mat measurement_points = cv::Mat_<double>::zeros(measurement_dim, 2);
-	int radius = 30;
+	int radius = 10;
 
 	cv::Mat test_measurement = segmentation_img.clone();
 	ukfToolModel.renderToolUKF(test_measurement, coarse_tool, Cam_matrix, projection_mat, temp_point, temp_normal);
@@ -295,7 +290,7 @@ void KalmanFilter::getMeasurementModel(const cv::Mat &coarse_guess_vector, const
 		cv::line(test_measurement, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
 	}
     cv::imshow("test_measurement", test_measurement);
-	zt = cv::Mat_<double>::zeros(measurement_dim, 1);  //don't forget this
+	zt = cv::Mat_<double>::zeros(measurement_dim, 1);
     for (int i = 0; i <measurement_dim; ++i) {
         cv::Mat normal = temp_normal.row(i);
         cv::Mat pixel = measurement_points.row(i);
@@ -380,12 +375,11 @@ void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat_<double> & sigma_p
 //	 cv::imshow("resulting_image for sigma : " , resulting_image);
 //	 cv::waitKey();
 
-	// sigma_point_out = left_pz.clone(); //// for left camera tracking
+	 sigma_point_out = left_pz.clone(); //// for left camera tracking
 	/*** right camera predicted measurement ***/
 	cv::Mat temp_point_r = cv::Mat(1,2,CV_64FC1);
 	cv::Mat temp_normal_r = cv::Mat(1,2,CV_64FC1);
 	ukfToolModel.renderToolUKF(right_image, sigma_arm, cam_right, P_right, temp_point_r, temp_normal_r); //temp_normal not using right now
-//	showNormals(temp_point_r, temp_normal_r, right_image );
 	cv::Mat right_pz = cv::Mat::zeros(temp_point_r.rows, 1, CV_64FC1);  ///left predicted measurements
 
 	int left_dim = temp_point_l.rows;
@@ -460,6 +454,8 @@ void KalmanFilter::getCourseEstimation(){
 	kalman_mu_arm1.at<double>(5 , 0) = 1.464622;
 
 	kalman_mu_arm1.at<double>(6 , 0) = tmp[0][4];
+    kalman_mu_arm1.at<double>(7 , 0) = tmp[0][5];
+    kalman_mu_arm1.at<double>(8 , 0) = tmp[0][6];
 
 //	kalman_mu_arm1 = cv::Mat_<double>::zeros(L, 1);
 //	kalman_mu_arm1.at<double>(0 , 0) = arm_trans[0];
@@ -488,7 +484,7 @@ void KalmanFilter::getCourseEstimation(){
 	dev_pos = ukfToolModel.randomNum(0.00001, 0.0);  ///deviation for position
 	dev_ori = ukfToolModel.randomNum(0.0001, 0.0);  ///deviation for orientation
 
-	for (int j = 6; j < 7; ++j) {
+	for (int j = 6; j < 9; ++j) {
 		kalman_sigma_arm1.at<double>(j,j) = dev_pos; //gaussian generator
 	}
 
@@ -553,8 +549,8 @@ void KalmanFilter::UKF_double_arm(){ //well, currently just one......
 	double j1 = kalman_mu_arm1.at<double>(6 , 0);
 
 	//these two joint not really matters
-	double j2 = real_mu.at<double>(7 , 0);
-	double j3 = real_mu.at<double>(8 , 0);
+	double j2 = kalman_mu_arm1.at<double>(7 , 0);
+	double j3 = kalman_mu_arm1.at<double>(8 , 0);
 
 	convertToolModel(kalman_mu_arm1, j1, j2, j3, show_arm);
 	cv::Mat test_l = tool_rawImg_left.clone();
@@ -612,7 +608,6 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 	cv::Mat normal_measurement;
 	cv::Mat zt;
 	//getMeasurementModel(kalman_mu, seg_left, P_left,Cam_left_arm_1, tool_rawImg_left, zt, normal_measurement);   ///using left camera measurements
-	//getMeasurementModel(kalman_mu, seg_right, P_right,Cam_right_arm_1, tool_rawImg_right, zt, normal_measurement);    ////using right camera measurements
 	getStereoMeasurement(kalman_mu, zt, normal_measurement);
 
 	ROS_INFO_STREAM(" zt: " << zt);
@@ -699,17 +694,14 @@ void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, 
 	double dev_ang = ukfToolModel.randomNum(0.00001, 0); ///deviation for //cv::waitKey(); joint angles
 
 	for (int j = 0; j < 3; ++j) {
-		//double dev_pos = ukfToolModel.randomNum(0.06, 0.00);
 		sigma_point_out.at<double>(j,0) = sigma_point_in.at<double>(j,0) + dev_pos;//gaussian generator
 	}
 	for (int j = 3; j < 6; ++j) {
-		//double dev_ori = ukfToolModel.randomNum(0.08, 0.00);
 		sigma_point_out.at<double>(j,0) = sigma_point_in.at<double>(j,0) + dev_ori;//gaussian generator
 	}
-//	for (int j = 6; j < 9; ++j) {
-//		//double dev_ang = ukfToolModel.randomNum(0.001, 0);
-//		sigma_point_out.at<double>(j,0) = delta_zt.at<double>(j,0) + dev_ang;//gaussian generator
-//	}
+	for (int j = 6; j < 9; ++j) {
+		sigma_point_out.at<double>(j,0) = delta_zt.at<double>(j,0) + dev_ang;//gaussian generator
+	}
 
 };
 
