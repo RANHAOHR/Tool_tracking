@@ -18,10 +18,13 @@
 
 using namespace std;
 
-    std::vector< glm::vec3 > vertices;
-	std::vector< glm::vec2 > uvs;
-	std::vector< glm::vec3 > normals;
+std::vector< glm::vec3 > vertices;
+std::vector< glm::vec2 > uvs;
+std::vector< glm::vec3 > normals;
 
+/**
+brief testing
+*/
 bool loadOBJ(
     const char * path, 
     std::vector<glm::vec3> & out_vertices,

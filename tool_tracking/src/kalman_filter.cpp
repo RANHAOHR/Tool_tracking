@@ -52,7 +52,6 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 		nh_(*nodehandle), L(9){
 
 	ROS_INFO("Initializing UKF...");
-
 	// initialization, just basic black image ??? how to get the size of the image
 	toolImage_left_arm_1 = cv::Mat::zeros(480, 640, CV_8UC3);
 	toolImage_right_arm_1 = cv::Mat::zeros(480, 640, CV_8UC3);
@@ -67,15 +66,13 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	seg_right  = cv::Mat::zeros(480, 640, CV_32FC1);
 
 	resulting_image = cv::Mat::zeros(480, 640, CV_8UC3);
-
 	freshSegImage = false;
+	freshCameraInfo = false; //should be left and right
 
 	/***motion model params***/
-	//Initialization of sensor datas.
+	//Initialization of sensor data.
 	kinematics = Davinci_fwd_solver();
 	davinci_interface::init_joint_feedback(nh_);
-
-	freshCameraInfo = false; //should be left and right
 
 	//The projection matrix from the simulation does not accurately reflect the Da Vinci robot. We are hardcoding the matrix from the da vinci itself.
 	projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
@@ -188,9 +185,7 @@ void KalmanFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &pro
 KalmanFilter::~KalmanFilter() {
 };
 
-/*
- * get the measurement zt using coarse guess
- */
+
 void KalmanFilter::getMeasurementModel(const cv::Mat &coarse_guess_vector, const cv::Mat &segmentation_img, const cv::Mat &projection_mat,
 		cv::Mat &Cam_matrix, cv::Mat &rawImage, cv::Mat &zt, cv::Mat &normal_measurement)
 {
@@ -412,7 +407,7 @@ void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat_<double> & sigma_p
 /*
  * get a course estimation for dynamic tracking TODO:
  */
-void KalmanFilter::getCourseEstimation(){
+void KalmanFilter::getCoarseEstimation(){
 
     std::vector<std::vector<double> > tmp;
     tmp.resize(2);
@@ -536,7 +531,7 @@ void KalmanFilter::UKF_double_arm(){ //well, currently just one......
 	//testRenderGazebo();  ///to test the gazebo camera configuration
 
 	ROS_INFO("--------------ARM 1 : --------------");
-	getCourseEstimation();   ///get new kalman_mu_arm1, kalman_sigma_arm1
+	getCoarseEstimation();   ///get new kalman_mu_arm1, kalman_sigma_arm1
 	ROS_INFO_STREAM("BEFORE kalman_mu_arm1: " << kalman_mu_arm1);
 
 	update(kalman_mu_arm1, kalman_sigma_arm1, toolImage_left_arm_1,
@@ -621,7 +616,7 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 	cv::Mat temp_normal_test = cv::Mat(1,2,CV_64FC1);
 	sigma_pts_bar[0] = sigma_pts_last[0];
 	for(int i = 1; i < 2 * L + 1; i++){
-		g(sigma_pts_bar[i], sigma_pts_last[i], sigma_pts_last[0]); // TODO: motion model
+		g(sigma_pts_bar[i], sigma_pts_last[i]); // TODO: motion model
 		///testing?
 		ToolModel::toolModel test_arm;
 		convertToolModel(sigma_pts_bar[i], test_arm);
@@ -685,7 +680,7 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 };
 
 //TODO:
-void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & delta_zt){
+void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in){
 
 	sigma_point_out = sigma_point_in.clone();
 
@@ -699,19 +694,19 @@ void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, 
 	for (int j = 3; j < 6; ++j) {
 		sigma_point_out.at<double>(j,0) = sigma_point_in.at<double>(j,0) + dev_ori;//gaussian generator
 	}
-	for (int j = 6; j < 9; ++j) {
-		sigma_point_out.at<double>(j,0) = delta_zt.at<double>(j,0) + dev_ang;//gaussian generator
-	}
+//	for (int j = 6; j < 9; ++j) {
+//		sigma_point_out.at<double>(j,0) = sigma_point_in.at<double>(j,0) + dev_ang;//gaussian generator
+//	}
 
 };
 
 /******from eigen to opencv matrix****/
-void KalmanFilter::convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix){
+void KalmanFilter::convertEigenToMat(const Eigen::Affine3d & arm_pose, cv::Mat & outputMatrix){
 
 	outputMatrix = cv::Mat::eye(4,4,CV_64FC1);
 
-	Eigen::Vector3d pos = trans.translation();
-	Eigen::Matrix3d rot = trans.linear();
+	Eigen::Vector3d pos = arm_pose.translation();
+	Eigen::Matrix3d rot = arm_pose.linear();
 
 	//this is the last col, translation
 	outputMatrix.at<double>(0,3) = pos(0);
@@ -739,37 +734,37 @@ void KalmanFilter::convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & ou
 
 };
 
-void KalmanFilter::convertToolModel(const cv::Mat & trans, ToolModel::toolModel &toolModel){
+void KalmanFilter::convertToolModel(const cv::Mat & arm_pose, ToolModel::toolModel &toolModel){
 
-	toolModel.tvec_cyl(0) = trans.at<double>(0,0);
-	toolModel.tvec_cyl(1) = trans.at<double>(1,0);
-	toolModel.tvec_cyl(2) = trans.at<double>(2,0);
-	toolModel.rvec_cyl(0) = trans.at<double>(3,0);
-	toolModel.rvec_cyl(1) = trans.at<double>(4,0);
-	toolModel.rvec_cyl(2) = trans.at<double>(5,0);
+	toolModel.tvec_cyl(0) = arm_pose.at<double>(0,0);
+	toolModel.tvec_cyl(1) = arm_pose.at<double>(1,0);
+	toolModel.tvec_cyl(2) = arm_pose.at<double>(2,0);
+	toolModel.rvec_cyl(0) = arm_pose.at<double>(3,0);
+	toolModel.rvec_cyl(1) = arm_pose.at<double>(4,0);
+	toolModel.rvec_cyl(2) = arm_pose.at<double>(5,0);
 
-	double ja1 = trans.at<double>(6,0);
-	double ja2 = trans.at<double>(7,0);
-	double ja3 = trans.at<double>(8,0);
+	double ja1 = arm_pose.at<double>(6,0);
+	double ja2 = arm_pose.at<double>(7,0);
+	double ja3 = arm_pose.at<double>(8,0);
 
 	ukfToolModel.computeEllipsePose(toolModel, ja1, ja2, ja3);
 
 };
 
-void KalmanFilter::convertToolModel(const cv::Mat & trans, const double joint_1, const double joint_2, const double joint_3, ToolModel::toolModel &toolModel){
-	toolModel.tvec_cyl(0) = trans.at<double>(0,0);
-	toolModel.tvec_cyl(1) = trans.at<double>(1,0);
-	toolModel.tvec_cyl(2) = trans.at<double>(2,0);
-	toolModel.rvec_cyl(0) = trans.at<double>(3,0);
-	toolModel.rvec_cyl(1) = trans.at<double>(4,0);
-	toolModel.rvec_cyl(2) = trans.at<double>(5,0);
+void KalmanFilter::convertToolModel(const cv::Mat & arm_pose, const double joint_1, const double joint_2, const double joint_3, ToolModel::toolModel &toolModel){
+	toolModel.tvec_cyl(0) = arm_pose.at<double>(0,0);
+	toolModel.tvec_cyl(1) = arm_pose.at<double>(1,0);
+	toolModel.tvec_cyl(2) = arm_pose.at<double>(2,0);
+	toolModel.rvec_cyl(0) = arm_pose.at<double>(3,0);
+	toolModel.rvec_cyl(1) = arm_pose.at<double>(4,0);
+	toolModel.rvec_cyl(2) = arm_pose.at<double>(5,0);
 
 	ukfToolModel.computeEllipsePose(toolModel, joint_1, joint_2, joint_3);
 };
 
-void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec){
+void KalmanFilter::computeRodriguesVec(const Eigen::Affine3d & arm_pose, cv::Mat rot_vec){
 
-	Eigen::Matrix3d rot_affine = trans.rotation();
+	Eigen::Matrix3d rot_affine = arm_pose.rotation();
 
 	cv::Mat rot(3,3,CV_64FC1);
 	rot.at<double>(0,0) = rot_affine(0,0);
