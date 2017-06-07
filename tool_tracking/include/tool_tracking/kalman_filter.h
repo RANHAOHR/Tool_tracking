@@ -69,7 +69,14 @@
 #include <sensor_msgs/image_encodings.h>
 #include <cwru_opencv_common/projective_geometry.h>
 
+/**
+ * @brief cwru_xform_utils is for running in the Jade version
+ */
 //#include <cwru_xform_utils/xform_utils.h>
+
+/**
+ * @brief xform_utils is for running in the Indigo version
+ */
 #include <xform_utils/xform_utils.h>
 
 class KalmanFilter {
@@ -231,9 +238,9 @@ public:
  */
     KalmanFilter(ros::NodeHandle *nodehandle);
 
-    /**
-     * The deconstructor
-     */
+/**
+ * The deconstructor
+ */
     ~KalmanFilter();
 
 /**
@@ -295,9 +302,6 @@ public:
  * @brief get measurement model using only one camera feedback, usually left camera
  * @param coarse_guess_vector: input the coarse guess
  * @param segmentation_img: segmented image
- * @param projection_mat
- * @param Cam_matrix
- * @param rawImage
  * @param zt: output observation vector
  * @param normal_measurement: output normals for computing the predicted observation vector
  */
@@ -305,9 +309,9 @@ public:
 
 /**
  * @brief get the measurement model using stereo vision
- * @param coarse_guess_vector
- * @param zt
- * @param normal_measurement
+ * @param coarse_guess_vector: input the coarse guess
+ * @param zt: output observation vector
+ * @param normal_measurement: output normals for computing the predicted observation vector
  */
 	void getStereoMeasurement(const cv::Mat & coarse_guess_vector, cv::Mat &zt, cv::Mat &normal_measurement);
 
@@ -331,11 +335,6 @@ public:
  * @param S: output the decomposed matrix
  */
 	void Cholesky( const cv::Mat& A, cv::Mat& S );
-
-/**
- * test the calibration or configuration in gazebo, render the tip point under camera
- */
-	void testRenderGazebo();
 
 };
 #endif
