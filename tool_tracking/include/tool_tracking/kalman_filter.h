@@ -228,7 +228,7 @@ private:
 public:
 
 /**
- * left and right camera raw image
+ * @brief left and right camera raw image
  */
 	cv::Mat tool_rawImg_left;
 	cv::Mat tool_rawImg_right;
@@ -239,7 +239,7 @@ public:
     KalmanFilter(ros::NodeHandle *nodehandle);
 
 /**
- * The deconstructor
+ * @brief The deconstructor
  */
     ~KalmanFilter();
 
@@ -263,13 +263,6 @@ public:
 	void UKF_double_arm();
 
 /**
- * @brief using Cholesky decomposition to get the square root of the covariance
- * @param sigma_cov: covariance matrix
- * @param square_root: returned square root matrix
- */
-	void getSquareRootCov(cv::Mat &sigma_cov, cv::Mat &square_root);
-
-/**
  * @brief update mean and covariance, main UKF structure
  * @param kalman_mu: mean vector
  * @param kalman_sigma: covariance matrix
@@ -285,12 +278,8 @@ public:
 /**
  * @brief convert the Kalman mu or sigma points to a tool model
  * @param trans: this is the input matrix, can be a kalman_mu or a sigma point
- * @param joint_1: input joint angle for the 5th joint
- * @param joint_2: input joint angle for the 6th joint
- * @param joint_3: input joint angle for the 7th joint
  * @param toolModel: return the tool geometry
  */
-    void convertToolModel(const cv::Mat & trans, const double joint_1, const double joint_2, const double joint_3, ToolModel::toolModel &toolModel);
 	void convertToolModel(const cv::Mat & trans, ToolModel::toolModel &toolModel);
 
 /**
@@ -317,17 +306,17 @@ public:
 
 /**
  * @brief convert a affine matrix to opencv matrix
- * @param trans
- * @param outputMatrix
+ * @param arm_pose: the SE(3) group matrix in Eigen::Affine
+ * @param outputMatrix: the SE(3) group matrix in opencv matrix
  */
     void convertEigenToMat(const Eigen::Affine3d & arm_pose, cv::Mat & outputMatrix);
 
 /**
  * @brief compute a rodrigues vector from a affine matrix
- * @param trans
- * @param rot_vec
+ * @param arm_pose: the SE(3) group matrix with format of Eigen::Affine
+ * @param rot_vec: the 3x1 rotation vector with format of opencv matrix
  */
-	void computeRodriguesVec(const Eigen::Affine3d & arm_pose, cv::Mat rot_vec);
+	void computeRodriguesVec(const Eigen::Affine3d & arm_pose, cv::Mat & rot_vec);
 
 /**
  * @brief Cholesky decomposition for square root of covariance
@@ -335,6 +324,19 @@ public:
  * @param S: output the decomposed matrix
  */
 	void Cholesky( const cv::Mat& A, cv::Mat& S );
+
+/**
+ * @brief
+ * @param real_pose: the tool pose obtained from forward kinematics in Gazebo
+ * @param KalmanMu:
+ */
+	void showGazeboToolError(cv::Mat &real_pose, cv::Mat &KalmanMu);
+
+/**
+ * @brief show the rendered tool image using input tool pose
+ * @param inputToolPose: can be kalman mu or "real tool" in Gazebo
+ */
+	void showRenderedImage(cv::Mat &inputToolPose);
 
 };
 #endif

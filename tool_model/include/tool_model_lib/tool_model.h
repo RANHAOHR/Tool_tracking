@@ -25,7 +25,11 @@
 class ToolModel {
 
 private:
-    std::string tool_model_pkg;
+
+/**
+ * @brief tool_model_pkg gives the path finding all the tool body parts inside the workspace
+ */
+std::string tool_model_pkg;
 
 public:
     struct toolModel {

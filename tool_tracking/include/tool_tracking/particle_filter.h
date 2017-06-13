@@ -77,9 +77,7 @@ private:
 
 	ros::NodeHandle node_handle;
 
-	///ros::Timer timer;
-
-	ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
+	ToolModel newToolModel;
 	ToolModel::toolModel initial; //initial configuration
 
 	unsigned int numParticles; //total number of particles
@@ -181,15 +179,15 @@ public:
 	/*
 	 * update particles
 	 */
-	void updateSamples(const cv::Mat &bodyVel, double &updateRate, std::vector<ToolModel::toolModel> particles);
-
 	void updateParticles(std::vector<ToolModel::toolModel> &updateParticles);
 
+	void showGazeboToolError(ToolModel::toolModel &real_pose, ToolModel::toolModel &bestParticle);
+	void convertToolModeltoMatrix(const ToolModel::toolModel &inputToolModel, cv::Mat &toolMatrix);
+
+	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
+	void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 
 	cv::Mat adjoint(cv::Mat &G);
-    void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
-    void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
-
 };
 
 #endif

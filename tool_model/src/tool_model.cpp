@@ -48,7 +48,6 @@ using namespace std;
 
 boost::mt19937 rng((const uint32_t &) time(0));
 
-//constructor
 ToolModel::ToolModel() {
 
     ///adjust the model params according to the tool geometry
@@ -86,7 +85,6 @@ ToolModel::ToolModel() {
     getFaceInfo(griper1_faces, griper1_Vpts, griper1_Npts, gripper1Face_normal, gripper1Face_centroid);
     getFaceInfo(griper2_faces, griper2_Vpts, griper2_Npts, gripper2Face_normal, gripper2Face_centroid);
 
-
     /* prepare to get the oval normals for UKF */
     std::string oval_normal = tool_model_pkg + "/tool_parts/new_less_normal.obj";  //contains only the faces with useful normals
     load_model_vertices(oval_normal.c_str(),
@@ -98,7 +96,6 @@ ToolModel::ToolModel() {
     srand((unsigned) time(NULL)); //for the random number generator, use only once
 };
 
-/*Gaussian distribution*/
 double ToolModel::randomNumber(double stdev, double mean) {
 
     boost::normal_distribution<> nd(mean, stdev);
@@ -109,7 +106,7 @@ double ToolModel::randomNumber(double stdev, double mean) {
 
 };
 
-/*generate random number in a certain range, uniform distribution*/
+
 double ToolModel::randomNum(double min, double max){
 
     /// srand((unsigned) time( NULL));  //do this in main or constructor
@@ -131,7 +128,6 @@ void ToolModel::ConvertInchtoMeters(std::vector<cv::Point3d> &input_vertices) {
     }
 };
 
-//set zero configuration for tool points;
 void ToolModel::load_model_vertices(const char *path, std::vector<glm::vec3> &out_vertices,
                                     std::vector<glm::vec3> &vertex_normal,
                                     std::vector<std::vector<int> > &out_faces,
@@ -259,7 +255,6 @@ void ToolModel::load_model_vertices(const char *path, std::vector<glm::vec3> &ou
     // }
 };
 
-/*output a glm to a cv 3d point*/
 void ToolModel::Convert_glTocv_pts(std::vector<glm::vec3> &input_vertices, std::vector<cv::Point3d> &out_vertices) {
 
     unsigned long vsize = input_vertices.size();
@@ -1197,9 +1192,6 @@ void ToolModel::gatherNormals(std::vector< std::vector<double> > &part1_normals,
     }
 
     /****** oval part normals *****/
-//    for (int i = 0; i < part3_normals.size(); ++i) { // here we really don't need too much normals
-//        temp_vec_normals.push_back(part3_normals[i]);
-//    }
     temp_vec_normals.push_back(part3_normals[4]);
     temp_vec_normals.push_back(part3_normals[7]);
 
