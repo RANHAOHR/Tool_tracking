@@ -66,8 +66,8 @@
 #include <cwru_davinci_interface/davinci_interface.h>
 #include <cwru_davinci_kinematics/davinci_kinematics.h>
 
-#include <cwru_xform_utils/xform_utils.h>
-//#include <xform_utils/xform_utils.h>
+//#include <cwru_xform_utils/xform_utils.h>
+#include <xform_utils/xform_utils.h>
 
 class ParticleFilter {
 
@@ -77,9 +77,7 @@ private:
 
 	ros::NodeHandle node_handle;
 
-	///ros::Timer timer;
-
-	ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
+	ToolModel newToolModel;
 	ToolModel::toolModel initial; //initial configuration
 
 	unsigned int numParticles; //total number of particles
@@ -96,7 +94,7 @@ private:
 	std::vector<double> matchingScores_arm_1; // particle scores (matching scores)
 	std::vector<double> matchingScores_arm_2; // particle scores (matching scores)
 
-	std::vector<ToolModel::toolModel> particles_arm_1; // particles
+	std::vector<std::vector <double> > particles_arm_1; // particles
 	std::vector<double> particleWeights_arm_1; // particle weights calculated from matching scores
 
 	std::vector<ToolModel::toolModel> particles_arm_2; // particles
@@ -146,10 +144,15 @@ public:
 	~ParticleFilter();
 
 	/*
-	* The initializeParticles initializes the particles by setting the total number of particles, initial
-	* guess and randomly generating the particles around the initial guess.
-	*/
+	 * The initializeParticles initializes the particles by setting the total number of particles, initial
+	 * guess and randomly generating the particles around the initial guess.
+	 */
 	void initializeParticles();
+
+    /*
+     * get coarse initialization
+     */
+    void getCoarseGuess();
 
 	/***consider getting a timer to debug***/
 	// void timerCallback(const ros::TimerEvent&);
@@ -164,9 +167,9 @@ public:
 /*	void
 	resampleLowVariance(const std::vector<ToolModel::toolModel> &initial, const std::vector<double> &particleWeight,
 						std::vector<ToolModel::toolModel> &results);*/
-	void resamplingParticles(const std::vector<ToolModel::toolModel> &sampleModel,
+	void resamplingParticles(const std::vector< std::vector<double> > &sampleModel,
 							 const std::vector<double> &particleWeight,
-							 std::vector<ToolModel::toolModel> &update_particles);
+							 std::vector<std::vector<double> > &update_particles);
 
 	/*
 	 * get measuerment for two tools
@@ -176,13 +179,19 @@ public:
 	/*
 	 * update particles
 	 */
-	void updateSamples(const cv::Mat &bodyVel, double &updateRate, std::vector<ToolModel::toolModel> particles);
+	//void updateParticles(std::vector<ToolModel::toolModel> &updateParticles);
 
-	void updateParticles(std::vector<ToolModel::toolModel> &updateParticles, const ToolModel::toolModel &bestParticle);
+	void computeNoisedParticles(std::vector <double> & inputParticle, std::vector< std::vector <double> > & noisedParticles);
+
+	void showGazeboToolError(ToolModel::toolModel &real_pose, ToolModel::toolModel &bestParticle);
+	void convertToolModeltoMatrix(const ToolModel::toolModel &inputToolModel, cv::Mat &toolMatrix);
+
+	void convertToolModel(const cv::Mat & arm_pose, ToolModel::toolModel &toolModel);
+
+	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
+	void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 
 	cv::Mat adjoint(cv::Mat &G);
-    void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
-
 };
 
 #endif

@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
     ROS_INFO("After Loading Model and Initialization, please press ENTER to go on");
     cin.ignore();
 
-    cv::Mat testImg = cv::Mat::zeros(480, 640, CV_8UC3); //CV_8UC3
+    cv::Mat testImg = cv::Mat::zeros(480, 640, CV_8UC1); //CV_8UC3
     cv::Mat P(3, 4, CV_64FC1);
 
 //    cv::Size size(640, 480);
@@ -93,26 +93,49 @@ int main(int argc, char **argv) {
     initial.rvec_cyl(1) = 1.4;
     initial.rvec_cyl(2) = 0.2;
 
-
-    newToolModel.computeEllipsePose(initial, 0.0 , 0.0, 0.0, 0.0 );
+    newToolModel.computeEllipsePose(initial, 0.0, 0.0, 0.0 );
 
     cv::Mat temp_point = cv::Mat(1,2,CV_64FC1);
     cv::Mat temp_normal = cv::Mat(1,2,CV_64FC1);
     newToolModel.renderToolUKF(testImg, initial, Cam, P, temp_point, temp_normal);
 
-    ROS_INFO_STREAM("temp_point row: " << temp_point.rows );
-    ROS_INFO_STREAM("temp_normal row: " << temp_normal.rows );
-    cv::Mat new_temp(temp_point.rows, 1, CV_64FC1);
-    for (int i = 0; i <temp_point.rows ; ++i) {
-        cv::Mat normal = temp_normal.row(i);
-        cv::Mat pixel = temp_point.row(i);
-        double dot_product = normal.dot(pixel);
-        new_temp.at<double>(i,0) = dot_product;
+    ROS_INFO_STREAM("tool_points " << temp_point);
+    ROS_INFO_STREAM("tool_normals " << temp_normal);
 
+//    ROS_INFO_STREAM("temp_point row: " << temp_point.rows );
+//    ROS_INFO_STREAM("temp_normal row: " << temp_normal.rows );
+//    cv::Mat new_temp(temp_point.rows, 1, CV_64FC1);
+//    for (int i = 0; i <temp_point.rows ; ++i) {
+//        cv::Mat normal = temp_normal.row(i);
+//        cv::Mat pixel = temp_point.row(i);
+//        double dot_product = normal.dot(pixel);
+//        new_temp.at<double>(i,0) = dot_product;
+//
+//    }
+
+    int dim = temp_point.rows;
+    for (int i = 0; i < dim; ++i) {
+
+        cv::Point2d prjpt_1;
+        prjpt_1.x = temp_point.at<double>(i,0);
+        prjpt_1.y = temp_point.at<double>(i,1);
+
+        double y_k = temp_normal.at<double>(i,1);
+        double x_k = temp_normal.at<double>(i,0);
+        double theta = atan2(y_k, x_k);
+        double r = 40;
+
+        cv::Point2d prjpt_2;
+        prjpt_2.x = prjpt_1.x  + r * cos(theta);
+        prjpt_2.y = prjpt_1.y  + r * sin(theta);
+        cv::line(testImg, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
+//		cv::imshow("rendered_image:", inputImage);
+//		cv::waitKey();
     }
+
+    //double score = newToolModel.calculateMatchingScore(testImg, testImg );
     //ROS_INFO_STREAM("new_temp" << new_temp);
     cv::imshow("tool image: ",testImg );
-    //cv::imshow("segImg : ",segImg );
 
     cv::waitKey(0);
 

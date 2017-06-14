@@ -69,52 +69,108 @@
 #include <sensor_msgs/image_encodings.h>
 #include <cwru_opencv_common/projective_geometry.h>
 
-#include <cwru_xform_utils/xform_utils.h>
-//#include <xform_utils/xform_utils.h>
+/**
+ * @brief cwru_xform_utils is for running in the Jade version
+ */
+//#include <cwru_xform_utils/xform_utils.h>
+
+/**
+ * @brief xform_utils is for running in the Indigo version
+ */
+#include <xform_utils/xform_utils.h>
 
 class KalmanFilter {
 
 private:
-    ros::NodeHandle nh_;  //may need this
+    ros::NodeHandle nh_;
 
-    ToolModel ukfToolModel;  /// it should be set up the first time, probably need updates of the camera poses
+/**
+ * @brief instantiate the ukf tool geometry
+ */
+    ToolModel ukfToolModel;
 
-    ToolModel::toolModel initial; //initial configuration
+/**
+ * @brief initial tool pose
+ */
+    ToolModel::toolModel initial;
 
-    cv::Mat toolImage_left_arm_1; //left rendered Image for ARM 1
-    cv::Mat toolImage_right_arm_1; //right rendered Image for ARM 1
+/**
+ * @brief image for showing the arm_1 on the left and right camera
+ */
+    cv::Mat toolImage_left_arm_1;
+    cv::Mat toolImage_right_arm_1;
 
-    cv::Mat toolImage_left_arm_2; //left rendered Image for ARM 2
-    cv::Mat toolImage_right_arm_2; //right rendered Image for ARM 2
+/**
+ * @brief image for showing the arm_2 on the left and right camera
+ */
+    cv::Mat toolImage_left_arm_2;
+    cv::Mat toolImage_right_arm_2;
 
-	cv::Mat toolImage_cam_left;
-	cv::Mat toolImage_cam_right;
-
+/**
+ * @brief camera extrinsic matrix for arm_1 to left and right camera
+ */
 	cv::Mat Cam_left_arm_1;
     cv::Mat Cam_right_arm_1;
+
+/**
+ * @brief camera extrinsic matrix for arm_2 to left and right camera
+ */
     cv::Mat Cam_left_arm_2;
     cv::Mat Cam_right_arm_2;
 
-    int L;  ///DOF for both arms.
+/**
+ * @brief  a image for showing some test results
+ */
+    cv::Mat resulting_image;
 
-    const static double alpha = 0.0005;
-    const static double k = 0.0; //TODO: how much?
+/**
+ * @brief Degree of freedom for single tool pose
+ */
+    int L;
+
+/**
+ * @brief dimension for measurement vector, get this from getMeasurementModel
+ */
+	int measurement_dimension;
+
+/**
+ * @brief Unscented Kalman filter parameters
+ */
+    const static double alpha = 0.001;
+    const static double k = 0.0;
     const static double beta = 2;
 
-	/************using variables*************/
+/**
+ * @brief joint sensor feedback, gives 7 joint angles. sensor_1 for green arm, sensor_2 for yellow arm
+ */
     std::vector<double> sensor_1;
     std::vector<double> sensor_2;
 
+/**
+ * @brief the mean and covariance for arm 1
+ */
     cv::Mat kalman_mu_arm1;
     cv::Mat kalman_sigma_arm1;
 
+/**
+ * @brief computed from the forward kinematics, this is only useful for gazebo and evaluating
+ */
+	cv::Mat real_mu;
+
+/**
+ * @brief the mean and covariance for arm 2
+ */
 	cv::Mat kalman_mu_arm2;
 	cv::Mat kalman_sigma_arm2;
 
-	cv::Mat zt_arm1;
-
+/**
+ * @brief instantiate a fwd_solver, find the definition in pkg: cwru_davinci_kinematics, davinci_kinematics.cpp
+ */
     Davinci_fwd_solver kinematics;
 
+/**
+ * @brief camera extrinsic matrix, getting from tf::listener, for computing from tf to Eigen matrix in Constructor
+ */
     Eigen::Affine3d arm_1__cam_l;
     Eigen::Affine3d arm_2__cam_l;
     Eigen::Affine3d arm_1__cam_r;
@@ -126,26 +182,44 @@ private:
     void projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight);
     void projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft);
 
+/**
+ * @brief left and right projection matrix
+ */
     cv::Mat P_left;
     cv::Mat P_right;
 
-    double matching_score(const cv::Mat & stat,cv::Mat &left_image,cv::Mat &right_image,
-						  cv::Mat &cam_left, cv::Mat &cam_right);
-	
-	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & delta_zt);
+/**
+ * @brief motion model
+ * @param sigma_point_out:  output sigma point
+ * @param sigma_point_in:  input sigma point
+ */
+	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
+
+/**
+ * @brief predicted observation model
+ * @param sigma_point_out
+ * @param sigma_point_in
+ * @param left_image
+ * @param right_image
+ * @param cam_left: left camera extrinsic matrix
+ * @param cam_right
+ * @param normal_measurement:  input normals for computing the predicted observation vector, this is obtain via getMeasurementModel function
+ */
 	void h(cv::Mat & sigma_point_out, const cv::Mat_<double> & sigma_point_in,
 			cv::Mat &left_image,cv::Mat &right_image,
-			cv::Mat &cam_left, cv::Mat &cam_right);
+			cv::Mat &cam_left, cv::Mat &cam_right, cv::Mat &normal_measurement);
 
-    void computeSigmaMeasures(std::vector<double> & measureWeights, cv::Mat & zt, const std::vector<cv::Mat_<double> > & sigma_point_in,
-							  cv::Mat &left_image,cv::Mat &right_image,
-							  cv::Mat &cam_left, cv::Mat &cam_right);
-
-
-	/*****image subscribing part*****/
+/**
+ * @brief image subscribing part
+ */
 	cv::Mat seg_left;
 	cv::Mat seg_right;
 
+/**
+ * @brief using Canny edge detector for segmentation
+ * @param InputImg
+ * @return
+ */
 	cv::Mat segmentation(cv::Mat &InputImg);
 
 	bool freshSegImage;
@@ -153,59 +227,123 @@ private:
 
 public:
 
+/**
+ * @brief left and right camera raw image
+ */
 	cv::Mat tool_rawImg_left;
 	cv::Mat tool_rawImg_right;
 
-    /*
-    * The default constructor
-    */
+/**
+ * @brief The default constructor
+ */
     KalmanFilter(ros::NodeHandle *nodehandle);
 
-    /*
-     * The deconstructor
-     */
+/**
+ * @brief The deconstructor
+ */
     ~KalmanFilter();
 
-    /***consider getting a timer to debug***/
-    // void timerCallback(const ros::TimerEvent&);
-
-    /*
-     * This is the main function for tracking the needle. This function is called and it syncs all of the functions
-    */
-
+/**
+ * @brief showing the affine matrix
+ * @param affine
+ */
     void print_affine(Eigen::Affine3d &affine);
 
+/**
+ * @brief test the obtained normals for measurement model
+ * @param temp_point: input image points
+ * @param temp_normal: input image point normals
+ * @param inputImage
+ */
+    void showNormals(cv::Mat &temp_point, cv::Mat &temp_normal, cv::Mat &inputImage );
+
+/**
+ * @brief double arm tracking function
+ */
 	void UKF_double_arm();
-	void getSquareRootCov(cv::Mat &sigma_cov, cv::Mat &square_root);
 
-    void update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,cv::Mat &zt,
-				cv::Mat &left_image,cv::Mat &right_image,
-				cv::Mat &cam_left, cv::Mat &cam_right);
+/**
+ * @brief update mean and covariance, main UKF structure
+ * @param kalman_mu: mean vector
+ * @param kalman_sigma: covariance matrix
+ * @param left_image
+ * @param right_image
+ */
+    void update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
+				cv::Mat &left_image,cv::Mat &right_image);
 
-    void convertToolModel(const cv::Mat & trans, ToolModel::toolModel &toolModel);
-    /*
-     * Unscented Kalman filter update
-     */
-    void UnscentedKalmanFilter(
-            const cv::Mat &mu,
-            const cv::Mat &sigma,
-            cv::Mat &update_mu,
-            cv::Mat &update_sigma,
-            const cv::Mat &zt
-    );
+/**
+ * @brief convert the Kalman mu or sigma points to a tool model
+ * @param trans: this is the input matrix, can be a kalman_mu or a sigma point
+ * @param toolModel: return the tool geometry
+ */
+	void convertToolModel(const cv::Mat & trans, ToolModel::toolModel &toolModel);
 
-    void getCourseEstimation();  ///for dynamic tracking
-    double measureFunc(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose, cv::Mat &Cam_left, cv::Mat &Cam_right, cv::Mat & rawImage_left,
-					   cv::Mat & rawImage_right);
+/**
+ *
+ * @param arm_pose - input vector containing tool pose, left and right camera matrices <19,1>
+ * @param toolModel : return a tool geometry
+ * @param cam_mat_l : left camera to base transformation
+ * @param cam_mat_r : right camera to base transformation
+ */
+	void computeToolPose(const cv::Mat & arm_pose, ToolModel::toolModel &toolModel, cv::Mat & cam_mat_l, cv::Mat & cam_mat_r);
 
-	void getMeasurementModel(const cv::Mat & coarse_guess_vector,
-							 cv::Mat &Cam_left,
-							 cv::Mat &Cam_right,
-							 cv::Mat & rawImage_left,
-							 cv::Mat & rawImage_right);
 
-	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
-	void Cholesky( const cv::Mat& A, cv::Mat& S );  //this is not working
+/**
+ * @brief get a coarse guess using forward kinematics
+ */
+    void getCoarseEstimation();
+
+/**
+ * @brief get measurement model using only one camera feedback, usually left camera
+ * @param coarse_guess_vector: input the coarse guess
+ * @param segmentation_img: segmented image
+ * @param zt: output observation vector
+ * @param normal_measurement: output normals for computing the predicted observation vector
+ */
+	void getMeasurementModel(const ToolModel::toolModel &coarse_guess_model, const cv::Mat &segmentation_img, const cv::Mat &projection_mat, cv::Mat &Cam_matrix, cv::Mat & rawImage, cv::Mat &zt, cv::Mat &normal_measurement);
+
+/**
+ * @brief get the measurement model using stereo vision
+ * @param coarse_guess_vector: input the coarse guess
+ * @param zt: output observation vector
+ * @param normal_measurement: output normals for computing the predicted observation vector
+ */
+	void getStereoMeasurement(const cv::Mat & coarse_guess_vector, cv::Mat &zt, cv::Mat &normal_measurement, cv::Mat & cam_left, cv::Mat & cam_right);
+
+/**
+ * @brief convert a affine matrix to opencv matrix
+ * @param arm_pose: the SE(3) group matrix in Eigen::Affine
+ * @param outputMatrix: the SE(3) group matrix in opencv matrix
+ */
+    void convertEigenToMat(const Eigen::Affine3d & arm_pose, cv::Mat & outputMatrix);
+
+/**
+ * @brief compute a rodrigues vector from a affine matrix
+ * @param arm_pose: the SE(3) group matrix with format of Eigen::Affine
+ * @param rot_vec: the 3x1 rotation vector with format of opencv matrix
+ */
+	void computeRodriguesVec(const Eigen::Affine3d & arm_pose, cv::Mat & rot_vec);
+
+/**
+ * @brief Cholesky decomposition for square root of covariance
+ * @param A: the input matrix
+ * @param S: output the decomposed matrix
+ */
+	void Cholesky( const cv::Mat& A, cv::Mat& S );
+
+/**
+ * @brief
+ * @param real_pose: the tool pose obtained from forward kinematics in Gazebo
+ * @param KalmanMu:
+ */
+	void showGazeboToolError(cv::Mat &real_pose, cv::Mat &KalmanMu);
+
+/**
+ * @brief show the rendered tool image using input tool pose
+ * @param inputToolPose: can be kalman mu or "real tool" in Gazebo
+ */
+	void showRenderedImage(cv::Mat &inputToolPose);
 
 };
 #endif

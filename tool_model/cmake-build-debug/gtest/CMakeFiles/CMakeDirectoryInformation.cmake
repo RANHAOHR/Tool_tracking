@@ -3,7 +3,7 @@
 
 # Relative path conversion top directories.
 set(CMAKE_RELATIVE_PATH_TOP_SOURCE "/usr/src/gtest")
-set(CMAKE_RELATIVE_PATH_TOP_BINARY "/home/rxh349/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug")
+set(CMAKE_RELATIVE_PATH_TOP_BINARY "/home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug")
 
 # Force unix paths in dependencies.
 set(CMAKE_FORCE_UNIX_PATHS 1)

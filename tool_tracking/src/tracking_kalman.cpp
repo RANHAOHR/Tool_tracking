@@ -36,17 +36,13 @@ int main(int argc, char **argv) {
 	cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_32FC1);
 
 	image_transport::ImageTransport it(nh);
-	image_transport::Subscriber img_sub_l = it.subscribe("/davinci_endo/left/image_raw", 1,boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_left)));
+    image_transport::Subscriber img_sub_l = it.subscribe("/davinci_endo/left/image_raw", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_left)));
 
-	image_transport::Subscriber img_sub_r = it.subscribe("/davinci_endo/right/image_raw", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_right)));
+    image_transport::Subscriber img_sub_r = it.subscribe("/davinci_endo/right/image_raw", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_right)));
 
 	ROS_INFO("---- done subscribe -----");
 
-	/*** Timer set up ***/
-	ros::Rate loop_rate(50);
-
-	ros::Duration(2).sleep();
-
+	ros::Duration(3).sleep();
 
 //	cv::Size size(640, 475);
 //	std::string package = ros::package::getPath("tool_tracking"); ////warning: do not have one package with the same name
@@ -59,8 +55,8 @@ int main(int argc, char **argv) {
 //
 //	cv::resize(new_seg_left, new_seg_left,size );
 //	cv::resize(new_seg_right, new_seg_right,size );
-	int tracking_iteration = 0;
 	while (nh.ok()) {
+
 		ros::spinOnce();
 
 		if (freshImage){
@@ -71,7 +67,6 @@ int main(int argc, char **argv) {
             UKF.UKF_double_arm();
 
 			freshImage = false;
-			tracking_iteration += 1;
 		}
 
 	}

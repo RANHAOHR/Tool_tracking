@@ -1,8 +1,8 @@
-prefix=/home/rxh349/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/devel
+prefix=/home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/devel
 
 Name: tool_model
 Description: Description of tool_model
 Version: 0.0.0
-Cflags: -I/home/rxh349/ros_ws/src/Tool_tracking/tool_model/include
-Libs: -L/home/rxh349/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/devel/lib -ltool_model_lib
+Cflags: -I/home/ranhao/ros_ws/src/Tool_tracking/tool_model/include
+Libs: -L/home/ranhao/ros_ws/src/Tool_tracking/tool_model/cmake-build-debug/devel/lib -ltool_model_lib
 Requires: image_transport roscpp sensor_msgs std_msgs message_runtime cwru_opencv_common vesselness_image_filter
