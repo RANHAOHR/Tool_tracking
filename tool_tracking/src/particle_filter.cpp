@@ -493,6 +493,7 @@ void ParticleFilter::updateParticles(std::vector <double> &best_particle_last, s
 		updatedParticles[j][16] = cat_vec.at<double>(0,0);
 		updatedParticles[j][17] = cat_vec.at<double>(1,0);
 		updatedParticles[j][18] = cat_vec.at<double>(2,0);
+
 		/**** add noise for propagated particles ****/
 		for (int l = 0; l < updatedParticles[j].size(); ++l) {
 			updatedParticles[j][l] = updatedParticles[j][l] + newToolModel.randomNum(0.0003, 0);

@@ -134,6 +134,11 @@ private:
 	int measurement_dimension;
 
 /**
+ * time step for time t and t+ delta_t
+ */
+	double t_1_step;
+	double t_step;
+/**
  * @brief Unscented Kalman filter parameters
  */
     const static double alpha = 0.001;
@@ -193,7 +198,7 @@ private:
  * @param sigma_point_out:  output sigma point
  * @param sigma_point_in:  input sigma point
  */
-	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in);
+	void g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u_t);
 
 /**
  * @brief predicted observation model
@@ -208,6 +213,11 @@ private:
 	void h(cv::Mat & sigma_point_out, const cv::Mat_<double> & sigma_point_in,
 			cv::Mat &left_image,cv::Mat &right_image,
 			cv::Mat &cam_left, cv::Mat &cam_right, cv::Mat &normal_measurement);
+
+	/**
+	 * @brief compute joint velocities for motion model
+	 */
+	void computeJointVelocity(cv::Mat & u_t);
 
 /**
  * @brief image subscribing part
@@ -270,7 +280,7 @@ public:
  * @param right_image
  */
     void update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
-				cv::Mat &left_image,cv::Mat &right_image);
+				cv::Mat &left_image,cv::Mat &right_image, const cv::Mat & u_t);
 
 /**
  * @brief convert the Kalman mu or sigma points to a tool model

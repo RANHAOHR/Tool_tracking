@@ -130,6 +130,8 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
 //	ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
 //	ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
+
+	getCoarseEstimation();
 	ros::spinOnce();
 };
 
@@ -407,7 +409,7 @@ void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat_<double> & sigma_p
 };
 
 /*
- * get a course estimation for dynamic tracking TODO:
+ * get a course estimation for dynamic tracking
  */
 void KalmanFilter::getCoarseEstimation(){
 
@@ -509,7 +511,7 @@ void KalmanFilter::getCoarseEstimation(){
 	for (int j = 9; j < 19; ++j) {
 		kalman_sigma_arm1.at<double>(j,j) = dev_cam_mat; //gaussian generator
 	}
-
+	t_step = ros::Time::now().toSec();  /// t_step should corresponding to input kalman_mu_arm1
 };
 
 void KalmanFilter::showNormals(cv::Mat &temp_point, cv::Mat &temp_normal, cv::Mat &inputImage ){
@@ -540,20 +542,23 @@ void KalmanFilter::UKF_double_arm(){ //well, currently just one......
 	seg_right = segmentation(tool_rawImg_right);
 
 	ROS_INFO("--------------ARM 1 : --------------");
-	getCoarseEstimation();   ///get new kalman_mu_arm1, kalman_sigma_arm1
-	ROS_INFO_STREAM("BEFORE kalman_mu_arm1: " << kalman_mu_arm1);
 
+	ROS_INFO_STREAM("BEFORE kalman_mu_arm1: " << kalman_mu_arm1);
+	cv::Mat u_t = cv::Mat_<double>::zeros(L, 1);   ///start with zero velocity
+	computeJointVelocity(u_t);  ///get velocity
+	//getCoarseEstimation();   //directly get predicted mu
 	update(kalman_mu_arm1, kalman_sigma_arm1, toolImage_left_arm_1,
-		   toolImage_right_arm_1);
+		   toolImage_right_arm_1, u_t);
 	ROS_WARN_STREAM("FORAWRD KINEMATICS: " << real_mu);
 
 	showRenderedImage(kalman_mu_arm1);
 	showGazeboToolError(real_mu, kalman_mu_arm1);
+	t_step = ros::Time::now().toSec();
 
 };
 
 void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
-						  cv::Mat &left_image,cv::Mat &right_image){
+						  cv::Mat &left_image,cv::Mat &right_image, const cv::Mat & u_t){
 	cv::Mat cam_left = cv::Mat::eye(4,4,CV_64FC1);
 	cv::Mat cam_right = cv::Mat::eye(4,4,CV_64FC1);
 	/******Find and convert our various params and inputs******/
@@ -570,7 +575,7 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 	std::vector<cv::Mat_<double> > sigma_pts_last;
 	sigma_pts_last.resize(2*L + 1);
 
-	sigma_pts_last[0] = kalman_mu.clone();//X_0
+	sigma_pts_last[0] = kalman_mu.clone();
 	for (int i = 1; i <= L; i++) {
 		cv::Mat square_root_sigma = root_sigma_t_last.col(i - 1);
 		sigma_pts_last[i] = sigma_pts_last[0] + (gamma * square_root_sigma );
@@ -589,25 +594,26 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 		w_c[i] = 1.0 / (2.0 * (L + lambda));
 	}
 
-	/**** get measurement model ****/
-	cv::Mat normal_measurement;
-	cv::Mat zt;
-
-	//getMeasurementModel(kalman_mu, seg_left, P_left,Cam_left_arm_1, tool_rawImg_left, zt, normal_measurement);  ///using only left camera measurements
-	getStereoMeasurement(kalman_mu, zt, normal_measurement, cam_left, cam_right); ///using both camera measurements
-
-	ROS_INFO_STREAM(" zt: " << zt);
-	cv::waitKey();
 	/*****Update sigma points based on motion model******/
 	std::vector<cv::Mat_<double> > sigma_pts_bar;
 	sigma_pts_bar.resize(2*L + 1);
 
+	/**** get measurement model ****/
+	cv::Mat normal_measurement;
+	cv::Mat zt;
+
+	sigma_pts_bar[0]= sigma_pts_last[0] + u_t * (t_1_step - t_step);
+	//getMeasurementModel(kalman_mu, seg_left, P_left,Cam_left_arm_1, tool_rawImg_left, zt, normal_measurement);  ///using only left camera measurements
+	getStereoMeasurement(sigma_pts_bar[0], zt, normal_measurement, cam_left, cam_right); ///using both camera measurements
+	ROS_INFO_STREAM(" zt: " << zt);
+	cv::waitKey();
 	cv::Mat render_test = seg_left.clone();
 	cv::Mat temp_point_test = cv::Mat(1,2,CV_64FC1);
 	cv::Mat temp_normal_test = cv::Mat(1,2,CV_64FC1);
-	sigma_pts_bar[0] = sigma_pts_last[0];
-	for(int i = 1; i < 2 * L + 1; i++){
-		g(sigma_pts_bar[i], sigma_pts_last[i]); // TODO: motion model
+
+	for(int i = 0; i < 2 * L + 1; i++){
+		ROS_INFO_STREAM("u_t: " << u_t);
+		g(sigma_pts_bar[i], sigma_pts_last[i], u_t); // TODO: motion model
 //		///testing
 //		ToolModel::toolModel test_arm;
 //		convertToolModel(sigma_pts_bar[i], test_arm);
@@ -663,10 +669,86 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 	ROS_WARN_STREAM("KALMAN ARM AT : " << kalman_mu);
 };
 
-//TODO:
-void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in){
+void KalmanFilter::computeJointVelocity(cv::Mat & u_t){
 
-	sigma_point_out = sigma_point_in.clone(); //initialization
+	t_1_step = ros::Time::now().toSec();
+
+	std::vector<std::vector<double> > tmp;
+	tmp.resize(2);
+	if(davinci_interface::get_fresh_robot_pos(tmp)){
+		sensor_1 = tmp[0];
+		sensor_2 = tmp[1];
+	}
+
+	real_mu.at<double>(0 , 0) = sensor_1[0];
+	real_mu.at<double>(1 , 0) = sensor_1[1];
+	real_mu.at<double>(2 , 0) = sensor_1[2];
+	real_mu.at<double>(3 , 0) = sensor_1[3];
+	real_mu.at<double>(4 , 0) = sensor_1[4];
+	real_mu.at<double>(5 , 0) = sensor_1[5];
+	real_mu.at<double>(6 , 0) = sensor_1[6];
+
+	cv::Mat rotationmatrix(3,3,CV_64FC1);
+	cv::Mat p(3,1,CV_64FC1);
+	rotationmatrix = Cam_left_arm_1.colRange(0,3).rowRange(0,3);
+	p = Cam_left_arm_1.colRange(3,4).rowRange(0,3);
+	cv::Mat cat_vec(3,1, CV_64FC1);
+	cv::Rodrigues(rotationmatrix, cat_vec);
+
+	real_mu.at<double>(7 , 0) = p.at<double>(0,0);
+	real_mu.at<double>(8 , 0)= p.at<double>(1,0);
+	real_mu.at<double>(9 , 0) = p.at<double>(2,0);
+
+	real_mu.at<double>(10 , 0) = cat_vec.at<double>(0,0);
+	real_mu.at<double>(11, 0) = cat_vec.at<double>(1,0);
+	real_mu.at<double>(12, 0) = cat_vec.at<double>(2,0);
+
+	rotationmatrix = Cam_right_arm_1.colRange(0,3).rowRange(0,3);
+	p = Cam_right_arm_1.colRange(3,4).rowRange(0,3);
+	cv::Rodrigues(rotationmatrix, cat_vec);
+
+	real_mu.at<double>(13, 0) = p.at<double>(0,0);
+	real_mu.at<double>(14, 0) = p.at<double>(1,0);
+	real_mu.at<double>(15, 0)  = p.at<double>(2,0);
+
+	real_mu.at<double>(16, 0)  = cat_vec.at<double>(0,0);
+	real_mu.at<double>(17, 0) = cat_vec.at<double>(1,0);
+	real_mu.at<double>(18, 0)  = cat_vec.at<double>(2,0);
+
+
+	cv::Mat predicted_real_mu = real_mu.clone();
+	cv::Mat temp_mu = kalman_mu_arm1.clone();
+
+	u_t = predicted_real_mu - temp_mu;
+
+	double delta_t = t_1_step - t_step;
+	u_t = u_t * (1 / delta_t);
+
+	double dev_pos = ukfToolModel.randomNum(0.00001, 0.0);  ///deviation for position
+	double dev_ori = ukfToolModel.randomNum(0.00001, 0.0);  ///deviation for orientation
+
+	kalman_sigma_arm1 = (cv::Mat_<double>::zeros(L, L));
+
+	for (int j = 0; j < 3; ++j) {
+		kalman_sigma_arm1.at<double>(j,j) = dev_pos; //gaussian generator
+	}
+	for (int j = 3; j < 6; ++j) {
+		kalman_sigma_arm1.at<double>(j,j) = dev_ori; //gaussian generator
+	}
+
+	dev_pos = ukfToolModel.randomNum(0.00001, 0.0);  ///deviation for position
+	for (int j = 6; j < 9; ++j) {
+		kalman_sigma_arm1.at<double>(j,j) = dev_pos; //gaussian generator
+	}
+	double dev_cam_mat = ukfToolModel.randomNum(0.0000001, 0.0);
+	for (int j = 9; j < 19; ++j) {
+		kalman_sigma_arm1.at<double>(j,j) = dev_cam_mat; //gaussian generator
+	}
+
+};
+
+void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in, const cv::Mat & u_t){
+/*	sigma_point_out = sigma_point_in.clone(); //initialization
 
 	double dev_pos = ukfToolModel.randomNum(0.00001, 0.00);  ///deviation for position
 	double dev_ori = ukfToolModel.randomNum(0.00001, 0.00);  ///deviation for orientation
@@ -685,6 +767,32 @@ void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in){
 
 	for (int j = 10; j < 19; ++j) {
 		sigma_point_out.at<double>(j,0) = sigma_point_in.at<double>(j,0) + dev_cam;//gaussian generator
+	}*/
+
+	double delta_t = t_1_step - t_step;
+	sigma_point_out = sigma_point_in.clone(); //initialization
+	for (int i = 0; i < 19; ++i) {
+		sigma_point_out.at<double>(i,0) = sigma_point_in.at<double>(i,0) + u_t.at<double>(i,0) * delta_t;
+	}
+	/*****add noise vector X_t* ****/
+
+	double dev_pos = ukfToolModel.randomNum(0.00001, 0.00);  ///deviation for position
+	double dev_ori = ukfToolModel.randomNum(0.00001, 0.00);  ///deviation for orientation
+	double dev_ang = ukfToolModel.randomNum(0.000001, 0); ///deviation for joint angles
+	double dev_cam = ukfToolModel.randomNum(0.00000001, 0.0);
+
+	for (int j = 0; j < 7; ++j) {
+		sigma_point_out.at<double>(j,0) = sigma_point_out.at<double>(j,0) + dev_pos;//gaussian generator
+	}
+	for (int j = 3; j < 6; ++j) {
+		sigma_point_out.at<double>(j,0) = sigma_point_out.at<double>(j,0) + dev_ori;//gaussian generator
+	}
+	for (int j = 6; j < 9; ++j) {
+		sigma_point_out.at<double>(j,0) = sigma_point_out.at<double>(j,0) + dev_ang;//gaussian generator
+	}
+
+	for (int j = 10; j < 19; ++j) {
+		sigma_point_out.at<double>(j,0) = sigma_point_out.at<double>(j,0) + dev_cam;//gaussian generator
 	}
 
 };
