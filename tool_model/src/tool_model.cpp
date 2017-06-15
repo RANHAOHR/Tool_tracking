@@ -963,8 +963,8 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
     inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
 
-    double grip_1_delta = theta_grip_1 - theta_grip_2;
-    double grip_2_delta = theta_grip_1 + theta_grip_2;
+    double grip_2_delta = theta_grip_1 - theta_grip_2;
+    double grip_1_delta = theta_grip_1 + theta_grip_2;
 
     cos_theta = cos(grip_1_delta);
     sin_theta = sin(-grip_1_delta);

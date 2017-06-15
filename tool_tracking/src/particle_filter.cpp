@@ -40,56 +40,58 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
-        node_handle(*nodehandle), numParticles(100){
+        node_handle(*nodehandle), numParticles(300){
 
 	/**** need to subscribe this for simulation ***/
-    tf::StampedTransform arm_1__cam_l_st;
-    tf::StampedTransform arm_2__cam_l_st;
-    tf::StampedTransform arm_1__cam_r_st;
-    tf::StampedTransform arm_2__cam_r_st;
+    // tf::StampedTransform arm_1__cam_l_st;
+    // tf::StampedTransform arm_2__cam_l_st;
+    // tf::StampedTransform arm_1__cam_r_st;
+    // tf::StampedTransform arm_2__cam_r_st;
 
-    try{
-        tf::TransformListener l;
-        while(!l.waitForTransform("/left_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
-        l.lookupTransform("/left_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), arm_1__cam_l_st);
-        while(!l.waitForTransform("/left_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
-        l.lookupTransform("/left_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), arm_2__cam_l_st);
-        while(!l.waitForTransform("/right_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
-        l.lookupTransform("/right_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), arm_1__cam_r_st);
-        while(!l.waitForTransform("/right_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
-        l.lookupTransform("/right_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), arm_2__cam_r_st);
-    }
-    catch (tf::TransformException ex){
-        ROS_ERROR("%s",ex.what());
-        exit(1);
-    }
+    // try{
+    //     tf::TransformListener l;
+    //     while(!l.waitForTransform("/left_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+    //     l.lookupTransform("/left_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), arm_1__cam_l_st);
+    //     while(!l.waitForTransform("/left_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+    //     l.lookupTransform("/left_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), arm_2__cam_l_st);
+    //     while(!l.waitForTransform("/right_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+    //     l.lookupTransform("/right_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), arm_1__cam_r_st);
+    //     while(!l.waitForTransform("/right_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
+    //     l.lookupTransform("/right_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), arm_2__cam_r_st);
+    // }
+    // catch (tf::TransformException ex){
+    //     ROS_ERROR("%s",ex.what());
+    //     exit(1);
+    // }
 
-    //Convert to Affine3ds for storage, which is the format they will be used in for rendering.
-    XformUtils xfu;
-    arm_1__cam_l = xfu.transformTFToAffine3d(arm_1__cam_l_st);//.inverse();
-    arm_1__cam_r = xfu.transformTFToAffine3d(arm_1__cam_r_st);//.inverse();
-    arm_2__cam_l = xfu.transformTFToAffine3d(arm_2__cam_l_st);//.inverse();
-    arm_2__cam_r = xfu.transformTFToAffine3d(arm_2__cam_r_st);//.inverse();
+    // //Convert to Affine3ds for storage, which is the format they will be used in for rendering.
+    // XformUtils xfu;
+    // arm_1__cam_l = xfu.transformTFToAffine3d(arm_1__cam_l_st);//.inverse();
+    // arm_1__cam_r = xfu.transformTFToAffine3d(arm_1__cam_r_st);//.inverse();
+    // arm_2__cam_l = xfu.transformTFToAffine3d(arm_2__cam_l_st);//.inverse();
+    // arm_2__cam_r = xfu.transformTFToAffine3d(arm_2__cam_r_st);//.inverse();
 
-    convertEigenToMat(arm_1__cam_l, Cam_left_arm_1);
-    convertEigenToMat(arm_1__cam_r, Cam_right_arm_1);
-    convertEigenToMat(arm_2__cam_l, Cam_left_arm_2);
-    convertEigenToMat(arm_2__cam_r, Cam_right_arm_2);
+    // convertEigenToMat(arm_1__cam_l, Cam_left_arm_1);
+    // convertEigenToMat(arm_1__cam_r, Cam_right_arm_1);
+    // convertEigenToMat(arm_2__cam_l, Cam_left_arm_2);
+    // convertEigenToMat(arm_2__cam_r, Cam_right_arm_2);
 
 //    ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
 //    ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
 //    ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
 //    ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
-//
-//	Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.8361,0.5340, 0.1264, -0.1142,
-//	0.5132, 0.8424, -0.1641, -0.0262,
-//	-0.1942, -0.0723, -0.9783, 0.1273,
-//	0,0, 0,1.0000);
-//
-//	Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.8361,0.5340, 0.1264, -0.1192,
-//			0.5132, 0.8424, -0.1641, -0.0262,
-//			-0.1942, -0.0723, -0.9783, 0.1273,
-//			0,0, 0,1.0000);
+
+	Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.7882, 0.6067, 0.1025, -0.1449,
+	0.5854, 0.7909, -0.1784, -0.0607,
+	-0.1894, -0.0806, -0.9786, 0.0209,
+	0,0, 0, 1.0000);
+
+
+	Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.7893, 0.6067, 0.0949, -0.1428,
+	0.5852, 0.7899, -0.1835, -0.0612,
+	-0.1861, -0.0892, -0.9784, 0.0223,
+	0,0, 0, 1.0000);
+
 	ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
 	ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
 
@@ -167,7 +169,7 @@ void ParticleFilter::getCoarseGuess(){
 	predicted_real_pose.rvec_cyl(1) = a1_rvec.at<double>(1,0);
 	predicted_real_pose.rvec_cyl(2) = a1_rvec.at<double>(2,0);
 
-	newToolModel.computeEllipsePose(predicted_real_pose, sensor_1[4], sensor_1[4], sensor_1[4]);
+	newToolModel.computeEllipsePose(predicted_real_pose, sensor_1[4], sensor_1[5], sensor_1[6]);
 
     /*** first arm particles initialization ***/
 	std::vector<double>  initialParticle;
@@ -210,10 +212,15 @@ void ParticleFilter::computeNoisedParticles(std::vector <double> & inputParticle
 
 	for (int i = 0; i < noisedParticles.size(); ++i) {
 		noisedParticles[i].resize(19);
-		for (int j = 0; j < 19; ++j) {
-			double dev = newToolModel.randomNumber(0.0005, 0);
+		for (int j = 0; j < 7; ++j) {
+			double dev = newToolModel.randomNumber(0.001, 0);
 			inputParticle[j] = inputParticle[j] + dev;
 		}
+		for (int j = 7; j < 19; ++j) {
+			double dev = newToolModel.randomNumber(0.005, 0);
+			inputParticle[j] = inputParticle[j] + dev;
+		}
+
 		noisedParticles[i] = inputParticle;
 	}
 };
