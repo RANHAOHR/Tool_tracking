@@ -6,10 +6,6 @@
 
 
 bool freshImage;
-bool freshCameraInfo;
-bool freshVelocity;
-
-double Arr[6];
 
 using namespace std;
 using namespace cv_projective;
@@ -29,19 +25,6 @@ void newImageCallback(const sensor_msgs::ImageConstPtr &msg, cv::Mat *outputImag
 		ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
 	}
 
-}
-
-// receive body velocity
-// still not sure if this does anything.
-void arrayCallback(const std_msgs::Float64MultiArray::ConstPtr &array) {
-	int i = 0;
-	// print all the remaining numbers
-	for (std::vector<double>::const_iterator it = array->data.begin(); it != array->data.end(); ++it) {
-		Arr[i] = *it;
-		i++;
-	}
-
-	freshVelocity = true;
 }
 
 cv::Mat segmentation(cv::Mat &InputImg) {
@@ -76,7 +59,6 @@ int main(int argc, char **argv) {
 	/******  initialization  ******/
 	ParticleFilter Particles(&nh);
 
-    freshCameraInfo = false;
     freshImage = false;
     //freshVelocity = false;//Moving all velocity-related things inside of the kalman.
 
@@ -112,17 +94,13 @@ int main(int argc, char **argv) {
             Particles.raw_image_left = rawImage_left.clone();
             Particles.raw_image_right = rawImage_right.clone();
 
-            seg_left = segmentation(rawImage_left);  //or use image_vessselness
+            seg_left = segmentation(rawImage_left);
             seg_right = segmentation(rawImage_right);
-
-			//cv::imshow("seg left ", seg_left);
 
             trackingImgs = Particles.trackingTool(seg_left, seg_right); //with rendered tool and segmented img
 
 			freshImage = false;
-			freshVelocity = false;
-            Particles.getCoarseGuess(); //get ready for next time step
-
+            //Particles.getCoarseGuess(); //get ready for next time step, this is first used for static tracking
 			cv::waitKey(20);
 		}
 
