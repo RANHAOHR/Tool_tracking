@@ -78,21 +78,6 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
     convertEigenToMat(arm_2__cam_l, Cam_left_arm_2);
     convertEigenToMat(arm_2__cam_r, Cam_right_arm_2);
 
-//    ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
-//    ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
-//    ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
-//    ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
-//
-//	Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.8361,0.5340, 0.1264, -0.1142,
-//	0.5132, 0.8424, -0.1641, -0.0262,
-//	-0.1942, -0.0723, -0.9783, 0.1273,
-//	0,0, 0,1.0000);
-//
-//	Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.8361,0.5340, 0.1264, -0.1192,
-//			0.5132, 0.8424, -0.1641, -0.0262,
-//			-0.1942, -0.0723, -0.9783, 0.1273,
-//			0,0, 0,1.0000);
-
 	ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
 	ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
 
@@ -165,10 +150,10 @@ void ParticleFilter::getCoarseGuess(){
     computeRodriguesVec(a1_pos, a1_rvec);
 
     /*** first arm particles initialization ***/
-    initial.tvec_cyl(0) = a1_trans[0];  //left and right (image frame)
-    initial.tvec_cyl(1) = a1_trans[1];  //up and down
-    initial.tvec_cyl(2) = a1_trans[2];
-    initial.rvec_cyl(0) = a1_rvec.at<double>(0,0);
+    initial.tvec_cyl(0) = a1_trans[0] + 0.001;  //left and right (image frame)
+    initial.tvec_cyl(1) = a1_trans[1] + 0.001;  //up and down
+    initial.tvec_cyl(2) = a1_trans[2] + 0.004;
+    initial.rvec_cyl(0) = a1_rvec.at<double>(0,0) + 0.005;
     initial.rvec_cyl(1) = a1_rvec.at<double>(1,0);
     initial.rvec_cyl(2) = a1_rvec.at<double>(2,0);
 
@@ -227,7 +212,7 @@ void ParticleFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &p
 };
 
 std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right) {
-
+	double t_step = ros::Time::now().toSec();
     ros::spinOnce();
 
 	ROS_INFO("---- in tracking function ---");
@@ -271,8 +256,6 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	ToolModel::toolModel best_particle = particles_arm_1[maxScoreIdx_1];
 	ROS_INFO("Real tool at (%f %f %f): %f %f %f, ", initial.tvec_cyl(0), initial.tvec_cyl(1),initial.tvec_cyl(2),initial.rvec_cyl(0),initial.rvec_cyl(1), initial.rvec_cyl(2));
 	ROS_WARN("Particle ARM AT (%f %f %f): %f %f %f, ",best_particle.tvec_cyl(0), best_particle.tvec_cyl(1),best_particle.tvec_cyl(2),best_particle.rvec_cyl(0),best_particle.rvec_cyl(1), best_particle.rvec_cyl(2));
-	////compute RMS errors before update
-	showGazeboToolError(initial, best_particle);
 
 	///showing results for each iteration here
 	newToolModel.renderTool(raw_image_left, particles_arm_1[maxScoreIdx_1], Cam_left_arm_1, P_left);
@@ -287,8 +270,12 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	std::vector<ToolModel::toolModel> oldParticles = particles_arm_1;
 	resamplingParticles(oldParticles, particleWeights_arm_1, particles_arm_1);
 
-	updateParticles(particles_arm_1);
+	double t1_step = ros::Time::now().toSec();
+	ROS_INFO_STREAM("Delta t = " << t1_step - t_step);
+	showGazeboToolError(initial, best_particle);
 
+	updateParticles(particles_arm_1);
+	cv::waitKey(20);
 	return trackingImages;
 };
 
@@ -300,18 +287,22 @@ void ParticleFilter::showGazeboToolError(ToolModel::toolModel &real_pose, ToolMo
 	convertToolModeltoMatrix(bestParticle, renderedMat);
 	convertToolModeltoMatrix(real_pose, real_tool_vector);
 
-	cv::Mat diff = real_tool_vector - renderedMat;
-	double error = diff.dot(diff);
-	error = sqrt(error);
+	cv::Mat position = real_tool_vector.rowRange(0,12) - renderedMat.rowRange(0,12);
+	cv::Mat orientation = real_tool_vector.rowRange(12,dim) - renderedMat.rowRange(12,dim);
 
-	ROS_WARN_STREAM("Position and orientation  error: " << error);
+	double error_pos = position.dot(position);
+	double error_ori = orientation.dot(orientation);
+	error_pos = sqrt(error_pos);
+	error_ori = sqrt(error_ori);
+	ROS_WARN_STREAM("Position  error: " << error_pos);
+	ROS_WARN_STREAM("orientation  error: " << error_ori);
 };
 
 /***** update particles to find and reach to the best pose ***/
 void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedParticles) {
     ///every loop should generate different particle from one base particle k
     for (int i = 0; i < numParticles; ++i) {
-		updatedParticles[i] = newToolModel.gaussianSampling(updatedParticles[i]);  //generate new particles with new deviation
+		updatedParticles[i] = newToolModel.gaussianSampling(updatedParticles[i]);  //generate new particles with new deviation, using Gaussian process noise
     }
 
 };
@@ -436,29 +427,29 @@ void ParticleFilter::convertToolModeltoMatrix(const ToolModel::toolModel &inputT
 	toolMatrix.at<double>(1,0) = inputToolModel.tvec_cyl(1);
 	toolMatrix.at<double>(2,0) = inputToolModel.tvec_cyl(2);
 
-	toolMatrix.at<double>(3,0) = inputToolModel.rvec_cyl(0);
-	toolMatrix.at<double>(4,0) = inputToolModel.rvec_cyl(1);
-	toolMatrix.at<double>(5,0) = inputToolModel.rvec_cyl(2);
+	toolMatrix.at<double>(3,0) = inputToolModel.tvec_elp(0);
+	toolMatrix.at<double>(4,0) = inputToolModel.tvec_elp(1);
+	toolMatrix.at<double>(5,0) = inputToolModel.tvec_elp(2);
 
-	toolMatrix.at<double>(6,0) = inputToolModel.tvec_elp(0);
-	toolMatrix.at<double>(7,0) = inputToolModel.tvec_elp(1);
-	toolMatrix.at<double>(8,0) = inputToolModel.tvec_elp(2);
+	toolMatrix.at<double>(6,0) = inputToolModel.tvec_grip1(0);
+	toolMatrix.at<double>(7,0) = inputToolModel.tvec_grip1(1);
+	toolMatrix.at<double>(8,0) = inputToolModel.tvec_grip1(2);
 
-	toolMatrix.at<double>(9,0) = inputToolModel.rvec_elp(0);
-	toolMatrix.at<double>(10,0) = inputToolModel.rvec_elp(1);
-	toolMatrix.at<double>(11,0) = inputToolModel.rvec_elp(2);
+	toolMatrix.at<double>(9,0) = inputToolModel.tvec_grip2(0);
+	toolMatrix.at<double>(10,0) = inputToolModel.tvec_grip2(1);
+	toolMatrix.at<double>(11,0) = inputToolModel.tvec_grip2(2);
 
-	toolMatrix.at<double>(12,0) = inputToolModel.tvec_grip1(0);
-	toolMatrix.at<double>(13,0) = inputToolModel.tvec_grip1(1);
-	toolMatrix.at<double>(14,0) = inputToolModel.tvec_grip1(2);
+	toolMatrix.at<double>(12,0) = inputToolModel.rvec_cyl(0);
+	toolMatrix.at<double>(13,0) = inputToolModel.rvec_cyl(1);
+	toolMatrix.at<double>(14,0) = inputToolModel.rvec_cyl(2);
 
-	toolMatrix.at<double>(15,0) = inputToolModel.rvec_grip1(0);
-	toolMatrix.at<double>(16,0) = inputToolModel.rvec_grip1(1);
-	toolMatrix.at<double>(17,0) = inputToolModel.rvec_grip1(2);
+	toolMatrix.at<double>(15,0) = inputToolModel.rvec_elp(0);
+	toolMatrix.at<double>(16,0) = inputToolModel.rvec_elp(1);
+	toolMatrix.at<double>(17,0) = inputToolModel.rvec_elp(2);
 
-	toolMatrix.at<double>(18,0) = inputToolModel.tvec_grip2(0);
-	toolMatrix.at<double>(19,0) = inputToolModel.tvec_grip2(1);
-	toolMatrix.at<double>(20,0) = inputToolModel.tvec_grip2(2);
+	toolMatrix.at<double>(18,0) = inputToolModel.rvec_grip1(0);
+	toolMatrix.at<double>(19,0) = inputToolModel.rvec_grip1(1);
+	toolMatrix.at<double>(20,0) = inputToolModel.rvec_grip1(2);
 
 	toolMatrix.at<double>(21,0) = inputToolModel.rvec_grip2(0);
 	toolMatrix.at<double>(22,0) = inputToolModel.rvec_grip2(1);
