@@ -77,7 +77,9 @@ private:
 
 	ros::NodeHandle node_handle;
 
-	ToolModel newToolModel;
+	///ros::Timer timer;
+
+	ToolModel newToolModel;  /// it should be set up the first time, probably need updates of the camera poses
 	ToolModel::toolModel initial; //initial configuration
 
 	unsigned int numParticles; //total number of particles
@@ -144,15 +146,10 @@ public:
 	~ParticleFilter();
 
 	/*
-	 * The initializeParticles initializes the particles by setting the total number of particles, initial
-	 * guess and randomly generating the particles around the initial guess.
-	 */
+	* The initializeParticles initializes the particles by setting the total number of particles, initial
+	* guess and randomly generating the particles around the initial guess.
+	*/
 	void initializeParticles();
-
-    /*
-     * get coarse initialization
-     */
-    void getCoarseGuess();
 
 	/***consider getting a timer to debug***/
 	// void timerCallback(const ros::TimerEvent&);
@@ -179,15 +176,15 @@ public:
 	/*
 	 * update particles
 	 */
-	void updateParticles(ToolModel::toolModel &best_particle, std::vector<ToolModel::toolModel> &updateParticles);
+	void updateSamples(const cv::Mat &bodyVel, double &updateRate, std::vector<ToolModel::toolModel> particles);
 
-	void showGazeboToolError(ToolModel::toolModel &real_pose, ToolModel::toolModel &bestParticle);
-	void convertToolModeltoMatrix(const ToolModel::toolModel &inputToolModel, cv::Mat &toolMatrix);
+	void updateParticles(std::vector<ToolModel::toolModel> &updateParticles, const ToolModel::toolModel &bestParticle);
 
-	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
-	void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 
 	cv::Mat adjoint(cv::Mat &G);
+    void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
+    void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
+
 };
 
 #endif

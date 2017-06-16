@@ -3,8 +3,7 @@
 #include <image_transport/image_transport.h>
 #include <cwru_opencv_common/projective_geometry.h>
 #include <tool_tracking/particle_filter.h>
-#include "std_msgs/MultiArrayLayout.h"
-#include "std_msgs/Float64MultiArray.h"
+
 
 bool freshImage;
 bool freshCameraInfo;
@@ -55,7 +54,7 @@ cv::Mat segmentation(cv::Mat &InputImg) {
 
 	resize(src, src, cv::Size(), 1, 1);
 
-	double lowThresh = 43;
+	double lowThresh = 20;
 
 	cv::cvtColor(src, src_gray, CV_BGR2GRAY);
 
@@ -77,127 +76,55 @@ int main(int argc, char **argv) {
 	/******  initialization  ******/
 	ParticleFilter Particles(&nh);
 
-	freshCameraInfo = false;
-	freshImage = false;
-	freshVelocity = false;
+    freshCameraInfo = false;
+    freshImage = false;
+    //freshVelocity = false;//Moving all velocity-related things inside of the kalman.
 
-	cv::Mat seg_left;
-	cv::Mat seg_right;
+    cv::Mat seg_left  = cv::Mat::zeros(480, 640, CV_8UC1);
+    cv::Mat seg_right  = cv::Mat::zeros(480, 640, CV_8UC1);
 
-	cv::Mat bodyVel = cv::Mat::zeros(6, 1, CV_64FC1);
+    trackingImgs.resize(2);
 
-	trackingImgs.resize(2);
+    //TODO: get image size from camera model, or initialize segmented images,
 
+    cv::Mat rawImage_left = cv::Mat::zeros(480, 640, CV_8UC3);//CV_32FC1
+    cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
+
+    image_transport::ImageTransport it(nh);
+    image_transport::Subscriber img_sub_l = it.subscribe(
+            "/davinci_endo/left/image_raw", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_left)));
+
+    image_transport::Subscriber img_sub_r = it.subscribe(
+            "/davinci_endo/right/image_raw", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_right)));
+
+    ROS_INFO("---- done subscribe -----");
+
+    ros::Duration(2).sleep();
 	/****TODO: Temp Projection matrices****/
-	cv::Mat P_l(3, 4, CV_64FC1);
-	P_l.at<double>(0, 0) = 893.7852590197848;
-	P_l.at<double>(1, 0) = 0;
-	P_l.at<double>(2, 0) = 0;
-
-	P_l.at<double>(0, 1) = 0;
-	P_l.at<double>(1, 1) = 893.7852590197848;
-	P_l.at<double>(2, 1) = 0;
-
-	P_l.at<double>(0, 2) = 288.4443244934082; // horiz
-	P_l.at<double>(1, 2) = 259.7727756500244; //verticle
-	P_l.at<double>(2, 2) = 1;
-
-	P_l.at<double>(0, 3) = 0;
-	P_l.at<double>(1, 3) = 0;
-	P_l.at<double>(2, 3) = 0;
-
-	cv::Mat P_r(3, 4, CV_64FC1);
-	P_r.at<double>(0, 0) = 893.7852590197848;
-	P_r.at<double>(1, 0) = 0;
-	P_r.at<double>(2, 0) = 0;
-
-	P_r.at<double>(0, 1) = 0;
-	P_r.at<double>(1, 1) = 893.7852590197848;
-	P_r.at<double>(2, 1) = 0;
-
-	P_r.at<double>(0, 2) = 288.4443244934082; // horiz
-	P_r.at<double>(1, 2) = 259.7727756500244; //verticle
-	P_r.at<double>(2, 2) = 1;
-
-	P_r.at<double>(0, 3) = 4.732953897952732;
-	P_r.at<double>(1, 3) = 0;
-	P_r.at<double>(2, 3) = 0;
-
-	clock_t t;
-	double avg_tim = 0.0;
-	int count = 1;
-
-	/*** Timer set up ***/
-	ros::Rate loop_rate(50);
-
-	/*** Subscribers, velocity, stream images ***/
-
-	ros::Subscriber sub3 = nh.subscribe("/bodyVelocity", 100, arrayCallback);
-
-	const std::string leftCameraTopic("/davinci_endo/left/camera_info");
-	const std::string rightCameraTopic("/davinci_endo/right/camera_info");
-	cameraProjectionMatrices cameraInfoObj(nh, leftCameraTopic, rightCameraTopic);
-	ROS_INFO("---- Connected to camera info -----");
-
-	//TODO: get image size from camera model, or initialize segmented images,
-
-	cv::Mat rawImage_left = cv::Mat::zeros(475, 640, CV_32FC1);
-	cv::Mat rawImage_right = cv::Mat::zeros(475, 640, CV_32FC1);
-
-	image_transport::ImageTransport it(nh);
-	image_transport::Subscriber img_sub_l = it.subscribe("/davinci_endo/left/image_raw", 1,
-														 boost::function<void(const sensor_msgs::ImageConstPtr &)>(
-																 boost::bind(newImageCallback, _1, &rawImage_left)));
-	image_transport::Subscriber img_sub_r = it.subscribe("/davinci_endo/right/image_raw", 1,
-														 boost::function<void(const sensor_msgs::ImageConstPtr &)>(
-																 boost::bind(newImageCallback, _1, &rawImage_right)));
-
-	ROS_INFO("---- done subscribe -----");
-
-	/***testing segmentation images***/
-	cv::Size size(640, 475);
-	std::string package = ros::package::getPath("tool_tracking"); ////warning: do not have one package with the same name
-	//seg_left = cv::imread(package + "/left.png", CV_LOAD_IMAGE_GRAYSCALE );
-	seg_left = cv::imread(package + "/new.png", CV_LOAD_IMAGE_GRAYSCALE );  //testing image
-	seg_right = cv::imread(package + "/right.png", CV_LOAD_IMAGE_GRAYSCALE );
-
-	cv::Mat new_seg_left = seg_left.rowRange(5,480);
-	cv::Mat new_seg_right = seg_right.rowRange(5,480);
-
-	cv::resize(new_seg_left, new_seg_left,size );
-	cv::resize(new_seg_right, new_seg_right,size );
-
 
 	while (nh.ok()) {
-		//ros::spinOnce();
+		ros::spinOnce();
 		/*** make sure camera information is ready ***/
 
 		/*** if camera is ready, doing the tracking based on segemented image***/
-		//if (freshImage /*&& freshVelocity && freshCameraInfo && !freshCameraInfo*/) {
+		if (freshImage) {
 
-			//t = clock();
-//			seg_left = segmentation(rawImage_left);  //or use image_vessselness
-//			seg_right = segmentation(rawImage_right);
-			//t = clock() - t;
+            Particles.raw_image_left = rawImage_left.clone();
+            Particles.raw_image_right = rawImage_right.clone();
 
+            seg_left = segmentation(rawImage_left);  //or use image_vessselness
+            seg_right = segmentation(rawImage_right);
 
-			// body velocity
-			for (int i(0); i < 6; i++) {
-				bodyVel.at<double>(i, 0) = Arr[i];
-			}
+			cv::imshow("seg left ", seg_left);
 
-			trackingImgs = Particles.trackingTool(bodyVel, new_seg_left, new_seg_right, P_l,
-												  P_r); //with rendered tool and segmented img
-//
-//			cv::imshow("Rendered Image: Left", trackingImgs[0]);
-//			cv::imshow("Rendered Image: Right", trackingImgs[1]);
-//			cv::waitKey(50);
+            trackingImgs = Particles.trackingTool(seg_left, seg_right); //with rendered tool and segmented img
 
 			freshImage = false;
 			freshVelocity = false;
-		//}
 
-		loop_rate.sleep();  //or cv::waitKey(10);
+			cv::waitKey(20);
+		}
+
 	}
 
 }
