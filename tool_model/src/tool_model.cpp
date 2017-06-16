@@ -58,7 +58,7 @@ ToolModel::ToolModel() {
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
 
-    std::string cylinder = tool_model_pkg + "/tool_parts/cyliner_tense_end_face.obj"; //"/tense_cylinde_2.obj", test_cylinder_3, cyliner_tense_end_face
+    std::string cylinder = tool_model_pkg + "/tool_parts/refine_cylinder_3.obj"; //"/tense_cylinde_2.obj", test_cylinder_3 for ukf; refine_cylinder_3 is for particle filter
     std::string ellipse = tool_model_pkg + "/tool_parts/refine_ellipse_3.obj";
     std::string gripper1 = tool_model_pkg + "/tool_parts/gripper2_1.obj";
     std::string gripper2 = tool_model_pkg + "/tool_parts/gripper2_2.obj";
@@ -285,23 +285,20 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                                    cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
                                    const cv::Mat &P, cv::OutputArray jac) {
 
-//    cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << -1,0,0,0,
-//    0,0,1,0,
-//    0,1,0,0,
-//    0,0,0,1); //tip
+/*   cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << -1,0,0,0,
+   0,1,0,0,
+   0,0,-1,0,
+   0,0,0,1); 
 
-//    cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << 0,0,1,0,
-//            1,0,0,0,
-//            0,1,0,0,
-//            0,0,0,1);
-//
-//
-//    cv::Mat temp_input_Vmat = adjoint_mat * input_Vmat;
-//    cv::Mat temp_input_Nmat = adjoint_mat * input_Nmat;
+   cv::Mat temp_input_Vmat = adjoint_mat * input_Vmat;
+   cv::Mat temp_input_Nmat = adjoint_mat * input_Nmat;*/
 
     cv::Mat new_Vertices = transformPoints(input_Vmat, rvec, tvec);
+    // cv::Mat new_Vertices = transformPoints(input_Vmat, rvec, tvec);
 
     new_Vertices = camTransformMats(CamMat, new_Vertices); //transform every point under camera frame
+
+    // cv::Mat new_Normals = transformPoints(input_Nmat, rvec, tvec);
 
     cv::Mat new_Normals = transformPoints(input_Nmat, rvec, tvec);
     new_Normals = camTransformMats(CamMat, new_Normals); //transform every surface normal under camera frame
@@ -389,11 +386,7 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                         cv::Point2d prjpt_1 = reproject(ept_1, P);
                         cv::Point2d prjpt_2 = reproject(ept_2, P);
 
-                        if(((prjpt_1.x <= 0 && prjpt_2.x <= 0) || (prjpt_1.x >= 640 && prjpt_2.x >= 640)) || ((prjpt_1.y <= 0 && prjpt_2.y <= 0) || (prjpt_1.y >= 480 && prjpt_2.y >= 480))){
-                            //this is not suppose to be in the image
-                        }else {
-                            cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
-                        }
+                        cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);  
                     }
                 }
             }
@@ -756,7 +749,7 @@ ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder,
     toolModel newTool = seeds;  //BODY part is done here
 
     ///what if generate seeding group
-    double step = 0.0001;
+    double step = 0.0007;
     double dev = randomNumber(step, 0);
 
     newTool.tvec_cyl(0) = seeds.tvec_cyl(0) + dev;
@@ -782,6 +775,10 @@ ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder,
     double theta_grip_1 = theta_oval + randomNumber(0.0001, 0); // oval rotation
     double theta_grip_2 = theta_open + randomNumber(0.0001, 0);
 
+    if(theta_grip_2 < 0.0){
+        theta_grip_2 = 0.0;
+    }
+
     computeEllipsePose(newTool, theta_1, theta_grip_1, theta_grip_2);
 
     return newTool;
@@ -791,22 +788,22 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose){
 
     toolModel gaussianTool;  //new sample
 
-    double dev_pos = randomNumber(0.0001, 0);
+    double dev_pos = randomNumber(0.0005, 0);
     gaussianTool.tvec_cyl(0) = max_pose.tvec_cyl(0)+ dev_pos;
 
-    dev_pos = randomNumber(0.0001, 0);
+    dev_pos = randomNumber(0.0005, 0);
     gaussianTool.tvec_cyl(1) = max_pose.tvec_cyl(1)+ dev_pos;
 
-    dev_pos = randomNumber(0.0001, 0);
+    dev_pos = randomNumber(0.0005, 0);
     gaussianTool.tvec_cyl(2) = max_pose.tvec_cyl(2)+ dev_pos;
 
-    double dev_ori = randomNumber(0.0003, 0);
+    double dev_ori = randomNumber(0.0007, 0);
     gaussianTool.rvec_cyl(0) = max_pose.rvec_cyl(0)+ dev_ori;
 
-    dev_ori = randomNumber(0.0003, 0);
+    dev_ori = randomNumber(0.0007, 0);
     gaussianTool.rvec_cyl(1) = max_pose.rvec_cyl(1)+ dev_ori;
 
-    dev_ori = randomNumber(0.0003, 0);
+    dev_ori = randomNumber(0.0007, 0);
     gaussianTool.rvec_cyl(2) = max_pose.rvec_cyl(2)+ dev_ori;
 
     /************** sample the angles of the joints **************/
@@ -831,7 +828,7 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
 
     cv::Mat q_ellipse_ = cv::Mat(4, 1, CV_64FC1);
     q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0.0036; //notice this mean y is pointing to the gripper tip, should be the same with computeEllipsePose
+    q_ellipse_.at<double>(1, 0) = 0.015; //notice this mean y is pointing to the gripper tip, should be the same with computeEllipsePose, 0.0036
     q_ellipse_.at<double>(2, 0) = 0;
     q_ellipse_.at<double>(3, 0) = 1;
 
@@ -881,9 +878,8 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
     /**** orientation ***/
     double grip_1_delta = theta_grip_1 - theta_grip_2/2;
     double grip_2_delta = theta_grip_1 + theta_grip_2/2;
-
     cos_theta = cos(grip_1_delta);
-    sin_theta = sin(-grip_1_delta);
+    sin_theta = sin(grip_1_delta);
 
     cv::Mat gripper_1_ = (cv::Mat_<double>(3,3) << 1, 0, 0,
             0,cos_theta,-sin_theta,
@@ -897,7 +893,7 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
 
     /*gripper 2*/
     cos_theta = cos(grip_2_delta);
-    sin_theta = sin(-grip_2_delta);
+    sin_theta = sin(grip_2_delta);
 
     cv::Mat gripper_2_ = (cv::Mat_<double>(3,3) << 1, 0, 0,
             0,cos_theta,-sin_theta,
@@ -923,7 +919,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
 
     cv::Mat q_ellipse_(4, 1, CV_64FC1);
     q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0.0036;//(offset_ellipse - offset_body);
+    q_ellipse_.at<double>(1, 0) = 0.015; //offset  0036
     q_ellipse_.at<double>(2, 0) = 0;
     q_ellipse_.at<double>(3, 0) = 1;
 
@@ -965,11 +961,11 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
     inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
 
-    double grip_2_delta = theta_grip_1 - theta_grip_2/2;
-    double grip_1_delta = theta_grip_1 + theta_grip_2/2;
+    double grip_1_delta = theta_grip_1 - theta_grip_2/2;
+    double grip_2_delta = theta_grip_1 + theta_grip_2/2;
 
     cos_theta = cos(grip_1_delta);
-    sin_theta = sin(-grip_1_delta);
+    sin_theta = sin(grip_1_delta);
 
     cv::Mat gripper_1_ = (cv::Mat_<double>(3,3) << 1, 0, 0,
             0,cos_theta,-sin_theta,
@@ -984,7 +980,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     inputModel.tvec_grip2(2) = inputModel.tvec_grip1(2);
 
     cos_theta = cos(grip_2_delta);
-    sin_theta = sin(-grip_2_delta);
+    sin_theta = sin(grip_2_delta);
 
     cv::Mat gripper_2_ = (cv::Mat_<double>(3,3) << 1, 0, 0,
             0,cos_theta,-sin_theta,
@@ -1079,11 +1075,6 @@ void ToolModel::renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &Ca
         tool_oval_normals[i][3] = temp_normal.at<double>(0,1);
 
     }
-
-//    for (int i = 0; i <tool_vertices_normals.size() ; ++i) {
-//        ROS_INFO("tool_vertices_normals i: %d, %f, %f,%f,%f ", i, tool_vertices_normals[i][0], tool_vertices_normals[i][1],tool_vertices_normals[i][2],tool_vertices_normals[i][3]);
-//    }
-//    reorganizeVertices(tool_vertices_normals, tool_points, tool_normals);
     gatherNormals(tool_vertices_normals, tool_oval_normals, tool_gripper_normals, tool_points, tool_normals);
 
 };
