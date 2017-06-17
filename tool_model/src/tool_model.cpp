@@ -744,7 +744,7 @@ void ToolModel::modify_model_(std::vector<glm::vec3> &input_vertices, std::vecto
 translation, rotation, new z axis, new x axis*/
 //TODO:
 ToolModel::toolModel
-ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder, const double &theta_oval, const double &theta_open){
+ToolModel::setRandomConfig(const toolModel &seeds, double &theta_cylinder, double &theta_oval, double &theta_open){
 
     toolModel newTool = seeds;  //BODY part is done here
 
@@ -772,7 +772,7 @@ ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder,
     /************** sample the angles of the joints **************/
     //set positive as clockwise
     double theta_1 = theta_cylinder + randomNumber(0.0001, 0);   // tool rotation
-    double theta_grip_1 = theta_oval + randomNumber(0.0001, 0); // oval rotation
+    double theta_grip_1 = -1.0 * theta_oval + randomNumber(0.0001, 0); // oval rotation
     double theta_grip_2 = theta_open + randomNumber(0.0001, 0);
 
     if(theta_grip_2 < 0.0){
@@ -808,8 +808,8 @@ ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose){
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    double theta_ = randomNumber(0.001, 0);    //-90,90
-    double theta_grip_1 = randomNumber(0.001, 0);
+    double theta_ = randomNumber(0.007, 0);    //-90,90
+    double theta_grip_1 = randomNumber(0.007, 0);
     double theta_grip_2 = randomNumber(0.001, 0);
 
     computeRandomPose(max_pose, gaussianTool, theta_, theta_grip_1, theta_grip_2);
@@ -948,7 +948,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     /*********** computations for gripper kinematics **********/
     cv::Mat test_gripper(3, 1, CV_64FC1);
     test_gripper.at<double>(0, 0) = 0;
-    test_gripper.at<double>(1, 0) = 0.006;//close to offset_gripper - offset_ellipse;
+    test_gripper.at<double>(1, 0) = 0.002;
     test_gripper.at<double>(2, 0) = 0;
 
     cv::Mat rot_elp(3, 3, CV_64FC1);
