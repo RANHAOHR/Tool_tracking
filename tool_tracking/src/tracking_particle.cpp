@@ -103,8 +103,7 @@ int main(int argc, char **argv) {
             trackingImgs = Particles.trackingTool(seg_left, seg_right); //with rendered tool and segmented img
 
 			freshImage = false;
-            //Particles.getCoarseGuess(); //get ready for next time step, this is first used for static tracking
-			cv::waitKey(20);
+
 		}
 
 	}

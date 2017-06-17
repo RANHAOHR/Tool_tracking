@@ -58,7 +58,7 @@ ToolModel::ToolModel() {
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
 
-    std::string cylinder = tool_model_pkg + "/tool_parts/cyliner_tense_end_face.obj"; //"/tense_cylinde_2.obj", test_cylinder_3, cyliner_tense_end_face
+    std::string cylinder = tool_model_pkg + "/tool_parts/refine_cylinder_3.obj"; //"/tense_cylinde_2.obj", test_cylinder_3, cyliner_tense_end_face
     std::string ellipse = tool_model_pkg + "/tool_parts/refine_ellipse_3.obj";
     std::string gripper1 = tool_model_pkg + "/tool_parts/gripper2_1.obj";
     std::string gripper2 = tool_model_pkg + "/tool_parts/gripper2_2.obj";
@@ -831,7 +831,7 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
 
     cv::Mat q_ellipse_ = cv::Mat(4, 1, CV_64FC1);
     q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0.0036; //notice this mean y is pointing to the gripper tip, should be the same with computeEllipsePose
+    q_ellipse_.at<double>(1, 0) = 0.015; //notice this mean y is pointing to the gripper tip, should be the same with computeEllipsePose
     q_ellipse_.at<double>(2, 0) = 0;
     q_ellipse_.at<double>(3, 0) = 1;
 
@@ -879,8 +879,8 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
     inputModel.tvec_grip2(2) = inputModel.tvec_grip1(2);
 
     /**** orientation ***/
-    double grip_1_delta = theta_grip_1 - theta_grip_2;
-    double grip_2_delta = theta_grip_1 + theta_grip_2;
+    double grip_2_delta = theta_grip_1 - theta_grip_2;
+    double grip_1_delta = theta_grip_1 + theta_grip_2;
 
     cos_theta = cos(grip_1_delta);
     sin_theta = sin(-grip_1_delta);
@@ -921,7 +921,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
 
     cv::Mat q_ellipse_(4, 1, CV_64FC1);
     q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0.0036;//(offset_ellipse - offset_body);
+    q_ellipse_.at<double>(1, 0) = 0.015;//(offset_ellipse - offset_body);
     q_ellipse_.at<double>(2, 0) = 0;
     q_ellipse_.at<double>(3, 0) = 1;
 
@@ -950,7 +950,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     /*********** computations for gripper kinematics **********/
     cv::Mat test_gripper(3, 1, CV_64FC1);
     test_gripper.at<double>(0, 0) = 0;
-    test_gripper.at<double>(1, 0) = 0.006;//close to offset_gripper - offset_ellipse;
+    test_gripper.at<double>(1, 0) = 0.006;
     test_gripper.at<double>(2, 0) = 0;
 
     cv::Mat rot_elp(3, 3, CV_64FC1);
@@ -963,11 +963,17 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
     inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
 
-    double grip_2_delta = theta_grip_1 - theta_grip_2;
-    double grip_1_delta = theta_grip_1 + theta_grip_2;
+    double theta_orien_grip = -1.0 * theta_grip_1; 
+    double theta_grip_open = theta_grip_2;
+    if(theta_grip_open < 0.0){
+        theta_grip_open = 0.0;
+    }
+
+    double grip_2_delta = theta_orien_grip - theta_grip_open/2;
+    double grip_1_delta = theta_orien_grip + theta_grip_open/2;
 
     cos_theta = cos(grip_1_delta);
-    sin_theta = sin(-grip_1_delta);
+    sin_theta = sin(grip_1_delta);
 
     cv::Mat gripper_1_ = (cv::Mat_<double>(3,3) << 1, 0, 0,
             0,cos_theta,-sin_theta,
@@ -982,7 +988,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     inputModel.tvec_grip2(2) = inputModel.tvec_grip1(2);
 
     cos_theta = cos(grip_2_delta);
-    sin_theta = sin(-grip_2_delta);
+    sin_theta = sin(grip_2_delta);
 
     cv::Mat gripper_2_ = (cv::Mat_<double>(3,3) << 1, 0, 0,
             0,cos_theta,-sin_theta,
