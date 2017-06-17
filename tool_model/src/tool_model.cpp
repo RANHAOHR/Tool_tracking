@@ -58,7 +58,7 @@ ToolModel::ToolModel() {
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
 
-    std::string cylinder = tool_model_pkg + "/tool_parts/refine_cylinder_3.obj"; //"/tense_cylinde_2.obj", test_cylinder_3 for ukf; refine_cylinder_3 is for particle filter
+    std::string cylinder = tool_model_pkg + "/tool_parts/cyliner_tense_end_face.obj"; //"/tense_cylinde_2.obj", test_cylinder_3 for ukf; refine_cylinder_3 is for particle filter
     std::string ellipse = tool_model_pkg + "/tool_parts/refine_ellipse_3.obj";
     std::string gripper1 = tool_model_pkg + "/tool_parts/gripper2_1.obj";
     std::string gripper2 = tool_model_pkg + "/tool_parts/gripper2_2.obj";
@@ -526,7 +526,7 @@ void ToolModel::Compute_Silhouette_UKF(const std::vector<std::vector<int> > &inp
                             std::vector<double> vertex_vector;
                             vertex_vector.resize(4); // vertices, normals
 
-                            if(mid_vertex.x >= 10 && mid_vertex.x <=640 && mid_vertex.y >= 0 && mid_vertex.y <= 480){
+                            if(mid_vertex.x >= 30 && mid_vertex.x <=640 && mid_vertex.y >= 0 && mid_vertex.y <= 480){
                                 vertex_vector[0] = mid_vertex.x;
                                 vertex_vector[1] = mid_vertex.y;
                                 vertex_vector[2] = temp_normal.at<double>(0,0);
@@ -772,12 +772,8 @@ ToolModel::setRandomConfig(const toolModel &seeds, double &theta_cylinder, doubl
     /************** sample the angles of the joints **************/
     //set positive as clockwise
     double theta_1 = theta_cylinder + randomNumber(0.0001, 0);   // tool rotation
-    double theta_grip_1 = -1.0 * theta_oval + randomNumber(0.0001, 0); // oval rotation
+    double theta_grip_1 = theta_oval + randomNumber(0.0001, 0); // oval rotation
     double theta_grip_2 = theta_open + randomNumber(0.0001, 0);
-
-    if(theta_grip_2 < 0.0){
-        theta_grip_2 = 0.0;
-    }
 
     computeEllipsePose(newTool, theta_1, theta_grip_1, theta_grip_2);
 
@@ -876,8 +872,8 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
     inputModel.tvec_grip2(2) = inputModel.tvec_grip1(2);
 
     /**** orientation ***/
-    double grip_1_delta = theta_grip_1 - theta_grip_2/2;
-    double grip_2_delta = theta_grip_1 + theta_grip_2/2;
+    double grip_2_delta = theta_grip_1 - theta_grip_2/2;
+    double grip_1_delta = theta_grip_1 + theta_grip_2/2;
     cos_theta = cos(grip_1_delta);
     sin_theta = sin(grip_1_delta);
 
@@ -961,8 +957,14 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
     inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
 
-    double grip_1_delta = theta_grip_1 - theta_grip_2/2;
-    double grip_2_delta = theta_grip_1 + theta_grip_2/2;
+    double theta_orien_grip = -1 * theta_grip_1; 
+    double theta_grip_open = theta_grip_2;
+    if(theta_grip_open < 0.0){
+        theta_grip_open = 0.0;
+    }
+
+    double grip_2_delta = theta_orien_grip - theta_grip_open;
+    double grip_1_delta = theta_orien_grip + theta_grip_open;
 
     cos_theta = cos(grip_1_delta);
     sin_theta = sin(grip_1_delta);
@@ -1075,6 +1077,7 @@ void ToolModel::renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &Ca
         tool_oval_normals[i][3] = temp_normal.at<double>(0,1);
 
     }
+    //reorganizeVertices(tool_vertices_normals, tool_points, tool_normals);
     gatherNormals(tool_vertices_normals, tool_oval_normals, tool_gripper_normals, tool_points, tool_normals);
 
 };
@@ -1142,7 +1145,6 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
 };
 
 void ToolModel::gatherNormals(std::vector< std::vector<double> > &part1_normals, std::vector< std::vector<double> > &part2_normals, std::vector< std::vector<double> > &part3_normals, cv::Mat &tool_points, cv::Mat &tool_normals){
-
     std::sort(part1_normals.begin(), part1_normals.end());
     part1_normals.erase(std::unique(part1_normals.begin(), part1_normals.end()), part1_normals.end());
 
@@ -1153,38 +1155,41 @@ void ToolModel::gatherNormals(std::vector< std::vector<double> > &part1_normals,
     part3_normals.erase(std::unique(part3_normals.begin(), part3_normals.end()), part3_normals.end());
 
     int point_dim = part1_normals.size();
-
     std::vector< std::vector<double> > temp_vec_normals;
-    ///need adjust the first few normals
-    for (int m = 0; m <point_dim - 9; ++m) {
-        temp_vec_normals.push_back(part1_normals[m]);
-    }
 
-    cv::Mat cylinder_norm(1,2,CV_64FC1);
-    cylinder_norm.at<double>(0,0) = temp_vec_normals[0][2];
-    cylinder_norm.at<double>(0,1) = temp_vec_normals[0][3];
-    cv::normalize(cylinder_norm, cylinder_norm);
+    if (point_dim > 9)
+    {
+        ///need adjust the first few normals
+        for (int m = 0; m <point_dim - 9; ++m) {
+            temp_vec_normals.push_back(part1_normals[m]);
+        }
 
-    //ROS_INFO_STREAM("cylinder_norm " << cylinder_norm);
-    for (int l = point_dim - 9; l < point_dim; ++l) {
-        cv::Mat temp(1,2,CV_64FC1);
-        temp.at<double>(0,0) = part1_normals[l][2];
-        temp.at<double>(0,1) = part1_normals[l][3];
-        cv::normalize(temp, temp);
-        double bar = cylinder_norm.dot(temp);
-        if(bar < 0.3 && bar > -0.1){
-            temp_vec_normals.push_back(part1_normals[l]);
+        cv::Mat cylinder_norm(1,2,CV_64FC1);
+        cylinder_norm.at<double>(0,0) = temp_vec_normals[0][2];
+        cylinder_norm.at<double>(0,1) = temp_vec_normals[0][3];
+        cv::normalize(cylinder_norm, cylinder_norm);
+
+        for (int l = point_dim - 9; l < point_dim; ++l) {
+            cv::Mat temp(1,2,CV_64FC1);
+            temp.at<double>(0,0) = part1_normals[l][2];
+            temp.at<double>(0,1) = part1_normals[l][3];
+            cv::normalize(temp, temp);
+            double bar = cylinder_norm.dot(temp);
+            if(bar < 0.3 && bar > -0.1){
+                temp_vec_normals.push_back(part1_normals[l]);
+            }
         }
     }
 
-    /****** oval part normals *****/
-    for (int i = 0; i < 2; ++i) { // here we really don't need too much normals
-        temp_vec_normals.push_back(part2_normals[i]);
-    }
 
-    /****** oval part normals *****/
-    temp_vec_normals.push_back(part3_normals[4]);
-    temp_vec_normals.push_back(part3_normals[7]);
+    // /****** oval part normals *****/
+    // for (int i = 0; i < 2; ++i) { // here we really don't need too much normals
+    //     temp_vec_normals.push_back(part2_normals[i]);
+    // }
+
+    // /****** oval part normals *****/
+    // temp_vec_normals.push_back(part3_normals[4]);
+    // temp_vec_normals.push_back(part3_normals[7]);
 
 
     int actual_dim = temp_vec_normals.size();   //need one more for other orientation
