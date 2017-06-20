@@ -40,7 +40,8 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
-        node_handle(*nodehandle), numParticles(100){
+        node_handle(*nodehandle), numParticles(180), down_sample_rate(0.0015), error(1)
+{
 
 	/**** need to subscribe this for simulation ***/
     // tf::StampedTransform arm_1__cam_l_st;
@@ -411,8 +412,8 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	std::vector<std::vector<double> > oldParticles = particles_arm_1;
 	resamplingParticles(oldParticles, particleWeights_arm_1, particles_arm_1);
 
-    cv::waitKey(16);
-	updateParticles(best_particle, particles_arm_1, predicted_real_pose);
+    cv::waitKey(20);
+	updateParticles(best_particle, maxScore_1, particles_arm_1, predicted_real_pose);
 
 	return trackingImages;
 };
@@ -434,7 +435,7 @@ void ParticleFilter::showGazeboToolError(ToolModel::toolModel &real_pose, ToolMo
 };
 
 /***** update particles to find and reach to the best pose ***/
-void ParticleFilter::updateParticles(std::vector <double> &best_particle_last, std::vector<std::vector <double> > &updatedParticles, ToolModel::toolModel & predicted_real_pose) {
+void ParticleFilter::updateParticles(std::vector <double> &best_particle_last, double &maxScore, std::vector<std::vector <double> > &updatedParticles, ToolModel::toolModel & predicted_real_pose) {
 	std::vector<std::vector<double> > tmp;
 	tmp.resize(2);
 	if(davinci_interface::get_fresh_robot_pos(tmp)){
@@ -524,27 +525,39 @@ void ParticleFilter::updateParticles(std::vector <double> &best_particle_last, s
         }
 
     }
-		/**** add noise for propagated particles ****/
-        for (int m = 0; m < updatedParticles.size(); ++m) {
 
-            for (int l = 0; l < 7; ++l) {
-                double dev_sensor = newToolModel.randomNumber(0.001, 0);
-                updatedParticles[m][l] = updatedParticles[m][l] + dev_sensor;
-            }
+    ROS_INFO_STREAM("down_sample_rate " << down_sample_rate);
+    if(maxScore > 1.25){
+        down_sample_rate = 0.0002;
+    }
+    /**** add noise for propagated particles ****/
+    for (int m = 1; m < updatedParticles.size(); ++m) {
 
-            std::vector<double> dev_cam;
-            dev_cam.resize(6);
-
-            for (int j = 7; j < 13; ++j) {
-                dev_cam[j-7] = newToolModel.randomNumber(0.0003, 0);
-                updatedParticles[m][j] = updatedParticles[m][j] + dev_cam[j-7];
-            }
-
-            for (int j = 13; j < 19; ++j) {
-                updatedParticles[m][j] = updatedParticles[m][j] + dev_cam[j-13];
-            }
-
+        for (int l = 0; l < 7; ++l) {
+            double dev_sensor = newToolModel.randomNumber(down_sample_rate, 0);
+            updatedParticles[m][l] = updatedParticles[m][l] + dev_sensor;
         }
+
+        std::vector<double> dev_cam;
+        dev_cam.resize(6);
+
+        for (int j = 7; j < 13; ++j) {
+            dev_cam[j-7] = newToolModel.randomNumber(down_sample_rate, 0);
+            updatedParticles[m][j] = updatedParticles[m][j] + dev_cam[j-7];
+        }
+
+        for (int j = 13; j < 19; ++j) {
+            updatedParticles[m][j] = updatedParticles[m][j] + dev_cam[j-13];
+        }
+
+    }
+
+    down_sample_rate -= 0.0001;
+    if(down_sample_rate < 0.0002){
+        down_sample_rate = 0.0002;
+    };
+
+
 };
 
 double ParticleFilter::measureFuncSameCam(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose,

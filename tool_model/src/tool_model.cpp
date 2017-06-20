@@ -389,11 +389,8 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                         cv::Point2d prjpt_1 = reproject(ept_1, P);
                         cv::Point2d prjpt_2 = reproject(ept_2, P);
 
-                        if(((prjpt_1.x <= 0 && prjpt_2.x <= 0) || (prjpt_1.x >= 640 && prjpt_2.x >= 640)) || ((prjpt_1.y <= 0 && prjpt_2.y <= 0) || (prjpt_1.y >= 480 && prjpt_2.y >= 480))){
-                            //this is not suppose to be in the image
-                        }else {
-                            cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
-                        }
+                        cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);  
+
                     }
                 }
             }
@@ -499,10 +496,8 @@ void ToolModel::Compute_Silhouette_UKF(const std::vector<std::vector<int> > &inp
                         cv::Point2d prjpt_1 = reproject(ept_1, P);
                         cv::Point2d prjpt_2 = reproject(ept_2, P);
 
-                        if(((prjpt_1.x <= 0 && prjpt_2.x <= 0) || (prjpt_1.x >= 640 && prjpt_2.x >= 640)) || ((prjpt_1.y <= 0 && prjpt_2.y <= 0) || (prjpt_1.y >= 480 && prjpt_2.y >= 480))){
-                            //this is not suppose to be in the image
-                        }else{
-
+                        if(prjpt_1.x <= 640 && prjpt_2.x <= 640 && prjpt_1.y >= 0 && prjpt_1.y <= 480 && prjpt_2.y >= 0 && prjpt_2.y <= 480){
+                           
                             cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
                             /**** get new vertex ****/
                             cv::Point2d mid_vertex = prjpt_1 + prjpt_2;
@@ -533,7 +528,7 @@ void ToolModel::Compute_Silhouette_UKF(const std::vector<std::vector<int> > &inp
                             std::vector<double> vertex_vector;
                             vertex_vector.resize(4); // vertices, normals
 
-                            if(mid_vertex.x >= 30 && mid_vertex.x <=640 && mid_vertex.y >= 0 && mid_vertex.y <= 480){
+                            if(mid_vertex.x >= 10 && mid_vertex.x <=640 && mid_vertex.y >= 0 && mid_vertex.y <= 480){
                                 vertex_vector[0] = mid_vertex.x;
                                 vertex_vector[1] = mid_vertex.y;
                                 vertex_vector[2] = temp_normal.at<double>(0,0);
@@ -751,12 +746,10 @@ void ToolModel::modify_model_(std::vector<glm::vec3> &input_vertices, std::vecto
 translation, rotation, new z axis, new x axis*/
 //TODO:
 ToolModel::toolModel
-ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder, const double &theta_oval, const double &theta_open){
+ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder, const double &theta_oval, const double &theta_open, double &step){
 
     toolModel newTool = seeds;  //BODY part is done here
 
-    ///what if generate seeding group
-    double step = 0.0005;
     double dev = randomNumber(step, 0);
 
     newTool.tvec_cyl(0) = seeds.tvec_cyl(0) + dev;
@@ -787,26 +780,26 @@ ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder,
     return newTool;
 };
 
-ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose){
+ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, double &step){
 
     toolModel gaussianTool;  //new sample
 
-    double dev_pos = randomNumber(0.0003, 0);
+    double dev_pos = randomNumber(step, 0);
     gaussianTool.tvec_cyl(0) = max_pose.tvec_cyl(0)+ dev_pos;
 
-    dev_pos = randomNumber(0.0003, 0);
+    dev_pos = randomNumber(step, 0);
     gaussianTool.tvec_cyl(1) = max_pose.tvec_cyl(1)+ dev_pos;
 
-    dev_pos = randomNumber(0.0003, 0);
+    dev_pos = randomNumber(step, 0);
     gaussianTool.tvec_cyl(2) = max_pose.tvec_cyl(2)+ dev_pos;
 
-    double dev_ori = randomNumber(0.001, 0);
+    double dev_ori = randomNumber(step, 0);
     gaussianTool.rvec_cyl(0) = max_pose.rvec_cyl(0)+ dev_ori;
 
-    dev_ori = randomNumber(0.001, 0);
+    dev_ori = randomNumber(step, 0);
     gaussianTool.rvec_cyl(1) = max_pose.rvec_cyl(1)+ dev_ori;
 
-    dev_ori = randomNumber(0.001, 0);
+    dev_ori = randomNumber(step, 0);
     gaussianTool.rvec_cyl(2) = max_pose.rvec_cyl(2)+ dev_ori;
 
     /************** sample the angles of the joints **************/
@@ -963,14 +956,14 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
     inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
 
-    double theta_orien_grip = -1.0 * theta_grip_1; 
+    double theta_orien_grip = -1.0 * theta_grip_1; //maybe the x being flipped
     double theta_grip_open = theta_grip_2;
     if(theta_grip_open < 0.0){
         theta_grip_open = 0.0;
     }
 
-    double grip_2_delta = theta_orien_grip - theta_grip_open/2;
-    double grip_1_delta = theta_orien_grip + theta_grip_open/2;
+    double grip_2_delta = theta_orien_grip - theta_grip_open;
+    double grip_1_delta = theta_orien_grip + theta_grip_open;
 
     cos_theta = cos(grip_1_delta);
     sin_theta = sin(grip_1_delta);

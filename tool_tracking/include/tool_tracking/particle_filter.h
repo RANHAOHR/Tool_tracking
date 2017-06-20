@@ -128,6 +128,9 @@ private:
 	double t_step;
 	double t_1_step;
 
+    double down_sample_rate;
+    double error;
+
 public:
 
 	/*
@@ -194,7 +197,7 @@ public:
  * @param best_particle_last: last time step best particle, used to compute the nominal velocity
  * @param updatedParticles : input and output particles
  */
-	void updateParticles(std::vector <double> &best_particle_last, std::vector<std::vector <double> > &updatedParticles, ToolModel::toolModel & predicted_real_pose);
+	void updateParticles(std::vector <double> &best_particle_last, double &maxScore, std::vector<std::vector <double> > &updatedParticles, ToolModel::toolModel & predicted_real_pose);
 
 	void computeNoisedParticles(std::vector <double> & inputParticle, std::vector< std::vector <double> > & noisedParticles);
 

@@ -37,7 +37,7 @@ cv::Mat segmentation(cv::Mat &InputImg) {
 
 	resize(src, src, cv::Size(), 1, 1);
 
-	double lowThresh = 20;
+	double lowThresh = 43;
 
 	cv::cvtColor(src, src_gray, CV_BGR2GRAY);
 
