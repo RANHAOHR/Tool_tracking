@@ -385,8 +385,9 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
 
                         cv::Point2d prjpt_1 = reproject(ept_1, P);
                         cv::Point2d prjpt_2 = reproject(ept_2, P);
-
+                        if(prjpt_1.x <= 640 && prjpt_2.x <= 640 && prjpt_1.y >= 0 && prjpt_1.y <= 480 && prjpt_2.y >= 0 && prjpt_2.y <= 480){
                         cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);  
+                        }
                     }
                 }
             }
@@ -492,10 +493,8 @@ void ToolModel::Compute_Silhouette_UKF(const std::vector<std::vector<int> > &inp
                         cv::Point2d prjpt_1 = reproject(ept_1, P);
                         cv::Point2d prjpt_2 = reproject(ept_2, P);
 
-                        if(((prjpt_1.x <= 0 && prjpt_2.x <= 0) || (prjpt_1.x >= 640 && prjpt_2.x >= 640)) || ((prjpt_1.y <= 0 && prjpt_2.y <= 0) || (prjpt_1.y >= 480 && prjpt_2.y >= 480))){
-                            //this is not suppose to be in the image
-                        }else{
-
+                        if(prjpt_1.x <= 640 && prjpt_2.x <= 640 && prjpt_1.y >= 0 && prjpt_1.y <= 480 && prjpt_2.y >= 0 && prjpt_2.y <= 480){
+                           
                             cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
                             /**** get new vertex ****/
                             cv::Point2d mid_vertex = prjpt_1 + prjpt_2;
@@ -526,7 +525,7 @@ void ToolModel::Compute_Silhouette_UKF(const std::vector<std::vector<int> > &inp
                             std::vector<double> vertex_vector;
                             vertex_vector.resize(4); // vertices, normals
 
-                            if(mid_vertex.x >= 30 && mid_vertex.x <=640 && mid_vertex.y >= 0 && mid_vertex.y <= 480){
+                            if(mid_vertex.x >= 10 && mid_vertex.x <=640 && mid_vertex.y >= 0 && mid_vertex.y <= 480){
                                 vertex_vector[0] = mid_vertex.x;
                                 vertex_vector[1] = mid_vertex.y;
                                 vertex_vector[2] = temp_normal.at<double>(0,0);
@@ -915,7 +914,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
 
     cv::Mat q_ellipse_(4, 1, CV_64FC1);
     q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0.015; //offset  0036
+    q_ellipse_.at<double>(1, 0) = 0.014; //offset  0036
     q_ellipse_.at<double>(2, 0) = 0;
     q_ellipse_.at<double>(3, 0) = 1;
 
@@ -944,7 +943,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     /*********** computations for gripper kinematics **********/
     cv::Mat test_gripper(3, 1, CV_64FC1);
     test_gripper.at<double>(0, 0) = 0;
-    test_gripper.at<double>(1, 0) = 0.002;
+    test_gripper.at<double>(1, 0) = 0.0065;
     test_gripper.at<double>(2, 0) = 0;
 
     cv::Mat rot_elp(3, 3, CV_64FC1);
@@ -963,7 +962,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
         theta_grip_open = 0.0;
     }
 
-    double grip_2_delta = theta_orien_grip - theta_grip_open;
+    double grip_2_delta = theta_orien_grip - theta_grip_open;  // - 0.24
     double grip_1_delta = theta_orien_grip + theta_grip_open;
 
     cos_theta = cos(grip_1_delta);
@@ -1077,71 +1076,8 @@ void ToolModel::renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &Ca
         tool_oval_normals[i][3] = temp_normal.at<double>(0,1);
 
     }
-    //reorganizeVertices(tool_vertices_normals, tool_points, tool_normals);
     gatherNormals(tool_vertices_normals, tool_oval_normals, tool_gripper_normals, tool_points, tool_normals);
 
-};
-
-void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vertices_normals, cv::Mat &tool_points, cv::Mat &tool_normals){
-
-    std::sort(tool_vertices_normals.begin(), tool_vertices_normals.end());
-    tool_vertices_normals.erase(std::unique(tool_vertices_normals.begin(), tool_vertices_normals.end()), tool_vertices_normals.end());
-
-    int point_dim = tool_vertices_normals.size();
-
-    int actual_dim = point_dim;   //need one more for other orientation
-    tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-    tool_normals = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-
-    for (int j = 0; j < point_dim; ++j) {
-        tool_points.at<double>(j,0) = tool_vertices_normals[j][0];
-        tool_points.at<double>(j,1) = tool_vertices_normals[j][1];
-
-        tool_normals.at<double>(j,0) = tool_vertices_normals[j][2];
-        tool_normals.at<double>(j,1) = tool_vertices_normals[j][3];
-    }
-    /******** using less side normals: current best using stereo ********/
-//    std::vector< std::vector<double> > temp_vec_normals;
-//    ///need adjust the first few normals
-//
-//    for (int m = 0; m <point_dim - 9; ++m) {
-//        temp_vec_normals.push_back(tool_vertices_normals[m]);
-//    }
-//
-//    cv::Mat cylinder_norm(1,2,CV_64FC1);
-//    cylinder_norm.at<double>(0,0) = temp_vec_normals[0][2];
-//    cylinder_norm.at<double>(0,1) = temp_vec_normals[0][3];
-//    cv::normalize(cylinder_norm, cylinder_norm);
-//    //ROS_INFO_STREAM("cylinder_norm " << cylinder_norm);
-//    for (int l = point_dim - 9; l < point_dim; ++l) {
-//        cv::Mat temp(1,2,CV_64FC1);
-//        temp.at<double>(0,0) = tool_vertices_normals[l][2];
-//        temp.at<double>(0,1) = tool_vertices_normals[l][3];
-//        cv::normalize(temp, temp);
-//        double bar = cylinder_norm.dot(temp);
-//        //ROS_INFO_STREAM("bar IS " << bar);
-//        if(bar < 0.3 && bar > -0.1){
-//            temp_vec_normals.push_back(tool_vertices_normals[l]);
-//        }
-//    }
-//    int actual_dim = temp_vec_normals.size();   //need one more for other orientation
-//    tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-//    tool_normals = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-//
-//    for (int j = 0; j < actual_dim; ++j) {
-//        tool_points.at<double>(j,0) = temp_vec_normals[j][0];
-//        tool_points.at<double>(j,1) = temp_vec_normals[j][1];
-//
-//        tool_normals.at<double>(j,0) = temp_vec_normals[j][2];
-//        tool_normals.at<double>(j,1) = temp_vec_normals[j][3];
-//
-//    }
-    /***** normalize *****/
-    for (int i = 0; i < actual_dim; ++i) {
-        cv::Mat temp(1,2,CV_64FC1);
-        cv::normalize(tool_normals.row(i), temp);
-        temp.copyTo(tool_normals.row(i));
-    }
 };
 
 void ToolModel::gatherNormals(std::vector< std::vector<double> > &part1_normals, std::vector< std::vector<double> > &part2_normals, std::vector< std::vector<double> > &part3_normals, cv::Mat &tool_points, cv::Mat &tool_normals){
@@ -1157,10 +1093,11 @@ void ToolModel::gatherNormals(std::vector< std::vector<double> > &part1_normals,
     int point_dim = part1_normals.size();
     std::vector< std::vector<double> > temp_vec_normals;
 
-    if (point_dim > 9)
+double extra_dim = 9;
+    if (point_dim > extra_dim)
     {
         ///need adjust the first few normals
-        for (int m = 0; m <point_dim - 9; ++m) {
+        for (int m = 0; m <point_dim - extra_dim; ++m) {
             temp_vec_normals.push_back(part1_normals[m]);
         }
 
@@ -1169,13 +1106,13 @@ void ToolModel::gatherNormals(std::vector< std::vector<double> > &part1_normals,
         cylinder_norm.at<double>(0,1) = temp_vec_normals[0][3];
         cv::normalize(cylinder_norm, cylinder_norm);
 
-        for (int l = point_dim - 9; l < point_dim; ++l) {
+        for (int l = point_dim - extra_dim; l < point_dim; ++l) {
             cv::Mat temp(1,2,CV_64FC1);
             temp.at<double>(0,0) = part1_normals[l][2];
             temp.at<double>(0,1) = part1_normals[l][3];
             cv::normalize(temp, temp);
             double bar = cylinder_norm.dot(temp);
-            if(bar < 0.3 && bar > -0.1){
+            if(bar < 0.1 && bar > -0.1){
                 temp_vec_normals.push_back(part1_normals[l]);
             }
         }

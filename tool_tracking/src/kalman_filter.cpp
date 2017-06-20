@@ -82,8 +82,9 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	P_right = cv::Mat::zeros(3,4,CV_64FC1);
 
 	/*** the calibrated transformation for real da vinci robot comes in : ****/
+    /********** using calibration results: camera-base transformation *******/
     Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.7882, 0.6067, 0.1025, -0.12249,  //-0.7882, 0.6067, 0.1025, -0.1449,
-            0.5854, 0.7909, -0.1784, -0.0480,   //	0.5854, 0.7909, -0.1784, -0.0607,
+            0.5854, 0.7909, -0.1784, -0.0460,   //	0.5854, 0.7909, -0.1784, -0.0607,
             -0.1894, -0.0806, -0.9786, 0.02, //	-0.1894, -0.0806, -0.9786, 0.0200,   0.0157
             0,0, 0, 1.0000);
 
@@ -92,16 +93,16 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 //    -0.2056958859990591]
 
     cv::Mat rot(3,3,CV_64FC1);
-    cv::Mat rot_vec = (cv::Mat_<double>(3,1) << 1.09976677, 2.5802519, -0.200696); //1.0996677, 2.6502519, -0.20696
+    cv::Mat rot_vec = (cv::Mat_<double>(3,1) << 1.07976677, 2.570082519, -0.16696); //1.0996677, 2.6502519, -0.20696
     cv::Rodrigues(rot_vec, rot);
     rot.copyTo(Cam_left_arm_1.colRange(0,3).rowRange(0,3));
 
     Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.7893, 0.6067, 0.0949, -0.13599, // -0.7893, 0.6067, 0.0949, -0.1428,
-            0.5852, 0.7899, -0.1835, -0.0500,   ///	0.5852, 0.7899, -0.1835, -0.0612,
-            -0.1861, -0.0892, -0.9784, 0.0180,     //	-0.1861, -0.0892, -0.9784, 0.0223,
+            0.5852, 0.7899, -0.1835, -0.0480,   ///	0.5852, 0.7899, -0.1835, -0.0612,
+            -0.1861, -0.0892, -0.9784, 0.02,     //	-0.1861, -0.0892, -0.9784, 0.0223,
             0,0, 0, 1.0000);
 
-    rot_vec = (cv::Mat_<double>(3,1) << 1.059996677, 2.5802519, -0.18696);
+    rot_vec = (cv::Mat_<double>(3,1) << 1.059996677, 2.5602519, -0.17696);
     cv::Rodrigues(rot_vec, rot);
     rot.copyTo(Cam_right_arm_1.colRange(0,3).rowRange(0,3));
 
@@ -200,7 +201,7 @@ void KalmanFilter::getMeasurementModel(const cv::Mat &coarse_guess_vector, const
 
 	int measurement_dim = temp_point.rows;
     cv::Mat measurement_points = cv::Mat_<double>::zeros(measurement_dim, 2);
-	int radius = 27;
+	int radius = 24;
 
 	cv::Mat test_measurement = segmentation_img.clone();
 	ukfToolModel.renderToolUKF(test_measurement, coarse_tool, Cam_matrix, projection_mat, temp_point, temp_normal);
@@ -269,6 +270,7 @@ void KalmanFilter::getMeasurementModel(const cv::Mat &coarse_guess_vector, const
 		zt.at<double>(i,0) = dot_product;
     }
     normal_measurement = temp_normal.clone();
+    cv::waitKey();
 };
 
 /*
@@ -414,10 +416,11 @@ void KalmanFilter::getCoarseEstimation(){
 	real_mu.at<double>(6 , 0) = sensor_1[4];
 	real_mu.at<double>(7 , 0) = sensor_1[5];
 	real_mu.at<double>(8 , 0) = sensor_1[6];
-
+    ROS_WARN_STREAM("sensor_1[5] " << sensor_1[5]);
+    ROS_WARN_STREAM("sensor_1[6] " << sensor_1[6]);
 	////intentionally bad ones......
 	kalman_mu_arm1 = cv::Mat_<double>::zeros(L, 1);
-    kalman_mu_arm1.at<double>(0 , 0) = arm_trans[0] + 0.007;
+    kalman_mu_arm1.at<double>(0 , 0) = arm_trans[0] + 0.003;
     kalman_mu_arm1.at<double>(1 , 0) = arm_trans[1];
     kalman_mu_arm1.at<double>(2 , 0) = arm_trans[2];
     kalman_mu_arm1.at<double>(3 , 0) = arm_rvec.at<double>(0,0);
@@ -688,7 +691,7 @@ cv::Mat KalmanFilter::segmentation(cv::Mat &InputImg) {
 	src = InputImg;
 	cv::resize(src, src, cv::Size(), 1, 1);
 
-	double lowThresh = 43;
+	double lowThresh = 30;
 	cv::cvtColor(src, src_gray, CV_BGR2GRAY);
 	cv::blur(src_gray, src_gray, cv::Size(3, 3));
 	cv::Canny(src_gray, grad, lowThresh, 4 * lowThresh, 3); //use Canny segmentation
