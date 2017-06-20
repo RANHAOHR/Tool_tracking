@@ -123,6 +123,8 @@ private:
 	bool freshCameraInfo;
 
 	double down_sample_rate;
+	double error_pos;
+	double error_ori;
 public:
 
 	/*

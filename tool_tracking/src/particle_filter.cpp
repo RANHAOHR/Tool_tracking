@@ -40,7 +40,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
-        node_handle(*nodehandle), numParticles(100), down_sample_rate(0.003){
+        node_handle(*nodehandle), numParticles(100), down_sample_rate(0.004), error_pos(1), error_ori(1){
 
 	initializeParticles();
 
@@ -148,9 +148,9 @@ void ParticleFilter::getCoarseGuess(){
     computeRodriguesVec(a1_pos, a1_rvec);
 
     /*** first arm particles initialization ***/
-    initial.tvec_cyl(0) = a1_trans[0] + 0.01;  //left and right (image frame)
+    initial.tvec_cyl(0) = a1_trans[0];// + 0.01;  //left and right (image frame)
     initial.tvec_cyl(1) = a1_trans[1] + 0.001;  //up and down
-    initial.tvec_cyl(2) = a1_trans[2] + 0.004;
+    initial.tvec_cyl(2) = a1_trans[2];// + 0.004;
     initial.rvec_cyl(0) = a1_rvec.at<double>(0,0) + 0.005;
     initial.rvec_cyl(1) = a1_rvec.at<double>(1,0);
     initial.rvec_cyl(2) = a1_rvec.at<double>(2,0);
@@ -275,7 +275,7 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	showGazeboToolError(initial, best_particle);
 
 	updateParticles(particles_arm_1);
-	cv::waitKey(15);
+	cv::waitKey(20);
 	return trackingImages;
 };
 
@@ -290,10 +290,10 @@ void ParticleFilter::showGazeboToolError(ToolModel::toolModel &real_pose, ToolMo
 	cv::Mat position = real_tool_vector.rowRange(0, 12) - renderedMat.rowRange(0,12);
 	cv::Mat orientation = real_tool_vector.rowRange(12, dim) - renderedMat.rowRange(12,dim);
 
-	double error_pos = position.dot(position);
-	double error_ori = orientation.dot(orientation);
-	error_pos = sqrt(error_pos);
-	error_ori = sqrt(error_ori);
+	double total_pos = position.dot(position);
+	double total_ori = orientation.dot(orientation);
+	error_pos = sqrt(total_pos / 12);
+	error_ori = sqrt(total_ori / 12);
 	ROS_WARN_STREAM("Position  error: " << error_pos);
 	ROS_WARN_STREAM("orientation  error: " << error_ori);
 };
@@ -304,10 +304,14 @@ void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedP
 
 	ROS_INFO_STREAM("down_sample_rate " << down_sample_rate);
 
-	down_sample_rate -= 0.0003;
+	down_sample_rate -= 0.0002;
 	if(down_sample_rate < 0.0002){
-		down_sample_rate = 0.00015;
+		down_sample_rate = 0.0002;
 	};
+
+	if(error_pos < 0.003 && error_ori < 0.005){
+		down_sample_rate = 0.0001;
+	}
 	//after resampling the first one will be the best, leave it
     for (int i = 1; i < numParticles; ++i) {
 		updatedParticles[i] = newToolModel.gaussianSampling(updatedParticles[i], down_sample_rate);  //generate new particles with new deviation, using Gaussian process noise
