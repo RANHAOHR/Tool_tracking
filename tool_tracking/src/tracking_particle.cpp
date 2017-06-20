@@ -4,12 +4,7 @@
 #include <cwru_opencv_common/projective_geometry.h>
 #include <tool_tracking/particle_filter.h>
 
-
 bool freshImage;
-bool freshCameraInfo;
-bool freshVelocity;
-
-double Arr[6];
 
 using namespace std;
 using namespace cv_projective;
@@ -29,19 +24,6 @@ void newImageCallback(const sensor_msgs::ImageConstPtr &msg, cv::Mat *outputImag
 		ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
 	}
 
-}
-
-// receive body velocity
-// still not sure if this does anything.
-void arrayCallback(const std_msgs::Float64MultiArray::ConstPtr &array) {
-	int i = 0;
-	// print all the remaining numbers
-	for (std::vector<double>::const_iterator it = array->data.begin(); it != array->data.end(); ++it) {
-		Arr[i] = *it;
-		i++;
-	}
-
-	freshVelocity = true;
 }
 
 cv::Mat segmentation(cv::Mat &InputImg) {
@@ -76,17 +58,14 @@ int main(int argc, char **argv) {
 	/******  initialization  ******/
 	ParticleFilter Particles(&nh);
 
-    freshCameraInfo = false;
     freshImage = false;
-    //freshVelocity = false;//Moving all velocity-related things inside of the kalman.
 
     cv::Mat seg_left  = cv::Mat::zeros(480, 640, CV_8UC1);
     cv::Mat seg_right  = cv::Mat::zeros(480, 640, CV_8UC1);
 
     trackingImgs.resize(2);
 
-    //TODO: get image size from camera model, or initialize segmented images,
-
+    //get image size from camera model, or initialize segmented images,
     cv::Mat rawImage_left = cv::Mat::zeros(480, 640, CV_8UC3);//CV_32FC1
     cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
 
@@ -98,30 +77,24 @@ int main(int argc, char **argv) {
             "/davinci_endo/right/image_raw", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_right)));
 
     ROS_INFO("---- done subscribe -----");
-
     ros::Duration(2).sleep();
-	/****TODO: Temp Projection matrices****/
 
 	while (nh.ok()) {
 		ros::spinOnce();
-		/*** make sure camera information is ready ***/
 
-		/*** if camera is ready, doing the tracking based on segemented image***/
+		/*** if camera is ready, doing the tracking based on segmented image ***/
 		if (freshImage) {
 
             Particles.raw_image_left = rawImage_left.clone();
             Particles.raw_image_right = rawImage_right.clone();
 
-            seg_left = segmentation(rawImage_left);  //or use image_vessselness
+            seg_left = segmentation(rawImage_left);
             seg_right = segmentation(rawImage_right);
 
             trackingImgs = Particles.trackingTool(seg_left, seg_right); //with rendered tool and segmented img
 
 			freshImage = false;
-			freshVelocity = false;
             //Particles.getCoarseGuess(); //get ready for next time step
-
-
 		}
 
 	}

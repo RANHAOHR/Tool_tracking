@@ -122,6 +122,7 @@ private:
 	ros::Subscriber projectionMat_subscriber_l;
 	bool freshCameraInfo;
 
+	double down_sample_rate;
 public:
 
 	/*

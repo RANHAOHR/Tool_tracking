@@ -751,12 +751,11 @@ void ToolModel::modify_model_(std::vector<glm::vec3> &input_vertices, std::vecto
 translation, rotation, new z axis, new x axis*/
 //TODO:
 ToolModel::toolModel
-ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder, const double &theta_oval, const double &theta_open){
+ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder, const double &theta_oval, const double &theta_open, double &step){
 
     toolModel newTool = seeds;  //BODY part is done here
 
     ///what if generate seeding group
-    double step = 0.0005;
     double dev = randomNumber(step, 0);
 
     newTool.tvec_cyl(0) = seeds.tvec_cyl(0) + dev;
@@ -777,7 +776,8 @@ ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder,
     newTool.rvec_cyl(2) = seeds.rvec_cyl(2)+ dev;
 
     /************** sample the angles of the joints **************/
-    //set positive as clockwise
+    //set positive as clockwise, if angles are pretty goog, then give small noises
+
     double theta_1 = theta_cylinder + randomNumber(0.0001, 0);   // tool rotation
     double theta_grip_1 = theta_oval + randomNumber(0.0001, 0); // oval rotation
     double theta_grip_2 = theta_open + randomNumber(0.0001, 0);
@@ -787,33 +787,33 @@ ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder,
     return newTool;
 };
 
-ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose){
+ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, double &step){
 
     toolModel gaussianTool;  //new sample
 
-    double dev_pos = randomNumber(0.0003, 0);
+    double dev_pos = randomNumber(step, 0);
     gaussianTool.tvec_cyl(0) = max_pose.tvec_cyl(0)+ dev_pos;
 
-    dev_pos = randomNumber(0.0003, 0);
+    dev_pos = randomNumber(step, 0);
     gaussianTool.tvec_cyl(1) = max_pose.tvec_cyl(1)+ dev_pos;
 
-    dev_pos = randomNumber(0.0003, 0);
+    dev_pos = randomNumber(step, 0);
     gaussianTool.tvec_cyl(2) = max_pose.tvec_cyl(2)+ dev_pos;
 
-    double dev_ori = randomNumber(0.001, 0);
+    double dev_ori = randomNumber(step, 0);
     gaussianTool.rvec_cyl(0) = max_pose.rvec_cyl(0)+ dev_ori;
 
-    dev_ori = randomNumber(0.001, 0);
+    dev_ori = randomNumber(step, 0);
     gaussianTool.rvec_cyl(1) = max_pose.rvec_cyl(1)+ dev_ori;
 
-    dev_ori = randomNumber(0.001, 0);
+    dev_ori = randomNumber(step, 0);
     gaussianTool.rvec_cyl(2) = max_pose.rvec_cyl(2)+ dev_ori;
 
     /************** sample the angles of the joints **************/
     //set positive as clockwise
-    double theta_ = randomNumber(0.001, 0);    //-90,90
-    double theta_grip_1 = randomNumber(0.001, 0);
-    double theta_grip_2 = randomNumber(0.001, 0);
+    double theta_ = randomNumber(step, 0);    //-90,90
+    double theta_grip_1 = randomNumber(step, 0);
+    double theta_grip_2 = randomNumber(step, 0);
 
     computeRandomPose(max_pose, gaussianTool, theta_, theta_grip_1, theta_grip_2);
 
@@ -1275,8 +1275,8 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
     cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
 
 //    cv::imshow("segImgGrey img", segImgGrey);
+//    cv::imshow("distance_img img", distance_img);
 //    cv::imshow("Normalized img", normDIST);
-////    cv::imshow("distance_img", distance_img);
 //    cv::waitKey();
 
     /***multiplication process**/
