@@ -37,7 +37,7 @@ cv::Mat segmentation(cv::Mat &InputImg) {
 
 	resize(src, src, cv::Size(), 1, 1);
 
-	double lowThresh = 43;
+	double lowThresh = 28;
 
 	cv::cvtColor(src, src_gray, CV_BGR2GRAY);
 
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
             cv::imshow("seg left: ",seg_left );
             cv::imshow("seg right: ",seg_right );  
 
-            trackingImgs = Particles.trackingTool(seg_left, seg_right); //with rendered tool and segmented img
+            Particles.trackingTool(seg_left, seg_right); //with rendered tool and segmented img
 
 			freshImage = false;
 

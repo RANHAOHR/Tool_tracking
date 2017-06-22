@@ -51,14 +51,14 @@ boost::mt19937 rng((const uint32_t &) time(0));
 ToolModel::ToolModel() {
 
     ///adjust the model params according to the tool geometry
-    offset_body = 0.4560;
+    offset_body = 0.4530; //0.4560
     offset_ellipse = offset_body;
-    offset_gripper = offset_ellipse+ 0.005;
+    offset_gripper = offset_ellipse+ 0.007;
 
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
 
-    std::string cylinder = tool_model_pkg + "/tool_parts/refine_cylinder_3.obj"; //"/tense_cylinde_2.obj", test_cylinder_3, cyliner_tense_end_face
+    std::string cylinder = tool_model_pkg + "/tool_parts/cyliner_tense_end_face.obj"; //"/tense_cylinde_2.obj", test_cylinder_3, cyliner_tense_end_face, refine_cylinder_3
     std::string ellipse = tool_model_pkg + "/tool_parts/refine_ellipse_3.obj";
     std::string gripper1 = tool_model_pkg + "/tool_parts/gripper2_1.obj";
     std::string gripper2 = tool_model_pkg + "/tool_parts/gripper2_2.obj";
@@ -284,20 +284,13 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                                    const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
                                    cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
                                    const cv::Mat &P, cv::OutputArray jac) {
+   // cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << -1,0,0,0,
+   //         0,1,0,0,
+   //         0,0,-1,0,
+   //         0,0,0,1);
 
-//    cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << -1,0,0,0,
-//    0,0,1,0,
-//    0,1,0,0,
-//    0,0,0,1); //tip
-
-//    cv::Mat adjoint_mat = (cv::Mat_<double>(4,4) << 0,0,1,0,
-//            1,0,0,0,
-//            0,1,0,0,
-//            0,0,0,1);
-//
-//
-//    cv::Mat temp_input_Vmat = adjoint_mat * input_Vmat;
-//    cv::Mat temp_input_Nmat = adjoint_mat * input_Nmat;
+   // cv::Mat temp_input_Vmat = adjoint_mat * input_Vmat;
+   // cv::Mat temp_input_Nmat = adjoint_mat * input_Nmat;
 
     cv::Mat new_Vertices = transformPoints(input_Vmat, rvec, tvec);
 
@@ -356,7 +349,6 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                     int n2_ = input_faces[neighbor_faces[i][j]][4];
                     int n3_ = input_faces[neighbor_faces[i][j]][5];
 
-
                     new_Vertices.col(v1_).copyTo(temp.col(0));
                     cv::Point3d pt1_ = convert_MattoPts(temp);
                     new_Vertices.col(v2_).copyTo(temp.col(0));
@@ -380,7 +372,7 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
 
                     double isfront_j = dotProduct(fnormal_n, face_point_j);
 
-                    if (isfront_i * isfront_j < 0.0) // one is front, another is back
+                    if (isfront_i * isfront_j <= 0.0) // one is front, another is back
                     {
                         /*finish finding, drawing the image*/
                         new_Vertices.col(neighbor_faces[i][j + 1]).copyTo(ept_1);  //under camera frames
@@ -388,8 +380,10 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
 
                         cv::Point2d prjpt_1 = reproject(ept_1, P);
                         cv::Point2d prjpt_2 = reproject(ept_2, P);
-
-                        cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);  
+                        if (prjpt_1.x <= 640 && prjpt_1.x >= -100 && prjpt_2.x < 640 && prjpt_2.x >= -100)
+                        {
+                            cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);  
+                        }
 
                     }
                 }
@@ -914,7 +908,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
 
     cv::Mat q_ellipse_(4, 1, CV_64FC1);
     q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0.015;//(offset_ellipse - offset_body);
+    q_ellipse_.at<double>(1, 0) = 0.011;//(offset_ellipse - offset_body);
     q_ellipse_.at<double>(2, 0) = 0;
     q_ellipse_.at<double>(3, 0) = 1;
 

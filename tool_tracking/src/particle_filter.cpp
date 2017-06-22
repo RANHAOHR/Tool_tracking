@@ -40,56 +40,16 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
-        node_handle(*nodehandle), numParticles(180), down_sample_rate(0.0015), error(1)
+        node_handle(*nodehandle), numParticles(120), down_sample_rate(0.0028), error(1)
 {
-
-	/**** need to subscribe this for simulation ***/
-    // tf::StampedTransform arm_1__cam_l_st;
-    // tf::StampedTransform arm_2__cam_l_st;
-    // tf::StampedTransform arm_1__cam_r_st;
-    // tf::StampedTransform arm_2__cam_r_st;
-
-    // try{
-    //     tf::TransformListener l;
-    //     while(!l.waitForTransform("/left_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
-    //     l.lookupTransform("/left_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), arm_1__cam_l_st);
-    //     while(!l.waitForTransform("/left_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
-    //     l.lookupTransform("/left_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), arm_2__cam_l_st);
-    //     while(!l.waitForTransform("/right_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
-    //     l.lookupTransform("/right_camera_optical_frame", "one_psm_base_link", ros::Time(0.0), arm_1__cam_r_st);
-    //     while(!l.waitForTransform("/right_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), ros::Duration(10.0)) && ros::ok()){}
-    //     l.lookupTransform("/right_camera_optical_frame", "two_psm_base_link", ros::Time(0.0), arm_2__cam_r_st);
-    // }
-    // catch (tf::TransformException ex){
-    //     ROS_ERROR("%s",ex.what());
-    //     exit(1);
-    // }
-
-    // //Convert to Affine3ds for storage, which is the format they will be used in for rendering.
-    // XformUtils xfu;
-    // arm_1__cam_l = xfu.transformTFToAffine3d(arm_1__cam_l_st);//.inverse();
-    // arm_1__cam_r = xfu.transformTFToAffine3d(arm_1__cam_r_st);//.inverse();
-    // arm_2__cam_l = xfu.transformTFToAffine3d(arm_2__cam_l_st);//.inverse();
-    // arm_2__cam_r = xfu.transformTFToAffine3d(arm_2__cam_r_st);//.inverse();
-
-    // convertEigenToMat(arm_1__cam_l, Cam_left_arm_1);
-    // convertEigenToMat(arm_1__cam_r, Cam_right_arm_1);
-    // convertEigenToMat(arm_2__cam_l, Cam_left_arm_2);
-    // convertEigenToMat(arm_2__cam_r, Cam_right_arm_2);
-
-//    ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
-//    ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
-//    ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
-//    ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
-
     /********** using calibration results: camera-base transformation *******/
-    Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.7882, 0.6067, 0.1025, -0.12249,  //-0.7882, 0.6067, 0.1025, -0.1449,
-            0.5854, 0.7909, -0.1784, -0.0480,   //	0.5854, 0.7909, -0.1784, -0.0607,
-            -0.1894, -0.0806, -0.9786, 0.02, //	-0.1894, -0.0806, -0.9786, 0.0200,   0.0157
+    Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.7882, 0.6067, 0.1025, -0.125049,  //-0.7882, 0.6067, 0.1025, -0.1449,
+            0.5854, 0.7909, -0.1784, -0.0500,   //	0.5854, 0.7909, -0.1784, -0.0607,
+            -0.1894, -0.0806, -0.9786, 0.0180, //	-0.1894, -0.0806, -0.9786, 0.0200,   0.0157
             0,0, 0, 1.0000);
 
     cv::Mat rot(3,3,CV_64FC1);
-    cv::Mat rot_vec = (cv::Mat_<double>(3,1) << 1.09976677, 2.5802519, -0.200696); //1.0996677, 2.6502519, -0.20696
+    cv::Mat rot_vec = (cv::Mat_<double>(3,1) << 1.01976677, 2.60519, -0.1857696); //1.019976677, 2.5822519, -0.200696
     cv::Rodrigues(rot_vec, rot);
     rot.copyTo(Cam_left_arm_1.colRange(0,3).rowRange(0,3));
 
@@ -97,7 +57,7 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
             0.5852, 0.7899, -0.1835, -0.0500,   ///	0.5852, 0.7899, -0.1835, -0.0612,
             -0.1861, -0.0892, -0.9784, 0.0180,     //	-0.1861, -0.0892, -0.9784, 0.0223,
             0,0, 0, 1.0000);
-    rot_vec = (cv::Mat_<double>(3,1) << 1.059996677, 2.5802519, -0.18696);
+    rot_vec = (cv::Mat_<double>(3,1) << 1.009996677, 2.5802519, -0.18696);
     cv::Rodrigues(rot_vec, rot);
     rot.copyTo(Cam_right_arm_1.colRange(0,3).rowRange(0,3));
 
@@ -143,7 +103,7 @@ void ParticleFilter::initializeParticles() {
 	particleWeights_arm_2.resize(numParticles); //initialize particle weight array
 
     /******Find and convert our various params and inputs******/
-    //Get sensor update.
+    //Get sensor update
     kinematics = Davinci_fwd_solver();
     getCoarseGuess();
 
@@ -223,7 +183,7 @@ void ParticleFilter::computeNoisedParticles(std::vector <double> & inputParticle
 		noisedParticles[i].resize(19);
 
 		for (int j = 0; j < 7; ++j) {
-            double dev_sensor = newToolModel.randomNumber(0.0005, 0);
+            double dev_sensor = newToolModel.randomNumber(down_sample_rate, 0);
 			inputParticle[j] = inputParticle[j] + dev_sensor;
 		}
         /**** make noise for and right camera the same ****/
@@ -231,7 +191,7 @@ void ParticleFilter::computeNoisedParticles(std::vector <double> & inputParticle
         dev_cam.resize(6);
 
         for (int j = 7; j < 13; ++j) {
-            dev_cam[j-7] = newToolModel.randomNumber(0.0001, 0);
+            dev_cam[j-7] = newToolModel.randomNumber(0.0002, 0);
 			inputParticle[j] = inputParticle[j] + dev_cam[j-7];
 		}
 
@@ -285,13 +245,13 @@ void ParticleFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &p
 	freshCameraInfo = true;
 };
 
-std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right) {
+void ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right) {
 	t_step = ros::Time::now().toSec();  //get current time step
     ros::spinOnce();
 
-	ROS_INFO("---- in tracking function ---");
-	std::vector<cv::Mat> trackingImages;
-	trackingImages.resize(2);
+//	ROS_INFO("---- in tracking function ---");
+//	std::vector<cv::Mat> trackingImages;
+//	trackingImages.resize(2);
 
 	/***Update according to the max score***/
 	double maxScore_1 = 0.0;
@@ -388,7 +348,6 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	/*** calculate weights using matching score and do the resampling ***/
 	for (int j = 0; j < numParticles; ++j) { // normalize the weights
 		particleWeights_arm_1[j] = (matchingScores_arm_1[j] / totalScore_1);
-		//ROS_INFO_STREAM("weights" << particleWeights[j]);
 	}
 
 	ToolModel::toolModel best_tool_pose = particle_models[maxScoreIdx_1];
@@ -402,20 +361,17 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	///showing results for each iteration here
 	newToolModel.renderTool(raw_image_left, particle_models[maxScoreIdx_1], cam_matrices_left_arm_1[maxScoreIdx_1], P_left);
 	newToolModel.renderTool(raw_image_right, particle_models[maxScoreIdx_1], cam_matrices_right_arm_1[maxScoreIdx_1], P_right);
-	// showing the best particle on left and right image
-	trackingImages[0] = raw_image_left.clone();
-	trackingImages[1] = raw_image_right.clone();
-	cv::imshow("trackingImages left", trackingImages[0]);
-	cv::imshow("trackingImages right", trackingImages[1]);
+
+    // showing the best particle on left and right image
+	cv::imshow("trackingImages left", raw_image_left);
+	cv::imshow("trackingImages right", raw_image_right);
 
 	//each time will clear the particles and resample them, resample using low variance resampling method
 	std::vector<std::vector<double> > oldParticles = particles_arm_1;
 	resamplingParticles(oldParticles, particleWeights_arm_1, particles_arm_1);
-
     cv::waitKey(20);
-	updateParticles(best_particle, maxScore_1, particles_arm_1, predicted_real_pose);
 
-	return trackingImages;
+	updateParticles(best_particle, maxScore_1, particles_arm_1, predicted_real_pose);
 };
 
 void ParticleFilter::showGazeboToolError(ToolModel::toolModel &real_pose, ToolModel::toolModel &bestParticle){
@@ -482,10 +438,9 @@ void ParticleFilter::updateParticles(std::vector <double> &best_particle_last, d
 	double delta_t = t_1_step - t_step;
 	cv::Mat nom_vel = delta_thetas *  (1 / delta_t);
     double velocity_bar = cv::sum( nom_vel )[0];
-
-    if(fabs(velocity_bar) > 0.01){
-
-        ROS_INFO_STREAM("velocity_bar " << velocity_bar);
+    ROS_INFO_STREAM("velocity_bar " << velocity_bar);
+    if(fabs(velocity_bar) > 0.012){
+        ROS_WARN(" Refresh state! ");
         /******** using the obtained velocity to propagate the particles ********/
         for (int j = 0; j < updatedParticles.size(); ++j) {
             for (int i = 0; i < 7; ++i) {
@@ -523,36 +478,32 @@ void ParticleFilter::updateParticles(std::vector <double> &best_particle_last, d
             updatedParticles[j][17] = cat_vec.at<double>(1,0);
             updatedParticles[j][18] = cat_vec.at<double>(2,0);
         }
+        down_sample_rate = 0.002;
 
     }
 
     ROS_INFO_STREAM("down_sample_rate " << down_sample_rate);
-    if(maxScore > 1.25){
+    if(maxScore > 1.20){
         down_sample_rate = 0.0002;
     }
     /**** add noise for propagated particles ****/
     for (int m = 1; m < updatedParticles.size(); ++m) {
-
         for (int l = 0; l < 7; ++l) {
             double dev_sensor = newToolModel.randomNumber(down_sample_rate, 0);
             updatedParticles[m][l] = updatedParticles[m][l] + dev_sensor;
         }
-
         std::vector<double> dev_cam;
         dev_cam.resize(6);
-
         for (int j = 7; j < 13; ++j) {
             dev_cam[j-7] = newToolModel.randomNumber(down_sample_rate, 0);
             updatedParticles[m][j] = updatedParticles[m][j] + dev_cam[j-7];
         }
-
         for (int j = 13; j < 19; ++j) {
             updatedParticles[m][j] = updatedParticles[m][j] + dev_cam[j-13];
         }
-
     }
 
-    down_sample_rate -= 0.0001;
+    down_sample_rate -= 0.0002;
     if(down_sample_rate < 0.0002){
         down_sample_rate = 0.0002;
     };

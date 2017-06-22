@@ -169,7 +169,7 @@ public:
  * @param segmented_right : segmented image for right camera
  * @return
  */
-	std::vector<cv::Mat> trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+	void trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 /**
  * @brief low variance resampling
  * @param sampleModel : input particles
