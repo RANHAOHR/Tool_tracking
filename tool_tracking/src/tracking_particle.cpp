@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "tracking_node");
 
 	ros::NodeHandle nh;
-	/******  initialization  ******/
+	//Initialize particles
 	ParticleFilter Particles(&nh);
 
     freshImage = false;
@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
 	while (nh.ok()) {
 		ros::spinOnce();
 
-		/*** if camera is ready, doing the tracking based on segmented image ***/
+		// if camera is ready, track segmented image
 		if (freshImage) {
 
             Particles.raw_image_left = rawImage_left.clone();
@@ -91,12 +91,10 @@ int main(int argc, char **argv) {
             seg_left = segmentation(rawImage_left);
             seg_right = segmentation(rawImage_right);
 
-            trackingImgs = Particles.trackingTool(seg_left, seg_right); //with rendered tool and segmented img
+            trackingImgs = Particles.trackingTool(seg_left, seg_right);
 
 			freshImage = false;
             //Particles.getCoarseGuess(); //get ready for next time step
 		}
-
 	}
-
 }

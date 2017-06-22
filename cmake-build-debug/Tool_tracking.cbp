@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="Tool_tracking"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Tool_tracking">
+				<Option output="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Tool_tracking" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/c++/4.8"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/4.8"/>
+					<Add directory="/usr/include/c++/4.8/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 Tool_tracking"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Tool_tracking/fast">
+				<Option output="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Tool_tracking" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/c++/4.8"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/4.8"/>
+					<Add directory="/usr/include/c++/4.8/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 Tool_tracking/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/tool_model/include/tool_model_lib/tool_model.h">
+			<Option target="Tool_tracking"/>
+		</Unit>
+		<Unit filename="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/tool_model/src/showing_image.cpp">
+			<Option target="Tool_tracking"/>
+		</Unit>
+		<Unit filename="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/tool_model/src/test_seg.cpp">
+			<Option target="Tool_tracking"/>
+		</Unit>
+		<Unit filename="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/tool_model/src/tool_model.cpp">
+			<Option target="Tool_tracking"/>
+		</Unit>
+		<Unit filename="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/tool_model/src/tool_model_main.cpp">
+			<Option target="Tool_tracking"/>
+		</Unit>
+		<Unit filename="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/tool_tracking/include/tool_tracking/kalman_filter.h">
+			<Option target="Tool_tracking"/>
+		</Unit>
+		<Unit filename="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/tool_tracking/include/tool_tracking/particle_filter.h">
+			<Option target="Tool_tracking"/>
+		</Unit>
+		<Unit filename="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/tool_tracking/src/kalman_filter.cpp">
+			<Option target="Tool_tracking"/>
+		</Unit>
+		<Unit filename="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/tool_tracking/src/particle_filter.cpp">
+			<Option target="Tool_tracking"/>
+		</Unit>
+		<Unit filename="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/tool_tracking/src/tracking_kalman.cpp">
+			<Option target="Tool_tracking"/>
+		</Unit>
+		<Unit filename="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/tool_tracking/src/tracking_particle.cpp">
+			<Option target="Tool_tracking"/>
+		</Unit>
+		<Unit filename="/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>
