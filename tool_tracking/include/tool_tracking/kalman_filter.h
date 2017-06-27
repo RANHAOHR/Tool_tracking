@@ -338,6 +338,11 @@ public:
  */
 	void showRenderedImage(cv::Mat &inputToolPose);
 
+	/**
+	 * @brief convert matrix to tool model for error computing
+	 * @param inputToolModel
+	 * @param toolMatrix
+	 */
 	void convertToolModeltoMatrix(const ToolModel::toolModel &inputToolModel, cv::Mat &toolMatrix);
 
 };

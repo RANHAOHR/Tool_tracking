@@ -443,9 +443,9 @@ void KalmanFilter::getCoarseEstimation(){
 	kalman_mu_arm1 = cv::Mat_<double>::zeros(L, 1);
 	kalman_mu_arm1.at<double>(0 , 0) = arm_trans[0] + 0.004;
 	kalman_mu_arm1.at<double>(1 , 0) = arm_trans[1] - 0.004;
-	kalman_mu_arm1.at<double>(2 , 0) = arm_trans[2] + 0.002;
+	kalman_mu_arm1.at<double>(2 , 0) = arm_trans[2] /*+ 0.002*/;
 	kalman_mu_arm1.at<double>(3 , 0) = arm_rvec.at<double>(0,0) + 0.03;
-	kalman_mu_arm1.at<double>(4 , 0) = arm_rvec.at<double>(1,0) + 0.03;
+	kalman_mu_arm1.at<double>(4 , 0) = arm_rvec.at<double>(1,0) + 0.02;
 	kalman_mu_arm1.at<double>(5 , 0) = arm_rvec.at<double>(2,0);
 
 	kalman_mu_arm1.at<double>(6 , 0) = tmp[0][4];
@@ -795,7 +795,7 @@ void KalmanFilter::showGazeboToolError(cv::Mat &real_pose, cv::Mat &KalmanMu){
 	cv::Mat orientation = real_tool_vector.rowRange(12, dim) - renderedMat.rowRange(12,dim);
 	double error_pos = position.dot(position);
 	double error_ori = orientation.dot(orientation);
-	error_pos = sqrt(error_pos / 12);
+	error_pos = sqrt(error_pos / 12);  //divide by dimension
 	error_ori = sqrt(error_ori / 12);
 	ROS_WARN_STREAM("Position  error: " << error_pos);
 	ROS_WARN_STREAM("orientation  error: " << error_ori);

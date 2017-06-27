@@ -40,7 +40,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
-        node_handle(*nodehandle), numParticles(200), downsample_rate_pos(0.004), downsample_rate_rot(0.026), error_pos(1), error_ori(1){
+        node_handle(*nodehandle), numParticles(200), downsample_rate_pos(0.003), downsample_rate_rot(0.02), error_pos(1), error_ori(1){
 
 	initializeParticles();
 
@@ -104,8 +104,8 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
 
 	freshCameraInfo = false;
 
-	pos_thresh = downsample_rate_pos / 4;
-	rot_thresh = downsample_rate_rot / 2;
+	pos_thresh = 0.001;
+	rot_thresh = 0.01;
 };
 
 ParticleFilter::~ParticleFilter() {
@@ -148,11 +148,11 @@ void ParticleFilter::getCoarseGuess(){
     computeRodriguesVec(a1_pos, a1_rvec);
 
 	//toolModel representation of initial guess of configuration of joints 1-4 computed above
-    initial.tvec_cyl(0) = a1_trans[0] + 0.006;  //left and right (image frame)
-    initial.tvec_cyl(1) = a1_trans[1]+ 0.009;  //up and down
+    initial.tvec_cyl(0) = a1_trans[0] + 0.008;  //left and right (image frame)
+    initial.tvec_cyl(1) = a1_trans[1]+ 0.007;  //up and down
     initial.tvec_cyl(2) = a1_trans[2];// + 0.004;
-    initial.rvec_cyl(0) = a1_rvec.at<double>(0,0) + 0.03;
-    initial.rvec_cyl(1) = a1_rvec.at<double>(1,0) + 0.05;
+    initial.rvec_cyl(0) = a1_rvec.at<double>(0,0) + 0.04;
+    initial.rvec_cyl(1) = a1_rvec.at<double>(1,0) + 0.03;
     initial.rvec_cyl(2) = a1_rvec.at<double>(2,0);
 
     double theta_cylinder = sensor_1[4]; //guess from sensor
@@ -232,7 +232,7 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 
 	toolImage_left_temp.setTo(0);
 	toolImage_right_temp.setTo(0);
-
+/*+ 0.003*/
     ////////////////////////PART 1: Measurement model//////////////////////////////
     for (int i = 0; i < numParticles; ++i) {
         //get matching score of particle i
@@ -271,8 +271,8 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	newToolModel.renderTool(raw_image_right, particles_arm_1[maxScoreIdx_1], Cam_right_arm_1, P_right);
 	trackingImages[0] = raw_image_left.clone();
 	trackingImages[1] = raw_image_right.clone();
-//	cv::imshow("trackingImages left", trackingImages[0]);
-//	cv::imshow("trackingImages right", trackingImages[1]);
+	cv::imshow("trackingImages left", trackingImages[0]);
+	cv::imshow("trackingImages right", trackingImages[1]);
 
 	//////////////////////PART 2: Resampling/////////////////////////////////////
 	std::vector<ToolModel::toolModel> oldParticles = particles_arm_1;
@@ -287,7 +287,7 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	showGazeboToolError(initial, best_particle);
 	/////////////////////////PART 3: Motion model////////////////////////////////
 	updateParticles(particles_arm_1);
-//	cv::waitKey(20);
+	cv::waitKey(20);
 	return trackingImages;
 };
 
@@ -315,7 +315,7 @@ void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedP
 	ROS_INFO_STREAM("downsample_rate_pos " << downsample_rate_pos); //annealing coefficient
 	ROS_INFO_STREAM("downsample_rate_rot " << downsample_rate_rot); //annealing coefficient
 	//decrement annealing coefficient every time function is called
-	downsample_rate_pos -= 0.0005;
+	downsample_rate_pos -= 0.0004;
 	if(downsample_rate_pos < 0.0002){
 		downsample_rate_pos = 0.0002;
 	};
@@ -334,7 +334,7 @@ void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedP
 	}
 
 	//Move particles through gaussian noise motion model
-	//after resampling, first particle is best -> leave it
+	//after resampling, first particle is best -> save it in the searching pool
     for (int i = 1; i < numParticles; ++i) {
 		updatedParticles[i] = newToolModel.gaussianSampling(updatedParticles[i], downsample_rate_pos, downsample_rate_rot);
     }
