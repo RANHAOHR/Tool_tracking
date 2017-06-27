@@ -338,5 +338,7 @@ public:
  */
 	void showRenderedImage(cv::Mat &inputToolPose);
 
+	void convertToolModeltoMatrix(const ToolModel::toolModel &inputToolModel, cv::Mat &toolMatrix);
+
 };
 #endif

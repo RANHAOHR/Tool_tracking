@@ -226,7 +226,7 @@ public:
      * @param theta_open FK guess of joint 7
      * @return toolModel representation of a particle randomly perturbed from inputs
      */
-    toolModel setRandomConfig(const toolModel &seeds, const double &theta_cylinder, const double &theta_oval, const double &theta_open, double &step);
+    toolModel setRandomConfig(const toolModel &seeds, const double &theta_cylinder, const double &theta_oval, const double &theta_open, double &pos, double &rot);
 
     /**
      * @brief randomly perturb a particle
@@ -235,7 +235,7 @@ public:
      * @param step scaling factor for perturbation (higher perturbations early and less perturbations later)
      * @return
      */
-    ToolModel::toolModel gaussianSampling(const toolModel &max_pose, double &step);
+    ToolModel::toolModel gaussianSampling(const toolModel &max_pose, double &pos, double &rot );
 
     /**
      * @brief Compute toolModel pose given a toolModel representation of joints 1-4 and a double representation of joints 5,6,7

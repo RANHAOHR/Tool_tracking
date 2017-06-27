@@ -133,7 +133,12 @@ private:
 
 	bool freshCameraInfo; //Determine if a new image to analyze
 
-	double down_sample_rate; //annealing rate.  High at start to allow large perturbations and decrease as we converge
+	double downsample_rate_pos; //annealing rate for position noise.  High at start to allow large perturbations and decrease as we converge
+	double downsample_rate_rot; //annealing rate for rotation noise.
+
+	double pos_thresh;  //annealing threshold, for position error
+	double rot_thresh; //annealing threshold, for orientation error
+
 	double error_pos; //error between best particle and gazebo readings for pos
 	double error_ori; //error between best partticle and gazebo readings for ori
 public:

@@ -222,7 +222,7 @@ void KalmanFilter::getMeasurementModel(const cv::Mat &coarse_guess_vector, const
 
 	int measurement_dim = temp_point.rows;
     cv::Mat measurement_points = cv::Mat_<double>::zeros(measurement_dim, 2);
-	int radius = 10;
+	int radius = 40;
 
 	cv::Mat test_measurement = segmentation_img.clone();
 	ukfToolModel.renderToolUKF(test_measurement, coarse_tool, Cam_matrix, projection_mat, temp_point, temp_normal);
@@ -440,20 +440,12 @@ void KalmanFilter::getCoarseEstimation(){
 	real_mu.at<double>(8 , 0) = tmp[0][6];
 
 	////intentionally bad ones......
-/*	kalman_mu_arm1 = cv::Mat_<double>::zeros(L, 1);
-	kalman_mu_arm1.at<double>(0 , 0) = -0.209029;
-	kalman_mu_arm1.at<double>(1 , 0) = 0.011988;
-	kalman_mu_arm1.at<double>(2 , 0) = -0.075185;
-	kalman_mu_arm1.at<double>(3 , 0) = 0.80909;
-	kalman_mu_arm1.at<double>(4 , 0) = -1.328505;
-	kalman_mu_arm1.at<double>(5 , 0) = 1.464622;*/
-
 	kalman_mu_arm1 = cv::Mat_<double>::zeros(L, 1);
-	kalman_mu_arm1.at<double>(0 , 0) = arm_trans[0] + 0.001;
-	kalman_mu_arm1.at<double>(1 , 0) = arm_trans[1] - 0.001;
-	kalman_mu_arm1.at<double>(2 , 0) = arm_trans[2];
-	kalman_mu_arm1.at<double>(3 , 0) = arm_rvec.at<double>(0,0) + 0.005;
-	kalman_mu_arm1.at<double>(4 , 0) = arm_rvec.at<double>(1,0);
+	kalman_mu_arm1.at<double>(0 , 0) = arm_trans[0] + 0.004;
+	kalman_mu_arm1.at<double>(1 , 0) = arm_trans[1] - 0.004;
+	kalman_mu_arm1.at<double>(2 , 0) = arm_trans[2] + 0.002;
+	kalman_mu_arm1.at<double>(3 , 0) = arm_rvec.at<double>(0,0) + 0.03;
+	kalman_mu_arm1.at<double>(4 , 0) = arm_rvec.at<double>(1,0) + 0.03;
 	kalman_mu_arm1.at<double>(5 , 0) = arm_rvec.at<double>(2,0);
 
 	kalman_mu_arm1.at<double>(6 , 0) = tmp[0][4];
@@ -640,7 +632,7 @@ void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in){
 
 	sigma_point_out = sigma_point_in.clone(); //initialization
 
-	double dev_pos = ukfToolModel.randomNum(0.00007, 0.00);  ///deviation for position
+	double dev_pos = ukfToolModel.randomNum(0.00001, 0.00);  ///deviation for position
 	double dev_ori = ukfToolModel.randomNum(0.00001, 0.00);  ///deviation for orientation
 	double dev_ang = ukfToolModel.randomNum(0.000001, 0); ///deviation for joint angles
 
@@ -785,22 +777,29 @@ void KalmanFilter::Cholesky( const cv::Mat& A, cv::Mat& S )
 
 void KalmanFilter::showGazeboToolError(cv::Mat &real_pose, cv::Mat &KalmanMu){
 
+	//Get matrix representations of the toolModels
+	int dim = 24;
 
-	cv::Mat position = real_pose.rowRange(0,3) - KalmanMu.rowRange(0,3);
-	cv::Mat orientation = real_pose.rowRange(3,L) - KalmanMu.rowRange(3,L);
+	ToolModel::toolModel real_tool;
+	ToolModel::toolModel kalman_tool;
+	convertToolModel(real_pose, real_tool);
+	convertToolModel(KalmanMu, kalman_tool);
 
+	cv::Mat renderedMat = cv::Mat::zeros(dim,1,CV_64FC1);
+	cv::Mat real_tool_vector = cv::Mat::zeros(dim,1,CV_64FC1);
+	convertToolModeltoMatrix(kalman_tool, renderedMat);
+	convertToolModeltoMatrix(real_tool, real_tool_vector);
+
+	//Find difference in pos/orientation for real_pose and particle_pose
+	cv::Mat position = real_tool_vector.rowRange(0, 12) - renderedMat.rowRange(0,12);
+	cv::Mat orientation = real_tool_vector.rowRange(12, dim) - renderedMat.rowRange(12,dim);
 	double error_pos = position.dot(position);
 	double error_ori = orientation.dot(orientation);
-	error_pos = sqrt(error_pos);
-	error_ori = sqrt(error_ori);
+	error_pos = sqrt(error_pos / 12);
+	error_ori = sqrt(error_ori / 12);
 	ROS_WARN_STREAM("Position  error: " << error_pos);
 	ROS_WARN_STREAM("orientation  error: " << error_ori);
 
-	cv::Mat diff = real_pose - KalmanMu;
-	double error = diff.dot(diff);
-	error = sqrt(error);
-
-	ROS_WARN_STREAM("Position and orientation error: " << error);
 };
 
 void KalmanFilter::showRenderedImage(cv::Mat &inputToolPose){
@@ -819,4 +818,38 @@ void KalmanFilter::showRenderedImage(cv::Mat &inputToolPose){
 
 	cv::waitKey();
 
+};
+
+void KalmanFilter::convertToolModeltoMatrix(const ToolModel::toolModel &inputToolModel, cv::Mat &toolMatrix){
+	toolMatrix.at<double>(0,0) = inputToolModel.tvec_cyl(0);
+	toolMatrix.at<double>(1,0) = inputToolModel.tvec_cyl(1);
+	toolMatrix.at<double>(2,0) = inputToolModel.tvec_cyl(2);
+
+	toolMatrix.at<double>(3,0) = inputToolModel.tvec_elp(0);
+	toolMatrix.at<double>(4,0) = inputToolModel.tvec_elp(1);
+	toolMatrix.at<double>(5,0) = inputToolModel.tvec_elp(2);
+
+	toolMatrix.at<double>(6,0) = inputToolModel.tvec_grip1(0);
+	toolMatrix.at<double>(7,0) = inputToolModel.tvec_grip1(1);
+	toolMatrix.at<double>(8,0) = inputToolModel.tvec_grip1(2);
+
+	toolMatrix.at<double>(9,0) = inputToolModel.tvec_grip2(0);
+	toolMatrix.at<double>(10,0) = inputToolModel.tvec_grip2(1);
+	toolMatrix.at<double>(11,0) = inputToolModel.tvec_grip2(2);
+
+	toolMatrix.at<double>(12,0) = inputToolModel.rvec_cyl(0);
+	toolMatrix.at<double>(13,0) = inputToolModel.rvec_cyl(1);
+	toolMatrix.at<double>(14,0) = inputToolModel.rvec_cyl(2);
+
+	toolMatrix.at<double>(15,0) = inputToolModel.rvec_elp(0);
+	toolMatrix.at<double>(16,0) = inputToolModel.rvec_elp(1);
+	toolMatrix.at<double>(17,0) = inputToolModel.rvec_elp(2);
+
+	toolMatrix.at<double>(18,0) = inputToolModel.rvec_grip1(0);
+	toolMatrix.at<double>(19,0) = inputToolModel.rvec_grip1(1);
+	toolMatrix.at<double>(20,0) = inputToolModel.rvec_grip1(2);
+
+	toolMatrix.at<double>(21,0) = inputToolModel.rvec_grip2(0);
+	toolMatrix.at<double>(22,0) = inputToolModel.rvec_grip2(1);
+	toolMatrix.at<double>(23,0) = inputToolModel.rvec_grip2(2);
 };

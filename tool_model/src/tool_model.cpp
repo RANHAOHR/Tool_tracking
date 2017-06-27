@@ -520,7 +520,7 @@ void ToolModel::Compute_Silhouette_UKF(const std::vector<std::vector<int> > &inp
                             std::vector<double> vertex_vector;
                             vertex_vector.resize(4); // vertices, normals
 
-                            if(mid_vertex.x >= 10 && mid_vertex.x <=640 && mid_vertex.y >= 0 && mid_vertex.y <= 480){
+                            if(mid_vertex.x >= 20 && mid_vertex.x <=640 && mid_vertex.y >= 0 && mid_vertex.y <= 480){
                                 vertex_vector[0] = mid_vertex.x;
                                 vertex_vector[1] = mid_vertex.y;
                                 vertex_vector[2] = temp_normal.at<double>(0,0);
@@ -720,22 +720,22 @@ void ToolModel::modify_model_(std::vector<glm::vec3> &input_vertices, std::vecto
     }
 };
 
-ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder, const double &theta_oval, const double &theta_open, double &step){
+ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &seeds, const double &theta_cylinder, const double &theta_oval, const double &theta_open, double &pos, double &rot ){
 
     toolModel newTool = seeds;   //Output toolModel
 
     //Perturb tvec_cyl/rvec_cyl by random noise
-    double dev = randomNumber(step, 0); //gaussian noise
+    double dev = randomNumber(pos, 0); //gaussian noise
     newTool.tvec_cyl(0) = seeds.tvec_cyl(0) + dev;
-    dev = randomNumber(step, 0);
+    dev = randomNumber(pos, 0);
     newTool.tvec_cyl(1) = seeds.tvec_cyl(1) + dev;
-    dev = randomNumber(step, 0);
+    dev = randomNumber(pos, 0);
     newTool.tvec_cyl(2) = seeds.tvec_cyl(2)+ dev;
-    dev = randomNumber(step, 0);
+    dev = randomNumber(rot, 0);
     newTool.rvec_cyl(0) = seeds.rvec_cyl(0)+ dev;
-    dev = randomNumber(step, 0);
+    dev = randomNumber(rot, 0);
     newTool.rvec_cyl(1) = seeds.rvec_cyl(1)+ dev;
-    dev = randomNumber(step, 0);
+    dev = randomNumber(rot, 0);
     newTool.rvec_cyl(2) = seeds.rvec_cyl(2)+ dev;
 
     //Perturb joints 5,6,7 by random noise
@@ -750,32 +750,32 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &seeds, const do
     return newTool;
 };
 
-ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, double &step){
+ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, double &pos, double &rot ){
 
     toolModel gaussianTool;  //new sample
 
-    double dev_pos = randomNumber(step, 0);
-    gaussianTool.tvec_cyl(0) = max_pose.tvec_cyl(0)+ dev_pos;
+    double dev = randomNumber(pos, 0);
+    gaussianTool.tvec_cyl(0) = max_pose.tvec_cyl(0)+ dev;
 
-    dev_pos = randomNumber(step, 0);
-    gaussianTool.tvec_cyl(1) = max_pose.tvec_cyl(1)+ dev_pos;
+    dev = randomNumber(pos, 0);
+    gaussianTool.tvec_cyl(1) = max_pose.tvec_cyl(1)+ dev;
 
-    dev_pos = randomNumber(step, 0);
-    gaussianTool.tvec_cyl(2) = max_pose.tvec_cyl(2)+ dev_pos;
+    dev = randomNumber(pos, 0);
+    gaussianTool.tvec_cyl(2) = max_pose.tvec_cyl(2)+ dev;
 
-    double dev_ori = randomNumber(step, 0);
-    gaussianTool.rvec_cyl(0) = max_pose.rvec_cyl(0)+ dev_ori;
+    dev = randomNumber(rot, 0);
+    gaussianTool.rvec_cyl(0) = max_pose.rvec_cyl(0)+ dev;
 
-    dev_ori = randomNumber(step, 0);
-    gaussianTool.rvec_cyl(1) = max_pose.rvec_cyl(1)+ dev_ori;
+    dev = randomNumber(rot, 0);
+    gaussianTool.rvec_cyl(1) = max_pose.rvec_cyl(1)+ dev;
 
-    dev_ori = randomNumber(step, 0);
-    gaussianTool.rvec_cyl(2) = max_pose.rvec_cyl(2)+ dev_ori;
+    dev = randomNumber(rot, 0);
+    gaussianTool.rvec_cyl(2) = max_pose.rvec_cyl(2)+ dev;
 
     //perturb joint angles by random noise, positive = CW
-    double theta_ = randomNumber(step, 0);    //-90,90
-    double theta_grip_1 = randomNumber(step, 0);
-    double theta_grip_2 = randomNumber(step, 0);
+    double theta_ = randomNumber(0.001, 0);
+    double theta_grip_1 = randomNumber(0.001, 0);
+    double theta_grip_2 = randomNumber(0.001, 0);
 
     computeRandomPose(max_pose, gaussianTool, theta_, theta_grip_1, theta_grip_2);
 
@@ -917,7 +917,6 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     cv::Mat rot_new =  rot_ellipse * g_ellipse;
     cv::Mat temp_vec(3,1,CV_64FC1);
     cv::Rodrigues(rot_new, inputModel.rvec_elp);
-
 
     /////////////////////////////PART 2: computations for gripper /////////////////////////
     //Part 2.a: gripper 1
@@ -1135,8 +1134,9 @@ void ToolModel::gatherNormals(std::vector< std::vector<double> > &part1_normals,
     int point_dim = part1_normals.size();
 
     std::vector< std::vector<double> > temp_vec_normals;
+    int baseDim = 8;
     ///need adjust the first few normals
-    for (int m = 0; m <point_dim - 9; ++m) {
+    for (int m = 0; m <point_dim - baseDim; ++m) {
         temp_vec_normals.push_back(part1_normals[m]);
     }
 
@@ -1146,26 +1146,25 @@ void ToolModel::gatherNormals(std::vector< std::vector<double> > &part1_normals,
     cv::normalize(cylinder_norm, cylinder_norm);
 
     //ROS_INFO_STREAM("cylinder_norm " << cylinder_norm);
-    for (int l = point_dim - 9; l < point_dim; ++l) {
+    for (int l = point_dim - baseDim; l < point_dim; ++l) {
         cv::Mat temp(1,2,CV_64FC1);
         temp.at<double>(0,0) = part1_normals[l][2];
         temp.at<double>(0,1) = part1_normals[l][3];
         cv::normalize(temp, temp);
         double bar = cylinder_norm.dot(temp);
-        if(bar < 0.3 && bar > -0.1){
+        if(bar < 0.1 && bar > -0.01){
             temp_vec_normals.push_back(part1_normals[l]);
         }
     }
 
     /****** oval part normals *****/
-    for (int i = 0; i < 2; ++i) { // here we really don't need too much normals
-        temp_vec_normals.push_back(part2_normals[i]);
-    }
-
-    /****** oval part normals *****/
-    temp_vec_normals.push_back(part3_normals[4]);
-    temp_vec_normals.push_back(part3_normals[7]);
-
+//    for (int i = 0; i < 2; ++i) { // here we really don't need too much normals
+//        temp_vec_normals.push_back(part2_normals[i]);
+//    }
+//
+//    /****** gripper part normals *****/
+//    temp_vec_normals.push_back(part3_normals[4]);
+//    temp_vec_normals.push_back(part3_normals[7]);
 
     int actual_dim = temp_vec_normals.size();   //need one more for other orientation
     tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
