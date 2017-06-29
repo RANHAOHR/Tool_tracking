@@ -128,7 +128,10 @@ private:
 	double t_step;
 	double t_1_step;
 
-    double down_sample_rate;
+    double down_sample_joint;
+	double down_sample_cam;
+
+	double consistency_rate;
     double error;
 
 public:

@@ -51,7 +51,11 @@ boost::mt19937 rng((const uint32_t &) time(0));
 ToolModel::ToolModel() {
 
     ///adjust the model params according to the tool geometry
-    offset_body = 0.4530; //0.4560
+    // offset_body = 0.4530; //0.4560
+    // offset_ellipse = offset_body;
+    // offset_gripper = offset_ellipse+ 0.007;
+
+    offset_body = 0.4560; //0.4560
     offset_ellipse = offset_body;
     offset_gripper = offset_ellipse+ 0.007;
 
@@ -818,7 +822,7 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
 
     cv::Mat q_ellipse_ = cv::Mat(4, 1, CV_64FC1);
     q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0.015; //notice this mean y is pointing to the gripper tip, should be the same with computeEllipsePose
+    q_ellipse_.at<double>(1, 0) = 0.02; //notice this mean y is pointing to the gripper tip, should be the same with computeEllipsePose
     q_ellipse_.at<double>(2, 0) = 0;
     q_ellipse_.at<double>(3, 0) = 1;
 
@@ -908,7 +912,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
 
     cv::Mat q_ellipse_(4, 1, CV_64FC1);
     q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0.011;//(offset_ellipse - offset_body);
+    q_ellipse_.at<double>(1, 0) = 0.007;//0.011
     q_ellipse_.at<double>(2, 0) = 0;
     q_ellipse_.at<double>(3, 0) = 1;
 

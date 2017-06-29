@@ -17,7 +17,7 @@
  *	 copyright notice, this list of conditions and the following
  *	 disclaimer in the documentation and/or other materials provided
  *	 with the distribution.
- *   * Neither the name of Case Western Reserve Univeristy, nor the names of its
+ *   * Neither the name of Case Western Reserve University, nor the names of its
  *	 contributors may be used to endorse or promote products derived
  *	 from this software without specific prior written permission.
  *
@@ -40,31 +40,40 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
-        node_handle(*nodehandle), numParticles(120), down_sample_rate(0.0028), error(1)
+        node_handle(*nodehandle), numParticles(150),down_sample_joint(0.0027), down_sample_cam(0.0012),
+        consistency_rate(0.001), error(1)
 {
     /********** using calibration results: camera-base transformation *******/
-    Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.7882, 0.6067, 0.1025, -0.125049,  //-0.7882, 0.6067, 0.1025, -0.1449,
-            0.5854, 0.7909, -0.1784, -0.0500,   //	0.5854, 0.7909, -0.1784, -0.0607,
-            -0.1894, -0.0806, -0.9786, 0.0180, //	-0.1894, -0.0806, -0.9786, 0.0200,   0.0157
-            0,0, 0, 1.0000);
+    // Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.7882, 0.6067, 0.1025, -0.125049,  //-0.7882, 0.6067, 0.1025, -0.1449,
+    //         0.5854, 0.7909, -0.1784, -0.0500,   //	0.5854, 0.7909, -0.1784, -0.0607,
+    //         -0.1894, -0.0806, -0.9786, 0.0180, //	-0.1894, -0.0806, -0.9786, 0.0200,   0.0157
+    //         0,0, 0, 1.0000);
 
-    cv::Mat rot(3,3,CV_64FC1);
-    cv::Mat rot_vec = (cv::Mat_<double>(3,1) << 1.01976677, 2.60519, -0.1857696); //1.019976677, 2.5822519, -0.200696
-    cv::Rodrigues(rot_vec, rot);
-    rot.copyTo(Cam_left_arm_1.colRange(0,3).rowRange(0,3));
+    // cv::Mat rot(3,3,CV_64FC1);
+    // cv::Mat rot_vec = (cv::Mat_<double>(3,1) << 1.01976677, 2.60519, -0.1857696); //1.019976677, 2.5822519, -0.200696
+    // cv::Rodrigues(rot_vec, rot);
+    // rot.copyTo(Cam_left_arm_1.colRange(0,3).rowRange(0,3));
 
-    Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.7893, 0.6067, 0.0949, -0.13599, // -0.7893, 0.6067, 0.0949, -0.1428,
-            0.5852, 0.7899, -0.1835, -0.0500,   ///	0.5852, 0.7899, -0.1835, -0.0612,
-            -0.1861, -0.0892, -0.9784, 0.0180,     //	-0.1861, -0.0892, -0.9784, 0.0223,
+    // Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.7893, 0.6067, 0.0949, -0.13599, // -0.7893, 0.6067, 0.0949, -0.1428,
+    //         0.5852, 0.7899, -0.1835, -0.0500,   ///	0.5852, 0.7899, -0.1835, -0.0612,
+    //         -0.1861, -0.0892, -0.9784, 0.0180,     //	-0.1861, -0.0892, -0.9784, 0.0200,
+    //         0,0, 0, 1.0000);
+    // rot_vec = (cv::Mat_<double>(3,1) << 1.009996677, 2.5802519, -0.18696);
+    // cv::Rodrigues(rot_vec, rot);
+    // rot.copyTo(Cam_right_arm_1.colRange(0,3).rowRange(0,3));
+
+    Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.7882, 0.6067, 0.1025, -0.1449,
+            0.5854, 0.7909, -0.1784, -0.0607,
+            -0.1894, -0.0806, -0.9786, 0.0200,
+            0, 0, 0, 1.0000);
+
+    Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.7893, 0.6067, 0.0949, -0.1428,
+            0.5852, 0.7899, -0.1835, -0.0612,
+            -0.1861, -0.0892, -0.9784,0.0200,
             0,0, 0, 1.0000);
-    rot_vec = (cv::Mat_<double>(3,1) << 1.009996677, 2.5802519, -0.18696);
-    cv::Rodrigues(rot_vec, rot);
-    rot.copyTo(Cam_right_arm_1.colRange(0,3).rowRange(0,3));
 
 	ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
 	ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
-
-	initializeParticles();
 
 	projectionMat_subscriber_r = node_handle.subscribe("/davinci_endo/right/camera_info", 1, &ParticleFilter::projectionRightCB, this);
 	projectionMat_subscriber_l = node_handle.subscribe("/davinci_endo/left/camera_info", 1, &ParticleFilter::projectionLeftCB, this);
@@ -85,6 +94,7 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
 	P_right = cv::Mat::zeros(3,4,CV_64FC1);
 
 	freshCameraInfo = false;
+	initializeParticles();
 };
 
 ParticleFilter::~ParticleFilter() {
@@ -183,21 +193,29 @@ void ParticleFilter::computeNoisedParticles(std::vector <double> & inputParticle
 		noisedParticles[i].resize(19);
 
 		for (int j = 0; j < 7; ++j) {
-            double dev_sensor = newToolModel.randomNumber(down_sample_rate, 0);
+            double dev_sensor = newToolModel.randomNumber(down_sample_joint, 0);
 			inputParticle[j] = inputParticle[j] + dev_sensor;
 		}
         /**** make noise for and right camera the same ****/
         std::vector<double> dev_cam;
         dev_cam.resize(6);
-
+        //left cam
         for (int j = 7; j < 13; ++j) {
-            dev_cam[j-7] = newToolModel.randomNumber(0.0002, 0);
-			inputParticle[j] = inputParticle[j] + dev_cam[j-7];
-		}
-
-        for (int j = 13; j < 19; ++j) {
-            inputParticle[j] = inputParticle[j] + dev_cam[j-13];
+            dev_cam[j-7] = newToolModel.randomNumber(0.0005, 0);
+            inputParticle[j] = inputParticle[j] + dev_cam[j-7];
         }
+
+        //right cam
+        inputParticle[13] = inputParticle[13] + dev_cam[0] + newToolModel.randomNumber(0.0003, 0);
+        ///maintain the constrains for left and right cam
+        inputParticle[14] = inputParticle[8] + newToolModel.randomNumber(0.0001, 0);
+        double dev_z = newToolModel.randomNumber(0.0009, 0); //bigger z
+        inputParticle[9] = inputParticle[9] + dev_z;
+        inputParticle[15] = inputParticle[15] + dev_z; //bigger z noise
+
+        inputParticle[16] = inputParticle[16] + dev_cam[3] + newToolModel.randomNumber(consistency_rate, 0);
+        inputParticle[17] = inputParticle[17] + dev_cam[4] + newToolModel.randomNumber(consistency_rate, 0);
+        inputParticle[18] = inputParticle[18] + dev_cam[5] + newToolModel.randomNumber(consistency_rate, 0);
 
 		noisedParticles[i] = inputParticle;
 	}
@@ -249,9 +267,12 @@ void ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &
 	t_step = ros::Time::now().toSec();  //get current time step
     ros::spinOnce();
 
-//	ROS_INFO("---- in tracking function ---");
-//	std::vector<cv::Mat> trackingImages;
-//	trackingImages.resize(2);
+	// newToolModel.renderTool(raw_image_left, predicted_real_pose, Cam_left_arm_1, P_left);
+	// newToolModel.renderTool(raw_image_right, predicted_real_pose, Cam_right_arm_1, P_right);
+
+	// cv::imshow("initial left", raw_image_left);
+	// cv::imshow("initial right", raw_image_right);
+ //    cv::waitKey();
 
 	/***Update according to the max score***/
 	double maxScore_1 = 0.0;
@@ -439,7 +460,7 @@ void ParticleFilter::updateParticles(std::vector <double> &best_particle_last, d
 	cv::Mat nom_vel = delta_thetas *  (1 / delta_t);
     double velocity_bar = cv::sum( nom_vel )[0];
     ROS_INFO_STREAM("velocity_bar " << velocity_bar);
-    if(fabs(velocity_bar) > 0.012){
+    if(fabs(velocity_bar) > 0.1){
         ROS_WARN(" Refresh state! ");
         /******** using the obtained velocity to propagate the particles ********/
         for (int j = 0; j < updatedParticles.size(); ++j) {
@@ -478,36 +499,63 @@ void ParticleFilter::updateParticles(std::vector <double> &best_particle_last, d
             updatedParticles[j][17] = cat_vec.at<double>(1,0);
             updatedParticles[j][18] = cat_vec.at<double>(2,0);
         }
-        down_sample_rate = 0.002;
+        down_sample_joint = 0.002;
 
     }
 
-    ROS_INFO_STREAM("down_sample_rate " << down_sample_rate);
-    if(maxScore > 1.20){
-        down_sample_rate = 0.0002;
+    ROS_INFO_STREAM("down_sample_joint " << down_sample_joint);
+    ROS_INFO_STREAM("down_sample_cam " << down_sample_cam);
+    ROS_INFO_STREAM("consistency  " << consistency_rate);
+    if(maxScore > 1.2){
+        down_sample_joint = 0.0002;
+        down_sample_cam = 0.0001;
     }
     /**** add noise for propagated particles ****/
     for (int m = 1; m < updatedParticles.size(); ++m) {
         for (int l = 0; l < 7; ++l) {
-            double dev_sensor = newToolModel.randomNumber(down_sample_rate, 0);
+            double dev_sensor = newToolModel.randomNumber(down_sample_joint, 0);
             updatedParticles[m][l] = updatedParticles[m][l] + dev_sensor;
         }
         std::vector<double> dev_cam;
         dev_cam.resize(6);
+        //left cam
+        double dev_left = down_sample_cam + 0.0009;
         for (int j = 7; j < 13; ++j) {
-            dev_cam[j-7] = newToolModel.randomNumber(down_sample_rate, 0);
-            updatedParticles[m][j] = updatedParticles[m][j] + dev_cam[j-7];
+            dev_cam[j-7] = newToolModel.randomNumber(dev_left, 0);
+            updatedParticles[m][j] = updatedParticles[m][j] + dev_cam[j-7]/* + newToolModel.randomNumber(0.0012, 0)*/;
         }
-        for (int j = 13; j < 19; ++j) {
-            updatedParticles[m][j] = updatedParticles[m][j] + dev_cam[j-13];
-        }
+
+        //right cam
+        double dev_xy =down_sample_cam +  consistency_rate/* +0.0009*/;
+        updatedParticles[m][13] = updatedParticles[m][13] + dev_cam[0] + newToolModel.randomNumber(dev_xy, 0);
+        updatedParticles[m][14] = updatedParticles[m][8] + dev_cam[1] + newToolModel.randomNumber(dev_xy, 0);
+
+        double dev = down_sample_cam + consistency_rate + 0.001;
+        double dev_z = newToolModel.randomNumber(dev, 0); //bigger z
+        updatedParticles[m][9] = updatedParticles[m][9] + dev_z;
+        updatedParticles[m][15] = updatedParticles[m][15] + dev_z; //bigger z noise
+
+        double dev_rot = down_sample_cam + consistency_rate + 0.0009;
+        updatedParticles[m][16] = updatedParticles[m][16] + dev_cam[3] + newToolModel.randomNumber(dev_rot, 0);
+        updatedParticles[m][17] = updatedParticles[m][17] + dev_cam[4] + newToolModel.randomNumber(dev_rot, 0);
+        updatedParticles[m][18] = updatedParticles[m][18] + dev_cam[5] + newToolModel.randomNumber(dev_rot, 0);
+
     }
 
-    down_sample_rate -= 0.0002;
-    if(down_sample_rate < 0.0002){
-        down_sample_rate = 0.0002;
+    down_sample_joint -= 0.0002;
+    if(down_sample_joint < 0.0002){
+        down_sample_joint = 0.0002;
     };
 
+    down_sample_cam -= 0.0001;
+    if(down_sample_cam < 0.0001){
+        down_sample_cam = 0.0002;
+    };
+
+    consistency_rate -= 0.0001;
+    if(consistency_rate < 0.0001){
+        consistency_rate = 0.0002;
+    };
 
 };
 
