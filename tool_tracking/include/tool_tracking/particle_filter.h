@@ -104,9 +104,9 @@ private:
 	std::vector<double> particleWeights_arm_2; // particle weights calculated from matching scores
 
     cv::Mat Cam_left_arm_1;
-    cv::Mat Cam_right_arm_1;
-    cv::Mat Cam_left_arm_2;
-    cv::Mat Cam_right_arm_2;
+//    cv::Mat Cam_right_arm_1;
+//    cv::Mat Cam_left_arm_2;
+//    cv::Mat Cam_right_arm_2;
 
     Davinci_fwd_solver kinematics;
 
@@ -131,7 +131,7 @@ private:
     double down_sample_joint;
 	double down_sample_cam;
 
-	double consistency_rate;
+	int L;
     double error;
 
 public:
@@ -203,8 +203,6 @@ public:
 	void updateParticles(std::vector <double> &best_particle_last, double &maxScore, std::vector<std::vector <double> > &updatedParticles, ToolModel::toolModel & predicted_real_pose);
 
 	void computeNoisedParticles(std::vector <double> & inputParticle, std::vector< std::vector <double> > & noisedParticles);
-
-	void showGazeboToolError(ToolModel::toolModel &real_pose, ToolModel::toolModel &bestParticle);
 
 	void convertToolModeltoMatrix(const ToolModel::toolModel &inputToolModel, cv::Mat &toolMatrix);
 	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);

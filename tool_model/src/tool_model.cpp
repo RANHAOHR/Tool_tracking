@@ -235,28 +235,6 @@ void ToolModel::load_model_vertices(const char *path, std::vector<glm::vec3> &ou
     }
 
     printf("loaded file %s successfully.\n", path);
-    /*debug for faces*/
-    // for (int i = 0; i < 10; ++i)
-    // {
-    //     ROS_INFO_STREAM("face: " << i );
-    //     ROS_INFO_STREAM("vertex: " << out_faces[i][0] << " " << out_faces[i][1] << " " << out_faces[i][2] << " normal: " << out_faces[i][3] << " " << out_faces[i][4] << " " << out_faces[i][5] );
-    // }
-
-    // for (int i = 0; i < 10; ++i)
-    // {
-    //     ROS_INFO_STREAM("vertex: " << i );
-    //     ROS_INFO_STREAM("x: " << out_vertices[i].x << " y: " << out_vertices[i].y << " z: " << out_vertices[i].z );
-    // }
-
-    // /*screen unneccessary faces*/
-    // for (int i = 0; i < all_faces.size(); ++i)
-    // {
-    //     neighbor_num = (neighbor_faces[i].size())/3;
-    //     if ( neighbor_num > 0){
-
-    //         out_faces.push_back(all_faces[i]);
-    //     }
-    // }
 };
 
 void ToolModel::Convert_glTocv_pts(std::vector<glm::vec3> &input_vertices, std::vector<cv::Point3d> &out_vertices) {
