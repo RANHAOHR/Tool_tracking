@@ -40,7 +40,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
-        node_handle(*nodehandle), numParticles(200), downsample_rate_pos(0.003), downsample_rate_rot(0.02), error_pos(1), error_ori(1){
+        node_handle(*nodehandle), numParticles(200), downsample_rate_pos(0.002), downsample_rate_rot(0.005), error_pos(1), error_ori(1){
 
 	initializeParticles();
 
@@ -148,11 +148,11 @@ void ParticleFilter::getCoarseGuess(){
     computeRodriguesVec(a1_pos, a1_rvec);
 
 	//toolModel representation of initial guess of configuration of joints 1-4 computed above
-    initial.tvec_cyl(0) = a1_trans[0] + 0.008;  //left and right (image frame)
-    initial.tvec_cyl(1) = a1_trans[1]+ 0.007;  //up and down
-    initial.tvec_cyl(2) = a1_trans[2];// + 0.004;
-    initial.rvec_cyl(0) = a1_rvec.at<double>(0,0) + 0.04;
-    initial.rvec_cyl(1) = a1_rvec.at<double>(1,0) + 0.03;
+    initial.tvec_cyl(0) = a1_trans[0] - 0.002;  //left and right (image frame)
+    initial.tvec_cyl(1) = a1_trans[1]+ 0.004;  //up and down
+    initial.tvec_cyl(2) = a1_trans[2] + 0.004;
+    initial.rvec_cyl(0) = a1_rvec.at<double>(0,0) + 0.01;
+    initial.rvec_cyl(1) = a1_rvec.at<double>(1,0) /*+ 0.03*/;
     initial.rvec_cyl(2) = a1_rvec.at<double>(2,0);
 
     double theta_cylinder = sensor_1[4]; //guess from sensor
@@ -232,7 +232,6 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 
 	toolImage_left_temp.setTo(0);
 	toolImage_right_temp.setTo(0);
-/*+ 0.003*/
     ////////////////////////PART 1: Measurement model//////////////////////////////
     for (int i = 0; i < numParticles; ++i) {
         //get matching score of particle i
@@ -251,8 +250,8 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	}
 
     //show composite of all particles in left/right camera on temp images
-//	cv::imshow("temp image arm_1 left: " , toolImage_left_temp);
-//	cv::imshow("temp image arm_1 right:  " , toolImage_right_temp);
+	cv::imshow("temp image arm_1 left: " , toolImage_left_temp);
+	cv::imshow("temp image arm_1 right:  " , toolImage_right_temp);
 //	ROS_INFO_STREAM("Maxscore arm 1: " << maxScore_1);  //debug
 
     //compute weights as normalized matching scores
@@ -284,7 +283,7 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 //	float sec = (float) t_step / CLOCKS_PER_SEC;
 //	ROS_INFO_STREAM("Delta t = " << sec1 - sec);
 
-	showGazeboToolError(initial, best_particle);
+//	showGazeboToolError(initial, best_particle);
 	/////////////////////////PART 3: Motion model////////////////////////////////
 	updateParticles(particles_arm_1);
 	cv::waitKey(20);
@@ -312,26 +311,26 @@ void ParticleFilter::showGazeboToolError(ToolModel::toolModel &real_pose, ToolMo
 };
 
 void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedParticles) {
-	ROS_INFO_STREAM("downsample_rate_pos " << downsample_rate_pos); //annealing coefficient
-	ROS_INFO_STREAM("downsample_rate_rot " << downsample_rate_rot); //annealing coefficient
+//	ROS_INFO_STREAM("downsample_rate_pos " << downsample_rate_pos); //annealing coefficient
+//	ROS_INFO_STREAM("downsample_rate_rot " << downsample_rate_rot); //annealing coefficient
 	//decrement annealing coefficient every time function is called
-	downsample_rate_pos -= 0.0004;
-	if(downsample_rate_pos < 0.0002){
-		downsample_rate_pos = 0.0002;
-	};
-
-	downsample_rate_rot -= 0.004;
-	if(downsample_rate_rot < 0.004){
-		downsample_rate_rot = 0.0003;
-	};
-
-	//If error is small decrement it even more
-	if(error_pos < pos_thresh){
-		downsample_rate_pos = 0.0001;
-	}
-	if(error_ori < rot_thresh){
-		downsample_rate_rot = 0.0001;
-	}
+//	downsample_rate_pos -= 0.0004;
+//	if(downsample_rate_pos < 0.0002){
+//		downsample_rate_pos = 0.0002;
+//	};
+//
+//	downsample_rate_rot -= 0.004;
+//	if(downsample_rate_rot < 0.004){
+//		downsample_rate_rot = 0.0003;
+//	};
+//
+//	//If error is small decrement it even more
+//	if(error_pos < pos_thresh){
+//		downsample_rate_pos = 0.0001;
+//	}
+//	if(error_ori < rot_thresh){
+//		downsample_rate_rot = 0.0001;
+//	}
 
 	//Move particles through gaussian noise motion model
 	//after resampling, first particle is best -> save it in the searching pool

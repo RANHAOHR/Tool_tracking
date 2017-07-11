@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
             trackingImgs = Particles.trackingTool(seg_left, seg_right);
 
 			freshImage = false;
-            //Particles.getCoarseGuess(); //get ready for next time step
+            Particles.getCoarseGuess(); //get ready for next time step
 		}
 	}
 }

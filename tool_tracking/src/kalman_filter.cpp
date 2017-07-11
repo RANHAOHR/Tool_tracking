@@ -205,7 +205,7 @@ void KalmanFilter::getMeasurementModel(const cv::Mat &coarse_guess_vector, const
 	cv::distanceTransform(segImageGrey, distance_img, CV_DIST_L2, 3);
 	cv::normalize(distance_img, segImgBlur, 0.00, 1.00, cv::NORM_MINMAX);
 
-	cv::imshow("segImgBlur", segImgBlur);
+//	cv::imshow("segImgBlur", segImgBlur);
 	/*** get the rendered image points and normals ***/
 	cv::Mat temp_point = cv::Mat(1,2,CV_64FC1);
 	cv::Mat temp_normal = cv::Mat(1,2,CV_64FC1);
@@ -216,7 +216,7 @@ void KalmanFilter::getMeasurementModel(const cv::Mat &coarse_guess_vector, const
 	convertToolModel(coarse_guess_vector, coarse_tool);
 	ukfToolModel.renderToolUKF(rendered_image, coarse_tool, Cam_matrix, projection_mat, temp_point, temp_normal);
 
-	ROS_INFO_STREAM("temp_normal row: " << temp_normal.rows );
+//	ROS_INFO_STREAM("temp_normal row: " << temp_normal.rows );
 
 //	showNormals(temp_point, temp_normal, rendered_image );
 
@@ -303,16 +303,16 @@ void KalmanFilter::getStereoMeasurement(const cv::Mat & coarse_guess_vector, cv:
 	cv::Mat normal_left;
 	getMeasurementModel(coarse_guess_vector, seg_left, P_left,
 						Cam_left_arm_1, tool_rawImg_left, zt_left, normal_left);
-	ROS_INFO_STREAM("zt_left" << zt_left);
-	ROS_INFO_STREAM("normal_left" << normal_left);
-	ROS_INFO("-------- RIGHT ------------------");
+//	ROS_INFO_STREAM("zt_left" << zt_left);
+//	ROS_INFO_STREAM("normal_left" << normal_left);
+//	ROS_INFO("-------- RIGHT ------------------");
 	///get measurement model from RIGHT camera
 	cv::Mat zt_right;
 	cv::Mat normal_right;
 	getMeasurementModel(coarse_guess_vector, seg_right, P_right,
 						Cam_right_arm_1, tool_rawImg_right, zt_right, normal_right);
-	ROS_INFO_STREAM("zt_right" << zt_right);
-	ROS_INFO_STREAM("normal_right" << normal_right);
+//	ROS_INFO_STREAM("zt_right" << zt_right);
+//	ROS_INFO_STREAM("normal_right" << normal_right);
 
 	int left_dim = zt_left.rows;
 	int right_dim = zt_right.rows;
@@ -379,8 +379,8 @@ void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat_<double> & sigma_p
 	int right_dim = temp_normal_r.rows;
 
 	int total_dim = left_dim + right_dim;
-	ROS_INFO_STREAM("LEFT AND RIGHT SIZE : " << total_dim);
-	ROS_INFO_STREAM("normal_measurement " << normal_measurement.rows);
+//	ROS_INFO_STREAM("LEFT AND RIGHT SIZE : " << total_dim);
+//	ROS_INFO_STREAM("normal_measurement " << normal_measurement.rows);
 	if(total_dim != normal_measurement.rows){
 		ROS_ERROR("ONE SIGMA POINT HAS DIFFERENT NUMBER OD NORMALS !");
 		exit(1);
@@ -441,12 +441,12 @@ void KalmanFilter::getCoarseEstimation(){
 
 	////intentionally bad ones......
 	kalman_mu_arm1 = cv::Mat_<double>::zeros(L, 1);
-	kalman_mu_arm1.at<double>(0 , 0) = arm_trans[0] + 0.004;
-	kalman_mu_arm1.at<double>(1 , 0) = arm_trans[1] - 0.004;
+	kalman_mu_arm1.at<double>(0 , 0) = arm_trans[0] + 0.002;
+	kalman_mu_arm1.at<double>(1 , 0) = arm_trans[1] /*- 0.004*/;
 	kalman_mu_arm1.at<double>(2 , 0) = arm_trans[2] /*+ 0.002*/;
-	kalman_mu_arm1.at<double>(3 , 0) = arm_rvec.at<double>(0,0) + 0.03;
-	kalman_mu_arm1.at<double>(4 , 0) = arm_rvec.at<double>(1,0) + 0.02;
-	kalman_mu_arm1.at<double>(5 , 0) = arm_rvec.at<double>(2,0);
+	kalman_mu_arm1.at<double>(3 , 0) = arm_rvec.at<double>(0,0) + 0.01;
+	kalman_mu_arm1.at<double>(4 , 0) = arm_rvec.at<double>(1,0) /*+ 0.03*/;
+	kalman_mu_arm1.at<double>(5 , 0) = arm_rvec.at<double>(2,0) /*+ 0.02*/;
 
 	kalman_mu_arm1.at<double>(6 , 0) = tmp[0][4];
     kalman_mu_arm1.at<double>(7 , 0) = tmp[0][5];
@@ -490,7 +490,7 @@ void KalmanFilter::showNormals(cv::Mat &temp_point, cv::Mat &temp_normal, cv::Ma
 		prjpt_2.y = prjpt_1.y  + r * sin(theta);
 		cv::line(inputImage, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
 		cv::imshow("rendered_image:", inputImage);
-		cv::waitKey();
+//		cv::waitKey();
 	}
 };
 
@@ -499,15 +499,17 @@ void KalmanFilter::UKF_double_arm(){ //well, currently just one......
 	seg_left = segmentation(tool_rawImg_left);
 	seg_right = segmentation(tool_rawImg_right);
 
-	ROS_INFO("--------------ARM 1 : --------------");
+//	ROS_INFO("--------------ARM 1 : --------------");
 	getCoarseEstimation();   ///get new kalman_mu_arm1, kalman_sigma_arm1
-	ROS_INFO_STREAM("BEFORE kalman_mu_arm1: " << kalman_mu_arm1);
+//	ROS_INFO_STREAM("BEFORE kalman_mu_arm1: " << kalman_mu_arm1);
+
+    showRenderedImage(kalman_mu_arm1); //has cv::waitKey() inside
 
 	update(kalman_mu_arm1, kalman_sigma_arm1, toolImage_left_arm_1,
 		   toolImage_right_arm_1, Cam_left_arm_1, Cam_right_arm_1);
-	ROS_WARN_STREAM("FORAWRD KINEMATICS: " << real_mu);
+//	ROS_WARN_STREAM("FORAWRD KINEMATICS: " << real_mu);
 	showGazeboToolError(real_mu, kalman_mu_arm1);
-	showRenderedImage(kalman_mu_arm1);
+	showRenderedImage(kalman_mu_arm1); //has cv::waitKey() inside
 };
 
 void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
@@ -523,7 +525,7 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 	///get the square root for sigma point generation using SVD decomposition
 	cv::Mat root_sigma_t_last = cv::Mat_<double>::zeros(L, L);
 	Cholesky(sigma_t_last, root_sigma_t_last);
-	ROS_INFO_STREAM(" root_sigma_t_last" << root_sigma_t_last);
+//	ROS_INFO_STREAM(" root_sigma_t_last" << root_sigma_t_last);
 	//Populate the sigma points:
 	std::vector<cv::Mat_<double> > sigma_pts_last;
 	sigma_pts_last.resize(2*L + 1);
@@ -553,9 +555,9 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 
 	//getMeasurementModel(kalman_mu, seg_left, P_left,Cam_left_arm_1, tool_rawImg_left, zt, normal_measurement);  ///using only left camera measurements
 	getStereoMeasurement(kalman_mu, zt, normal_measurement); ///using both camera measurements
-
-	ROS_INFO_STREAM(" zt: " << zt);
-	cv::waitKey();
+//
+//	ROS_INFO_STREAM(" zt: " << zt);
+//	cv::waitKey();
 	/*****Update sigma points based on motion model******/
 	std::vector<cv::Mat_<double> > sigma_pts_bar;
 	sigma_pts_bar.resize(2*L + 1);
@@ -582,7 +584,7 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 	for(int i = 0; i < 2 * L + 1; i++){
 		mu_bar = mu_bar + w_m[i] * sigma_pts_bar[i]; //seems like every time is the coarse guess
 	}
-	ROS_INFO_STREAM("mu_bar" << mu_bar);
+//	ROS_INFO_STREAM("mu_bar" << mu_bar);
 
 	cv::Mat sigma_bar = cv::Mat_<double>::zeros(L, L);
 	for(int i = 0; i < 2 * L + 1; i++){
@@ -609,25 +611,22 @@ void KalmanFilter::update(cv::Mat & kalman_mu, cv::Mat & kalman_sigma,
 	for(int i = 0; i < 2 * L + 1; i++){
 		S = S + w_c[i] * (Z_bar[i] - z_caret) * ((Z_bar[i] - z_caret).t());
 	}
-//	ROS_INFO_STREAM(" S inv  " << S.inv());
+
 	cv::Mat sigma_xz = cv::Mat_<double>::zeros(L, measurement_dimension);
 	for(int i = 0; i < 2 * L + 1; i++){
 		sigma_xz = sigma_xz + w_c[i] * (sigma_pts_bar[i] - mu_bar) * ((Z_bar[i] - z_caret).t());
 	}
 
 	cv::Mat K = sigma_xz * S.inv();
-//	ROS_INFO_STREAM(" K" << K);
-//	cv::waitKey();
+
 	/***** Update our mu and sigma *****/
 //	ROS_INFO_STREAM("mu_bar" << mu_bar);
 //	ROS_INFO_STREAM("zt - z_caret" << zt - z_caret);
 	kalman_mu = mu_bar + K * (zt - z_caret);
 	kalman_sigma = sigma_bar - K * S * K.t();
-
-	ROS_WARN_STREAM("KALMAN ARM AT : " << kalman_mu);
+//	ROS_WARN_STREAM("KALMAN ARM AT : " << kalman_mu);
 };
 
-//TODO:
 void KalmanFilter::g(cv::Mat & sigma_point_out, const cv::Mat & sigma_point_in){
 
 	sigma_point_out = sigma_point_in.clone(); //initialization
