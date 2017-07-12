@@ -51,13 +51,17 @@ boost::mt19937 rng((const uint32_t &) time(0));
 ToolModel::ToolModel() {
 
     ///adjust the model params according to the tool geometry
-    // offset_body = 0.4530; //0.4560
-    // offset_ellipse = offset_body;
-    // offset_gripper = offset_ellipse+ 0.007;
+     offset_body = 0.4530; //0.4560
+     offset_ellipse = offset_body;
+     offset_gripper = offset_ellipse+ 0.007;
+//
+//    offset_body = 0.4560; //0.4560
+//    offset_ellipse = offset_body;
+//    offset_gripper = offset_ellipse+ 0.007;
 
-    offset_body = 0.4560; //0.4560
-    offset_ellipse = offset_body;
-    offset_gripper = offset_ellipse+ 0.007;
+//    offset_body = 0.4570; //0.4560
+//    offset_ellipse = offset_body;
+//    offset_gripper = offset_ellipse+ 0.009;
 
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
@@ -890,7 +894,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
 
     cv::Mat q_ellipse_(4, 1, CV_64FC1);
     q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0.007;//0.011
+    q_ellipse_.at<double>(1, 0) = 0.008;//0.011
     q_ellipse_.at<double>(2, 0) = 0;
     q_ellipse_.at<double>(3, 0) = 1;
 
@@ -907,7 +911,6 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     double cos_theta = cos(theta_ellipse);
     double sin_theta = sin(theta_ellipse);
 
-    /*** this works in simulation ?? ***/
     cv::Mat g_ellipse = (cv::Mat_<double>(3,3) << cos_theta, -sin_theta, 0,
             sin_theta, cos_theta, 0,
             0,0, 1);
@@ -919,7 +922,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     /*********** computations for gripper kinematics **********/
     cv::Mat test_gripper(3, 1, CV_64FC1);
     test_gripper.at<double>(0, 0) = 0;
-    test_gripper.at<double>(1, 0) = 0.006;
+    test_gripper.at<double>(1, 0) = 0.007;
     test_gripper.at<double>(2, 0) = 0;
 
     cv::Mat rot_elp(3, 3, CV_64FC1);

@@ -86,7 +86,6 @@ int main(int argc, char **argv) {
 
 	while (nh.ok()) {
 		ros::spinOnce();
-		/*** make sure camera information is ready ***/
 
 		/*** if camera is ready, doing the tracking based on segemented image***/
 		if (freshImage) {

@@ -72,94 +72,112 @@
 class ParticleFilter {
 
 private:
-	cv::Mat Cam_left;
-	cv::Mat Cam_right;
 
-	ros::NodeHandle node_handle;
+    ros::NodeHandle node_handle;
 
-	ToolModel newToolModel;
-	/**
-	 * @brief predicted_real_pose is used to get the predicted real tool pose from using the forward kinematics
-	 */
-	ToolModel::toolModel predicted_real_pose;
+    ToolModel newToolModel;
+/**
+ * @brief predicted_real_pose is used to get the predicted real tool pose from using the forward kinematics
+ */
+    ToolModel::toolModel next_step_pose;
 
-	unsigned int numParticles; //total number of particles
+    unsigned int numParticles; //total number of particles
 
-	cv::Mat toolImage_left_arm_1; //left rendered Image for ARM 1
-	cv::Mat toolImage_right_arm_1; //right rendered Image for ARM 1
+/**
+ * @brief left and right rendered Images for ARM 1, used for calculating matching score
+ */
+    cv::Mat toolImage_left_arm_1;
+    cv::Mat toolImage_right_arm_1;
 
-	cv::Mat toolImage_left_arm_2; //left rendered Image for ARM 2
-	cv::Mat toolImage_right_arm_2; //right rendered Image for ARM 2
+/**
+ * @brief left and right rendered Images for showing all particles
+ */
+    cv::Mat toolImage_left_temp;
+    cv::Mat toolImage_right_temp;
 
-	cv::Mat toolImage_left_temp; //left rendered Image
-	cv::Mat toolImage_right_temp; //right rendered Image
+    std::vector<double> matchingScores_arm_1; // particle scores (matching scores)
 
-	std::vector<double> matchingScores_arm_1; // particle scores (matching scores)
-	std::vector<double> matchingScores_arm_2; // particle scores (matching scores)
+    std::vector<std::vector<double> > particles_arm_1; // particles
+    std::vector<double> particleWeights_arm_1; // particle weights calculated from matching scores
 
-	std::vector<std::vector <double> > particles_arm_1; // particles
-	std::vector<double> particleWeights_arm_1; // particle weights calculated from matching scores
+/**
+ * @brief The transformation between the left and right camera matrices
+ */
+    cv::Mat g_cr_cl;
 
-	std::vector<ToolModel::toolModel> particles_arm_2; // particles
-	std::vector<double> particleWeights_arm_2; // particle weights calculated from matching scores
-
+/**
+ * @brief The camera to robot base transformation.
+ * The left one is the standard, the right right one is computed using the g_cr_cl according to left one
+ */
     cv::Mat Cam_left_arm_1;
-//    cv::Mat Cam_right_arm_1;
-//    cv::Mat Cam_left_arm_2;
-//    cv::Mat Cam_right_arm_2;
+    cv::Mat Cam_right_arm_1;
 
     Davinci_fwd_solver kinematics;
 
-    Eigen::Affine3d arm_1__cam_l;
-    Eigen::Affine3d arm_2__cam_l;
-    Eigen::Affine3d arm_1__cam_r;
-    Eigen::Affine3d arm_2__cam_r;
-
+/**
+ * @brief sensor information computed by the joint sensor of the the robot
+ */
     std::vector<double> sensor_1;
     std::vector<double> sensor_2;
 
-	void projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight);
-	void projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft);
+    void projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight);
 
-	ros::Subscriber projectionMat_subscriber_r;
-	ros::Subscriber projectionMat_subscriber_l;
-	bool freshCameraInfo;
+    void projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft);
 
-	double t_step;
-	double t_1_step;
+    ros::Subscriber projectionMat_subscriber_r;
+    ros::Subscriber projectionMat_subscriber_l;
 
+/**
+ * @brief flag for getting new camera info
+ */
+    bool freshCameraInfo;
+
+/**
+ * @brief The time stamp to track the velocity for motion model
+ */
+    double t_step;
+    double t_1_step;
+
+/**
+ * @brief The noises for perturbation
+ */
     double down_sample_joint;
-	double down_sample_cam;
+    double down_sample_cam;
 
-	int L;
-    double error;
+/**
+ * @brief The dimension of the state vector
+ */
+    int L;
 
 public:
 
-	/*
-	 * for comparing and testing
-	 */
-	cv::Mat raw_image_left; //left rendered Image
-	cv::Mat raw_image_right; //right rendered Image
+/**
+ * @brief for comparing and testing
+ */
+    cv::Mat raw_image_left; //left rendered Image
+    cv::Mat raw_image_right; //right rendered Image
 
-	cv::Mat P_left;
-	cv::Mat P_right;
+/**
+ * @brief The projection matrices
+ */
+    cv::Mat P_left;
+    cv::Mat P_right;
 
-	/*
-	* The default constructor
-	*/
-	ParticleFilter(ros::NodeHandle *nodehandle);
+/**
+* @brief The default constructor
+*/
+    ParticleFilter(ros::NodeHandle *nodehandle);
 
-	/*
-	 * The deconstructor 
-	 */
-	~ParticleFilter();
+/**
+ * @brief The deconstructor
+ */
+    ~ParticleFilter();
 
-	/*
-	 * The initializeParticles initializes the particles by setting the total number of particles, initial
-	 * guess and randomly generating the particles around the initial guess.
-	 */
-	void initializeParticles();
+/**
+ * @brief The initializeParticles initializes the particles by setting the total number of particles, initial
+ * guess and randomly generating the particles around the initial guess.
+ */
+    void initializeParticles();
 
 /**
  * @brief get a coarse initialzation using forward kinematics
@@ -172,16 +190,18 @@ public:
  * @param segmented_right : segmented image for right camera
  * @return
  */
-	void trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+    void trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+
 /**
  * @brief low variance resampling
  * @param sampleModel : input particles
  * @param particleWeight : input normalized weights
  * @param update_particles : output particles
  */
-	void resamplingParticles(const std::vector< std::vector<double> > &sampleModel,
-							 const std::vector<double> &particleWeight,
-							 std::vector<std::vector<double> > &update_particles);
+    void resamplingParticles(const std::vector<std::vector<double> > &sampleModel,
+                             const std::vector<double> &particleWeight,
+                             std::vector<std::vector<double> > &update_particles);
+
 /**
  * @brief get the p(z_t|x_t), compute the matching score based on the camera view image and rendered image
  * @param toolImage_left
@@ -193,20 +213,39 @@ public:
  * @param Cam_right
  * @return matching score using matching functions: chamfer matching
  */
-	double measureFuncSameCam(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose,
-							  const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right);
+    double measureFuncSameCam(cv::Mat &toolImage_left, cv::Mat &toolImage_right, ToolModel::toolModel &toolPose,
+                              const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left,
+                              cv::Mat &Cam_right);
+
 /**
  * @brief Motion model, propagte the particles using velocity computed from joint sensors
  * @param best_particle_last: last time step best particle, used to compute the nominal velocity
  * @param updatedParticles : input and output particles
  */
-	void updateParticles(std::vector <double> &best_particle_last, double &maxScore, std::vector<std::vector <double> > &updatedParticles, ToolModel::toolModel & predicted_real_pose);
+    void updateParticles(std::vector<double> &best_particle_last, double &maxScore,
+                         std::vector<std::vector<double> > &updatedParticles,
+                         ToolModel::toolModel &predicted_real_pose);
 
-	void computeNoisedParticles(std::vector <double> & inputParticle, std::vector< std::vector <double> > & noisedParticles);
+/**
+ * @brief Getting the particles by addding Gaussain noise to the initialization
+ * @param inputParticle
+ * @param noisedParticles
+ */
+    void computeNoisedParticles(std::vector<double> &inputParticle, std::vector<std::vector<double> > &noisedParticles);
 
-	void convertToolModeltoMatrix(const ToolModel::toolModel &inputToolModel, cv::Mat &toolMatrix);
-	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
-	void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
+/**
+ * @brief Extract the Rodrigues vector (the rotation part) given an Eigen::Affine3d
+ * @param trans
+ * @param rot_vec
+ */
+    void computeRodriguesVec(const Eigen::Affine3d &trans, cv::Mat rot_vec);
+
+/**
+ * @brief Compute the SE(3) Matrix when given an Eigen::Affine3d
+ * @param trans
+ * @param outputMatrix
+ */
+    void convertEigenToMat(const Eigen::Affine3d &trans, cv::Mat &outputMatrix);
 };
 
 #endif
