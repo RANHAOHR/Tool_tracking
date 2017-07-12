@@ -79,7 +79,7 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
 
     freshCameraInfo = false;
     initializeParticles();
-};
+};git 
 
 ParticleFilter::~ParticleFilter() {
 
