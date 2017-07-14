@@ -527,7 +527,7 @@ void ParticleFilter::resamplingParticles(const std::vector<std::vector<double> >
 
 };
 
-void ParticleFilter::computeRodriguesVec(const Eigen::Affine3d &trans, cv::Mat rot_vec) {
+void ParticleFilter::computeRodriguesVec(const Eigen::Affine3d &trans, cv::Mat &rot_vec) {
     Eigen::Matrix3d rot_affine = trans.rotation();
 
     cv::Mat rot(3, 3, CV_64FC1);

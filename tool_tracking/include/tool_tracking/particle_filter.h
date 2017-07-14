@@ -238,7 +238,7 @@ public:
  * @param trans
  * @param rot_vec
  */
-    void computeRodriguesVec(const Eigen::Affine3d &trans, cv::Mat rot_vec);
+    void computeRodriguesVec(const Eigen::Affine3d &trans, cv::Mat &rot_vec);
 
 /**
  * @brief Compute the SE(3) Matrix when given an Eigen::Affine3d
