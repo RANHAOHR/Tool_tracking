@@ -46,17 +46,33 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     g_cr_cl = cv::Mat::eye(4, 4, CV_64FC1);
 
     cv::Mat rot(3, 3, CV_64FC1);
-    cv::Mat rot_vec = (cv::Mat_<double>(3, 1) << -0.01, -0.008, 0.024); //-0.01163, -0.024, 0.00142
+    cv::Mat rot_vec = (cv::Mat_<double>(3, 1) << -0.01, -0.008, 0.024); //-0.01163, -0.024, 0.00142 //-0.01, -0.008, 0.024
     cv::Rodrigues(rot_vec, rot);
     rot.copyTo(g_cr_cl.colRange(0, 3).rowRange(0, 3));
 
-    cv::Mat p = (cv::Mat_<double>(3, 1) << -0.015, 0.0, 0.00); //-0.011, 0.0, 0.00
+    cv::Mat p = (cv::Mat_<double>(3, 1) << -0.015, 0.0, 0.00); //-0.011, 0.0, 0.00//-0.015, 0.0, 0.00
     p.copyTo(g_cr_cl.colRange(3, 4).rowRange(0, 3));
 
     Cam_left_arm_1 = (cv::Mat_<double>(4, 4) << -0.7882, 0.6067, 0.1025, -0.1449,
             0.5854, 0.7909, -0.1784, -0.0607,
             -0.1894, -0.0806, -0.9786, 0.0200,
             0, 0, 0, 1.0000);
+
+    /*
+     * rot_vec: [0.9466735106091037;
+         2.825194202970501;
+         -0.2056958859990591]
+    */
+
+    //better
+    Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.7882, 0.6067, 0.1025, -0.12249,  //-0.7882, 0.6067, 0.1025, -0.1449,
+            0.5854, 0.7909, -0.1784, -0.0480,   //	0.5854, 0.7909, -0.1784, -0.0607,
+            -0.1894, -0.0806, -0.9786, 0.02, //	-0.1894, -0.0806, -0.9786, 0.0200,   0.0157
+            0,0, 0, 1.0000);
+
+    rot_vec = (cv::Mat_<double>(3,1) << 1.09976677, 2.5802519, -0.200696); //1.0996677, 2.6502519, -0.20696
+    cv::Rodrigues(rot_vec, rot);
+    rot.copyTo(Cam_left_arm_1.colRange(0,3).rowRange(0,3));
 
     ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
 
@@ -179,14 +195,17 @@ void ParticleFilter::computeNoisedParticles(std::vector<double> &inputParticle,
         /**
          * left camera-base matrix, There is offset for positions from initial calibration results
          */
-        for (int j = 7; j < 10; ++j) {
-            inputParticle[j] = inputParticle[j] +
-                               newToolModel.randomNumber(down_sample_cam, 0.0001);
-        }
+        double pos = 0.001;
 
-        for (int j = 10; j < 13; ++j) {
-            inputParticle[j] = inputParticle[j] + newToolModel.randomNumber(down_sample_cam, 0);
-        }
+        inputParticle[7] = inputParticle[7] + newToolModel.randomNumber(down_sample_cam, 0);
+        inputParticle[8] = inputParticle[8] + newToolModel.randomNumber(down_sample_cam, 0);
+        inputParticle[9] = inputParticle[9] + newToolModel.randomNumber(down_sample_cam, 0);
+
+
+        inputParticle[10] = inputParticle[10] + newToolModel.randomNumber(down_sample_cam, 0.0);
+        inputParticle[11] = inputParticle[11] + newToolModel.randomNumber(down_sample_cam, 0.0);
+        inputParticle[12] = inputParticle[12] + newToolModel.randomNumber(down_sample_cam, 0.0);
+
         noisedParticles[i] = inputParticle;
     }
 
