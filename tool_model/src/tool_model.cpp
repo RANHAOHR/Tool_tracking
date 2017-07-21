@@ -1082,42 +1082,7 @@ void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vert
         tool_normals.at<double>(j,0) = tool_vertices_normals[j][2];
         tool_normals.at<double>(j,1) = tool_vertices_normals[j][3];
     }
-    /******** using less side normals: current best using stereo ********/
-//    std::vector< std::vector<double> > temp_vec_normals;
-//    ///need adjust the first few normals
-//
-//    for (int m = 0; m <point_dim - 9; ++m) {
-//        temp_vec_normals.push_back(tool_vertices_normals[m]);
-//    }
-//
-//    cv::Mat cylinder_norm(1,2,CV_64FC1);
-//    cylinder_norm.at<double>(0,0) = temp_vec_normals[0][2];
-//    cylinder_norm.at<double>(0,1) = temp_vec_normals[0][3];
-//    cv::normalize(cylinder_norm, cylinder_norm);
-//    //ROS_INFO_STREAM("cylinder_norm " << cylinder_norm);
-//    for (int l = point_dim - 9; l < point_dim; ++l) {
-//        cv::Mat temp(1,2,CV_64FC1);
-//        temp.at<double>(0,0) = tool_vertices_normals[l][2];
-//        temp.at<double>(0,1) = tool_vertices_normals[l][3];
-//        cv::normalize(temp, temp);
-//        double bar = cylinder_norm.dot(temp);
-//        //ROS_INFO_STREAM("bar IS " << bar);
-//        if(bar < 0.3 && bar > -0.1){
-//            temp_vec_normals.push_back(tool_vertices_normals[l]);
-//        }
-//    }
-//    int actual_dim = temp_vec_normals.size();   //need one more for other orientation
-//    tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-//    tool_normals = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-//
-//    for (int j = 0; j < actual_dim; ++j) {
-//        tool_points.at<double>(j,0) = temp_vec_normals[j][0];
-//        tool_points.at<double>(j,1) = temp_vec_normals[j][1];
-//
-//        tool_normals.at<double>(j,0) = temp_vec_normals[j][2];
-//        tool_normals.at<double>(j,1) = temp_vec_normals[j][3];
-//
-//    }
+
     /***** normalize *****/
     for (int i = 0; i < actual_dim; ++i) {
         cv::Mat temp(1,2,CV_64FC1);
@@ -1237,36 +1202,41 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
     cv::Mat BinaryImg(toolImFloat.size(), toolImFloat.type());
     BinaryImg = toolImFloat * (1.0/255);
 
-    /***segmented image process**/
-    for (int i = 0; i < segImgGrey.rows; i++) {
-        for (int j = 0; j < segImgGrey.cols; j++) {
-            segImgGrey.at<uchar>(i,j) = 255 - segImgGrey.at<uchar>(i,j);
+    if(countNonZero(BinaryImg) < 1){
+        output = 1000; //avoid empty image
+    } else{
+        /***segmented image process**/
+        for (int i = 0; i < segImgGrey.rows; i++) {
+            for (int j = 0; j < segImgGrey.cols; j++) {
+                segImgGrey.at<uchar>(i,j) = 255 - segImgGrey.at<uchar>(i,j);
 
+            }
         }
-    }
 
-    cv::Mat normDIST;
-    cv::Mat distance_img;
-    cv::distanceTransform(segImgGrey, distance_img, CV_DIST_L2, 3);
-    cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
+        cv::Mat normDIST;
+        cv::Mat distance_img;
+        cv::distanceTransform(segImgGrey, distance_img, CV_DIST_L2, 3);
+        cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
 
 //    cv::imshow("segImgGrey img", segImgGrey);
 //    cv::imshow("Normalized img", normDIST);
 ////    cv::imshow("distance_img", distance_img);
 //    cv::waitKey();
 
-    /***multiplication process**/
-    cv::Mat resultImg; //initialize
-    cv::multiply(normDIST, BinaryImg, resultImg);
+        /***multiplication process**/
+        cv::Mat resultImg; //initialize
+        cv::multiply(normDIST, BinaryImg, resultImg);
 
-    for (int k = 0; k < resultImg.rows; ++k) {
-        for (int i = 0; i < resultImg.cols; ++i) {
+        for (int k = 0; k < resultImg.rows; ++k) {
+            for (int i = 0; i < resultImg.cols; ++i) {
 
-            double mul = resultImg.at<float>(k,i);
-            if(mul > 0.0)
-                output += mul;
+                double mul = resultImg.at<float>(k,i);
+                if(mul > 0.0)
+                    output += mul;
+            }
         }
     }
+
     //ROS_INFO_STREAM("OUTPUT: " << output);
     output = exp(-1 * output/80);
 
