@@ -1058,68 +1058,6 @@ void ToolModel::renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &Ca
 
 };
 
-void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vertices_normals, cv::Mat &tool_points, cv::Mat &tool_normals){
-
-    std::sort(tool_vertices_normals.begin(), tool_vertices_normals.end());
-    tool_vertices_normals.erase(std::unique(tool_vertices_normals.begin(), tool_vertices_normals.end()), tool_vertices_normals.end());
-
-    int point_dim = tool_vertices_normals.size();
-
-    int actual_dim = point_dim;   //need one more for other orientation
-    tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-    tool_normals = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-
-    for (int j = 0; j < point_dim; ++j) {
-        tool_points.at<double>(j,0) = tool_vertices_normals[j][0];
-        tool_points.at<double>(j,1) = tool_vertices_normals[j][1];
-
-        tool_normals.at<double>(j,0) = tool_vertices_normals[j][2];
-        tool_normals.at<double>(j,1) = tool_vertices_normals[j][3];
-    }
-    /******** using less side normals: current best using stereo ********/
-//    std::vector< std::vector<double> > temp_vec_normals;
-//    ///need adjust the first few normals
-//
-//    for (int m = 0; m <point_dim - 9; ++m) {
-//        temp_vec_normals.push_back(tool_vertices_normals[m]);
-//    }
-//
-//    cv::Mat cylinder_norm(1,2,CV_64FC1);
-//    cylinder_norm.at<double>(0,0) = temp_vec_normals[0][2];
-//    cylinder_norm.at<double>(0,1) = temp_vec_normals[0][3];
-//    cv::normalize(cylinder_norm, cylinder_norm);
-//    //ROS_INFO_STREAM("cylinder_norm " << cylinder_norm);
-//    for (int l = point_dim - 9; l < point_dim; ++l) {
-//        cv::Mat temp(1,2,CV_64FC1);
-//        temp.at<double>(0,0) = tool_vertices_normals[l][2];
-//        temp.at<double>(0,1) = tool_vertices_normals[l][3];
-//        cv::normalize(temp, temp);
-//        double bar = cylinder_norm.dot(temp);
-//        //ROS_INFO_STREAM("bar IS " << bar);
-//        if(bar < 0.3 && bar > -0.1){
-//            temp_vec_normals.push_back(tool_vertices_normals[l]);
-//        }
-//    }
-//    int actual_dim = temp_vec_normals.size();   //need one more for other orientation
-//    tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-//    tool_normals = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-//
-//    for (int j = 0; j < actual_dim; ++j) {
-//        tool_points.at<double>(j,0) = temp_vec_normals[j][0];
-//        tool_points.at<double>(j,1) = temp_vec_normals[j][1];
-//
-//        tool_normals.at<double>(j,0) = temp_vec_normals[j][2];
-//        tool_normals.at<double>(j,1) = temp_vec_normals[j][3];
-//
-//    }
-    /***** normalize *****/
-    for (int i = 0; i < actual_dim; ++i) {
-        cv::Mat temp(1,2,CV_64FC1);
-        cv::normalize(tool_normals.row(i), temp);
-        temp.copyTo(tool_normals.row(i));
-    }
-};
-
 void ToolModel::gatherNormals(std::vector< std::vector<double> > &part1_normals, std::vector< std::vector<double> > &part2_normals, std::vector< std::vector<double> > &part3_normals, cv::Mat &tool_points, cv::Mat &tool_normals){
 
     std::sort(part1_normals.begin(), part1_normals.end());
@@ -1213,60 +1151,60 @@ float ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segme
 }
 
 float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmentedImage) {
-
     float output = 0;
-
-    ///////////////////PART 1: particle rendering processing////////////////////////////////
-    //get toolImage's binary grayscale representation (all 1's refer to pixels representing the particle)
     cv::Mat ROI_toolImage = toolImage.clone(); //CV_8UC3
+    cv::Mat segImgGrey = segmentedImage.clone(); //CV_8UC1
+
+    segImgGrey.convertTo(segImgGrey, CV_8UC1);
+
+    /***tool image process**/
     cv::Mat toolImageGrey(ROI_toolImage.size(), CV_8UC1); //grey scale of toolImage since tool image has 3 channels
-    cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //render bw version of ROI_toolImage on toolImageGrey
+    cv::Mat toolImFloat(ROI_toolImage.size(), CV_32FC1); //Float data type of grey scale tool image
+    cv::cvtColor(ROI_toolImage, toolImageGrey, CV_BGR2GRAY); //convert it to grey scale
 
-    cv::Mat toolImFloat(ROI_toolImage.size(), CV_32FC1); //Float data type of toolImageGrey
-    toolImageGrey.convertTo(toolImFloat, CV_32FC1);
+    toolImageGrey.convertTo(toolImFloat, CV_32FC1); // get float img
 
-    cv::Mat BinaryImg(toolImFloat.size(), toolImFloat.type()); //binary representation of toolImFloat
+    cv::Mat BinaryImg(toolImFloat.size(), toolImFloat.type());
     BinaryImg = toolImFloat * (1.0/255);
 
+    if(countNonZero(BinaryImg) < 100){
+        output = 1000; //avoid empty image
+    } else{
+        /***segmented image process**/
+        for (int i = 0; i < segImgGrey.rows; i++) {
+            for (int j = 0; j < segImgGrey.cols; j++) {
+                segImgGrey.at<uchar>(i,j) = 255 - segImgGrey.at<uchar>(i,j);
 
-    ///////////////////PART 2: segmenting image processing////////////////////////////////
-    //convert segmented image to 8UC1 and invert it.  All 0 values in segImgGrey are parts of the tool
-    cv::Mat segImgGrey = segmentedImage.clone();
-    segImgGrey.convertTo(segImgGrey, CV_8UC1);
-    for (int i = 0; i < segImgGrey.rows; i++) {
-        for (int j = 0; j < segImgGrey.cols; j++) {
-            segImgGrey.at<uchar>(i,j) = 255 - segImgGrey.at<uchar>(i,j);
+            }
         }
-    }
 
-    //compute normalized closest distance of every pixel to a segmented tool part (represented by 0's in segImgGrey)
-    cv::Mat distance_img; //distance to closest part of tool
-    cv::Mat normDIST; //normalized distance_img
-    cv::distanceTransform(segImgGrey, distance_img, CV_DIST_L2, 3);
-    cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
+        cv::Mat normDIST;
+        cv::Mat distance_img;
+        cv::distanceTransform(segImgGrey, distance_img, CV_DIST_L2, 3);
+        cv::normalize(distance_img, normDIST, 0.00, 1.00, cv::NORM_MINMAX);
 
 //    cv::imshow("segImgGrey img", segImgGrey);
-//    cv::imshow("distance_img img", distance_img);
 //    cv::imshow("Normalized img", normDIST);
+////    cv::imshow("distance_img", distance_img);
 //    cv::waitKey();
 
-    //////////////////PART 3: Compute Chamfer Distance//////////////////////////
-    //When we multiply BinaryImg by normDist, we get the distance of every pixel representing the particle to the closest pixel representing the segmented image
-    cv::Mat resultImg;
-    cv::multiply(normDIST, BinaryImg, resultImg);
+        /***multiplication process**/
+        cv::Mat resultImg; //initialize
+        cv::multiply(normDIST, BinaryImg, resultImg);
 
-    //We now sum all these distances
-    for (int k = 0; k < resultImg.rows; ++k) {
-        for (int i = 0; i < resultImg.cols; ++i) {
-            double mul = resultImg.at<float>(k,i);
-            if(mul > 0.0)
-                output += mul;
+        for (int k = 0; k < resultImg.rows; ++k) {
+            for (int i = 0; i < resultImg.cols; ++i) {
+
+                double mul = resultImg.at<float>(k,i);
+                if(mul > 0.0)
+                    output += mul;
+            }
         }
     }
-    //ROS_INFO_STREAM("OUTPUT: " << output);
 
-    //Scale the output
+    //ROS_INFO_STREAM("OUTPUT: " << output);
     output = exp(-1 * output/80);
+
     return output;
 };
 

@@ -1,0 +1,12 @@
+<launch>
+  
+   <!-- Launch daVinci node   -->      
+   <include file="$(find cwru_davinci_gazebo)/launch/sticky_davinci_gazebo.launch"/>
+
+   <node name="davinci_traj" pkg="cwru_davinci_traj_streamer" type="davinci_traj_interpolator_as" output="screen" launch-prefix="xterm -e"/>
+
+   <!-- Launch playfile view  -->
+   <node name="playfile_reader" pkg="cwru_playfile_reader" type="playfile_jointspace" args="/home/ranhao/ros_ws/src/cwru_davinci/cwru_playfile_reader/play/jsp/touchy.jsp" output="screen" />
+
+
+</launch>

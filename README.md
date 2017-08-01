@@ -1,6 +1,6 @@
 # Tool tracking package
 
-This package is for the da Vinci surgical robot tool tracking in simulatin environment, gazebo.
+This package is for the da Vinci surgical robot tool tracking in simulatin environment, Gazebo.
 
 #Dependences:
 pkgs:

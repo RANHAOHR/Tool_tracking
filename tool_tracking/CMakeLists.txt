@@ -6,7 +6,7 @@ find_package(catkin_simple REQUIRED)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 
-find_package(catkin REQUIRED COMPONENTS message_generation std_msgs sensor_msgs geometry_msgs cwru_opencv_common tool_model vesselness_image_filter cwru_davinci_interface)
+find_package(catkin REQUIRED COMPONENTS message_generation std_msgs sensor_msgs geometry_msgs cwru_opencv_common tool_model cwru_davinci_interface)
 
 find_package(OpenCV REQUIRED)
 
@@ -42,8 +42,8 @@ cs_add_executable(tracking_kalman src/tracking_kalman.cpp)
 # target_link_library(example my_lib)
 target_link_libraries(tool_tracking_particle tool_model_lib)
 target_link_libraries(tool_tracking_kalman tool_model_lib)
-target_link_libraries(tracking_particle tool_tracking_particle vesselness_image_filter_common_lib)
-target_link_libraries(tracking_kalman tool_tracking_kalman vesselness_image_filter_common_lib)
+target_link_libraries(tracking_particle tool_tracking_particle )
+target_link_libraries(tracking_kalman tool_tracking_kalman )
 
 
 cs_install()

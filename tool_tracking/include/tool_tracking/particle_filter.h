@@ -56,7 +56,6 @@
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 
-#include <vesselness_image_filter_cpu/vesselness_lib.h>
 #include <boost/random/normal_distribution.hpp>
 
 #include <geometry_msgs/Transform.h>
@@ -141,6 +140,7 @@ private:
 
 	double error_pos; //error between best particle and gazebo readings for pos
 	double error_ori; //error between best partticle and gazebo readings for ori
+    
 public:
 
 	cv::Mat raw_image_left; //left rendered Image

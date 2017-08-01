@@ -1,3 +1,0 @@
-/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/connor/ros_ws/src/dvrk_dependencies/Tool_tracking/cmake-build-debug/CMakeFiles/Tool_tracking.dir

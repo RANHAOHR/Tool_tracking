@@ -23,7 +23,6 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>cwru_opencv_common</build_depend>
-  <build_depend>vesselness_image_filter</build_depend>
   <build_depend>tool_model</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>cwru_davinci_interface</build_depend>
@@ -39,7 +38,6 @@
   <run_depend>std_msgs</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>cwru_opencv_common</run_depend>
-  <run_depend>vesselness_image_filter</run_depend >
   <run_depend>tool_model</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>cwru_davinci_interface</run_depend>
