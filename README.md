@@ -16,9 +16,9 @@ To check the tool geometry and virtual rendering performance, run:
 
 `rosrun tool_model tool_model_main`
 
-- tool tracking package: integrate Annealing Particle Filter (APF) algorithm, Unscented Kalman Filter (UKF) algorithm
+- tool tracking package: integrate Particle Filter (PF) algorithm, Unscented Kalman Filter (UKF) algorithm
 
-To run APF tracking algorithm:
+To run PF tracking algorithm:
 
 `rosrun tool_tracking tracking_particle`
 

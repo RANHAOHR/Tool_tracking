@@ -51,13 +51,10 @@ boost::mt19937 rng((const uint32_t &) time(0));
 ToolModel::ToolModel() {
 
     ///adjust the model params according to the tool geometry
-     offset_body = 0.4530; //0.4560
-     offset_ellipse = offset_body;
-     offset_gripper = offset_ellipse+ 0.007;
-//
-//    offset_body = 0.4560; //0.4560
-//    offset_ellipse = offset_body;
-//    offset_gripper = offset_ellipse+ 0.007;
+
+    offset_body = 0.4560; //0.4560
+    offset_ellipse = offset_body;
+    offset_gripper = offset_ellipse+ 0.007;
 
 //    offset_body = 0.4570; //0.4560
 //    offset_ellipse = offset_body;
@@ -894,7 +891,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
 
     cv::Mat q_ellipse_(4, 1, CV_64FC1);
     q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0.011;//0.011
+    q_ellipse_.at<double>(1, 0) = 0.015;//0.011
     q_ellipse_.at<double>(2, 0) = 0;
     q_ellipse_.at<double>(3, 0) = 1;
 
@@ -935,7 +932,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
     inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
 
-    double theta_orien_grip = -1.0 * theta_grip_1; //maybe the x being flipped
+    double theta_orien_grip = -1.0 * theta_grip_1 - 0.1; //maybe the x being flipped
     double theta_grip_open = theta_grip_2;
     if(theta_grip_open < 0.0){
         theta_grip_open = 0.0;

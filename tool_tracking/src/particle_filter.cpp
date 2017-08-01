@@ -41,38 +41,23 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-        node_handle(*nodehandle), numParticles(150), down_sample_joint(0.0006), down_sample_cam(0.002), L(13) {
+        node_handle(*nodehandle), numParticles(150), down_sample_joint(0.0001), down_sample_cam(0.001), L(13) {
     /********** using calibration results: camera-base transformation *******/
     g_cr_cl = cv::Mat::eye(4, 4, CV_64FC1);
 
     cv::Mat rot(3, 3, CV_64FC1);
-    cv::Mat rot_vec = (cv::Mat_<double>(3, 1) << -0.01, -0.008, 0.024); //-0.01163, -0.024, 0.00142 //-0.01, -0.008, 0.024
+    cv::Mat rot_vec = (cv::Mat_<double>(3, 1) << 0.0001, -0.004, 0.001); //-0.01163, -0.024, 0.00142
     cv::Rodrigues(rot_vec, rot);
     rot.copyTo(g_cr_cl.colRange(0, 3).rowRange(0, 3));
 
-    cv::Mat p = (cv::Mat_<double>(3, 1) << -0.015, 0.0, 0.00); //-0.011, 0.0, 0.00//-0.015, 0.0, 0.00
+    cv::Mat p = (cv::Mat_<double>(3, 1) << 0.00, 0.0, 0.00); //-0.011, 0.0, 0.00
     p.copyTo(g_cr_cl.colRange(3, 4).rowRange(0, 3));
 
-    Cam_left_arm_1 = (cv::Mat_<double>(4, 4) << -0.7882, 0.6067, 0.1025, -0.1449,
-            0.5854, 0.7909, -0.1784, -0.0607,
-            -0.1894, -0.0806, -0.9786, 0.0200,
-            0, 0, 0, 1.0000);
 
-    /*
-     * rot_vec: [0.9466735106091037;
-         2.825194202970501;
-         -0.2056958859990591]
-    */
-
-    //better
-    Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.7882, 0.6067, 0.1025, -0.12249,  //-0.7882, 0.6067, 0.1025, -0.1449,
-            0.5854, 0.7909, -0.1784, -0.0480,   //	0.5854, 0.7909, -0.1784, -0.0607,
-            -0.1894, -0.0806, -0.9786, 0.02, //	-0.1894, -0.0806, -0.9786, 0.0200,   0.0157
-            0,0, 0, 1.0000);
-
-    rot_vec = (cv::Mat_<double>(3,1) << 1.09976677, 2.5802519, -0.200696); //1.0996677, 2.6502519, -0.20696
-    cv::Rodrigues(rot_vec, rot);
-    rot.copyTo(Cam_left_arm_1.colRange(0,3).rowRange(0,3));
+    Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.716943558545065, 0.6619729172548394, 0.2185950380998081, -0.1204197326593225,
+            0.6401798005168575, 0.7493007959192897, -0.169464274243616, -0.04432758639716859,
+            -0.2759741960237143, 0.01844380806223521, -0.9609880691627903, 0.004489468645178,
+            0, 0, 0, 1);
 
     ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
 
@@ -195,7 +180,6 @@ void ParticleFilter::computeNoisedParticles(std::vector<double> &inputParticle,
         /**
          * left camera-base matrix, There is offset for positions from initial calibration results
          */
-        double pos = 0.001;
 
         inputParticle[7] = inputParticle[7] + newToolModel.randomNumber(down_sample_cam, 0);
         inputParticle[8] = inputParticle[8] + newToolModel.randomNumber(down_sample_cam, 0);
@@ -490,10 +474,10 @@ void ParticleFilter::updateParticles(std::vector<double> &best_particle_last, do
 
     }
 
-    down_sample_cam -= 0.0002;
-    if (down_sample_cam < 0.0001) {
-        down_sample_cam = 0.0001;
-    };
+//    down_sample_cam -= 0.0002;
+//    if (down_sample_cam < 0.0001) {
+//        down_sample_cam = 0.0001;
+//    };
 
 };
 

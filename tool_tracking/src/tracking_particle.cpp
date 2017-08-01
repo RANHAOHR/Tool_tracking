@@ -37,11 +37,11 @@ cv::Mat segmentation(cv::Mat &InputImg) {
 
 	resize(src, src, cv::Size(), 1, 1);
 
-	double lowThresh = 28;
+	double lowThresh = 27;
 
-	cv::cvtColor(src, src_gray, CV_BGR2GRAY);
+//	cv::cvtColor(src, src_gray, CV_BGR2GRAY); //if this is already CV_8UC1 in rect image
 
-	blur(src_gray, src_gray, cv::Size(3, 3));
+	blur(src, src_gray, cv::Size(3, 3));
 
 	Canny(src_gray, grad, lowThresh, 4 * lowThresh, 3); //use Canny segmentation
 
@@ -69,8 +69,8 @@ int main(int argc, char **argv) {
 
     //TODO: get image size from camera model, or initialize segmented images,
 
-    cv::Mat rawImage_left = cv::Mat::zeros(480, 640, CV_8UC3);//CV_32FC1
-    cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
+    cv::Mat rawImage_left = cv::Mat::zeros(480, 640, CV_8UC1);//CV_32FC1
+    cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_8UC1);
 
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber img_sub_l = it.subscribe(
@@ -93,11 +93,12 @@ int main(int argc, char **argv) {
             Particles.raw_image_left = rawImage_left.clone();
             Particles.raw_image_right = rawImage_right.clone();
 
+
             seg_left = segmentation(rawImage_left);
             seg_right = segmentation(rawImage_right);
 
             cv::imshow("seg left: ",seg_left );
-            cv::imshow("seg right: ",seg_right );  
+            cv::imshow("seg right: ",seg_right );
 
             Particles.trackingTool(seg_left, seg_right); //with rendered tool and segmented img
 
