@@ -12,20 +12,20 @@ using namespace cv_projective;
 
 std::vector<cv::Mat> trackingImgs;  ///this should be CV_32F
 
-void newImageCallback(const sensor_msgs::ImageConstPtr &msg, cv::Mat *outputImage) {
-	cv_bridge::CvImagePtr cv_ptr;
-	try {
-		//cv::Mat src =  cv_bridge::toCvShare(msg,"32FC1")->image;
-		//outputImage[0] = src.clone();
-		cv_ptr = cv_bridge::toCvCopy(msg);
-		outputImage[0] = cv_ptr->image;
-		freshImage = true;
-	}
-	catch (cv_bridge::Exception &e) {
-		ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
-	}
-
-}
+//void newImageCallback(const sensor_msgs::ImageConstPtr &msg, cv::Mat *outputImage) {
+//	cv_bridge::CvImagePtr cv_ptr;
+//	try {
+//		//cv::Mat src =  cv_bridge::toCvShare(msg,"32FC1")->image;
+//		//outputImage[0] = src.clone();
+//		cv_ptr = cv_bridge::toCvCopy(msg);
+//		outputImage[0] = cv_ptr->image;
+//		freshImage = true;
+//	}
+//	catch (cv_bridge::Exception &e) {
+//		ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
+//	}
+//
+//}
 
 cv::Mat segmentation(cv::Mat &InputImg) {
 
@@ -37,7 +37,7 @@ cv::Mat segmentation(cv::Mat &InputImg) {
 
 	resize(src, src, cv::Size(), 1, 1);
 
-	double lowThresh = 28;
+	double lowThresh = 27;
 
 	cv::cvtColor(src, src_gray, CV_BGR2GRAY);
 
@@ -72,12 +72,19 @@ int main(int argc, char **argv) {
     cv::Mat rawImage_left = cv::Mat::zeros(480, 640, CV_8UC3);//CV_32FC1
     cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
 
-    image_transport::ImageTransport it(nh);
-    image_transport::Subscriber img_sub_l = it.subscribe(
-            "/davinci_endo/left/image_rect", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_left)));
 
-    image_transport::Subscriber img_sub_r = it.subscribe(
-            "/davinci_endo/right/image_rect", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_right)));
+    string left_fname = "/home/rxh349/Downloads/newman_data/left_pics/50.png";
+    rawImage_left = cv::imread(left_fname);
+
+    string right_fname = "/home/rxh349/Downloads/newman_data/right_pics/50.png";
+    rawImage_right = cv::imread(right_fname);
+
+//    image_transport::ImageTransport it(nh);
+//    image_transport::Subscriber img_sub_l = it.subscribe(
+//            "/davinci_endo/left/image_rect", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_left)));
+//
+//    image_transport::Subscriber img_sub_r = it.subscribe(
+//            "/davinci_endo/right/image_rect", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_right)));
 
     ROS_INFO("---- done subscribe -----");
 
@@ -85,25 +92,21 @@ int main(int argc, char **argv) {
 	/****TODO: Temp Projection matrices****/
 
 	while (nh.ok()) {
-		ros::spinOnce();
+//		ros::spinOnce();
 
 		/*** if camera is ready, doing the tracking based on segemented image***/
-		if (freshImage) {
 
-            Particles.raw_image_left = rawImage_left.clone();
-            Particles.raw_image_right = rawImage_right.clone();
 
-            seg_left = segmentation(rawImage_left);
-            seg_right = segmentation(rawImage_right);
+        Particles.raw_image_left = rawImage_left.clone();
+        Particles.raw_image_right = rawImage_right.clone();
 
-            cv::imshow("seg left: ",seg_left );
-            cv::imshow("seg right: ",seg_right );  
+        seg_left = segmentation(rawImage_left);
+        seg_right = segmentation(rawImage_right);
 
-            Particles.trackingTool(seg_left, seg_right); //with rendered tool and segmented img
+        cv::imshow("seg left: ",seg_left );
+        cv::imshow("seg right: ",seg_right );
 
-			freshImage = false;
-
-		}
+        Particles.trackingTool(seg_left, seg_right); //with rendered tool and segmented img
 
 	}
 

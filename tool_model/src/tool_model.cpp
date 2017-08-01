@@ -51,17 +51,13 @@ boost::mt19937 rng((const uint32_t &) time(0));
 ToolModel::ToolModel() {
 
     ///adjust the model params according to the tool geometry
-     offset_body = 0.4530; //0.4560
-     offset_ellipse = offset_body;
-     offset_gripper = offset_ellipse+ 0.007;
-//
 //    offset_body = 0.4560; //0.4560
 //    offset_ellipse = offset_body;
-//    offset_gripper = offset_ellipse+ 0.007;
+//    offset_gripper = offset_ellipse+ 0.005;
 
-//    offset_body = 0.4570; //0.4560
-//    offset_ellipse = offset_body;
-//    offset_gripper = offset_ellipse+ 0.009;
+    offset_body = 0.475; //0.4560
+    offset_ellipse = offset_body;
+    offset_gripper = offset_ellipse+ 0.009;
 
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
@@ -894,7 +890,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
 
     cv::Mat q_ellipse_(4, 1, CV_64FC1);
     q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0.011;//0.011
+    q_ellipse_.at<double>(1, 0) = 0.01;//0.011
     q_ellipse_.at<double>(2, 0) = 0;
     q_ellipse_.at<double>(3, 0) = 1;
 
@@ -922,7 +918,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     /*********** computations for gripper kinematics **********/
     cv::Mat test_gripper(3, 1, CV_64FC1);
     test_gripper.at<double>(0, 0) = 0;
-    test_gripper.at<double>(1, 0) = 0.007;
+    test_gripper.at<double>(1, 0) = 0.01;
     test_gripper.at<double>(2, 0) = 0;
 
     cv::Mat rot_elp(3, 3, CV_64FC1);
@@ -1202,7 +1198,7 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
     cv::Mat BinaryImg(toolImFloat.size(), toolImFloat.type());
     BinaryImg = toolImFloat * (1.0/255);
 
-    if(countNonZero(BinaryImg) < 1){
+    if(countNonZero(BinaryImg) < 300){
         output = 1000; //avoid empty image
     } else{
         /***segmented image process**/
