@@ -919,7 +919,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     /*********** computations for gripper kinematics **********/
     cv::Mat test_gripper(3, 1, CV_64FC1);
     test_gripper.at<double>(0, 0) = 0;
-    test_gripper.at<double>(1, 0) = 0.007;
+    test_gripper.at<double>(1, 0) = 0.009;
     test_gripper.at<double>(2, 0) = 0;
 
     cv::Mat rot_elp(3, 3, CV_64FC1);
@@ -932,14 +932,14 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
     inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
 
-    double theta_orien_grip = -1.0 * theta_grip_1 - 0.1; //maybe the x being flipped
+    double theta_orien_grip = -1.0 * theta_grip_1 - 0.2; //maybe the x being flipped
     double theta_grip_open = theta_grip_2;
     if(theta_grip_open < 0.0){
         theta_grip_open = 0.0;
     }
 
-    double grip_2_delta = theta_orien_grip - theta_grip_open;
-    double grip_1_delta = theta_orien_grip + theta_grip_open;
+    double grip_2_delta = theta_orien_grip - (theta_grip_open +0.1);
+    double grip_1_delta = theta_orien_grip + (theta_grip_open +0.1);
 
     cos_theta = cos(grip_1_delta);
     sin_theta = sin(grip_1_delta);
@@ -1199,7 +1199,7 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
     cv::Mat BinaryImg(toolImFloat.size(), toolImFloat.type());
     BinaryImg = toolImFloat * (1.0/255);
 
-    if(countNonZero(BinaryImg) < 1){
+    if(countNonZero(BinaryImg) < 100){
         output = 1000; //avoid empty image
     } else{
         /***segmented image process**/
