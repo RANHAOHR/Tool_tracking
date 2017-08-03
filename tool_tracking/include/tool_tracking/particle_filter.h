@@ -140,7 +140,7 @@ private:
 
 	double error_pos; //error between best particle and gazebo readings for pos
 	double error_ori; //error between best partticle and gazebo readings for ori
-    
+
 public:
 
 	cv::Mat raw_image_left; //left rendered Image
