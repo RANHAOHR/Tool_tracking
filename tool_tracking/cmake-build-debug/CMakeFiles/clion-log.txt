@@ -1,0 +1,45 @@
+/home/rxh349/Documents/clion-2016.3.2/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking
+-- The C compiler identification is GNU 4.8.4
+-- The CXX compiler identification is GNU 4.8.4
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Using CATKIN_DEVEL_PREFIX: /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel
+-- Using CMAKE_PREFIX_PATH: /home/rxh349/ros_ws/devel;/opt/ros/jade
+-- This workspace overlays: /home/rxh349/ros_ws/devel;/opt/ros/jade
+-- Found PythonInterp: /usr/bin/python (found version "2.7.6") 
+-- Using PYTHON_EXECUTABLE: /usr/bin/python
+-- Using Debian Python package layout
+-- Using empy: /usr/bin/empy
+-- Using CATKIN_ENABLE_TESTING: ON
+-- Call enable_testing()
+-- Using CATKIN_TEST_RESULTS_DIR: /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/test_results
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Looking for pthread_create
+-- Looking for pthread_create - not found
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - found
+-- Found Threads: TRUE  
+-- Found gtest sources under '/usr/src/gtest': gtests will be built
+-- Using Python nosetests: /usr/bin/nosetests-2.7
+-- catkin 0.6.14
+-- Using these message generators: gencpp;geneus;genlisp;genpy
+-- Found CUDA: /usr/local/cuda (found suitable exact version "7.0") 
+-- Marking SHARED_LIBRARY "tool_tracking_particle" of package "tool_tracking" for installation
+-- Marking EXECUTABLE "tracking_particle" of package "tool_tracking" for installation
+-- Marking HEADER FILES in "include" folder of package "tool_tracking" for installation
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug

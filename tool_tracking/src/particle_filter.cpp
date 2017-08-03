@@ -47,7 +47,7 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     g_cr_cl = cv::Mat::eye(4, 4, CV_64FC1);
 
     cv::Mat rot(3, 3, CV_64FC1);
-    cv::Mat rot_vec = (cv::Mat_<double>(3, 1) << 0.0001, -0.004, 0.001); //-0.01163, -0.024, 0.00142
+    cv::Mat rot_vec = (cv::Mat_<double>(3, 1) << 0.0001, -0.002, 0.001); //-0.01163, -0.024, 0.00142
     cv::Rodrigues(rot_vec, rot);
     rot.copyTo(g_cr_cl.colRange(0, 3).rowRange(0, 3));
 
@@ -109,11 +109,6 @@ void ParticleFilter::initializeParticles() {
     //Get sensor update
     kinematics = Davinci_fwd_solver();
 
-    /**
-     * Get the initial gues from the forward kinematics
-     */
-    getCoarseGuess();
-
 };
 
 void ParticleFilter::getCoarseGuess() {
@@ -143,7 +138,7 @@ void ParticleFilter::getCoarseGuess() {
     }
     ROS_INFO_STREAM("joint_sensor size is : " << joint_sensor.size());
 
-    sensor_1 = joint_sensor[50];
+    sensor_1 = joint_sensor[index_pic];
 
     Eigen::Affine3d a1_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0],
                                                             sensor_1[0] + DH_q_offset0);
@@ -377,6 +372,11 @@ void ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &
              best_tool_pose.rvec_cyl(2));
 
     ///showing results for each iteration here
+//    cv::cvtColor(raw_image_left,raw_image_left,CV_GRAY2RGB);
+//    cv::cvtColor(raw_image_right,raw_image_right,CV_GRAY2RGB);
+    double type = raw_image_left.type();
+    ROS_INFO_STREAM("type :" << type);
+
     newToolModel.renderTool(raw_image_left, particle_models[maxScoreIdx_1], cam_matrices_left_arm_1[maxScoreIdx_1],
                             P_left);
     newToolModel.renderTool(raw_image_right, particle_models[maxScoreIdx_1], cam_matrices_right_arm_1[maxScoreIdx_1],

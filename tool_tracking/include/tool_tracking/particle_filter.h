@@ -152,6 +152,11 @@ private:
 public:
 
 /**
+ * @brief The code for pictures
+ */
+     int index_pic;
+
+/**
  * @brief for comparing and testing
  */
     cv::Mat raw_image_left; //left rendered Image

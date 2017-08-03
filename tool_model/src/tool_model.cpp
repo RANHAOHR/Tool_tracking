@@ -51,13 +51,13 @@ boost::mt19937 rng((const uint32_t &) time(0));
 ToolModel::ToolModel() {
 
     ///adjust the model params according to the tool geometry
-//    offset_body = 0.4560; //0.4560
-//    offset_ellipse = offset_body;
-//    offset_gripper = offset_ellipse+ 0.005;
-
-    offset_body = 0.475; //0.4560
+    offset_body = 0.4560; //0.4560
     offset_ellipse = offset_body;
-    offset_gripper = offset_ellipse+ 0.009;
+    offset_gripper = offset_ellipse+ 0.005;
+
+//    offset_body = 0.475; //0.4560
+//    offset_ellipse = offset_body;
+//    offset_gripper = offset_ellipse+ 0.01;
 
     /****initialize the vertices fo different part of tools****/
     tool_model_pkg = ros::package::getPath("tool_model");
@@ -364,7 +364,7 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                         cv::Point2d prjpt_2 = reproject(ept_2, P);
                         if (prjpt_1.x <= 640 && prjpt_1.x >= -100 && prjpt_2.x < 640 && prjpt_2.x >= -100)
                         {
-                            cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);  
+                            cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 0), 1, 8, 0);
                         }
 
                     }
@@ -374,151 +374,6 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
         }
     }
 
-};
-
-/*************** extract contour and the vertex normal for measurement model *******************/
-void ToolModel::Compute_Silhouette_UKF(const std::vector<std::vector<int> > &input_faces,
-                                   const std::vector<std::vector<int> > &neighbor_faces,
-                                   const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
-                                   cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
-                                   const cv::Mat &P, std::vector<std::vector<double> > &vertices_vector, cv::OutputArray jac){
-
-    cv::Mat new_Vertices = transformPoints(input_Vmat, rvec, tvec);
-
-    new_Vertices = camTransformMats(CamMat, new_Vertices); //transform every point under camera frame
-
-    cv::Mat new_Normals = transformPoints(input_Nmat, rvec, tvec);
-    new_Normals = camTransformMats(CamMat, new_Normals); //transform every surface normal under camera frame
-
-    unsigned long neighbor_num = 0;
-    cv::Mat temp(4, 1, CV_64FC1);
-
-    cv::Mat ept_1(4, 1, CV_64FC1);
-    cv::Mat ept_2(4, 1, CV_64FC1);
-
-    for (int i = 0; i < input_faces.size(); ++i) {
-        neighbor_num = (neighbor_faces[i].size()) / 5;  //each neighbor has two vertices, used to be 3 when normals
-
-        if (neighbor_num > 0) {
-            int v1 = input_faces[i][0];
-            int v2 = input_faces[i][1];
-            int v3 = input_faces[i][2];
-            int n1 = input_faces[i][3];
-            int n2 = input_faces[i][4];
-            int n3 = input_faces[i][5];
-
-            new_Vertices.col(v1).copyTo(temp.col(0));
-            cv::Point3d pt1 = convert_MattoPts(temp);
-            new_Vertices.col(v2).copyTo(temp.col(0));
-            cv::Point3d pt2 = convert_MattoPts(temp);
-            new_Vertices.col(v3).copyTo(temp.col(0));
-            cv::Point3d pt3 = convert_MattoPts(temp);
-
-            new_Normals.col(n1).copyTo(temp.col(0));
-            cv::Point3d vn1 = convert_MattoPts(temp);
-            new_Normals.col(n2).copyTo(temp.col(0));
-            cv::Point3d vn2 = convert_MattoPts(temp);
-            new_Normals.col(n3).copyTo(temp.col(0));
-            cv::Point3d vn3 = convert_MattoPts(temp);
-
-            cv::Point3d fnormal = FindFaceNormal(pt1, pt2, pt3, vn1, vn2, vn3); //knowing the direction and normalized
-            cv::Point3d face_point_i = pt1 + pt2 + pt3;
-            face_point_i.x = face_point_i.x / 3;
-            face_point_i.y = face_point_i.y / 3;
-            face_point_i.z = face_point_i.z / 3;
-
-            double isfront_i = dotProduct(fnormal, face_point_i);
-            if(isfront_i < 0.000){ //first need to find the front facing face
-                for (int neighbor_count = 0; neighbor_count <
-                                             neighbor_num; ++neighbor_count) {  //notice: cannot use J here, since the last j will not be counted
-                    int j = 5 * neighbor_count;
-                    int v1_ = input_faces[neighbor_faces[i][j]][0];
-                    int v2_ = input_faces[neighbor_faces[i][j]][1];
-                    int v3_ = input_faces[neighbor_faces[i][j]][2];
-
-                    int n1_ = input_faces[neighbor_faces[i][j]][3];
-                    int n2_ = input_faces[neighbor_faces[i][j]][4];
-                    int n3_ = input_faces[neighbor_faces[i][j]][5];
-
-
-                    new_Vertices.col(v1_).copyTo(temp.col(0));
-                    cv::Point3d pt1_ = convert_MattoPts(temp);
-                    new_Vertices.col(v2_).copyTo(temp.col(0));
-                    cv::Point3d pt2_ = convert_MattoPts(temp);
-                    new_Vertices.col(v3_).copyTo(temp.col(0));
-                    cv::Point3d pt3_ = convert_MattoPts(temp);
-
-                    new_Normals.col(n1_).copyTo(temp.col(0));
-                    cv::Point3d vn1_ = convert_MattoPts(temp);
-                    new_Normals.col(n2_).copyTo(temp.col(0));
-                    cv::Point3d vn2_ = convert_MattoPts(temp);
-                    new_Normals.col(n3_).copyTo(temp.col(0));
-                    cv::Point3d vn3_ = convert_MattoPts(temp);
-
-                    cv::Point3d fnormal_n = FindFaceNormal(pt1_, pt2_, pt3_, vn1_, vn2_, vn3_);
-
-                    cv::Point3d face_point_j = pt1_ + pt2_ + pt3_;
-                    face_point_j.x = face_point_j.x / 3;
-                    face_point_j.y = face_point_j.y / 3;
-                    face_point_j.z = face_point_j.z / 3;
-
-                    double isfront_j = dotProduct(fnormal_n, face_point_j);
-
-                    if (isfront_i * isfront_j < 0.0) // one is front, another is back
-                    {   /*finish finding, drawing the image*/
-                        new_Vertices.col(neighbor_faces[i][j + 1]).copyTo(ept_1);  //under camera frames
-                        new_Vertices.col(neighbor_faces[i][j + 3]).copyTo(ept_2);
-
-                        cv::Point2d prjpt_1 = reproject(ept_1, P);
-                        cv::Point2d prjpt_2 = reproject(ept_2, P);
-
-                        if(prjpt_1.x <= 640 && prjpt_2.x <= 640 && prjpt_1.y >= 0 && prjpt_1.y <= 480 && prjpt_2.y >= 0 && prjpt_2.y <= 480){
-                           
-                            cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
-                            /**** get new vertex ****/
-                            cv::Point2d mid_vertex = prjpt_1 + prjpt_2;
-                            mid_vertex.x = mid_vertex.x / 2;
-                            mid_vertex.y = mid_vertex.y / 2;
-
-                            double delta_y = prjpt_2.y - prjpt_1.y;
-                            double delta_x = prjpt_2.x - prjpt_1.x;
-
-                            double k  = delta_y / delta_x;
-                            cv::Mat temp_normal(1,2,CV_64FC1);
-                            temp_normal.at<double>(0,0) = -1.0 * k;   //n_x
-                            temp_normal.at<double>(0,1) = 1.0 ;     //n_y
-
-                            cv::Mat Vnormal_1 = new_Normals.col(neighbor_faces[i][j + 2]).clone();
-                            cv::Mat Vnormal_2 = new_Normals.col(neighbor_faces[i][j + 4]).clone();
-
-                            cv::Mat mid_normal(1,2,CV_64FC1);
-                            mid_normal.at<double>(0,0) = 0.5 * (Vnormal_1.at<double>(0,0) + Vnormal_2.at<double>(0,0));
-                            mid_normal.at<double>(0,1) = 0.5 * (Vnormal_1.at<double>(1,0) + Vnormal_2.at<double>(1,0));
-
-                            double dot_normal = mid_normal.dot(temp_normal);
-                            if(dot_normal < 0.0){
-                                temp_normal = -1.0 * temp_normal;   //flip?
-                            }
-
-                            /**get measurement points for UKF**/
-                            std::vector<double> vertex_vector;
-                            vertex_vector.resize(4); // vertices, normals
-
-                            if(mid_vertex.x >= 10 && mid_vertex.x <=640 && mid_vertex.y >= 0 && mid_vertex.y <= 480){
-                                vertex_vector[0] = mid_vertex.x;
-                                vertex_vector[1] = mid_vertex.y;
-                                vertex_vector[2] = temp_normal.at<double>(0,0);
-                                vertex_vector[3] = temp_normal.at<double>(0,1);
-                                vertices_vector.push_back(vertex_vector);
-                            }
-
-                        }
-
-                    }
-                }
-            }
-        }
-    }
 };
 
 cv::Point3d ToolModel::convert_MattoPts(cv::Mat &input_Mat) { //should be a 4 by 1 mat
@@ -890,7 +745,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
 
     cv::Mat q_ellipse_(4, 1, CV_64FC1);
     q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0.01;//0.011
+    q_ellipse_.at<double>(1, 0) = 0.011;//0.011
     q_ellipse_.at<double>(2, 0) = 0;
     q_ellipse_.at<double>(3, 0) = 1;
 
@@ -937,8 +792,8 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
         theta_grip_open = 0.0;
     }
 
-    double grip_2_delta = theta_orien_grip - theta_grip_open;
-    double grip_1_delta = theta_orien_grip + theta_grip_open;
+    double grip_2_delta = theta_orien_grip - (theta_grip_open + 0.1);
+    double grip_1_delta = theta_orien_grip + (theta_grip_open + 0.1);
 
     cos_theta = cos(grip_1_delta);
     sin_theta = sin(grip_1_delta);
@@ -1018,138 +873,6 @@ ToolModel::renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, co
     Compute_Silhouette(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image,
                        cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, jac);
 
-};
-
-/*** difference: give tool_normals ***/
-void ToolModel::renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P,
-                         cv::Mat &tool_points, cv::Mat &tool_normals, cv::OutputArray jac) {
-
-    std::vector< std::vector<double> > tool_vertices_normals;
-    Compute_Silhouette_UKF(body_faces, body_neighbors, body_Vmat, body_Nmat, CamMat, image, cv::Mat(tool.rvec_cyl),
-                       cv::Mat(tool.tvec_cyl), P, tool_vertices_normals, jac);
-
-    std::vector< std::vector<double> > tool_oval_normals;
-    Compute_Silhouette_UKF(oval_normal_faces, oval_normal_neighbors, oval_normal_Vmat, oval_normal_Nmat, CamMat, image,
-                       cv::Mat(tool.rvec_elp), cv::Mat(tool.tvec_elp), P, tool_oval_normals, jac);
-
-    std::vector< std::vector<double> > tool_gripper_normals;
-    Compute_Silhouette_UKF(griper1_faces, griper1_neighbors, gripper1_Vmat, gripper1_Nmat, CamMat, image,
-                           cv::Mat(tool.rvec_grip1), cv::Mat(tool.tvec_grip1), P, tool_gripper_normals, jac);
-
-    Compute_Silhouette_UKF(griper2_faces, griper2_neighbors, gripper2_Vmat, gripper2_Nmat, CamMat, image,
-                           cv::Mat(tool.rvec_grip2), cv::Mat(tool.tvec_grip2), P, tool_gripper_normals, jac);
-
-    int point_size = tool_oval_normals.size();
-    for (int i = 0; i < point_size; ++i) {
-        cv::Mat temp_normal(1,2,CV_64FC1);
-        temp_normal.at<double>(0,0) = tool_oval_normals[i][2];
-        temp_normal.at<double>(0,1) = tool_oval_normals[i][3];
-
-        //flip the normal
-        temp_normal = -1 * temp_normal;
-        tool_oval_normals[i][2] = temp_normal.at<double>(0,0);
-        tool_oval_normals[i][3] = temp_normal.at<double>(0,1);
-
-    }
-
-//    for (int i = 0; i <tool_vertices_normals.size() ; ++i) {
-//        ROS_INFO("tool_vertices_normals i: %d, %f, %f,%f,%f ", i, tool_vertices_normals[i][0], tool_vertices_normals[i][1],tool_vertices_normals[i][2],tool_vertices_normals[i][3]);
-//    }
-//    reorganizeVertices(tool_vertices_normals, tool_points, tool_normals);
-    gatherNormals(tool_vertices_normals, tool_oval_normals, tool_gripper_normals, tool_points, tool_normals);
-
-};
-
-void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vertices_normals, cv::Mat &tool_points, cv::Mat &tool_normals){
-
-    std::sort(tool_vertices_normals.begin(), tool_vertices_normals.end());
-    tool_vertices_normals.erase(std::unique(tool_vertices_normals.begin(), tool_vertices_normals.end()), tool_vertices_normals.end());
-
-    int point_dim = tool_vertices_normals.size();
-
-    int actual_dim = point_dim;   //need one more for other orientation
-    tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-    tool_normals = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-
-    for (int j = 0; j < point_dim; ++j) {
-        tool_points.at<double>(j,0) = tool_vertices_normals[j][0];
-        tool_points.at<double>(j,1) = tool_vertices_normals[j][1];
-
-        tool_normals.at<double>(j,0) = tool_vertices_normals[j][2];
-        tool_normals.at<double>(j,1) = tool_vertices_normals[j][3];
-    }
-
-    /***** normalize *****/
-    for (int i = 0; i < actual_dim; ++i) {
-        cv::Mat temp(1,2,CV_64FC1);
-        cv::normalize(tool_normals.row(i), temp);
-        temp.copyTo(tool_normals.row(i));
-    }
-};
-
-void ToolModel::gatherNormals(std::vector< std::vector<double> > &part1_normals, std::vector< std::vector<double> > &part2_normals, std::vector< std::vector<double> > &part3_normals, cv::Mat &tool_points, cv::Mat &tool_normals){
-
-    std::sort(part1_normals.begin(), part1_normals.end());
-    part1_normals.erase(std::unique(part1_normals.begin(), part1_normals.end()), part1_normals.end());
-
-    std::sort(part2_normals.begin(), part2_normals.end());
-    part2_normals.erase(std::unique(part2_normals.begin(), part2_normals.end()), part2_normals.end());
-
-    std::sort(part3_normals.begin(), part3_normals.end());
-    part3_normals.erase(std::unique(part3_normals.begin(), part3_normals.end()), part3_normals.end());
-
-    int point_dim = part1_normals.size();
-
-    std::vector< std::vector<double> > temp_vec_normals;
-    ///need adjust the first few normals
-    for (int m = 0; m <point_dim - 9; ++m) {
-        temp_vec_normals.push_back(part1_normals[m]);
-    }
-
-    cv::Mat cylinder_norm(1,2,CV_64FC1);
-    cylinder_norm.at<double>(0,0) = temp_vec_normals[0][2];
-    cylinder_norm.at<double>(0,1) = temp_vec_normals[0][3];
-    cv::normalize(cylinder_norm, cylinder_norm);
-
-    //ROS_INFO_STREAM("cylinder_norm " << cylinder_norm);
-    for (int l = point_dim - 9; l < point_dim; ++l) {
-        cv::Mat temp(1,2,CV_64FC1);
-        temp.at<double>(0,0) = part1_normals[l][2];
-        temp.at<double>(0,1) = part1_normals[l][3];
-        cv::normalize(temp, temp);
-        double bar = cylinder_norm.dot(temp);
-        if(bar < 0.3 && bar > -0.1){
-            temp_vec_normals.push_back(part1_normals[l]);
-        }
-    }
-
-    /****** oval part normals *****/
-    for (int i = 0; i < 2; ++i) { // here we really don't need too much normals
-        temp_vec_normals.push_back(part2_normals[i]);
-    }
-
-    /****** oval part normals *****/
-    temp_vec_normals.push_back(part3_normals[4]);
-    temp_vec_normals.push_back(part3_normals[7]);
-
-
-    int actual_dim = temp_vec_normals.size();   //need one more for other orientation
-    tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-    tool_normals = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-
-    for (int j = 0; j < actual_dim; ++j) {
-        tool_points.at<double>(j,0) = temp_vec_normals[j][0];
-        tool_points.at<double>(j,1) = temp_vec_normals[j][1];
-        tool_normals.at<double>(j,0) = temp_vec_normals[j][2];
-        tool_normals.at<double>(j,1) = temp_vec_normals[j][3];
-    }
-
-    /***** normalize *****/
-    for (int i = 0; i < actual_dim; ++i) {
-        cv::Mat temp(1,2,CV_64FC1);
-        cv::normalize(tool_normals.row(i), temp);
-        temp.copyTo(tool_normals.row(i));
-    }
 };
 
 float ToolModel::calculateMatchingScore(cv::Mat &toolImage, const cv::Mat &segmentedImage) {

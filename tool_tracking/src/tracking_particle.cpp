@@ -37,7 +37,7 @@ cv::Mat segmentation(cv::Mat &InputImg) {
 
 	resize(src, src, cv::Size(), 1, 1);
 
-	double lowThresh = 27;
+	double lowThresh = 24;
 
 	cv::cvtColor(src, src_gray, CV_BGR2GRAY);
 
@@ -57,6 +57,7 @@ int main(int argc, char **argv) {
 
 	ros::NodeHandle nh;
 	/******  initialization  ******/
+
 	ParticleFilter Particles(&nh);
 
     freshImage = false;
@@ -73,23 +74,21 @@ int main(int argc, char **argv) {
     cv::Mat rawImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
 
 
-    string left_fname = "/home/rxh349/Downloads/newman_data/left_pics/50.png";
+    string left_fname = "/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/left_pics/21.png";
     rawImage_left = cv::imread(left_fname);
 
-    string right_fname = "/home/rxh349/Downloads/newman_data/right_pics/50.png";
+    string right_fname = "/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/right_pics/21.png";
     rawImage_right = cv::imread(right_fname);
-
-//    image_transport::ImageTransport it(nh);
-//    image_transport::Subscriber img_sub_l = it.subscribe(
-//            "/davinci_endo/left/image_rect", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_left)));
-//
-//    image_transport::Subscriber img_sub_r = it.subscribe(
-//            "/davinci_endo/right/image_rect", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_right)));
 
     ROS_INFO("---- done subscribe -----");
 
     ros::Duration(2).sleep();
-	/****TODO: Temp Projection matrices****/
+    /**
+     * Get the initial guess from the forward kinematics
+     */
+    Particles.index_pic = 21;  // i-th sensor data
+    Particles.getCoarseGuess();
+
 
 	while (nh.ok()) {
 //		ros::spinOnce();

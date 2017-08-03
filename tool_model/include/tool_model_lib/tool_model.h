@@ -185,11 +185,6 @@ public:
     void renderTool(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P,
                         cv::OutputArray = cv::noArray());
 
-    //need vertex normals to compute measurement model
-    void renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &CamMat, const cv::Mat &P,
-                       cv::Mat &tool_points, cv::Mat &tool_normals, cv::OutputArray = cv::noArray());
-
-
     cv::Point2d reproject(const cv::Mat &point, const cv::Mat &P);
 
     ///measurement for perception model
@@ -202,13 +197,6 @@ public:
                             const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
                             cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
                             const cv::Mat &P, cv::OutputArray jac);
-
-    void Compute_Silhouette_UKF(const std::vector<std::vector<int> > &input_faces,
-                                           const std::vector<std::vector<int> > &neighbor_faces,
-                                           const cv::Mat &input_Vmat, const cv::Mat &input_Nmat,
-                                           cv::Mat &CamMat, cv::Mat &image, const cv::Mat &rvec, const cv::Mat &tvec,
-                                           const cv::Mat &P, std::vector<std::vector<double> > &vertices_vector,
-                                           cv::OutputArray jac);
 
     /**********************math computation*******************/
     cv::Point3d crossProduct(cv::Point3d &vec1, cv::Point3d &vec2);
@@ -237,9 +225,6 @@ public:
 
     /*************camera transforms************************/
     cv::Mat camTransformMats(cv::Mat &cam_mat, cv::Mat &input_mat);
-
-    void reorganizeVertices(std::vector< std::vector<double> > &tool_vertices_normals, cv::Mat &tool_points, cv::Mat &tool_normals);
-    void gatherNormals(std::vector< std::vector<double> > &part1_normals, std::vector< std::vector<double> > &part2_normals, std::vector< std::vector<double> > &part3_normals, cv::Mat &tool_points, cv::Mat &tool_normals);
 
 };
 
