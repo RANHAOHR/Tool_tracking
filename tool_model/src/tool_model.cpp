@@ -932,7 +932,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     inputModel.tvec_grip1(1) = q_rot.at<double>(1, 0) + inputModel.tvec_elp(1);
     inputModel.tvec_grip1(2) = q_rot.at<double>(2, 0) + inputModel.tvec_elp(2);
 
-    double theta_orien_grip = -1.0 * theta_grip_1 - 0.2; //maybe the x being flipped
+    double theta_orien_grip = -1.0 * theta_grip_1 - 0.1;
     double theta_grip_open = theta_grip_2;
     if(theta_grip_open < 0.0){
         theta_grip_open = 0.0;
@@ -1052,40 +1052,8 @@ void ToolModel::renderToolUKF(cv::Mat &image, const toolModel &tool, cv::Mat &Ca
         tool_oval_normals[i][3] = temp_normal.at<double>(0,1);
 
     }
-
-//    for (int i = 0; i <tool_vertices_normals.size() ; ++i) {
-//        ROS_INFO("tool_vertices_normals i: %d, %f, %f,%f,%f ", i, tool_vertices_normals[i][0], tool_vertices_normals[i][1],tool_vertices_normals[i][2],tool_vertices_normals[i][3]);
-//    }
-//    reorganizeVertices(tool_vertices_normals, tool_points, tool_normals);
     gatherNormals(tool_vertices_normals, tool_oval_normals, tool_gripper_normals, tool_points, tool_normals);
 
-};
-
-void ToolModel::reorganizeVertices(std::vector< std::vector<double> > &tool_vertices_normals, cv::Mat &tool_points, cv::Mat &tool_normals){
-
-    std::sort(tool_vertices_normals.begin(), tool_vertices_normals.end());
-    tool_vertices_normals.erase(std::unique(tool_vertices_normals.begin(), tool_vertices_normals.end()), tool_vertices_normals.end());
-
-    int point_dim = tool_vertices_normals.size();
-
-    int actual_dim = point_dim;   //need one more for other orientation
-    tool_points = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-    tool_normals = cv::Mat::zeros(actual_dim, 2,CV_64FC1);
-
-    for (int j = 0; j < point_dim; ++j) {
-        tool_points.at<double>(j,0) = tool_vertices_normals[j][0];
-        tool_points.at<double>(j,1) = tool_vertices_normals[j][1];
-
-        tool_normals.at<double>(j,0) = tool_vertices_normals[j][2];
-        tool_normals.at<double>(j,1) = tool_vertices_normals[j][3];
-    }
-
-    /***** normalize *****/
-    for (int i = 0; i < actual_dim; ++i) {
-        cv::Mat temp(1,2,CV_64FC1);
-        cv::normalize(tool_normals.row(i), temp);
-        temp.copyTo(tool_normals.row(i));
-    }
 };
 
 void ToolModel::gatherNormals(std::vector< std::vector<double> > &part1_normals, std::vector< std::vector<double> > &part2_normals, std::vector< std::vector<double> > &part3_normals, cv::Mat &tool_points, cv::Mat &tool_normals){
