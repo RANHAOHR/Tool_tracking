@@ -37,7 +37,7 @@ cv::Mat segmentation(cv::Mat &InputImg) {
 
 	resize(src, src, cv::Size(), 1, 1);
 
-	double lowThresh = 27;
+	double lowThresh = 24;
 
 //	cv::cvtColor(src, src_gray, CV_BGR2GRAY); //if this is already CV_8UC1 in rect image
 

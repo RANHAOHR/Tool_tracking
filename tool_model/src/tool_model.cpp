@@ -365,7 +365,7 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                         cv::Point2d prjpt_2 = reproject(ept_2, P);
                         if (prjpt_1.x <= 640 && prjpt_1.x >= -100 && prjpt_2.x < 640 && prjpt_2.x >= -100)
                         {
-                            cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);  
+                            cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 0), 1, 8, 0);
                         }
 
                     }
@@ -919,7 +919,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     /*********** computations for gripper kinematics **********/
     cv::Mat test_gripper(3, 1, CV_64FC1);
     test_gripper.at<double>(0, 0) = 0;
-    test_gripper.at<double>(1, 0) = 0.009;
+    test_gripper.at<double>(1, 0) = 0.01;
     test_gripper.at<double>(2, 0) = 0;
 
     cv::Mat rot_elp(3, 3, CV_64FC1);
@@ -938,8 +938,8 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
         theta_grip_open = 0.0;
     }
 
-    double grip_2_delta = theta_orien_grip - (theta_grip_open +0.1);
-    double grip_1_delta = theta_orien_grip + (theta_grip_open +0.1);
+    double grip_2_delta = theta_orien_grip - (theta_grip_open );
+    double grip_1_delta = theta_orien_grip + (theta_grip_open );
 
     cos_theta = cos(grip_1_delta);
     sin_theta = sin(grip_1_delta);
@@ -1199,7 +1199,7 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
     cv::Mat BinaryImg(toolImFloat.size(), toolImFloat.type());
     BinaryImg = toolImFloat * (1.0/255);
 
-    if(countNonZero(BinaryImg) < 100){
+    if(countNonZero(BinaryImg) < 10){
         output = 1000; //avoid empty image
     } else{
         /***segmented image process**/

@@ -46,7 +46,7 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
     g_cr_cl = cv::Mat::eye(4, 4, CV_64FC1);
 
     cv::Mat rot(3, 3, CV_64FC1);
-    cv::Mat rot_vec = (cv::Mat_<double>(3, 1) << 0.0001, -0.004, 0.001); //-0.01163, -0.024, 0.00142
+    cv::Mat rot_vec = (cv::Mat_<double>(3, 1) << 0.0001, -0.003, 0.001); //-0.01163, -0.024, 0.00142
     cv::Rodrigues(rot_vec, rot);
     rot.copyTo(g_cr_cl.colRange(0, 3).rowRange(0, 3));
 
@@ -58,7 +58,7 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
             0.6401798005168575, 0.7493007959192897, -0.169464274243616, -0.04432758639716859,
             -0.2759741960237143, 0.01844380806223521, -0.9609880691627903, 0.004489468645178,
             0, 0, 0, 1);
-
+    
     ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
 
     projectionMat_subscriber_r = node_handle.subscribe("/davinci_endo/right/camera_info", 1,
@@ -348,6 +348,8 @@ void ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &
              best_tool_pose.rvec_cyl(2));
 
     ///showing results for each iteration here
+    cv::cvtColor(raw_image_left,raw_image_left,CV_GRAY2RGB);
+    cv::cvtColor(raw_image_right,raw_image_right,CV_GRAY2RGB);
     newToolModel.renderTool(raw_image_left, particle_models[maxScoreIdx_1], cam_matrices_left_arm_1[maxScoreIdx_1],
                             P_left);
     newToolModel.renderTool(raw_image_right, particle_models[maxScoreIdx_1], cam_matrices_right_arm_1[maxScoreIdx_1],
