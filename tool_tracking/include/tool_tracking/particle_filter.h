@@ -89,12 +89,6 @@ private:
     cv::Mat toolImage_left_arm_1;
     cv::Mat toolImage_right_arm_1;
 
-/**
- * @brief left and right rendered Images for showing all particles
- */
-    cv::Mat toolImage_left_temp;
-    cv::Mat toolImage_right_temp;
-
     std::vector<double> matchingScores_arm_1; // particle scores (matching scores)
 
     std::vector<std::vector<double> > particles_arm_1; // particles

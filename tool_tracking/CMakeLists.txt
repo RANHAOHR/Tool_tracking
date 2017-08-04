@@ -37,6 +37,7 @@ catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs geometry_msgs
 
 cs_add_executable(tracking_particle src/tracking_particle.cpp)
 cs_add_executable(tracking_kalman src/tracking_kalman.cpp)
+add_executable(show_video src/check_video.cpp)
 #the following is required, if desire to link a node in this package with a library created in this same package
 # edit the arguments to reference the named node and named library within this package
 # target_link_library(example my_lib)
@@ -44,6 +45,7 @@ target_link_libraries(tool_tracking_particle tool_model_lib)
 target_link_libraries(tool_tracking_kalman tool_model_lib)
 target_link_libraries(tracking_particle tool_tracking_particle vesselness_image_filter_common_lib)
 target_link_libraries(tracking_kalman tool_tracking_kalman vesselness_image_filter_common_lib)
+target_link_libraries(show_video ${catkin_LIBRARIES} )
 
 
 cs_install()

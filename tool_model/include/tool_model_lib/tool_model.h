@@ -211,13 +211,6 @@ public:
      * @return a particle represents a tool pose
      */
     toolModel setRandomConfig(const toolModel &seeds, const double &theta_cylinder, const double &theta_oval, const double &theta_open, double &step);
-    /**
-     * @brief Perturbation function during the tracking, updating the particles using gaussian noises
-     * @param max_pose
-     * @param step
-     * @return
-     */
-    ToolModel::toolModel gaussianSampling(const toolModel &max_pose, double &step);
 
     /**
      * @brief computing the pose for the tool model based on the CYLINDER pose, return the pose within inputModel
@@ -228,16 +221,7 @@ public:
      */
     void computeEllipsePose(toolModel &inputmodel, const double &theta_ellipse, const double &theta_grip_1,
                           const double &theta_grip_2);
-    /**
-     * @brief computing the tool pose using the seed pose, satisfied some constraints, which is different from the computeEllipsePose() function
-     * @param seed_pose
-     * @param inputModel
-     * @param theta_tool
-     * @param theta_grip_1
-     * @param theta_grip_2
-     */
-    void computeRandomPose(const toolModel &seed_pose, toolModel &inputModel, const double &theta_tool, const double &theta_grip_1,
-                                      const double &theta_grip_2);
+
     /**
      * @brief The rendering function  of four body parts, for PF
      * @param image
