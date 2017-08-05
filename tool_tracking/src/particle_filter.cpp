@@ -41,7 +41,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-        node_handle(*nodehandle), numParticles(100), down_sample_joint(0.0001), down_sample_cam(0.001), L(13) {
+        node_handle(*nodehandle), numParticles(100), down_sample_joint(0.0002), down_sample_cam(0.0015), L(13) {
     /********** using calibration results: camera-base transformation *******/
     g_cr_cl = cv::Mat::eye(4, 4, CV_64FC1);
 
@@ -59,7 +59,7 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
 //            -0.2759741960237143, 0.01844380806223521, -0.9609880691627903, 0.004489468645178,
 //            0, 0, 0, 1);
 
-    Cam_left_arm_1 = (cv::Mat_<double>(4,4) <<     -0.7485517896980175, 0.6473114836067685, 0.1437291248519217, -0.1483084923396818,
+    Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.7485517896980175, 0.6473114836067685, 0.1437291248519217, -0.1483084923396818,
     0.6229470363018387, 0.7607926301469818, -0.1820207786951632, -0.05057582048676706,
     -0.2271721992292429, -0.04671634729772958, -0.9727334551625677, 0.0192314528282099,
     0, 0, 0, 1);

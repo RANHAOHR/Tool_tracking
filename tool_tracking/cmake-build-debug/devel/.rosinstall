@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/setup.sh
