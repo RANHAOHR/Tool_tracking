@@ -40,7 +40,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
-        node_handle(*nodehandle), numParticles(300), downsample_rate_pos(0.006), downsample_rate_rot(0.007), error_pos(1), error_ori(1){
+        node_handle(*nodehandle), numParticles(240), downsample_rate_pos(0.006), downsample_rate_rot(0.007), error_pos(1), error_ori(1){
 
 	initializeParticles();
 
@@ -219,8 +219,14 @@ void ParticleFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &p
 };
 
 std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right) {
-//	double t_step = clock();
+
     ros::spinOnce();
+
+    /**
+     * If necessary to check the model params
+     */
+    //testRenderedModel(initial, segmented_left, segmented_right);
+
 	ROS_INFO("---- in tracking function ---");
 	std::vector<cv::Mat> trackingImages;
 	trackingImages.resize(2);
@@ -262,8 +268,8 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 
     //store the best particle (that with highest weight)
 	ToolModel::toolModel best_particle = particles_arm_1[maxScoreIdx_1];
-//	ROS_INFO("Real tool at (%f %f %f): %f %f %f, ", initial.tvec_cyl(0), initial.tvec_cyl(1),initial.tvec_cyl(2),initial.rvec_cyl(0),initial.rvec_cyl(1), initial.rvec_cyl(2));
-//	ROS_WARN("Particle ARM AT (%f %f %f): %f %f %f, ",best_particle.tvec_cyl(0), best_particle.tvec_cyl(1),best_particle.tvec_cyl(2),best_particle.rvec_cyl(0),best_particle.rvec_cyl(1), best_particle.rvec_cyl(2));
+	ROS_INFO("Real tool at (%f %f %f): %f %f %f, ", initial.tvec_cyl(0), initial.tvec_cyl(1),initial.tvec_cyl(2),initial.rvec_cyl(0),initial.rvec_cyl(1), initial.rvec_cyl(2));
+	ROS_WARN("Particle ARM AT (%f %f %f): %f %f %f, ",best_particle.tvec_cyl(0), best_particle.tvec_cyl(1),best_particle.tvec_cyl(2),best_particle.rvec_cyl(0),best_particle.rvec_cyl(1), best_particle.rvec_cyl(2));
 
 	///render the best particle on real images and show
 	newToolModel.renderTool(raw_image_left, particles_arm_1[maxScoreIdx_1], Cam_left_arm_1, P_left);
@@ -277,16 +283,12 @@ std::vector<cv::Mat> ParticleFilter::trackingTool(const cv::Mat &segmented_left,
 	std::vector<ToolModel::toolModel> oldParticles = particles_arm_1;
 	resamplingParticles(oldParticles, particleWeights_arm_1, particles_arm_1);
 
-//	double t1_step = clock();
-//
-//	float sec1 = (float) t1_step / CLOCKS_PER_SEC;
-//	float sec = (float) t_step / CLOCKS_PER_SEC;
-//	ROS_INFO_STREAM("Delta t = " << sec1 - sec);
-
 	showGazeboToolError(initial, best_particle);
+
+	cv::waitKey(20);
+
 	/////////////////////////PART 3: Motion model////////////////////////////////
 	updateParticles(particles_arm_1);
-	cv::waitKey(20);
 
 	return trackingImages;
 };
@@ -305,8 +307,8 @@ void ParticleFilter::showGazeboToolError(ToolModel::toolModel &real_pose, ToolMo
 	cv::Mat orientation = real_tool_vector.rowRange(12, dim) - renderedMat.rowRange(12,dim);
 	double total_pos = position.dot(position);
 	double total_ori = orientation.dot(orientation);
-	error_pos = sqrt(total_pos / 12);
-	error_ori = sqrt(total_ori / 12);
+	error_pos = sqrt(total_pos);
+	error_ori = sqrt(total_ori);
 	ROS_WARN_STREAM("Position  error: " << error_pos);
 	ROS_WARN_STREAM("orientation  error: " << error_ori);
 };
@@ -495,4 +497,17 @@ void ParticleFilter::convertToolModeltoMatrix(const ToolModel::toolModel &inputT
 	toolMatrix.at<double>(21,0) = inputToolModel.rvec_grip2(0);
 	toolMatrix.at<double>(22,0) = inputToolModel.rvec_grip2(1);
 	toolMatrix.at<double>(23,0) = inputToolModel.rvec_grip2(2);
+};
+
+void ParticleFilter::testRenderedModel(ToolModel::toolModel &inputModel, cv::Mat &segmented_left, cv::Mat &segmented_right){
+
+    cv::Mat left_test = cv::Mat::zeros(480, 640, CV_8UC3);
+    cv::Mat right_test = cv::Mat::zeros(480, 640, CV_8UC3);
+
+    double test_score = measureFuncSameCam(left_test,right_test, inputModel ,segmented_left, segmented_right, Cam_left_arm_1, Cam_right_arm_1);
+    ROS_INFO_STREAM("Matching is: " << test_score);
+    cv::imshow("left_test ", left_test);
+    cv::imshow("right_test ", right_test);
+
+    cv::waitKey();
 };

@@ -256,6 +256,14 @@ public:
 	 * @param outputMatrix output cv::Mat
 	 */
 	void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
+
+    /**
+     * @brief test the model params based on the rendered image and the matching score
+     * @param inputModel
+     * @param segmented_left
+     * @param segmented_right
+     */
+    void testRenderedModel(ToolModel::toolModel &inputModel, cv::Mat &segmented_left, cv::Mat &segmented_right);
 };
 
 #endif
