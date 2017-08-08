@@ -4,12 +4,11 @@
 #include <cwru_opencv_common/projective_geometry.h>
 #include <tool_tracking/particle_filter.h>
 
+
 bool freshImage;
 
 using namespace std;
 using namespace cv_projective;
-
-std::vector<cv::Mat> trackingImgs;  ///this should be CV_32F
 
 void newImageCallback(const sensor_msgs::ImageConstPtr &msg, cv::Mat *outputImage) {
 	cv_bridge::CvImagePtr cv_ptr;
@@ -63,7 +62,6 @@ int main(int argc, char **argv) {
     cv::Mat seg_left  = cv::Mat::zeros(480, 640, CV_8UC1);
     cv::Mat seg_right  = cv::Mat::zeros(480, 640, CV_8UC1);
 
-    trackingImgs.resize(2);
 
     //get image size from camera model, or initialize segmented images,
     cv::Mat rawImage_left = cv::Mat::zeros(480, 640, CV_8UC3);//CV_32FC1
@@ -79,22 +77,42 @@ int main(int argc, char **argv) {
     ROS_INFO("---- done subscribe -----");
     ros::Duration(2).sleep();
 
-	while (nh.ok()) {
-		ros::spinOnce();
+//	while (nh.ok()) {
+//		ros::spinOnce();
+//
+//		// if camera is ready, track segmented image
+//		if (freshImage) {
+//
+//			Particles.raw_image_left = rawImage_left.clone();
+//			Particles.raw_image_right = rawImage_right.clone();
+//
+//			seg_left = segmentation(rawImage_left);
+//			seg_right = segmentation(rawImage_right);
+//
+//			Particles.trackingTool(seg_left, seg_right);
+//
+//			freshImage = false;
+//
+//			}
+//	}
 
-		// if camera is ready, track segmented image
-		if (freshImage) {
 
-            Particles.raw_image_left = rawImage_left.clone();
-            Particles.raw_image_right = rawImage_right.clone();
+	ros::spinOnce();
 
-            seg_left = segmentation(rawImage_left);
-            seg_right = segmentation(rawImage_right);
+	// if camera is ready, track segmented image
+	if (freshImage) {
 
-            trackingImgs = Particles.trackingTool(seg_left, seg_right);
+		Particles.raw_image_left = rawImage_left.clone();
+		Particles.raw_image_right = rawImage_right.clone();
 
-			freshImage = false;
-            Particles.getCoarseGuess(); //get ready for next time step
-		}
+		seg_left = segmentation(rawImage_left);
+		seg_right = segmentation(rawImage_right);
+
+		Particles.dataCollection(seg_left, seg_right);
+
+		freshImage = false;
+
 	}
+
+	return 0;
 }

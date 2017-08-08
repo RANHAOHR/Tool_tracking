@@ -1167,7 +1167,7 @@ float ToolModel::calculateChamferScore(cv::Mat &toolImage, const cv::Mat &segmen
     cv::Mat BinaryImg(toolImFloat.size(), toolImFloat.type());
     BinaryImg = toolImFloat * (1.0/255);
 
-    if(countNonZero(BinaryImg) < 100){
+    if(countNonZero(BinaryImg) < 10){
         output = 1000; //avoid empty image
     } else{
         /***segmented image process**/

@@ -65,6 +65,9 @@
 #include <cwru_davinci_interface/davinci_interface.h>
 #include <cwru_davinci_kinematics/davinci_kinematics.h>
 
+#include <iostream>
+#include <fstream>
+
 //#include <cwru_xform_utils/xform_utils.h>  //for jade (surgical31)
 #include <xform_utils/xform_utils.h>  //for indigo
 
@@ -135,11 +138,12 @@ private:
 	double downsample_rate_pos; //annealing rate for position noise.  High at start to allow large perturbations and decrease as we converge
 	double downsample_rate_rot; //annealing rate for rotation noise.
 
-	double pos_thresh;  //annealing threshold, for position error
-	double rot_thresh; //annealing threshold, for orientation error
-
 	double error_pos; //error between best particle and gazebo readings for pos
 	double error_ori; //error between best partticle and gazebo readings for ori
+
+	double pos_thresh;
+	std::vector<double> pos_noise;
+	std::vector<double> rot_noise;
 
 public:
 
@@ -148,6 +152,7 @@ public:
 
 	cv::Mat P_left; //Projection matrix for left camera
 	cv::Mat P_right; //Projection matrix for right camera
+
 
 	/**
 	* @brief - The default constructor
@@ -189,7 +194,7 @@ public:
 	 * apply gaussian noise motion model
 	 * @return perturbed particles after resampling and motion model
 	*/
-	std::vector<cv::Mat> trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
+	void trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
 	/**
 	 * @brief resample old particles with replacement
@@ -264,6 +269,8 @@ public:
      * @param segmented_right
      */
     void testRenderedModel(ToolModel::toolModel &inputModel, cv::Mat &segmented_left, cv::Mat &segmented_right);
+
+	void dataCollection(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 };
 
 #endif
