@@ -38,30 +38,28 @@
 #ifndef PARTICLEFILTER_H
 #define PARTICLEFILTER_H
 
-#include <vector>
 #include <stdio.h>
-#include <iostream>
-
-#include <opencv2/core/core.hpp>
 #include <stdlib.h>
 #include <math.h>
 
 #include <string>
 #include <cstring>
+#include <vector>
 
+#include <ros/ros.h>
 #include <tool_model_lib/tool_model.h>
+
+#include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <sensor_msgs/image_encodings.h>
-#include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 
 #include <boost/random/normal_distribution.hpp>
 
 #include <geometry_msgs/Transform.h>
-#include <cwru_davinci_interface/davinci_interface.h>
-
 #include <tf/transform_listener.h>
+
 #include <cwru_davinci_interface/davinci_interface.h>
 #include <cwru_davinci_kinematics/davinci_kinematics.h>
 
@@ -74,85 +72,137 @@
 class ParticleFilter {
 
 private:
-	cv::Mat Cam_left; //Gcb from left camera
-	cv::Mat Cam_right; //Gcb for right camera
 
 	ros::NodeHandle node_handle;
 
-	ToolModel newToolModel;  //updated configuration
-	ToolModel::toolModel initial; //initial configuration
+    /**
+     * The ToolModel class.
+     */
+	ToolModel newToolModel; 
 
-	unsigned int numParticles; //total number of particles
+    /**
+     * The initial tool pose, obtained from the forward kinematics, a toolModel= 3x1 cv::Mats tvec_cyl, rvec_cyl, tvec_elp, rvec_elp, tvec_grip1(2), rvec_grip1(2)
+     */
+	ToolModel::toolModel initial; 
 
-	cv::Mat toolImage_left_arm_1; //image in left camera frame.  Will store each particle vs segmented image to calculate chamfer distance
-	cv::Mat toolImage_right_arm_1; //image in right camera frame.  Will store each particle vs segmented image to calculate chamfer distance
-	cv::Mat toolImage_left_arm_2; //Not currently used, but same as above for arm 2
-	cv::Mat toolImage_right_arm_2; //Not currently used but same as above for arm 2
+    /**
+     * The total number of particles
+     */
+	unsigned int numParticles; 
 
-	cv::Mat toolImage_left_temp; //composite of all rendered particles in left camera
-	cv::Mat toolImage_right_temp; //composite of all rendered particles in right camera
+    /**
+     * Left and right images in left camera frames. Will store each particle vs segmented image to calculate chamfer distance
+     */
+	cv::Mat toolImage_left_arm_1;
+	cv::Mat toolImage_right_arm_1; 
 
-	std::vector<double> matchingScores_arm_1; // particle scores (matching scores)
-	std::vector<double> matchingScores_arm_2; // particle scores (matching scores)
+    /**
+     * Composite of all rendered particles in left and right camera. This is for debug and showing purpose
+     */
+	cv::Mat toolImage_left_temp; 
+	cv::Mat toolImage_right_temp; 
 
-	// particles for arm 1/2 stored as a vector of toolModels
-	// toolModel= 3x1 cv::Mats tvec_cyl, rvec_cyl, tvec_elp, rvec_elp, tvec_grip1(2), rvec_grip1(2)
+    /**
+     * The particle scores (matching scores), store all the matching scores computed from the chamfer matching algorithm
+     */
+	std::vector<double> matchingScores_arm_1;
+
+	/**
+     * The particles in the form of tool poses
+     */
 	std::vector<ToolModel::toolModel> particles_arm_1;
-	std::vector<ToolModel::toolModel> particles_arm_2;
-	std::vector<double> particleWeights_arm_1; // particle weights calculated from matching scores
-	std::vector<double> particleWeights_arm_2; // particle weights calculated from matching scores
 
-	//Intermediary representations of Gcb. Will be converted to cv::mat
+    /**
+     * particle weights calculated from matching scores
+     */
+	std::vector<double> particleWeights_arm_1;  
+
+    /**
+     * Intermediary representations of Gcb, this is because the FK is using the form of Eigen::Affine3d. Will be converted to cv::mat for image processing purpose.
+     */
 	Eigen::Affine3d arm_1__cam_l;
 	Eigen::Affine3d arm_2__cam_l;
 	Eigen::Affine3d arm_1__cam_r;
 	Eigen::Affine3d arm_2__cam_r;
 
-	cv::Mat Cam_left_arm_1; //Gcb for left camera and arm 1
-	cv::Mat Cam_right_arm_1; //Gcb for right camera and arm 1
-	cv::Mat Cam_left_arm_2; //Gcb for left camera and arm 2
-	cv::Mat Cam_right_arm_2; //Gcb for right camera and arm 2
+    /**
+     * All the camera-robot base transformations, computed ffrom the Eigen::Affine3d  matrices (e.g. arm_1__cam_l). Storing the matrices for arm 2 for later use
+     */
+	cv::Mat Cam_left_arm_1; 
+	cv::Mat Cam_right_arm_1;
+	cv::Mat Cam_left_arm_2;
+	cv::Mat Cam_right_arm_2;
 
-	Davinci_fwd_solver kinematics; // FK for davinci class
+    /**
+     * The left and right camera projection matrices
+     */
+    cv::Mat P_left;
+    cv::Mat P_right;
 
-	std::vector<double> sensor_1; //sensor readings from davinci of joint angles 7x1
-    std::vector<double> sensor_2; //sensor readings from davinci of joint angles 7x1
+    /**
+     * FK for davinci class
+     */
+	Davinci_fwd_solver kinematics;
 
-	/**
-	 * @brief get P_right from subsriber
-	 * @param projectionRight
-	 */
-	void projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight);
+    /**
+     * Sensor readings from davinci of joint angles 7x1, old version. sensor_1 is arm 1 and sensor_2 is arm 2.
+     */
+	std::vector<double> sensor_1; 
+    std::vector<double> sensor_2; 
 
-	/**
-	 * @brief get P_left from subscriber
-	 * @param projectionLeft
-	 */
-	void projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft);
+    /**
+     * The subscriber of the projection matrices for left and right camera. This is subscribing to camera_info.
+     */
+	ros::Subscriber projectionMat_subscriber_r; 
+	ros::Subscriber projectionMat_subscriber_l;
 
-	ros::Subscriber projectionMat_subscriber_r; //Get P_right by subscribing to camera_info
-	ros::Subscriber projectionMat_subscriber_l; //Get P_right by subscribing to camera_info
+    /**
+     * Determine if the projection matices are received
+     */
+	bool freshCameraInfo; 
 
-	bool freshCameraInfo; //Determine if a new image to analyze
+    /**
+     * Annealing rate for position and orientation noise.  High at start to allow large perturbations and decrease as we converge.
+     */
+	double downsample_rate_pos;
+	double downsample_rate_rot; 
 
-	double downsample_rate_pos; //annealing rate for position noise.  High at start to allow large perturbations and decrease as we converge
-	double downsample_rate_rot; //annealing rate for rotation noise.
+    /**
+     * Errors between best particle and gazebo readings for pos and orientation
+     */
+	double error_pos;
+	double error_ori; 
 
-	double error_pos; //error between best particle and gazebo readings for pos
-	double error_ori; //error between best partticle and gazebo readings for ori
-
+    /**
+     * The threshold for local search, when the error of pos is smal and the perturbation is not necessary
+     */ 
 	double pos_thresh;
+
+    /**
+     * The given system position and orientation noises for testing purpose
+     */
 	std::vector<double> pos_noise;
 	std::vector<double> rot_noise;
 
+    /**
+     * @brief get P_right from subsriber
+     * @param projectionRight
+     */
+    void projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight);
+
+    /**
+     * @brief get P_left from subscriber
+     * @param projectionLeft
+     */
+    void projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &projectionLeft);
+
 public:
 
-	cv::Mat raw_image_left; //left rendered Image
-	cv::Mat raw_image_right; //right rendered Image
-
-	cv::Mat P_left; //Projection matrix for left camera
-	cv::Mat P_right; //Projection matrix for right camera
-
+    /**
+     * The left and right raw images from image pipeline
+     */
+	cv::Mat raw_image_left; 
+	cv::Mat raw_image_right; 
 
 	/**
 	* @brief - The default constructor
@@ -164,19 +214,18 @@ public:
 
 	/**
 	 * @brief- The deconstructor
-	 * Not currently used
 	 */
 	~ParticleFilter();
 
 	/**
-	 * @brief- initializes the particles with the following actions:
+	 * @brief- initializing the particles with the following actions:
 	 * 		Initialize matchingScores_arm_x, particles_arm_x and particle_weights_arm_x arrays
 	 * 		Compute an initial guess and generate particles around it with getCoarseGuess()
 	 */
 	void initializeParticles();
 
 	/**
-     * @brief- Compute an initial guess from FK and generate particles around it
+     * @brief- Computing an initial guess from FK and generate particles around it
      * Used when particles initialized and there is no prior particle data
      * First get sensor info from all 7 joints
      * Then compute tvec_cyl/rvec_cyl from FK of joints 1-4
@@ -186,7 +235,7 @@ public:
     void getCoarseGuess();
 
 	/**
-	 * @brief - main tracking function
+	 * @brief - Main tracking function
 	 * called by tracking_particle.cpp
 	 * compute matching score of each particle
 	 * show composite of all particles and composite of best particle and segmented image
@@ -197,7 +246,7 @@ public:
 	void trackingTool(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
 	/**
-	 * @brief resample old particles with replacement
+	 * @brief Resampling old particles with replacement
 	 * Used in resampling step of trackingTool
 	 * @param sampleModel old particles to draw from
 	 * @param particleWeight particle weights
@@ -208,7 +257,7 @@ public:
 							 std::vector<ToolModel::toolModel> &update_particles);
 
 	/**
-	 * @brief Compute matching score between a particle and a segmented image
+	 * @brief - Computing the matching score between a particle and a segmented image
 	 * Render the particle and segmented image together and compute the chamfer distance between them
 	 * Used in measurement model
 	 * @param toolImage_left image of left segmented image and particle transformed under left camera's frame
@@ -224,22 +273,22 @@ public:
 							  const cv::Mat &segmented_left, const cv::Mat &segmented_right, cv::Mat &Cam_left, cv::Mat &Cam_right);
 
 	/**
-	 * @brief Modify annealing coefficient and call motion model gaussianSampling()
+	 * @brief - Modifying annealing coefficient and call motion model gaussianSampling()
 	 * Used after resampling before motion model
 	 * @param updateParticles particles to go through motion model
 	 */
 	void updateParticles(std::vector<ToolModel::toolModel> &updateParticles);
 
 	/**
- 	* @brief compute the error between the real pose from Gazebo and the best particles guess of the pose
-	 * Used in simulation to determine accuracy of particle
+ 	* @brief - Computing the error between the real pose from Gazebo and the best particles guess of the pose
+	* Used in simulation to determine accuracy of particle
  	* @param real_pose pose from Gazebo
  	* @param bestParticle
  	*/
 	void showGazeboToolError(ToolModel::toolModel &real_pose, ToolModel::toolModel &bestParticle);
 
 	/**
-	 * @brief convert a toolModel representation to a 24x1 matrix representation
+	 * @brief - Converting a toolModel representation to a 6x1 matrix representation.
 	 * Used to find the error in simulation (showGazeboToolError)
 	 * @param inputToolModel
 	 * @param toolMatrix output matrix representation
@@ -247,7 +296,7 @@ public:
 	void convertToolModeltoMatrix(const ToolModel::toolModel &inputToolModel, cv::Mat &toolMatrix);
 
 	/**
- 	* @brief Convert a rotation matrix to a rotation vector
+ 	* @brief - Converting a rotation matrix to a rotation vector.
 	* Used in forward kinematics of getCoraseGuess()
  	* @param trans - input SE(3)
  	* @param rot_vec output 3x1 cv::mat
@@ -255,7 +304,7 @@ public:
 	void computeRodriguesVec(const Eigen::Affine3d & trans, cv::Mat rot_vec);
 
 	/**
-	 * @brief convert from an SE(3) representation to a cv::Mat representation
+	 * @brief - Converting from an SE(3) representation to a cv::Mat representation.
 	 * Used to get a matrix representation of Gcb in the constructor
 	 * @param trans
 	 * @param outputMatrix output cv::Mat
@@ -263,13 +312,19 @@ public:
 	void convertEigenToMat(const Eigen::Affine3d & trans, cv::Mat & outputMatrix);
 
     /**
-     * @brief test the model params based on the rendered image and the matching score
+     * @brief - Testing the model params based on the rendered image and the matching score.
+     * Used in the trackingTool function
      * @param inputModel
      * @param segmented_left
      * @param segmented_right
      */
     void testRenderedModel(ToolModel::toolModel &inputModel, cv::Mat &segmented_left, cv::Mat &segmented_right);
 
+    /**
+     * @brief - Collecting data sets, for 4 pre-defined poses, 50 data sets for each pose. SHould specify the path of the file first.
+     * @param segmented_left
+     * @param segmented_right
+     */
 	void dataCollection(const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 };
 

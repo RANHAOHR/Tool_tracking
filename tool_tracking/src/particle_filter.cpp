@@ -90,9 +90,6 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
 	toolImage_left_arm_1 = cv::Mat::zeros(480, 640, CV_8UC3);  //left rendered Image for ARM 1
 	toolImage_right_arm_1 = cv::Mat::zeros(480, 640, CV_8UC3); //right rendered Image for ARM 1
 
-	toolImage_left_arm_2 = cv::Mat::zeros(480, 640, CV_8UC3); //left rendered Image for ARM 2
-	toolImage_right_arm_2 = cv::Mat::zeros(480, 640, CV_8UC3); //right rendered Image for ARM 2
-
 	toolImage_left_temp = cv::Mat::zeros(480, 640, CV_8UC3); //left rendered Image
 	toolImage_right_temp = cv::Mat::zeros(480, 640, CV_8UC3); //right rendered Image
 
@@ -112,12 +109,9 @@ ParticleFilter::~ParticleFilter() {
 void ParticleFilter::initializeParticles() {
 	ROS_INFO("---- Initialize particle is called---");
 	matchingScores_arm_1.resize(numParticles); //initialize matching score array
-	matchingScores_arm_2.resize(numParticles); //initialize matching score array
 
 	particles_arm_1.resize(numParticles); //initialize particle array
 	particleWeights_arm_1.resize(numParticles); //initialize particle weight array
-	particles_arm_2.resize(numParticles); //initialize particle array
-	particleWeights_arm_2.resize(numParticles); //initialize particle weight array
 
 	//Compute initial guess from FK and generate particles around initial guess
     kinematics = Davinci_fwd_solver();
@@ -235,71 +229,73 @@ void ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &
 
     ros::spinOnce();
 
-    /**
-     * If necessary to check the model params
-     */
-    //testRenderedModel(initial, segmented_left, segmented_right);
+    if(freshCameraInfo){
+	    /**
+	     * If necessary to check the model params
+	     */
+	    //testRenderedModel(initial, segmented_left, segmented_right);
 
-	ROS_INFO("---- in tracking function ---");
-	//Update according to the max score
-	double maxScore_1 = 0.0;
-	int maxScoreIdx_1 = -1; //maximum scored particle index
-	double totalScore_1 = 0.0; //total score
+		ROS_INFO("---- in tracking function ---");
+		//Update according to the max score
+		double maxScore_1 = 0.0;
+		int maxScoreIdx_1 = -1; //maximum scored particle index
+		double totalScore_1 = 0.0; //total score
 
-	toolImage_left_temp.setTo(0);
-	toolImage_right_temp.setTo(0);
-    ////////////////////////PART 1: Measurement model//////////////////////////////
-    for (int i = 0; i < numParticles; ++i) {
-        //get matching score of particle i
-		matchingScores_arm_1[i] = measureFuncSameCam(toolImage_left_arm_1,toolImage_right_arm_1,particles_arm_1[i],segmented_left, segmented_right,Cam_left_arm_1,Cam_right_arm_1);
+		toolImage_left_temp.setTo(0);
+		toolImage_right_temp.setTo(0);
+	    ////////////////////////PART 1: Measurement model//////////////////////////////
+	    for (int i = 0; i < numParticles; ++i) {
+	        //get matching score of particle i
+			matchingScores_arm_1[i] = measureFuncSameCam(toolImage_left_arm_1,toolImage_right_arm_1,particles_arm_1[i],segmented_left, segmented_right,Cam_left_arm_1,Cam_right_arm_1);
 
-        //render tool in left and right camera frame on temp image
-		newToolModel.renderTool(toolImage_left_temp, particles_arm_1[i], Cam_left_arm_1, P_left);
-		newToolModel.renderTool(toolImage_right_temp, particles_arm_1[i], Cam_right_arm_1, P_right);
+	  //       //render tool in left and right camera frame on temp image
+			// newToolModel.renderTool(toolImage_left_temp, particles_arm_1[i], Cam_left_arm_1, P_left);
+			// newToolModel.renderTool(toolImage_right_temp, particles_arm_1[i], Cam_right_arm_1, P_right);
 
-        //store total match score and largest discovered match score/index
-		if (matchingScores_arm_1[i] >= maxScore_1) {
-			maxScore_1 = matchingScores_arm_1[i];
-			maxScoreIdx_1 = i;
+	        //store total match score and largest discovered match score/index
+			if (matchingScores_arm_1[i] >= maxScore_1) {
+				maxScore_1 = matchingScores_arm_1[i];
+				maxScoreIdx_1 = i;
+			}
+			totalScore_1 += matchingScores_arm_1[i];
 		}
-		totalScore_1 += matchingScores_arm_1[i];
-	}
 
-    //show composite of all particles in left/right camera on temp images
-	cv::imshow("temp image arm_1 left: " , toolImage_left_temp);
-	cv::imshow("temp image arm_1 right:  " , toolImage_right_temp);
-	ROS_INFO_STREAM("Maxscore arm 1: " << maxScore_1);  //debug
+	    //show composite of all particles in left/right camera on temp images
+		// cv::imshow("temp image arm_1 left: " , toolImage_left_temp);
+		// cv::imshow("temp image arm_1 right:  " , toolImage_right_temp);
+		ROS_INFO_STREAM("Maxscore arm 1: " << maxScore_1);  //debug
 
-    //compute weights as normalized matching scores
-	for (int j = 0; j < numParticles; ++j) {
-		particleWeights_arm_1[j] = (matchingScores_arm_1[j] / totalScore_1);
-		//ROS_INFO_STREAM("weights" << particleWeights[j]);
-	}
+	    //compute weights as normalized matching scores
+		for (int j = 0; j < numParticles; ++j) {
+			particleWeights_arm_1[j] = (matchingScores_arm_1[j] / totalScore_1);
+			//ROS_INFO_STREAM("weights" << particleWeights[j]);
+		}
 
-    //store the best particle (that with highest weight)
-	ToolModel::toolModel best_particle = particles_arm_1[maxScoreIdx_1];
-	ROS_INFO("Real tool at (%f %f %f): %f %f %f, ", initial.tvec_cyl(0), initial.tvec_cyl(1),initial.tvec_cyl(2),initial.rvec_cyl(0),initial.rvec_cyl(1), initial.rvec_cyl(2));
-	ROS_WARN("Particle ARM AT (%f %f %f): %f %f %f, ",best_particle.tvec_cyl(0), best_particle.tvec_cyl(1),best_particle.tvec_cyl(2),best_particle.rvec_cyl(0),best_particle.rvec_cyl(1), best_particle.rvec_cyl(2));
+	    //store the best particle (that with highest weight)
+		ToolModel::toolModel best_particle = particles_arm_1[maxScoreIdx_1];
+		ROS_INFO("Real tool at (%f %f %f): %f %f %f, ", initial.tvec_cyl(0), initial.tvec_cyl(1),initial.tvec_cyl(2),initial.rvec_cyl(0),initial.rvec_cyl(1), initial.rvec_cyl(2));
+		ROS_WARN("Particle ARM AT (%f %f %f): %f %f %f, ",best_particle.tvec_cyl(0), best_particle.tvec_cyl(1),best_particle.tvec_cyl(2),best_particle.rvec_cyl(0),best_particle.rvec_cyl(1), best_particle.rvec_cyl(2));
 
-	///render the best particle on real images and show
-	cv::Mat show_raw_left = raw_image_left.clone();
-	cv::Mat show_raw_right = raw_image_right.clone();
-	newToolModel.renderTool(show_raw_left, best_particle, Cam_left_arm_1, P_left);
-	newToolModel.renderTool(show_raw_right, best_particle, Cam_right_arm_1, P_right);
+		///render the best particle on real images and show
+		cv::Mat show_raw_left = raw_image_left.clone();
+		cv::Mat show_raw_right = raw_image_right.clone();
+		newToolModel.renderTool(show_raw_left, best_particle, Cam_left_arm_1, P_left);
+		newToolModel.renderTool(show_raw_right, best_particle, Cam_right_arm_1, P_right);
 
-	cv::imshow("trackingImages left", show_raw_left);
-	cv::imshow("trackingImages right", show_raw_right);
+		cv::imshow("trackingImages left", show_raw_left);
+		cv::imshow("trackingImages right", show_raw_right);
 
-	//////////////////////PART 2: Resampling/////////////////////////////////////
-	std::vector<ToolModel::toolModel> oldParticles = particles_arm_1;
-	resamplingParticles(oldParticles, particleWeights_arm_1, particles_arm_1);
+		//////////////////////PART 2: Resampling/////////////////////////////////////
+		std::vector<ToolModel::toolModel> oldParticles = particles_arm_1;
+		resamplingParticles(oldParticles, particleWeights_arm_1, particles_arm_1);
 
-	showGazeboToolError(initial, best_particle);
+		showGazeboToolError(initial, best_particle);
 
-	cv::waitKey(30);
+		cv::waitKey(20);
 
-	/////////////////////////PART 3: Motion model////////////////////////////////
-	updateParticles(particles_arm_1);
+		/////////////////////////PART 3: Motion model////////////////////////////////
+		updateParticles(particles_arm_1);
+    }
 
 };
 
@@ -471,90 +467,95 @@ void ParticleFilter::testRenderedModel(ToolModel::toolModel &inputModel, cv::Mat
 
     double test_score = measureFuncSameCam(left_test,right_test, inputModel ,segmented_left, segmented_right, Cam_left_arm_1, Cam_right_arm_1);
     ROS_INFO_STREAM("Matching is: " << test_score);
-    cv::imshow("left_test ", left_test);
-    cv::imshow("right_test ", right_test);
+
+    cv::Mat left_test_show = segmented_left.clone();
+    cv::Mat right_test_show = segmented_right.clone();
+
+    newToolModel.renderTool(left_test_show, inputModel, Cam_left_arm_1, P_left);
+    newToolModel.renderTool(right_test_show, inputModel, Cam_right_arm_1, P_left);
+
+    cv::imshow("left_test ", left_test_show);
+    cv::imshow("right_test ", right_test_show);
 
     cv::waitKey();
 };
 
 void ParticleFilter::dataCollection(const cv::Mat &segmented_left, const cv::Mat &segmented_right){
-	pos_noise.resize(3);
-	rot_noise.resize(3);
 	/**
 	 * POSE 1
 	 */
-	// pos_noise[0] = 0.005;
-	// pos_noise[1] = 0.0;
-	// pos_noise[2] = 0.0;
+	pos_noise[0] = 0.005;
+	pos_noise[1] = 0.0;
+	pos_noise[2] = 0.0;
 
-	// rot_noise[0] = 0.05;
-	// rot_noise[1] = 0.0;
-	// rot_noise[2] = 0.0;
+	rot_noise[0] = 0.05;
+	rot_noise[1] = 0.0;
+	rot_noise[2] = 0.0;
 
-	// pos_thresh = 1;
+	pos_thresh = 1;
 
-	// numParticles = 200;
-	// for (int j = 0; j < 50; ++j) {  //each pose have 50 data sets to collect
-	// 	ofstream datafile_1 ("/home/ranhao/Desktop/temp_raw_pose_1.txt", std::ios_base::app);
-	// 	if (datafile_1.is_open())
-	// 	{
-	// 		ROS_ERROR_STREAM("POSE 1 " << j << " th round");
-	// 		downsample_rate_pos = 0.001;
-	// 		downsample_rate_rot = 0.001;
-	// 		initializeParticles(); //every time restart the particles
+	numParticles = 200;
+	for (int j = 0; j < 50; ++j) {  //each pose have 50 data sets to collect
+		ofstream datafile_1 ("/home/ranhao/Desktop/temp_raw_pose_1.txt", std::ios_base::app);
+		if (datafile_1.is_open())
+		{
+			ROS_ERROR_STREAM("POSE 1 " << j << " th round");
+			downsample_rate_pos = 0.001;
+			downsample_rate_rot = 0.001;
+			initializeParticles(); //every time restart the particles
 
-	// 		for (int k = 0; k < 10; ++k) {   //10 iterations
-	// 			trackingTool(segmented_left, segmented_right);
-	// 		}
+			for (int k = 0; k < 10; ++k) {   //10 iterations
+				trackingTool(segmented_left, segmented_right);
+			}
 
-	// 		datafile_1 << error_pos;
-	// 		datafile_1 << "  ";
-	// 		datafile_1 << error_ori;
-	// 		datafile_1 << "\n";
-	// 		datafile_1.close();
-	// 	}
-	// 	else cout << "Unable to open file";
+			datafile_1 << error_pos;
+			datafile_1 << "  ";
+			datafile_1 << error_ori;
+			datafile_1 << "\n";
+			datafile_1.close();
+		}
+		else cout << "Unable to open file";
 
-	// }
+	}
 
 	/**
 	 * POSE 2
 	 */
-	//  ROS_INFO("POSE 2 !");
-	// pos_noise[0] = 0.004;
-	// pos_noise[1] = 0.004;
-	// pos_noise[2] = 0.0;
+	 ROS_INFO("POSE 2 !");
+	pos_noise[0] = 0.004;
+	pos_noise[1] = 0.004;
+	pos_noise[2] = 0.0;
 
-	// rot_noise[0] = 0.05;
-	// rot_noise[1] = 0.05;
-	// rot_noise[2] = 0.0;
+	rot_noise[0] = 0.05;
+	rot_noise[1] = 0.05;
+	rot_noise[2] = 0.0;
 
-	// pos_thresh = 1.5;
+	pos_thresh = 1.5;
 
-	// numParticles = 260;
+	numParticles = 260;
 
-	// for (int j = 0; j < 50; ++j) {  //each pose have 50 data sets to collect
-	// 	ofstream datafile_2 ("/home/ranhao/Desktop/temp_raw_pose_2.txt", std::ios_base::app);
-	// 	if (datafile_2.is_open()){
+	for (int j = 0; j < 50; ++j) {  //each pose have 50 data sets to collect
+		ofstream datafile_2 ("/home/ranhao/Desktop/temp_raw_pose_2.txt", std::ios_base::app);
+		if (datafile_2.is_open()){
 			
-	// 		ROS_ERROR_STREAM("POSE 2 " << j << " th round");
-	// 		downsample_rate_pos = 0.003;
-	// 		downsample_rate_rot = 0.002;
-	// 		initializeParticles();
+			ROS_ERROR_STREAM("POSE 2 " << j << " th round");
+			downsample_rate_pos = 0.003;
+			downsample_rate_rot = 0.002;
+			initializeParticles();
 
-	// 		for (int k = 0; k < 10; ++k) {   //10 iterations
-	// 			trackingTool(segmented_left, segmented_right);
-	// 		}
+			for (int k = 0; k < 10; ++k) {   //10 iterations
+				trackingTool(segmented_left, segmented_right);
+			}
 
-	// 		datafile_2 << error_pos;
-	// 		datafile_2 << "  ";
-	// 		datafile_2 << error_ori;
-	// 		datafile_2 << "\n";
+			datafile_2 << error_pos;
+			datafile_2 << "  ";
+			datafile_2 << error_ori;
+			datafile_2 << "\n";
 
-	// 		datafile_2.close();
-	// 	}else cout << "Unable to open pose 2 file";
+			datafile_2.close();
+		}else cout << "Unable to open pose 2 file";
 
-	// }
+	}
 
 	/**
 	 * POSE 3
@@ -631,4 +632,4 @@ void ParticleFilter::dataCollection(const cv::Mat &segmented_left, const cv::Mat
 	}
 
 	ROS_INFO("FINISHED !");
-}
+};
