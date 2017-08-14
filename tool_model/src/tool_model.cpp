@@ -922,7 +922,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     //Part 2.a: gripper 1
     cv::Mat test_gripper(3, 1, CV_64FC1);
     test_gripper.at<double>(0, 0) = 0;
-    test_gripper.at<double>(1, 0) = 0.006;//close to offset_gripper - offset_ellipse;
+    test_gripper.at<double>(1, 0) = 0.007;//close to offset_gripper - offset_ellipse;
     test_gripper.at<double>(2, 0) = 0;
 
     cv::Mat rot_elp(3, 3, CV_64FC1);

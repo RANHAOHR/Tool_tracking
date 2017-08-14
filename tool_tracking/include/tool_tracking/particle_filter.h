@@ -318,7 +318,7 @@ public:
      * @param segmented_left
      * @param segmented_right
      */
-    void testRenderedModel(ToolModel::toolModel &inputModel, cv::Mat &segmented_left, cv::Mat &segmented_right);
+    void testRenderedModel(ToolModel::toolModel &inputModel, const cv::Mat &segmented_left, const cv::Mat &segmented_right);
 
     /**
      * @brief - Collecting data sets, for 4 pre-defined poses, 50 data sets for each pose. SHould specify the path of the file first.

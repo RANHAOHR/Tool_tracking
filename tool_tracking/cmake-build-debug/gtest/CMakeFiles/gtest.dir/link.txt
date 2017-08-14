@@ -1,0 +1,1 @@
+/usr/bin/c++  -fPIC -g  -shared -Wl,-soname,libgtest.so -o libgtest.so CMakeFiles/gtest.dir/src/gtest-all.cc.o  -L/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/gtest/src -lpthread -Wl,-rpath,/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/gtest/src 
