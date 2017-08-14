@@ -240,6 +240,14 @@ public:
  * @param outputMatrix
  */
     void convertEigenToMat(const Eigen::Affine3d &trans, cv::Mat &outputMatrix);
+
+/**
+ * @brief Each particle contains both left camera-robot transformation and the joint angle, decompose it for rendering
+ * @param input_particle
+ * @param tool_pose
+ * @param left_cam
+ */
+    void StateDecomposition(std::vector<double> &input_particle, ToolModel::toolModel &tool_pose, cv::Mat &left_cam);
 };
 
 #endif
