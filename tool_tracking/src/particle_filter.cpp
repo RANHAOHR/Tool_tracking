@@ -41,7 +41,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
-        node_handle(*nodehandle), numParticles(150), down_sample_joint(0.0003), down_sample_cam(0.001), L(13) {
+        node_handle(*nodehandle), numParticles(170), down_sample_joint(0.0003), down_sample_cam(0.001), L(13) {
     /********** using calibration results: camera-base transformation *******/
     g_cr_cl = cv::Mat::eye(4, 4, CV_64FC1);
 
@@ -61,9 +61,9 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle) :
 //    -0.2276037603279396, -0.04708392762802231, -0.9726148425989093, 0.01348956267172269;
 //    0, 0, 0, 1);
 
-    Cam_left_arm_1 = (cv::Mat_<double>(4,4) <<-0.795366110925932, 0.598910033205905, 0.09327122662354001, -0.14643016064445,
-    0.5800314064129208, 0.7967225045097124, -0.1696962532951757, -0.05682715421036513,
-    -0.1759440739701311, -0.0808704082657756, -0.9810727087742884, 0.01803630856224053,
+    Cam_left_arm_1 = (cv::Mat_<double>(4,4) <<-0.7957202989220624, 0.5973029574070733, 0.1002914899487871, -0.1457363810408611,
+    0.5774830577587885, 0.7981448037077312, -0.1716921381889863, -0.05765625519212968,
+    -0.1825993534625561, -0.07870228323949785, -0.9800323600412113, 0.0253347043654488,
     0, 0, 0, 1);
 
     ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
@@ -181,6 +181,8 @@ void ParticleFilter::computeNoisedParticles(std::vector<double> &inputParticle,
         for (int j = 0; j < 7; ++j) {
             inputParticle[j] = inputParticle[j] + newToolModel.randomNumber(down_sample_joint, 0);
         }
+
+
         /**
          * left camera-base matrix, There is offset for positions from initial calibration results
          */
@@ -393,7 +395,7 @@ void ParticleFilter::updateParticles(std::vector<double> &best_particle_last, do
     cv::Mat nom_vel = delta_thetas * (1 / delta_t);
     double velocity_bar = cv::sum(nom_vel)[0];
     ROS_INFO_STREAM("velocity_bar " << velocity_bar);
-    if (fabs(velocity_bar) > 0.05) {
+    if (fabs(velocity_bar) > 0.001) {
         ROS_WARN(" Refresh state! ");
         /******** using the obtained velocity to propagate the particles ********/
         for (int j = 0; j < updatedParticles.size(); ++j) {
@@ -443,7 +445,7 @@ void ParticleFilter::updateParticles(std::vector<double> &best_particle_last, do
 
     }
 
-    down_sample_cam -= 0.0002;
+    down_sample_cam -= 0.00015;
     if (down_sample_cam < 0.0001) {
         down_sample_cam = 0.0001;
     };
