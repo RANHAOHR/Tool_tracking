@@ -338,8 +338,9 @@ void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedP
 	//If error is small decrement it even more
 	if(error_pos < pos_thresh){
 		downsample_rate_pos = 0.0002;
+        downsample_rate_rot = 0.0004;
 	}
-	if(error_ori < 2.5){
+	if(error_ori < 4.0){
 		downsample_rate_rot = 0.0003;
 	}
 
@@ -634,7 +635,7 @@ void ParticleFilter::dataCollection(const cv::Mat &segmented_left, const cv::Mat
 
 /* noise set for pf converge*/
 
-	 pos_noise[0] = 0.005;
+	 pos_noise[0] = -0.005;
 	 pos_noise[1] = 0.005;
 	 pos_noise[2] = 0.0;
 
@@ -654,7 +655,7 @@ void ParticleFilter::dataCollection(const cv::Mat &segmented_left, const cv::Mat
 	 		downsample_rate_rot = 0.003;
 	 		initializeParticles(); //every time restart the particles
 
-	 		for (int k = 0; k < 10; ++k) {   //10 iterations
+	 		for (int k = 0; k < 20; ++k) {   //10 iterations
 	 			trackingTool(segmented_left, segmented_right);
 
 				datafile_1 << error_pos;
