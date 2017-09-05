@@ -481,88 +481,159 @@ void ParticleFilter::testRenderedModel(ToolModel::toolModel &inputModel, const c
 };
 
 void ParticleFilter::dataCollection(const cv::Mat &segmented_left, const cv::Mat &segmented_right){
-	/**
-	 * Noise set 1
-	 */
-	 pos_noise[0] = 0.005;
-	 pos_noise[1] = 0.00;
-	 pos_noise[2] = 0.0;
-
-	 rot_noise[0] = 0.005;
-	 rot_noise[1] = 0.05;
-	 rot_noise[2] = 0.01;
-
-	 pos_thresh = 1;
-
-	 numParticles = 400;
-	 for (int j = 0; j < 50; ++j) {  //each pose have 50 data sets to collect
-	 	ofstream datafile_1 ("/home/ranhao/Desktop/temp_raw_pose_1.txt", std::ios_base::app);
-	 	if (datafile_1.is_open())
-	 	{
-	 		ROS_ERROR_STREAM("POSE 1 " << j << " th round");
-	 		downsample_rate_pos = 0.002;
-	 		downsample_rate_rot = 0.003;
-	 		initializeParticles(); //every time restart the particles
-
-	 		for (int k = 0; k < 10; ++k) {   //10 iterations
-	 			trackingTool(segmented_left, segmented_right);
-	 		}
-
-			datafile_1 << error_pos;
-			datafile_1 << "  ";
-			datafile_1 << error_ori;
+//	/**
+//	 * Noise set 1
+//	 */
+//	 pos_noise[0] = 0.005;
+//	 pos_noise[1] = 0.00;
+//	 pos_noise[2] = 0.0;
+//
+//	 rot_noise[0] = 0.005;
+//	 rot_noise[1] = 0.05;
+//	 rot_noise[2] = 0.01;
+//
+//	 pos_thresh = 1;
+//
+//	 numParticles = 400;
+//	 for (int j = 0; j < 50; ++j) {  //each pose have 50 data sets to collect
+//	 	ofstream datafile_1 ("/home/ranhao/Desktop/temp_raw_pose_1.txt", std::ios_base::app);
+//	 	if (datafile_1.is_open())
+//	 	{
+//	 		ROS_ERROR_STREAM("POSE 1 " << j << " th round");
+//	 		downsample_rate_pos = 0.002;
+//	 		downsample_rate_rot = 0.003;
+//	 		initializeParticles(); //every time restart the particles
+//
+//	 		for (int k = 0; k < 10; ++k) {   //10 iterations
+//	 			trackingTool(segmented_left, segmented_right);
+//	 		}
+//
+//			datafile_1 << error_pos;
 //			datafile_1 << "  ";
+//			datafile_1 << error_ori;
+//
+//	 		datafile_1 << "\n";
+//	 		datafile_1.close();
+//	 	}
+//	 	else cout << "Unable to open file";
+//
+//	 }
+//
+//	 /**
+//	  * Noise set 2
+//	  */
+//	   ROS_INFO("POSE 2 !");
+//	  pos_noise[0] = 0.004;
+//	  pos_noise[1] = 0.004;
+//	  pos_noise[2] = 0.0;
+//
+//	  rot_noise[0] = 0.05;
+//	  rot_noise[1] = 0.05;
+//	  rot_noise[2] = 0.0;
+//
+//	  pos_thresh = 1.5;
+//
+//	  numParticles = 300;
+//
+//	  for (int j = 0; j < 50; ++j) {  //each pose have 50 data sets to collect
+//	  	ofstream datafile_2 ("/home/ranhao/Desktop/temp_raw_pose_2.txt", std::ios_base::app);
+//	  	if (datafile_2.is_open()){
+//
+//	  		ROS_ERROR_STREAM("POSE 2 " << j << " th round");
+//	  		downsample_rate_pos = 0.003;
+//	  		downsample_rate_rot = 0.002;
+//	  		initializeParticles();
+//
+//	  		for (int k = 0; k < 18; ++k) {   //10 iterations
+//	  			trackingTool(segmented_left, segmented_right);
+//	  		}
+//
+//	  		datafile_2 << error_pos;
+//	  		datafile_2 << "  ";
+//	  		datafile_2 << error_ori;
+//	  		datafile_2 << "\n";
+//
+//	  		datafile_2.close();
+//	  	}else cout << "Unable to open pose 2 file";
+//
+//	  }
+//
+//	 /**
+//	  * Noise set 3
+//	  */
+//	 ROS_INFO("POSE 3 !");
+//	 pos_noise[0] = 0.005;
+//	 pos_noise[1] = 0.005;
+//	 pos_noise[2] = 0.0;
+//
+//	 rot_noise[0] = 0.05;
+//	 rot_noise[1] = 0.07;
+//	 rot_noise[2] = 0.05;
+//
+//	 pos_thresh = 4;
+//	 numParticles = 700;
+//
+//	 for (int j = 0; j < 50; ++j) {  //each pose have 50 data sets to collect
+//	 	ofstream datafile_3("/home/ranhao/Desktop/temp_raw_pose_3.txt", std::ios_base::app);
+//	 	if (datafile_3.is_open()) {
+//
+//	 		ROS_ERROR_STREAM("POSE 3 " << j << " th round");
+//	 		downsample_rate_pos = 0.004;
+//	 		downsample_rate_rot = 0.005;
+//	 		initializeParticles();
+//
+//	 		for (int k = 0; k < 20; ++k) {   //10 iterations
+//	 			trackingTool(segmented_left, segmented_right);
+//	 		}
+//
+//	 		datafile_3 << error_pos;
+//	 		datafile_3 << "  ";
+//	 		datafile_3 << error_ori;
+//	 		datafile_3 << "\n";
+//
+//	 		datafile_3.close();
+//	 	}
+//	 	else cout << "Unable to open pose 3 file";
+//	 }
+//
+//	 /**
+//	  * Noise set 4
+//	  */
+//	 ROS_INFO("POSE 4 !");
+//	 pos_noise[0] = -0.01;
+//	 pos_noise[1] = 0.003;
+//	 pos_noise[2] = 0.002;
+//
+//	 rot_noise[0] = 0.07;
+//	 rot_noise[1] = 0.1;
+//	 rot_noise[2] = 0.07;
+//
+//	 pos_thresh = 5;
+//	 numParticles = 600;
+//
+//	 for (int j = 0; j < 50; ++j) {  //each pose have 50 data sets to collect
+//	 	ofstream datafile_4 ("/home/ranhao/Desktop/temp_raw_pose_4.txt", std::ios_base::app);
+//	 	if (datafile_4.is_open()) {
+//	 		ROS_ERROR_STREAM("POSE 4 " << j << " th round");
+//	 		downsample_rate_pos = 0.004;
+//	 		downsample_rate_rot = 0.005;
+//	 		initializeParticles();
+//
+//	 		for (int k = 0; k < 23; ++k) {   //10 iterations
+//	 			trackingTool(segmented_left, segmented_right);
+//	 		}
+//
+//	 		datafile_4 << error_pos;
+//	 		datafile_4 << "  ";
+//	 		datafile_4 << error_ori;
+//	 		datafile_4 << "\n";
+//	 		datafile_4.close();
+//	 	}
+//	 	else cout << "Unable to open pose 4 file";
+//	 }
 
-	 		datafile_1 << "\n";
-	 		datafile_1.close();
-	 	}
-	 	else cout << "Unable to open file";
+/* noise set for pf converge*/
 
-	 }
-
-	 /**
-	  * Noise set 2
-	  */
-	   ROS_INFO("POSE 2 !");
-	  pos_noise[0] = 0.004;
-	  pos_noise[1] = 0.004;
-	  pos_noise[2] = 0.0;
-
-	  rot_noise[0] = 0.05;
-	  rot_noise[1] = 0.05;
-	  rot_noise[2] = 0.0;
-
-	  pos_thresh = 1.5;
-
-	  numParticles = 300;
-
-	  for (int j = 0; j < 50; ++j) {  //each pose have 50 data sets to collect
-	  	ofstream datafile_2 ("/home/ranhao/Desktop/temp_raw_pose_2.txt", std::ios_base::app);
-	  	if (datafile_2.is_open()){
-
-	  		ROS_ERROR_STREAM("POSE 2 " << j << " th round");
-	  		downsample_rate_pos = 0.003;
-	  		downsample_rate_rot = 0.002;
-	  		initializeParticles();
-
-	  		for (int k = 0; k < 18; ++k) {   //10 iterations
-	  			trackingTool(segmented_left, segmented_right);
-	  		}
-
-	  		datafile_2 << error_pos;
-	  		datafile_2 << "  ";
-	  		datafile_2 << error_ori;
-	  		datafile_2 << "\n";
-
-	  		datafile_2.close();
-	  	}else cout << "Unable to open pose 2 file";
-
-	  }
-
-	 /**
-	  * Noise set 3
-	  */
-	 ROS_INFO("POSE 3 !");
 	 pos_noise[0] = 0.005;
 	 pos_noise[1] = 0.005;
 	 pos_noise[2] = 0.0;
@@ -572,65 +643,33 @@ void ParticleFilter::dataCollection(const cv::Mat &segmented_left, const cv::Mat
 	 rot_noise[2] = 0.05;
 
 	 pos_thresh = 4;
-	 numParticles = 700;
 
+	 numParticles = 1000;
 	 for (int j = 0; j < 50; ++j) {  //each pose have 50 data sets to collect
-	 	ofstream datafile_3("/home/ranhao/Desktop/temp_raw_pose_3.txt", std::ios_base::app);
-	 	if (datafile_3.is_open()) {
+	 	ofstream datafile_1 ("/home/ranhao/Desktop/new_raw_pose.txt", std::ios_base::app);
+	 	if (datafile_1.is_open())
+	 	{
+	 		ROS_ERROR_STREAM("POSE new " << j << " th round");
+	 		downsample_rate_pos = 0.002;
+	 		downsample_rate_rot = 0.003;
+	 		initializeParticles(); //every time restart the particles
 
-	 		ROS_ERROR_STREAM("POSE 3 " << j << " th round");
-	 		downsample_rate_pos = 0.004;
-	 		downsample_rate_rot = 0.005;
-	 		initializeParticles();
-
-	 		for (int k = 0; k < 20; ++k) {   //10 iterations
+	 		for (int k = 0; k < 10; ++k) {   //10 iterations
 	 			trackingTool(segmented_left, segmented_right);
-	 		}
 
-	 		datafile_3 << error_pos;
-	 		datafile_3 << "  ";
-	 		datafile_3 << error_ori;
-	 		datafile_3 << "\n";
+				datafile_1 << error_pos;
+				datafile_1 << "  ";
+				datafile_1 << error_ori;
+				datafile_1 << "  ";
 
-	 		datafile_3.close();
+			}
+
+
+	 		datafile_1 << "\n";
+	 		datafile_1.close();
 	 	}
-	 	else cout << "Unable to open pose 3 file";
-	 }
+	 	else cout << "Unable to open file";
 
-	 /**
-	  * Noise set 4
-	  */
-	 ROS_INFO("POSE 4 !");
-	 pos_noise[0] = -0.01;
-	 pos_noise[1] = 0.003;
-	 pos_noise[2] = 0.002;
-
-	 rot_noise[0] = 0.07;
-	 rot_noise[1] = 0.1;
-	 rot_noise[2] = 0.07;
-
-	 pos_thresh = 5;
-	 numParticles = 600;
-
-	 for (int j = 0; j < 50; ++j) {  //each pose have 50 data sets to collect
-	 	ofstream datafile_4 ("/home/ranhao/Desktop/temp_raw_pose_4.txt", std::ios_base::app);
-	 	if (datafile_4.is_open()) {
-	 		ROS_ERROR_STREAM("POSE 4 " << j << " th round");
-	 		downsample_rate_pos = 0.004;
-	 		downsample_rate_rot = 0.005;
-	 		initializeParticles();
-
-	 		for (int k = 0; k < 23; ++k) {   //10 iterations
-	 			trackingTool(segmented_left, segmented_right);
-	 		}
-
-	 		datafile_4 << error_pos;
-	 		datafile_4 << "  ";
-	 		datafile_4 << error_ori;
-	 		datafile_4 << "\n";
-	 		datafile_4.close();
-	 	}
-	 	else cout << "Unable to open pose 4 file";
 	 }
 
 	 ROS_INFO("FINISHED !");
