@@ -53,7 +53,7 @@ ToolModel::ToolModel() {
     ///offset the model's values according to the tool geometry.  values from testing
     offset_body = 0.4560;
     offset_ellipse = offset_body;
-    offset_gripper = offset_ellipse+ 0.005;
+    offset_gripper = offset_ellipse + 0.0055;
 
     //get path to package
     tool_model_pkg = ros::package::getPath("tool_model");
@@ -379,9 +379,9 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                         cv::Point2d prjpt_1 = reproject(ept_1, P);
                         cv::Point2d prjpt_2 = reproject(ept_2, P);
 
-                        if(((prjpt_1.x <= 0 && prjpt_2.x <= 0) || (prjpt_1.x >= 640 && prjpt_2.x >= 640)) || ((prjpt_1.y <= 0 && prjpt_2.y <= 0) || (prjpt_1.y >= 480 && prjpt_2.y >= 480))){
-                            //this is not suppose to be in the image
-                        }else { //draw edge line
+
+                        if(prjpt_1.x <= 640 && prjpt_2.x <= 640 && prjpt_1.y >= 0 && prjpt_1.y <= 480 && prjpt_2.y >= 0 && prjpt_2.y <= 480){
+                            //draw edge line
                             cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
                         }
                     }
@@ -486,9 +486,9 @@ void ToolModel::Compute_Silhouette_UKF(const std::vector<std::vector<int> > &inp
                         cv::Point2d prjpt_1 = reproject(ept_1, P);
                         cv::Point2d prjpt_2 = reproject(ept_2, P);
 
-                        if(((prjpt_1.x <= 0 && prjpt_2.x <= 0) || (prjpt_1.x >= 640 && prjpt_2.x >= 640)) || ((prjpt_1.y <= 0 && prjpt_2.y <= 0) || (prjpt_1.y >= 480 && prjpt_2.y >= 480))){
-                            //this is not suppose to be in the image
-                        }else{
+
+                        if(prjpt_1.x <= 640 && prjpt_2.x <= 640 && prjpt_1.y >= 0 && prjpt_1.y <= 480 && prjpt_2.y >= 0 && prjpt_2.y <= 480){
+
 
                             cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
                             /**** get new vertex ****/

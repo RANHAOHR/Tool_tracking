@@ -40,7 +40,7 @@
 using namespace std;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
-        node_handle(*nodehandle), numParticles(200), downsample_rate_pos(0.001), downsample_rate_rot(0.001), error_pos(1), error_ori(1){
+        node_handle(*nodehandle), numParticles(10), downsample_rate_pos(0.001), downsample_rate_rot(0.001), error_pos(1), error_ori(1){
 
 	initializeParticles();
 
@@ -84,8 +84,8 @@ ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
 	ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
 	ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
 
-	projectionMat_subscriber_r = node_handle.subscribe("/davinci_endo/right/camera_info", 1, &ParticleFilter::projectionRightCB, this);
-	projectionMat_subscriber_l = node_handle.subscribe("/davinci_endo/left/camera_info", 1, &ParticleFilter::projectionLeftCB, this);
+	projectionMat_subscriber_r = node_handle.subscribe("/davinci_endo/unsynched/right/camera_info", 1, &ParticleFilter::projectionRightCB, this);
+	projectionMat_subscriber_l = node_handle.subscribe("/davinci_endo/unsynched/left/camera_info", 1, &ParticleFilter::projectionLeftCB, this);
 
 	toolImage_left_arm_1 = cv::Mat::zeros(480, 640, CV_8UC3);  //left rendered Image for ARM 1
 	toolImage_right_arm_1 = cv::Mat::zeros(480, 640, CV_8UC3); //right rendered Image for ARM 1
@@ -128,8 +128,8 @@ void ParticleFilter::getCoarseGuess(){
     std::vector<std::vector<double> > tmp;
     tmp.resize(2);
     if(davinci_interface::get_fresh_robot_pos(tmp)){
-        sensor_1 = tmp[0];
-        sensor_2 = tmp[1];
+        sensor_1 = tmp[1];
+        sensor_2 = tmp[0];
     }
 
 	//Compute position variable a1_rvec representing joints 1-4 (3x1 cv::mat) using FK and DH parameters
@@ -154,12 +154,12 @@ void ParticleFilter::getCoarseGuess(){
 //	rot_noise[2] = 0.0;
 
 	//toolModel representation of initial guess of configuration of joints 1-4 computed above
-    initial.tvec_cyl(0) = a1_trans[0] + pos_noise[0];  //left and right (image frame)
-    initial.tvec_cyl(1) = a1_trans[1] + pos_noise[1];  //up and down
-    initial.tvec_cyl(2) = a1_trans[2] + pos_noise[2];
-    initial.rvec_cyl(0) = a1_rvec.at<double>(0,0) + rot_noise[0];
-    initial.rvec_cyl(1) = a1_rvec.at<double>(1,0) + rot_noise[1];
-    initial.rvec_cyl(2) = a1_rvec.at<double>(2,0) + rot_noise[2];
+    initial.tvec_cyl(0) = a1_trans[0];// + pos_noise[0];  //left and right (image frame)
+    initial.tvec_cyl(1) = a1_trans[1];// + pos_noise[1];  //up and down
+    initial.tvec_cyl(2) = a1_trans[2];// + pos_noise[2];
+    initial.rvec_cyl(0) = a1_rvec.at<double>(0,0);// + rot_noise[0];
+    initial.rvec_cyl(1) = a1_rvec.at<double>(1,0);// + rot_noise[1];
+    initial.rvec_cyl(2) = a1_rvec.at<double>(2,0);// + rot_noise[2];
 
     double theta_cylinder = sensor_1[4]; //guess from sensor
     double theta_oval = sensor_1[5]; //guess from sensor
@@ -180,7 +180,6 @@ void ParticleFilter::getCoarseGuess(){
 	initial.rvec_cyl(2) = a1_rvec.at<double>(2,0);
 
 	newToolModel.computeEllipsePose(initial, theta_cylinder, theta_oval, theta_open);
-
 };
 
 void ParticleFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight){
@@ -200,7 +199,7 @@ void ParticleFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &
 	P_right.at<double>(2,2) = projectionRight->P[10];
 	P_right.at<double>(2,3) = projectionRight->P[11];
 
-	//ROS_INFO_STREAM("right: " << P_right);
+	ROS_INFO_STREAM("right: " << P_right);
 	freshCameraInfo = true;
 };
 
@@ -221,7 +220,7 @@ void ParticleFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &p
 	P_left.at<double>(2,2) = projectionLeft->P[10];
 	P_left.at<double>(2,3) = projectionLeft->P[11];
 
-	//ROS_INFO_STREAM("left: " << P_left);
+	ROS_INFO_STREAM("left: " << P_left);
 	freshCameraInfo = true;
 };
 
@@ -282,8 +281,8 @@ void ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &
 		newToolModel.renderTool(show_raw_left, best_particle, Cam_left_arm_1, P_left);
 		newToolModel.renderTool(show_raw_right, best_particle, Cam_right_arm_1, P_right);
 
-//		cv::imshow("trackingImages left", show_raw_left);
-//		cv::imshow("trackingImages right", show_raw_right);
+		cv::imshow("trackingImages left", show_raw_left);
+		cv::imshow("trackingImages right", show_raw_right);
 
 		//////////////////////PART 2: Resampling/////////////////////////////////////
 		std::vector<ToolModel::toolModel> oldParticles = particles_arm_1;
@@ -291,7 +290,7 @@ void ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &
 
 		showGazeboToolError(initial, best_particle);
 
-//		cv::waitKey(20);
+		cv::waitKey();
 
 		/////////////////////////PART 3: Motion model////////////////////////////////
 		updateParticles(particles_arm_1);
@@ -330,7 +329,7 @@ void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedP
 		downsample_rate_pos = 0.0002;
 	};
 
-	downsample_rate_rot -= 0.0001;
+	downsample_rate_rot -= 0.0002;
 	if(downsample_rate_rot < 0.0003){
 		downsample_rate_rot = 0.0003;
 	};
@@ -645,7 +644,7 @@ void ParticleFilter::dataCollection(const cv::Mat &segmented_left, const cv::Mat
 //
 //	 pos_thresh = 4;
 //
-//	 numParticles = 1000;
+//	 numParticles = 700;
 //	 for (int j = 0; j < 50; ++j) {  //each pose have 50 data sets to collect
 //	 	ofstream datafile_1 ("/home/ranhao/Desktop/new_raw_pose.txt", std::ios_base::app);
 //	 	if (datafile_1.is_open())
@@ -675,12 +674,12 @@ void ParticleFilter::dataCollection(const cv::Mat &segmented_left, const cv::Mat
 
 
      pos_noise[0] = 0.005;
-	 pos_noise[1] = 0.007;
+	 pos_noise[1] = 0.008;
 	 pos_noise[2] = 0.0;
 
 	 rot_noise[0] = 0.05;
 	 rot_noise[1] = 0.07;
-	 rot_noise[2] = 0.05;
+	 rot_noise[2] = 0.06;
 
 	 pos_thresh = 4;
 	 numParticles = 700;

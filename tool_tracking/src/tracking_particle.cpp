@@ -77,42 +77,46 @@ int main(int argc, char **argv) {
     ROS_INFO("---- done subscribe -----");
     ros::Duration(2).sleep();
 
-//	while (nh.ok()) {
-//		ros::spinOnce();
-//
-//		// if camera is ready, track segmented image
-//		if (freshImage) {
-//
-//			Particles.raw_image_left = rawImage_left.clone();
-//			Particles.raw_image_right = rawImage_right.clone();
-//
-//			seg_left = segmentation(rawImage_left);
-//			seg_right = segmentation(rawImage_right);
-//
-//			Particles.trackingTool(seg_left, seg_right);
-//
-//			freshImage = false;
-//
-//			}
-//	}
+	while (nh.ok()) {
+		ros::spinOnce();
+
+		// if camera is ready, track segmented image
+		if (freshImage) {
+
+			Particles.raw_image_left = rawImage_left.clone();
+			Particles.raw_image_right = rawImage_right.clone();
+
+			seg_left = segmentation(rawImage_left);
+			seg_right = segmentation(rawImage_right);
+
+			cv::imshow("seg_left ", seg_left);
+			cv::imshow("seg_right ", seg_right);
+			cv::waitKey();
+			ROS_INFO("---- START TRACKING -----");
+			Particles.trackingTool(seg_left, seg_right);
+
+			freshImage = false;
+
+			}
+	}
 
 
 	ros::spinOnce();
 
-	// if camera is ready, track segmented image
-	if (freshImage) {
-
-		Particles.raw_image_left = rawImage_left.clone();
-		Particles.raw_image_right = rawImage_right.clone();
-
-		seg_left = segmentation(rawImage_left);
-		seg_right = segmentation(rawImage_right);
-
-		Particles.dataCollection(seg_left, seg_right);
-
-		freshImage = false;
-
-	}
+//	// if camera is ready, track segmented image
+//	if (freshImage) {
+//
+//		Particles.raw_image_left = rawImage_left.clone();
+//		Particles.raw_image_right = rawImage_right.clone();
+//
+//		seg_left = segmentation(rawImage_left);
+//		seg_right = segmentation(rawImage_right);
+//
+//		Particles.dataCollection(seg_left, seg_right);
+//
+//		freshImage = false;
+//
+//	}
 
 	return 0;
 }

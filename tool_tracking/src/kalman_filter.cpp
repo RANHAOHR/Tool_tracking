@@ -75,8 +75,8 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	davinci_interface::init_joint_feedback(nh_);
 
 	//The projection matrix from the simulation does not accurately reflect the Da Vinci robot. We are hardcoding the matrix from the da vinci itself.
-	projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
-	projectionMat_subscriber_l = nh_.subscribe("/davinci_endo/left/camera_info", 1, &KalmanFilter::projectionLeftCB, this);
+	projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/unsynched/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
+	projectionMat_subscriber_l = nh_.subscribe("/davinci_endo/unsynched/left/camera_info", 1, &KalmanFilter::projectionLeftCB, this);
 
 	P_left = cv::Mat::zeros(3,4,CV_64FC1);
 	P_right = cv::Mat::zeros(3,4,CV_64FC1);
@@ -115,21 +115,8 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	convertEigenToMat(arm_2__cam_l, Cam_left_arm_2);
 	convertEigenToMat(arm_2__cam_r, Cam_right_arm_2);
 
-	/*** the calibrated transformation for real da vinci robot comes in : ****/
-//	Cam_left_arm_1 = (cv::Mat_<double>(4,4) << -0.9999999999863094, -3.726808388799082e-06, 3.673205103273929e-06, -0.2209000899903854,
-//			-3.726781403852194e-06, 0.9999999999660707, 7.346410206619205e-06, -0.025046118487469873,
-//			-3.673232481812485e-06, 7.346396517286155e-06, -0.999999999966269, 0.05029912523761887,
-//			0, 0, 0, 1);
-//
-//	Cam_right_arm_1 = (cv::Mat_<double>(4,4) << -0.9999999999863094, -3.726808388799082e-06, 3.673205103273929e-06, -0.2109000899905203,
-//			-3.726781403852194e-06, 0.9999999999660707, 7.346410206619205e-06, -0.025046081755553767,
-//			-3.673232481812485e-06, 7.346396517286155e-06, -0.999999999966269, 0.05029916196993972,
-//			0, 0, 0, 1);
-
 	ROS_INFO_STREAM("Cam_left_arm_1: " << Cam_left_arm_1);
 	ROS_INFO_STREAM("Cam_right_arm_1: " << Cam_right_arm_1);
-//	ROS_INFO_STREAM("Cam_left_arm_2: " << Cam_left_arm_2);
-//	ROS_INFO_STREAM("Cam_right_arm_2: " << Cam_right_arm_2);
 	ros::spinOnce();
 };
 
@@ -157,7 +144,7 @@ void KalmanFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &pr
 	P_right.at<double>(2,2) = projectionRight->P[10];
 	P_right.at<double>(2,3) = projectionRight->P[11];
 
-	//ROS_INFO_STREAM("right: " << P_right);
+//	ROS_INFO_STREAM("right: " << P_right);
 	freshCameraInfo = true;
 };
 
@@ -178,7 +165,7 @@ void KalmanFilter::projectionLeftCB(const sensor_msgs::CameraInfo::ConstPtr &pro
 	P_left.at<double>(2,2) = projectionLeft->P[10];
 	P_left.at<double>(2,3) = projectionLeft->P[11];
 
-	//ROS_INFO_STREAM("left: " << P_left);
+//	ROS_INFO_STREAM("left: " << P_left);
 	freshCameraInfo = true;
 };
 
@@ -205,7 +192,7 @@ void KalmanFilter::getMeasurementModel(const cv::Mat &coarse_guess_vector, const
 	cv::distanceTransform(segImageGrey, distance_img, CV_DIST_L2, 3);
 	cv::normalize(distance_img, segImgBlur, 0.00, 1.00, cv::NORM_MINMAX);
 
-//	cv::imshow("segImgBlur", segImgBlur);
+	cv::imshow("segImgBlur", segImgBlur);
 	/*** get the rendered image points and normals ***/
 	cv::Mat temp_point = cv::Mat(1,2,CV_64FC1);
 	cv::Mat temp_normal = cv::Mat(1,2,CV_64FC1);
@@ -218,7 +205,7 @@ void KalmanFilter::getMeasurementModel(const cv::Mat &coarse_guess_vector, const
 
 //	ROS_INFO_STREAM("temp_normal row: " << temp_normal.rows );
 
-//	showNormals(temp_point, temp_normal, rendered_image );
+	showNormals(temp_point, temp_normal, rendered_image );
 
 	int measurement_dim = temp_point.rows;
     cv::Mat measurement_points = cv::Mat_<double>::zeros(measurement_dim, 2);
@@ -245,21 +232,21 @@ void KalmanFilter::getMeasurementModel(const cv::Mat &coarse_guess_vector, const
 			double delta_x =(x + j * cos(theta));
 			double delta_y = (y + j * sin(theta));
 
-//			 /** drawing the searching range **/
+			 /** drawing the searching range **/
 //			 ROS_INFO_STREAM("double target_x " << delta_x);
 //			 ROS_INFO_STREAM("double target_y " << delta_y);
-//
-//			 cv::Point2d prjpt_1;
-//			 prjpt_1.x = delta_x;
-//			 prjpt_1.y = delta_y;
-//
-//			 cv::Point2d prjpt_2;
-//
-//			 double new_delta_x = (x + (j+1) * cos(theta));
-//			 double new_delta_y = (y + (j+1) * sin(theta));
-//
-//			 prjpt_2.x = new_delta_x;
-//			 prjpt_2.y = new_delta_y;
+
+			 cv::Point2d prjpt_1;
+			 prjpt_1.x = delta_x;
+			 prjpt_1.y = delta_y;
+
+			 cv::Point2d prjpt_2;
+
+			 double new_delta_x = (x + (j+1) * cos(theta));
+			 double new_delta_y = (y + (j+1) * sin(theta));
+
+			 prjpt_2.x = new_delta_x;
+			 prjpt_2.y = new_delta_y;
 //			 cv::line(temp_show, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
 //			 cv::imshow("temp image show the search range:", temp_show);
 //			 cv::waitKey();
@@ -282,7 +269,7 @@ void KalmanFilter::getMeasurementModel(const cv::Mat &coarse_guess_vector, const
 		prjpt_2.y = measurement_points.at<double>(i, 1);
 		cv::line(test_measurement, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
 	}
-    cv::imshow("test_measurement", test_measurement);
+//    cv::imshow("test_measurement", test_measurement);
 	zt = cv::Mat_<double>::zeros(measurement_dim, 1);
     for (int i = 0; i <measurement_dim; ++i) {
         cv::Mat normal = temp_normal.row(i);
@@ -412,9 +399,13 @@ void KalmanFilter::getCoarseEstimation(){
     std::vector<std::vector<double> > tmp;
     tmp.resize(2);
     if(davinci_interface::get_fresh_robot_pos(tmp)){
-        sensor_1 = tmp[0];
-        sensor_2 = tmp[1];
+        sensor_1 = tmp[1];
+        sensor_2 = tmp[0];
     }
+
+	for (int i = 0; i < 7; ++i) {
+		ROS_INFO_STREAM("SENSORS: " << sensor_1[i]);
+	}
     Eigen::Affine3d arm_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0], sensor_1[0] + DH_q_offset0 );
     Eigen::Affine3d arm_pos_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1], sensor_1[1] + DH_q_offset1 );
     Eigen::Affine3d arm_pos_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_1[2] + DH_q_offset2, DH_alpha_params[2], 0.0 );
@@ -435,22 +426,22 @@ void KalmanFilter::getCoarseEstimation(){
 	real_mu.at<double>(4 , 0) = arm_rvec.at<double>(1,0);
 	real_mu.at<double>(5 , 0) = arm_rvec.at<double>(2,0);
 
-	real_mu.at<double>(6 , 0) = tmp[0][4];
-	real_mu.at<double>(7 , 0) = tmp[0][5];
-	real_mu.at<double>(8 , 0) = tmp[0][6];
+	real_mu.at<double>(6 , 0) = sensor_1[4];
+	real_mu.at<double>(7 , 0) = sensor_1[5];
+	real_mu.at<double>(8 , 0) = sensor_1[6];
 
 	////intentionally bad ones......
 	kalman_mu_arm1 = cv::Mat_<double>::zeros(L, 1);
-	kalman_mu_arm1.at<double>(0 , 0) = arm_trans[0] + 0.002;
+	kalman_mu_arm1.at<double>(0 , 0) = arm_trans[0];
 	kalman_mu_arm1.at<double>(1 , 0) = arm_trans[1] /*- 0.004*/;
 	kalman_mu_arm1.at<double>(2 , 0) = arm_trans[2] /*+ 0.002*/;
-	kalman_mu_arm1.at<double>(3 , 0) = arm_rvec.at<double>(0,0) + 0.01;
+	kalman_mu_arm1.at<double>(3 , 0) = arm_rvec.at<double>(0,0);
 	kalman_mu_arm1.at<double>(4 , 0) = arm_rvec.at<double>(1,0) /*+ 0.03*/;
 	kalman_mu_arm1.at<double>(5 , 0) = arm_rvec.at<double>(2,0) /*+ 0.02*/;
 
-	kalman_mu_arm1.at<double>(6 , 0) = tmp[0][4];
-    kalman_mu_arm1.at<double>(7 , 0) = tmp[0][5];
-    kalman_mu_arm1.at<double>(8 , 0) = tmp[0][6];
+	kalman_mu_arm1.at<double>(6 , 0) = sensor_1[4];
+    kalman_mu_arm1.at<double>(7 , 0) = sensor_1[5];
+    kalman_mu_arm1.at<double>(8 , 0) = sensor_1[6];
 
     double dev_pos = ukfToolModel.randomNum(0.00001, 0.0);  ///deviation for position
     double dev_ori = ukfToolModel.randomNum(0.00001, 0.0);  ///deviation for orientation
@@ -499,15 +490,16 @@ void KalmanFilter::UKF_double_arm(){ //well, currently just one......
 	seg_left = segmentation(tool_rawImg_left);
 	seg_right = segmentation(tool_rawImg_right);
 
-//	ROS_INFO("--------------ARM 1 : --------------");
+	ROS_INFO("--------------ARM 1 : --------------");
 	getCoarseEstimation();   ///get new kalman_mu_arm1, kalman_sigma_arm1
-//	ROS_INFO_STREAM("BEFORE kalman_mu_arm1: " << kalman_mu_arm1);
+	ROS_INFO_STREAM("BEFORE kalman_mu_arm1: " << kalman_mu_arm1);
 
     showRenderedImage(kalman_mu_arm1); //has cv::waitKey() inside
 
+	ROS_INFO_STREAM("after render!");
 	update(kalman_mu_arm1, kalman_sigma_arm1, toolImage_left_arm_1,
 		   toolImage_right_arm_1, Cam_left_arm_1, Cam_right_arm_1);
-//	ROS_WARN_STREAM("FORAWRD KINEMATICS: " << real_mu);
+	ROS_WARN_STREAM("FORAWRD KINEMATICS: " << real_mu);
 	showGazeboToolError(real_mu, kalman_mu_arm1);
 	showRenderedImage(kalman_mu_arm1); //has cv::waitKey() inside
 };
