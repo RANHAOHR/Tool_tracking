@@ -52,14 +52,14 @@ ToolModel::ToolModel() {
 
     ///offset the model's values according to the tool geometry.  values from testing
     offset_body = 0.4560;
-    offset_ellipse = offset_body;
-    offset_gripper = offset_ellipse + 0.0055;
+    offset_ellipse = 0.0;//offset_body;
+    offset_gripper = offset_body + 0.0055;
 
     //get path to package
     tool_model_pkg = ros::package::getPath("tool_model");
 
     std::string cylinder = tool_model_pkg + "/tool_parts/cyliner_tense_end_face.obj"; //"/tense_cylinde_2.obj", test_cylinder_3, cyliner_tense_end_face
-    std::string ellipse = tool_model_pkg + "/tool_parts/refine_ellipse_3.obj";
+    std::string ellipse = tool_model_pkg + "/tool_parts/oval_1.obj"; //refine_ellipse_3, oval_1
     std::string gripper1 = tool_model_pkg + "/tool_parts/gripper2_1.obj";
     std::string gripper2 = tool_model_pkg + "/tool_parts/gripper2_2.obj";
 
@@ -132,7 +132,7 @@ void ToolModel::load_model_vertices(const char *path, std::vector<glm::vec3> &ou
                                     std::vector<std::vector<int> > &neighbor_faces) {
 
     std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
-    std::vector<glm::vec2> temp_uvs;
+    std::vector<glm::vec2> temp_uvs; //prepare for different file format
 
     std::vector<int> temp_face;
     temp_face.resize(6);  //need three vertex and corresponding normals
@@ -179,18 +179,24 @@ void ToolModel::load_model_vertices(const char *path, std::vector<glm::vec3> &ou
         } else if (strcmp(lineHeader, "f") == 0) {
 
             unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
-            int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0],
-                                 &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2],
-                                 &normalIndex[2]);
-            if (matches != 9) {
-                ROS_ERROR("File can't be read by our simple parser : ( Try exporting with other options\n");
+
+            if (temp_uvs.size() != 0)
+            {
+                int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
+                // cout<<"matches is "<< matches<<endl;
+                if (matches != 9){
+                    printf("File can't be read by our simple parser : ( Try exporting with other options\n");
+                }
+            }else{
+                int matches = fscanf(file, "%d//%d %d//%d %d//%d\n", &vertexIndex[0], &normalIndex[0], &vertexIndex[1],&normalIndex[1], &vertexIndex[2], &normalIndex[2] );
+                if (matches != 6){
+                    printf("File can't be read by our simple parser : ( Try exporting with other options\n");
+                }
             }
+
             vertexIndices.push_back(vertexIndex[0]);
             vertexIndices.push_back(vertexIndex[1]);
             vertexIndices.push_back(vertexIndex[2]);
-            uvIndices.push_back(uvIndex[0]);
-            uvIndices.push_back(uvIndex[1]);
-            uvIndices.push_back(uvIndex[2]);
             normalIndices.push_back(normalIndex[0]);
             normalIndices.push_back(normalIndex[1]);
             normalIndices.push_back(normalIndex[2]);

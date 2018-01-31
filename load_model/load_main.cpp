@@ -66,40 +66,50 @@ bool loadOBJ(
         }
 
         else if ( strcmp( lineHeader, "vt" ) == 0 ){
-	    glm::vec2 uv;
-	    fscanf(file, "%f %f\n", &uv.x, &uv.y );
-	    // cout<<"uv"<<uv.x<<endl;
-	    temp_uvs.push_back(uv);
+    	    glm::vec2 uv;
+    	    fscanf(file, "%f %f\n", &uv.x, &uv.y );
+    	     // cout<<"uv"<<uv.x<<endl;
+    	    temp_uvs.push_back(uv);
 		} 
         else if ( strcmp( lineHeader, "vn" ) == 0 ){
             glm::vec3 normal;
             fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z );
-            // cout<<"normal x"<< normal.x<<endl;
+             // cout<<"normal x"<< normal.x<<endl;
             // cout<<"normal y"<< normal.y<<endl;
             // cout<<"normal z"<< normal.z<<endl;
             temp_normals.push_back(normal);
         }
         else if ( strcmp( lineHeader, "f" ) == 0 ){
-    std::string vertex1, vertex2, vertex3;
-    unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
-    int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
-    if (matches != 9){
-        printf("File can't be read by our simple parser : ( Try exporting with other options\n");
-        return false;
-    }
-    vertexIndices.push_back(vertexIndex[0]);
-    vertexIndices.push_back(vertexIndex[1]);
-    vertexIndices.push_back(vertexIndex[2]);
-    uvIndices    .push_back(uvIndex[0]);
-    uvIndices    .push_back(uvIndex[1]);
-    uvIndices    .push_back(uvIndex[2]);
-    normalIndices.push_back(normalIndex[0]);
-    normalIndices.push_back(normalIndex[1]);
-    normalIndices.push_back(normalIndex[2]);
+            unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+
+            if (temp_uvs.size() != 0)
+            {
+                int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
+                // cout<<"matches is "<< matches<<endl;
+                if (matches != 9){
+                    printf("File can't be read by our simple parser : ( Try exporting with other options\n");
+                    return false;
+                }
+            }else{
+                int matches = fscanf(file, "%d//%d %d//%d %d//%d\n", &vertexIndex[0], &normalIndex[0], &vertexIndex[1],&normalIndex[1], &vertexIndex[2], &normalIndex[2] );
+                if (matches != 6){
+                    printf("File can't be read by our simple parser : ( Try exporting with other options\n");
+                    return false;
+                }
+            }
+
+            vertexIndices.push_back(vertexIndex[0]);
+            vertexIndices.push_back(vertexIndex[1]);
+            vertexIndices.push_back(vertexIndex[2]);
+            uvIndices    .push_back(uvIndex[0]);
+            uvIndices    .push_back(uvIndex[1]);
+            uvIndices    .push_back(uvIndex[2]);
+            normalIndices.push_back(normalIndex[0]);
+            normalIndices.push_back(normalIndex[1]);
+            normalIndices.push_back(normalIndex[2]);
             
         }
     }
-
 
     // For each vertex of each triangle
     for( unsigned int i=0; i<vertexIndices.size(); i++ ){
@@ -123,14 +133,55 @@ bool loadOBJ(
 void debug() {
     
  
-    bool res = loadOBJ("ellipse.obj", vertices, uvs, normals);
-    //bool res = loadOBJ("ellipse.obj", vertices);
-    
+    bool res = loadOBJ("2.obj", vertices, uvs, normals);
+
+    float max_y = 0;
+    float min_y = 1000;
+
+    for (int i = 0; i < vertices.size(); ++i)
+    {
+        if (max_y < vertices[i].y)
+        {
+            max_y = vertices[i].y;
+        }
+
+        if (min_y > vertices[i].y)
+        {
+            min_y = vertices[i].y;
+        }
+        
+    }
+
+    cout<<" 2 max_y is "<< max_y <<endl;
+    cout<<"2 min_y is "<< min_y <<endl;
+
     puts("VERTEX______________________________________________________");
     
     // for (unsigned int i = 0; i < vertices.size(); i++) {
     //     cout << vertices[i].x << vertices[i].y << vertices[i].z << endl;   
     // }
+
+    res = loadOBJ("refine_ellipse_3.obj", vertices, uvs, normals);
+
+    max_y = 0;
+    min_y = 1000;
+    for (int i = 0; i < vertices.size(); ++i)
+    {
+        if (max_y < vertices[i].y)
+        {
+            max_y = vertices[i].y;
+        }
+
+        if (min_y > vertices[i].y)
+        {
+            min_y = vertices[i].y;
+        }
+        
+    }
+
+    cout<<" refine_ellipse_3 max_y is "<< max_y <<endl;
+    cout<<"refine_ellipse_3 min_y is "<< min_y <<endl;
+
     cout<<"finish debug"<<endl; 
 }
 
