@@ -10,4 +10,7 @@ set(tool_tracking_EXEC_DEPENDS "cv_bridge" "image_transport" "roscpp" "sensor_ms
 set(tool_tracking_RUN_DEPENDS "cv_bridge" "image_transport" "roscpp" "sensor_msgs" "std_msgs" "message_runtime" "cwru_opencv_common" "tool_model" "geometry_msgs" "cwru_davinci_interface" "cwru_davinci_kinematics" "cwru_xform_utils" "xform_utils")
 set(tool_tracking_TEST_DEPENDS )
 set(tool_tracking_DOC_DEPENDS )
+set(tool_tracking_URL_WEBSITE "")
+set(tool_tracking_URL_BUGTRACKER "")
+set(tool_tracking_URL_REPOSITORY "")
 set(tool_tracking_DEPRECATED "")

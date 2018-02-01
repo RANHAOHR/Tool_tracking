@@ -24,8 +24,8 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "/home/ranhao/ros_ws/src/cwru_davinci/cwru_davinci_kinematics/include"
   "/home/ranhao/ros_ws/src/xform_utils/include"
   "/opt/ros/kinetic/include"
-  "/opt/ros/kinetic/include/opencv-3.2.0-dev"
-  "/opt/ros/kinetic/include/opencv-3.2.0-dev/opencv"
+  "/opt/ros/kinetic/include/opencv-3.3.1"
+  "/opt/ros/kinetic/include/opencv-3.3.1/opencv"
   "/opt/ros/kinetic/share/xmlrpcpp/cmake/../../../include/xmlrpcpp"
   "/usr/include/eigen3"
   )

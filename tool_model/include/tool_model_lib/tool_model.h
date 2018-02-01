@@ -171,6 +171,11 @@ public:
     ToolModel();
 
     /**
+     * @brief Offset the mesh
+     */
+    void offsetModel();
+
+    /**
      * @brief return a value sampled from a gaussian distribution
      * Used for gaussian perturbations of state
      * @param stdev

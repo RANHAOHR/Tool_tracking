@@ -161,14 +161,14 @@ void ParticleFilter::getCoarseGuess(){
     initial.rvec_cyl(1) = a1_rvec.at<double>(1,0);// + rot_noise[1];
     initial.rvec_cyl(2) = a1_rvec.at<double>(2,0);// + rot_noise[2];
 
-    double theta_cylinder = sensor_1[4]; //guess from sensor
-    double theta_oval = sensor_1[5]; //guess from sensor
+    double theta_caudier = sensor_1[4]; //guess from sensor
+    double theta_gripper = sensor_1[5]; //guess from sensor
     double theta_open = sensor_1[6]; //guess from sensor
 
 	//Randomly generate particles around initial guess
 	//Particles stored as a vector of toolModels
     for (int i = 0; i < numParticles; i++) {
-        particles_arm_1[i] = newToolModel.setRandomConfig(initial, theta_cylinder, theta_oval, theta_open, downsample_rate_pos, downsample_rate_rot);
+        particles_arm_1[i] = newToolModel.setRandomConfig(initial, theta_caudier, theta_gripper, theta_open, downsample_rate_pos, downsample_rate_rot);
     }
 
 	//Update initial for compute errors in gazebo, for static tracking
@@ -179,7 +179,7 @@ void ParticleFilter::getCoarseGuess(){
 	initial.rvec_cyl(1) = a1_rvec.at<double>(1,0);
 	initial.rvec_cyl(2) = a1_rvec.at<double>(2,0);
 
-	newToolModel.computeEllipsePose(initial, theta_cylinder, theta_oval, theta_open);
+	newToolModel.computeEllipsePose(initial, theta_caudier, theta_gripper, theta_open);
 };
 
 void ParticleFilter::projectionRightCB(const sensor_msgs::CameraInfo::ConstPtr &projectionRight){
@@ -232,7 +232,7 @@ void ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &
 	    /**
 	     * If necessary to check the model params
 	     */
-//	    testRenderedModel(initial, segmented_left, segmented_right);
+	    testRenderedModel(initial, segmented_left, segmented_right);
 
 		ROS_INFO("---- in tracking function ---");
 		//Update according to the max score

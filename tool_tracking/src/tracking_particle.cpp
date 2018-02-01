@@ -91,17 +91,15 @@ int main(int argc, char **argv) {
 
 			cv::imshow("seg_left ", seg_left);
 			cv::imshow("seg_right ", seg_right);
-			cv::waitKey();
+
 			ROS_INFO("---- START TRACKING -----");
 			Particles.trackingTool(seg_left, seg_right);
-
+//            cv::waitKey(10);
 			freshImage = false;
 
 			}
+
 	}
-
-
-	ros::spinOnce();
 
 //	// if camera is ready, track segmented image
 //	if (freshImage) {

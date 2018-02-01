@@ -133,26 +133,26 @@ bool loadOBJ(
 void debug() {
     
  
-    bool res = loadOBJ("2.obj", vertices, uvs, normals);
+    bool res = loadOBJ("test_caudier.obj", vertices, uvs, normals);
 
     float max_y = 0;
     float min_y = 1000;
 
     for (int i = 0; i < vertices.size(); ++i)
     {
-        if (max_y < vertices[i].y)
+        if (max_y < vertices[i].z)
         {
-            max_y = vertices[i].y;
+            max_y = vertices[i].z;
         }
 
-        if (min_y > vertices[i].y)
+        if (min_y > vertices[i].z)
         {
-            min_y = vertices[i].y;
+            min_y = vertices[i].z;
         }
         
     }
 
-    cout<<" 2 max_y is "<< max_y <<endl;
+    cout<<"2 max_y is "<< max_y <<endl;
     cout<<"2 min_y is "<< min_y <<endl;
 
     puts("VERTEX______________________________________________________");
@@ -160,26 +160,26 @@ void debug() {
     // for (unsigned int i = 0; i < vertices.size(); i++) {
     //     cout << vertices[i].x << vertices[i].y << vertices[i].z << endl;   
     // }
-
-    res = loadOBJ("refine_ellipse_3.obj", vertices, uvs, normals);
+    std::vector< glm::vec3 > newvertices;
+    res = loadOBJ("refine_ellipse_3.obj", newvertices, uvs, normals);
 
     max_y = 0;
     min_y = 1000;
-    for (int i = 0; i < vertices.size(); ++i)
+    for (int i = 0; i < newvertices.size(); ++i)
     {
-        if (max_y < vertices[i].y)
+        if (max_y < newvertices[i].y)
         {
-            max_y = vertices[i].y;
+            max_y = newvertices[i].y;
         }
 
-        if (min_y > vertices[i].y)
+        if (min_y > newvertices[i].y)
         {
-            min_y = vertices[i].y;
+            min_y = newvertices[i].y;
         }
         
     }
 
-    cout<<" refine_ellipse_3 max_y is "<< max_y <<endl;
+    cout<<"refine_ellipse_3 max_y is "<< max_y <<endl;
     cout<<"refine_ellipse_3 min_y is "<< min_y <<endl;
 
     cout<<"finish debug"<<endl; 

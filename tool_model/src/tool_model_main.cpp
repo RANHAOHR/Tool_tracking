@@ -86,8 +86,8 @@ int main(int argc, char **argv) {
 //    ROS_INFO_STREAM("temp_point " << temp_point);
 
     initial.tvec_cyl(0) = 0.0;// +0.4  //left and right (image frame)
-    initial.tvec_cyl(1) = 0.0;  //up and down
-    initial.tvec_cyl(2) = -0.15;
+    initial.tvec_cyl(1) = -0.245;  //up and down
+    initial.tvec_cyl(2) = 0.0;
     initial.rvec_cyl(0) = 0.0;
     initial.rvec_cyl(1) = 0.0;
     initial.rvec_cyl(2) = 0.0;
@@ -98,7 +98,6 @@ int main(int argc, char **argv) {
 //    cv::namedWindow("rendered_image:", CV_WINDOW_NORMAL);
     cv::imshow("rendered_image:", testImg);
     cv::waitKey();
-
 //    cv::Mat temp_point = cv::Mat(1,2,CV_64FC1);
 //    cv::Mat temp_normal = cv::Mat(1,2,CV_64FC1);
 //    newToolModel.renderToolUKF(testImg, initial, Cam, P, temp_point, temp_normal);

@@ -49,17 +49,12 @@ using namespace std;
 boost::mt19937 rng((const uint32_t &) time(0));
 
 ToolModel::ToolModel() {
-
-    ///offset the model's values according to the tool geometry.  values from testing
-    offset_body = 0.4560;
-    offset_ellipse = 0.0;//offset_body;
-    offset_gripper = offset_body + 0.0055;
-
+    
     //get path to package
     tool_model_pkg = ros::package::getPath("tool_model");
 
     std::string cylinder = tool_model_pkg + "/tool_parts/cyliner_tense_end_face.obj"; //"/tense_cylinde_2.obj", test_cylinder_3, cyliner_tense_end_face
-    std::string ellipse = tool_model_pkg + "/tool_parts/oval_1.obj"; //refine_ellipse_3, oval_1
+    std::string ellipse = tool_model_pkg + "/tool_parts/test_caudier2.obj"; //refine_ellipse_3, test_caudier
     std::string gripper1 = tool_model_pkg + "/tool_parts/gripper2_1.obj";
     std::string gripper2 = tool_model_pkg + "/tool_parts/gripper2_2.obj";
 
@@ -71,6 +66,8 @@ ToolModel::ToolModel() {
                         griper1_Vnormal, griper1_faces, griper1_neighbors);
     load_model_vertices(gripper2.c_str(), griper2_vertices,
                         griper2_Vnormal, griper2_faces, griper2_neighbors);
+
+    offsetModel();
 
     modify_model_(body_vertices, body_Vnormal, body_Vpts, body_Npts, offset_body, body_Vmat, body_Nmat);
     modify_model_(ellipse_vertices, ellipse_Vnormal, ellipse_Vpts, ellipse_Npts, offset_ellipse, ellipse_Vmat,
@@ -94,6 +91,73 @@ ToolModel::ToolModel() {
 
     srand((unsigned) time(NULL)); //for the random number generator, use only once
 };
+
+void ToolModel::offsetModel(){
+
+    float min_y = 1000;
+
+    glm::mat3 caudierRot;
+    for(int i(0); i<3; i++){
+    for(int j(0);j<3;j++){
+        caudierRot[i][j] = 0.0;
+    }
+    }
+    caudierRot[0][2] = 1;
+    caudierRot[1][0] = -1;
+    caudierRot[2][1] = -1;
+
+    /*offset everything back to origin, since some of the vertices may not start from origin*/
+    for (int i = 0; i < body_vertices.size(); ++i) {
+        if (min_y > body_vertices[i].y) min_y = body_vertices[i].y;
+    }
+    for (int i = 0; i < body_vertices.size(); ++i) {
+        body_vertices[i].y = body_vertices[i].y - min_y;
+    }
+
+    min_y = 1000;
+    for (int i = 0; i < griper1_vertices.size(); ++i) {
+        if (min_y > griper1_vertices[i].y) min_y = griper1_vertices[i].y;
+    }
+    for (int i = 0; i < griper1_vertices.size(); ++i) {
+        griper1_vertices[i].y = griper1_vertices[i].y - min_y;
+    }
+
+    min_y = 1000;
+    for (int i = 0; i < griper2_vertices.size(); ++i) {
+        if (min_y > griper2_vertices[i].y) min_y = griper2_vertices[i].y;
+    }
+    for (int i = 0; i < griper2_vertices.size(); ++i) {
+        griper2_vertices[i].y = griper2_vertices[i].y - min_y;
+    }
+
+    double min_z = -0.10; //inch here
+    // for (int i = 0; i < ellipse_vertices.size(); ++i) {
+    //     if (min_z > ellipse_vertices[i].z) min_z = ellipse_vertices[i].z;
+    // }
+    for (int i = 0; i < ellipse_vertices.size(); ++i) {
+        ellipse_vertices[i].z = ellipse_vertices[i].z - min_z;
+    }
+    for (int i = 0; i < griper1_vertices.size(); ++i) {
+        griper1_vertices[i].y = griper1_vertices[i].y + 0.15;
+    }
+    for (int i = 0; i < griper2_vertices.size(); ++i) {
+        griper2_vertices[i].y = griper2_vertices[i].y + 0.15;
+    }
+
+    for (int k = 0; k < ellipse_vertices.size(); ++k) {
+        ellipse_vertices[k] = caudierRot * ellipse_vertices[k];
+        ellipse_Vnormal[k] = caudierRot * ellipse_Vnormal[k];
+    }
+
+    offset_ellipse = 0.0; //0.254;
+    offset_gripper = offset_ellipse + 0.01;
+    offset_body = 10.15; //the cylinder offset from the real origin of the real tool origin, offset_body * 0.0254
+    /* Offsets the cylinder according to the caudier, this is to render from the 4th joint space */
+    for (int i = 0; i < body_vertices.size(); ++i) {
+        body_vertices[i].y = body_vertices[i].y - offset_body;  //these are in INCHES
+    }
+
+}
 
 double ToolModel::randomNumber(double stdev, double mean) {
 
@@ -235,6 +299,7 @@ void ToolModel::load_model_vertices(const char *path, std::vector<glm::vec3> &ou
     }
 
     printf("loaded file %s successfully.\n", path);
+
     /*debug for faces*/
     // for (int i = 0; i < 10; ++i)
     // {
@@ -385,7 +450,6 @@ void ToolModel::Compute_Silhouette(const std::vector<std::vector<int> > &input_f
                         cv::Point2d prjpt_1 = reproject(ept_1, P);
                         cv::Point2d prjpt_2 = reproject(ept_2, P);
 
-
                         if(prjpt_1.x <= 640 && prjpt_2.x <= 640 && prjpt_1.y >= 0 && prjpt_1.y <= 480 && prjpt_2.y >= 0 && prjpt_2.y <= 480){
                             //draw edge line
                             cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
@@ -494,7 +558,6 @@ void ToolModel::Compute_Silhouette_UKF(const std::vector<std::vector<int> > &inp
 
 
                         if(prjpt_1.x <= 640 && prjpt_2.x <= 640 && prjpt_1.y >= 0 && prjpt_1.y <= 480 && prjpt_2.y >= 0 && prjpt_2.y <= 480){
-
 
                             cv::line(image, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
                             /**** get new vertex ****/
@@ -698,9 +761,9 @@ void ToolModel::modify_model_(std::vector<glm::vec3> &input_vertices, std::vecto
 
     //incorporate offset from tool origin to part origin
     int size = input_Vpts.size();
-    for (int i = 0; i < size; ++i) {
-        input_Vpts[i].y = input_Vpts[i].y - offset;
-    }
+//    for (int i = 0; i < size; ++i) {
+//        input_Vpts[i].y = input_Vpts[i].y - offset;
+//    }
 
     //convert normals from gl to cv::Point3d
     Convert_glTocv_pts(input_Vnormal, input_Npts); //not using homogeneous for v weight now
@@ -800,7 +863,7 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
     //Compute ellipse origin <x,y,z,1>
     cv::Mat q_ellipse_ = cv::Mat(4, 1, CV_64FC1);//values filled in from trial and error in gazebo
     q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0.0036; // //offset_ellipse - offset_body; pointing to the gripper tip
+    q_ellipse_.at<double>(1, 0) = 0.0036; //offset_ellipse - offset_body; pointing to the gripper tip
     q_ellipse_.at<double>(2, 0) = 0;
     q_ellipse_.at<double>(3, 0) = 1;
 
@@ -895,7 +958,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     //Compute ellipse origin <x,y,z,1>
     cv::Mat q_ellipse_(4, 1, CV_64FC1); //values filled in from trial and error in gazebo
     q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0.0036;//(offset_ellipse - offset_body);
+    q_ellipse_.at<double>(1, 0) = offset_ellipse;//(offset_ellipse - offset_body);
     q_ellipse_.at<double>(2, 0) = 0;
     q_ellipse_.at<double>(3, 0) = 1;
 
@@ -928,7 +991,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     //Part 2.a: gripper 1
     cv::Mat test_gripper(3, 1, CV_64FC1);
     test_gripper.at<double>(0, 0) = 0;
-    test_gripper.at<double>(1, 0) = 0.007;//close to offset_gripper - offset_ellipse;
+    test_gripper.at<double>(1, 0) = offset_gripper;//close to offset_gripper - offset_ellipse;
     test_gripper.at<double>(2, 0) = 0;
 
     cv::Mat rot_elp(3, 3, CV_64FC1);

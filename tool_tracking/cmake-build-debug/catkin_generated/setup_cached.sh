@@ -8,6 +8,7 @@
 
 # modified environment variables
 export CMAKE_PREFIX_PATH="/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel:$CMAKE_PREFIX_PATH"
-export LD_LIBRARY_PATH="/home/ranhao/ros_ws/devel/lib:/opt/ros/kinetic/lib:/home/ranhao/Documents/clion-2017.2.1/bin"
+export LD_LIBRARY_PATH="/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib:/home/ranhao/ros_ws/devel/lib:/opt/ros/kinetic/lib:/home/ranhao/Documents/clion-2017.2.1/bin"
+export PKG_CONFIG_PATH="/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/lib/pkgconfig:$PKG_CONFIG_PATH"
 export ROSLISP_PACKAGE_DIRECTORIES="/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking/cmake-build-debug/devel/share/common-lisp:$ROSLISP_PACKAGE_DIRECTORIES"
 export ROS_PACKAGE_PATH="/home/ranhao/ros_ws/src/Tool_tracking/tool_tracking:$ROS_PACKAGE_PATH"
