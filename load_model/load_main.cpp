@@ -133,21 +133,21 @@ bool loadOBJ(
 void debug() {
     
  
-    bool res = loadOBJ("test_caudier.obj", vertices, uvs, normals);
+    bool res = loadOBJ("gripper2.obj", vertices, uvs, normals);
 
     float max_y = 0;
     float min_y = 1000;
 
     for (int i = 0; i < vertices.size(); ++i)
     {
-        if (max_y < vertices[i].z)
+        if (max_y < vertices[i].x)
         {
-            max_y = vertices[i].z;
+            max_y = vertices[i].x;
         }
 
-        if (min_y > vertices[i].z)
+        if (min_y > vertices[i].x)
         {
-            min_y = vertices[i].z;
+            min_y = vertices[i].x;
         }
         
     }
