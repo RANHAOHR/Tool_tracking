@@ -141,7 +141,7 @@ void ToolModel::offsetModel(){
 
     /* add the offset for the caudier and grippers */
     for (int i = 0; i < ellipse_vertices.size(); ++i) {
-        ellipse_vertices[i].y = ellipse_vertices[i].y + 0.015;
+        ellipse_vertices[i].y = ellipse_vertices[i].y + 0.018;
     }
     for (int i = 0; i < griper1_vertices.size(); ++i) {
         griper1_vertices[i].y = griper1_vertices[i].y + 0.13; //move the origin to screw position
