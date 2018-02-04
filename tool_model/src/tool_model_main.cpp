@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
     initial.rvec_cyl(1) = 0.0;
     initial.rvec_cyl(2) = 0.0;
 
-    newToolModel.computeEllipsePose(initial, 0.0, 0.0, 0.0 );
+    newToolModel.computeEllipsePose(initial, -0.5, 0.0, 0.0 );
 
     newToolModel.renderTool(testImg, initial, Cam, P);
 //    cv::namedWindow("rendered_image:", CV_WINDOW_NORMAL);

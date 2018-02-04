@@ -120,15 +120,12 @@ void ToolModel::offsetModel(){
     }
 
     min_y = 1000;
-    // double max_z = 0;
     for (int i = 0; i < griper2_vertices.size(); ++i) {
         if (min_y > griper2_vertices[i].y) min_y = griper2_vertices[i].y;
-        // if (max_z < griper2_vertices[i].z) max_z = griper2_vertices[i].z;
     }
     for (int i = 0; i < griper2_vertices.size(); ++i) {
         griper2_vertices[i].y = griper2_vertices[i].y - min_y;
         // griper2_vertices[i].x = griper2_vertices[i].x - 0.03937;
-        // griper2_vertices[i].z = griper2_vertices[i].z - max_z;
     }
 
     min_y = 1000;
@@ -152,7 +149,7 @@ void ToolModel::offsetModel(){
 
     offset_ellipse = 0.0; //the joint
     offset_gripper = offset_ellipse + 0.009;
-    offset_body = 10.15; //the cylinder offset from the real origin of the real tool origin, offset_body * 0.0254
+    offset_body = 10.35; //the cylinder offset from the real origin of the real tool origin, offset_body * 0.0254
     /* Offsets the cylinder according to the caudier, this is to render from the 4th joint space */
     for (int i = 0; i < body_vertices.size(); ++i) {
         body_vertices[i].y = body_vertices[i].y - offset_body;  //these are in INCHES
