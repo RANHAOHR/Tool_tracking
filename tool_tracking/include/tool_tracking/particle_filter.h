@@ -66,8 +66,15 @@
 #include <cwru_davinci_interface/davinci_interface.h>
 #include <cwru_davinci_kinematics/davinci_kinematics.h>
 
+/**
+ * @brief cwru_xform_utils is for running in the Jade version
+ */
 #include <cwru_xform_utils/xform_utils.h>
-//#include <xform_utils/xform_utils.h>
+
+/**
+ * @brief xform_utils is for running in the Indigo version
+ */
+// #include <xform_utils/xform_utils.h>
 
 class ParticleFilter {
 

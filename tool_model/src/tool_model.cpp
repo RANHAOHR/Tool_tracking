@@ -746,9 +746,9 @@ void ToolModel::modify_model_(std::vector<glm::vec3> &input_vertices, std::vecto
     ConvertInchtoMeters(input_Vpts);
 
     int size = input_Vpts.size();
-    for (int i = 0; i < size; ++i) {
-        input_Vpts[i].y = input_Vpts[i].y - offset;
-    }
+    // for (int i = 0; i < size; ++i) {
+    //     input_Vpts[i].y = input_Vpts[i].y - offset;
+    // }
     Convert_glTocv_pts(input_Vnormal, input_Npts); //not using homogeneous for v weight now
     ConvertInchtoMeters(input_Npts);
 
@@ -822,7 +822,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
 
     cv::Mat q_ellipse_(4, 1, CV_64FC1);
     q_ellipse_.at<double>(0, 0) = 0;
-    q_ellipse_.at<double>(1, 0) = 0.0045;
+    q_ellipse_.at<double>(1, 0) = offset_ellipse;
     q_ellipse_.at<double>(2, 0) = 0;
     q_ellipse_.at<double>(3, 0) = 1;
 
@@ -850,7 +850,7 @@ void ToolModel::computeEllipsePose(toolModel &inputModel, const double &theta_el
     /*********** computations for gripper kinematics **********/
     cv::Mat test_gripper(3, 1, CV_64FC1);
     test_gripper.at<double>(0, 0) = 0;
-    test_gripper.at<double>(1, 0) = 0.001;
+    test_gripper.at<double>(1, 0) = offset_gripper;
     test_gripper.at<double>(2, 0) = 0;
 
     cv::Mat rot_elp(3, 3, CV_64FC1);
