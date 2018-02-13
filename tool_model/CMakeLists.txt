@@ -22,7 +22,13 @@ include_directories(include ${catkin_INCLUDE_DIRS} )
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS} )
 
 catkin_package(CATKIN_DEPENDS roscpp message_runtime std_msgs sensor_msgs cwru_opencv_common)
-catkin_package(INCLUDE_DIRS include ${tool_model_INCLUDE_DIRS})
+catkin_package(
+	DEPENDS EIGEN_DEP
+	LIBRARIES tool_model_lib
+	# CATKIN_DEPENDS
+	INCLUDE_DIRS include
+)
+
 
 # example boost usage
 # find_package(Boost REQUIRED COMPONENTS system thread)
