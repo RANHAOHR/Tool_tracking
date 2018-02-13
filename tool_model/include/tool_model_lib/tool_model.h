@@ -170,6 +170,11 @@ public:
     ToolModel();
 
     /**
+     * Offset the model parts
+     */
+    void offsetModel();
+
+    /**
      * @brief Random number generators
      */
     double randomNumber(double stdev, double mean);
