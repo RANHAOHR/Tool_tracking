@@ -59,7 +59,7 @@
 
 #include <image_transport/image_transport.h>
 
-#include <vesselness_image_filter_cpu/vesselness_lib.h>
+// #include <vesselness_image_filter_cpu/vesselness_lib.h>
 #include <boost/random/normal_distribution.hpp>
 
 #include <geometry_msgs/Transform.h>
