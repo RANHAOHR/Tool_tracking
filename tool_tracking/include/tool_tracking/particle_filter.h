@@ -84,6 +84,8 @@ private:
      * The initial tool pose, obtained from the forward kinematics, a toolModel= 3x1 cv::Mats tvec_cyl, rvec_cyl, tvec_elp, rvec_elp, tvec_grip1(2), rvec_grip1(2)
      */
 	ToolModel::toolModel initial; 
+	ToolModel::toolModel real_tool; 
+	ToolModel::toolModel last_tool; 
 
     /**
      * The total number of particles
@@ -124,6 +126,7 @@ private:
 	Eigen::Affine3d arm_2__cam_l;
 	Eigen::Affine3d arm_1__cam_r;
 	Eigen::Affine3d arm_2__cam_r;
+	Eigen::Affine3d end_effector;
 
     /**
      * All the camera-robot base transformations, computed ffrom the Eigen::Affine3d  matrices (e.g. arm_1__cam_l). Storing the matrices for arm 2 for later use
@@ -149,7 +152,6 @@ private:
      */
 	std::vector<double> sensor_1; 
     std::vector<double> sensor_2; 
-
     /**
      * The subscriber of the projection matrices for left and right camera. This is subscribing to camera_info.
      */
@@ -166,12 +168,6 @@ private:
      */
 	double downsample_rate_pos;
 	double downsample_rate_rot; 
-
-    /**
-     * Errors between best particle and gazebo readings for pos and orientation
-     */
-	double error_pos;
-	double error_ori; 
 
     /**
      * The threshold for local search, when the error of pos is smal and the perturbation is not necessary
@@ -198,6 +194,11 @@ private:
 
 public:
 
+    /**
+     * Errors between best particle and gazebo readings for pos and orientation
+     */
+    std::vector<double> initial_error_vec;
+    std::vector<double> error_vec;
     /**
      * The left and right raw images from image pipeline
      */
@@ -277,7 +278,7 @@ public:
 	 * Used after resampling before motion model
 	 * @param updateParticles particles to go through motion model
 	 */
-	void updateParticles(std::vector<ToolModel::toolModel> &updateParticles);
+	void updateParticles(std::vector<ToolModel::toolModel> &updateParticles, ToolModel::toolModel &bestParticle);
 
 	/**
  	* @brief - Computing the error between the real pose from Gazebo and the best particles guess of the pose
@@ -285,7 +286,8 @@ public:
  	* @param real_pose pose from Gazebo
  	* @param bestParticle
  	*/
-	void showGazeboToolError(ToolModel::toolModel &real_pose, ToolModel::toolModel &bestParticle);
+ 	std::vector<double> endEffectorError(Eigen::Affine3d& end_effector, ToolModel::toolModel &real_pose, ToolModel::toolModel &bestParticle);
+	std::vector<double> showGazeboToolError(ToolModel::toolModel &real_pose, ToolModel::toolModel &bestParticle);
 
 	/**
 	 * @brief - Converting a toolModel representation to a 6x1 matrix representation.

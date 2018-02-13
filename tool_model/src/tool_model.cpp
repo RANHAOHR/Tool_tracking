@@ -148,7 +148,7 @@ void ToolModel::offsetModel(){
     // }
 
 
-    double min_z = -0.10; //inch here
+    double min_z = -0.101;//-0.10; //inch here
 
     for (int i = 0; i < ellipse_vertices.size(); ++i) {
         ellipse_vertices[i].z = ellipse_vertices[i].z - min_z;
@@ -159,15 +159,15 @@ void ToolModel::offsetModel(){
     }
 
     for (int i = 0; i < griper1_vertices.size(); ++i) {
-        griper1_vertices[i].y = griper1_vertices[i].y + 0.13; //move the origin to screw position
+        griper1_vertices[i].y = griper1_vertices[i].y + 0.123; //move the origin to screw position
     }
     for (int i = 0; i < griper2_vertices.size(); ++i) {
-        griper2_vertices[i].y = griper2_vertices[i].y + 0.13;
+        griper2_vertices[i].y = griper2_vertices[i].y + 0.123;
     }
 
 
     offset_ellipse = 0.0; //0.254;
-    offset_gripper = offset_ellipse + 0.009;
+    offset_gripper = offset_ellipse + 0.0091;
     offset_body = 10.15; //the cylinder offset from the real origin of the real tool origin, offset_body * 0.0254
     /* Offsets the cylinder according to the caudier, this is to render from the 4th joint space */
     for (int i = 0; i < body_vertices.size(); ++i) {
@@ -810,15 +810,19 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &seeds, const do
 
     toolModel newTool = seeds;   //Output toolModel
 
+    double theta_1 = theta_cylinder + randomNumber(0.00001, 0); 
+    double theta_grip_1 = theta_oval + randomNumber(0.00001, 0); // oval rotation
+
+
     //Perturb tvec_cyl/rvec_cyl by random noise
     double dev = randomNumber(pos, 0); //gaussian noise
-    newTool.tvec_cyl(0) = seeds.tvec_cyl(0) + dev;
+    newTool.tvec_cyl(0) = seeds.tvec_cyl(0) - dev;
     dev = randomNumber(pos, 0);
-    newTool.tvec_cyl(1) = seeds.tvec_cyl(1) + dev;
+    newTool.tvec_cyl(1) = seeds.tvec_cyl(1) - dev;
     dev = randomNumber(pos, 0);
-    newTool.tvec_cyl(2) = seeds.tvec_cyl(2)+ dev;
+    newTool.tvec_cyl(2) = seeds.tvec_cyl(2)- dev;
     dev = randomNumber(rot, 0);
-    newTool.rvec_cyl(0) = seeds.rvec_cyl(0)+ dev;
+    newTool.rvec_cyl(0) = seeds.rvec_cyl(0)+dev;
     dev = randomNumber(rot, 0);
     newTool.rvec_cyl(1) = seeds.rvec_cyl(1)+ dev;
     dev = randomNumber(rot, 0);
@@ -826,44 +830,53 @@ ToolModel::toolModel ToolModel::setRandomConfig(const toolModel &seeds, const do
 
     //Perturb joints 5,6,7 by random noise
     //Positive = CW if angles are pretty goog, then give small noises
-    double theta_1 = theta_cylinder + randomNumber(0.0001, 0);   // tool rotation
-    double theta_grip_1 = theta_oval + randomNumber(0.0001, 0); // oval rotation
-    double theta_grip_2 = theta_open + randomNumber(0.0001, 0);
-
+    double theta_grip_2 = theta_open + randomNumber(0.00001, 0);
     //Generate a toolModel representation of joints 1-7
     computeEllipsePose(newTool, theta_1, theta_grip_1, theta_grip_2);
 
     return newTool;
 };
 
-ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, double &pos, double &rot ){
+ToolModel::toolModel ToolModel::gaussianSampling(const toolModel &max_pose, double &pos, double &rot,double &theta_caudier, double &theta_grip, double &theta_open){
 
     toolModel gaussianTool;  //new sample
 
-    double dev = randomNumber(pos, 0);
-    gaussianTool.tvec_cyl(0) = max_pose.tvec_cyl(0)+ dev;
+    double theta_ = theta_caudier + randomNumber(0.000001, 0);
+    double theta_grip_1 = theta_grip + randomNumber(0.00001, 0);
+    
+    double dev_rot = randomNumber(rot, 0);
+    gaussianTool.rvec_cyl(0) = max_pose.rvec_cyl(0)+ dev_rot;
 
-    dev = randomNumber(pos, 0);
-    gaussianTool.tvec_cyl(1) = max_pose.tvec_cyl(1) + dev;
+    dev_rot = randomNumber(rot, 0);
+    gaussianTool.rvec_cyl(1) = max_pose.rvec_cyl(1)+ dev_rot;
 
-    dev = randomNumber(pos, 0);
-    gaussianTool.tvec_cyl(2) = max_pose.tvec_cyl(2)+ dev;
+    dev_rot = randomNumber(rot, 0);
+    gaussianTool.rvec_cyl(2) = max_pose.rvec_cyl(2)+ dev_rot;
 
-    dev = randomNumber(rot, 0);
-    gaussianTool.rvec_cyl(0) = max_pose.rvec_cyl(0)+ dev;
+    double dev_pos = randomNumber(pos, 0);
+    gaussianTool.tvec_cyl(0) = max_pose.tvec_cyl(0)+ dev_pos;
 
-    dev = randomNumber(rot, 0);
-    gaussianTool.rvec_cyl(1) = max_pose.rvec_cyl(1)+ dev;
+    dev_pos = randomNumber(pos, 0);
+    gaussianTool.tvec_cyl(1) = max_pose.tvec_cyl(1) + dev_pos;
 
-    dev = randomNumber(rot, 0);
-    gaussianTool.rvec_cyl(2) = max_pose.rvec_cyl(2)+ dev;
+    dev_pos = randomNumber(pos, 0);
+    gaussianTool.tvec_cyl(2) = max_pose.tvec_cyl(2)+ dev_pos;
+
+    // dev = randomNumber(rot, 0);
+    // gaussianTool.rvec_cyl(0) = max_pose.rvec_cyl(0)+ dev;
+
+    // dev = randomNumber(rot, 0);
+    // gaussianTool.rvec_cyl(1) = max_pose.rvec_cyl(1)+ dev;
+
+    // dev = randomNumber(rot, 0);
+    // gaussianTool.rvec_cyl(2) = max_pose.rvec_cyl(2)+ dev;
 
     //perturb joint angles by random noise, positive = CW
-    double theta_ = randomNumber(0.001, 0);
-    double theta_grip_1 = randomNumber(0.001, 0);
-    double theta_grip_2 = randomNumber(0.001, 0);
+    double theta_grip_2 = theta_open + randomNumber(0.00001, 0);
 
-    computeRandomPose(max_pose, gaussianTool, theta_, theta_grip_1, theta_grip_2);
+    // computeRandomPose(max_pose, gaussianTool, theta_, theta_grip_1, theta_grip_2);
+
+    computeEllipsePose(gaussianTool, theta_, theta_grip_1, theta_grip_2);
 
     return gaussianTool;
 
@@ -906,7 +919,7 @@ void ToolModel::computeRandomPose(const toolModel &seed_pose, toolModel &inputMo
             sin_theta, cos_theta, 0,
             0,0, 1);
 
-    cv::Mat rot_new = g_ellipse * rot_ellipse;
+    cv::Mat rot_new = g_ellipse * rot_ellipse; ///////?
     cv::Mat temp_vec(3,1,CV_64FC1);
     cv::Rodrigues(rot_new, inputModel.rvec_elp);
 

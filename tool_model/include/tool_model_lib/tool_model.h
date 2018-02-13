@@ -240,7 +240,7 @@ public:
      * @param step scaling factor for perturbation (higher perturbations early and less perturbations later)
      * @return
      */
-    ToolModel::toolModel gaussianSampling(const toolModel &max_pose, double &pos, double &rot );
+    ToolModel::toolModel gaussianSampling(const toolModel &max_pose, double &pos, double &rot, double &theta_caudier, double &theta_grip, double &theta_open );
 
     /**
      * @brief Compute toolModel pose given a toolModel representation of joints 1-4 and a double representation of joints 5,6,7
