@@ -16,6 +16,7 @@
 #include "std_msgs/Float64MultiArray.h"
 
 using namespace std;
+
 int main(int argc, char **argv) {
     ROS_INFO("---- In main node -----");
     ros::init(argc, argv, "tool_tracking");
@@ -24,8 +25,8 @@ int main(int argc, char **argv) {
     cv::Mat Cam(4, 4, CV_64FC1);
 
     Cam = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0.0,
-    0, -1, 0, 0.0,
-    0, 0, -1, 0.2,
+    0, 0, -1, 0.0,
+    0, 1, 0, 0.2,
     0, 0, 0, 1);  ///should be camera extrinsic parameter relative to the tools
 
     ToolModel newToolModel;
@@ -59,6 +60,7 @@ int main(int argc, char **argv) {
     P.at<double>(1, 3) = 0;
     P.at<double>(2, 3) = 0;
 
+
     ToolModel::toolModel initial;
 
 //    initial.tvec_grip1(0) = 0.02;// +0.4  //left and right (image frame)
@@ -84,25 +86,21 @@ int main(int argc, char **argv) {
 //    temp_point = temp.clone();
 //    ROS_INFO_STREAM("temp_point " << temp_point);
 
-    initial.tvec_cyl(0) = 0.0;// +0.4  //left and right (image frame)
+    initial.tvec_cyl(0) = 0.01;// +0.4  //left and right (image frame)
     initial.tvec_cyl(1) = 0.0;  //up and down
-    initial.tvec_cyl(2) = 0.0;
+    initial.tvec_cyl(2) = 0.04;
     initial.rvec_cyl(0) = 0.0;
-    initial.rvec_cyl(1) = 0.0;
-    initial.rvec_cyl(2) = 0.0;
+    initial.rvec_cyl(1) = 1.4;
+    initial.rvec_cyl(2) = 0.2;
 
-    newToolModel.computeEllipsePose(initial, -0.5, 0.0, 0.0 );
+    newToolModel.computeEllipsePose(initial, 0.0, 0.0, 0.0 );
 
-    newToolModel.renderTool(testImg, initial, Cam, P);
-//    cv::namedWindow("rendered_image:", CV_WINDOW_NORMAL);
-    cv::imshow("rendered_image:", testImg);
-    cv::waitKey();
-//    cv::Mat temp_point = cv::Mat(1,2,CV_64FC1);
-//    cv::Mat temp_normal = cv::Mat(1,2,CV_64FC1);
-//    newToolModel.renderToolUKF(testImg, initial, Cam, P, temp_point, temp_normal);
-//
-//    ROS_INFO_STREAM("tool_points " << temp_point);
-//    ROS_INFO_STREAM("tool_normals " << temp_normal);
+    cv::Mat temp_point = cv::Mat(1,2,CV_64FC1);
+    cv::Mat temp_normal = cv::Mat(1,2,CV_64FC1);
+    newToolModel.renderToolUKF(testImg, initial, Cam, P, temp_point, temp_normal);
+
+    ROS_INFO_STREAM("tool_points " << temp_point);
+    ROS_INFO_STREAM("tool_normals " << temp_normal);
 
 //    ROS_INFO_STREAM("temp_point row: " << temp_point.rows );
 //    ROS_INFO_STREAM("temp_normal row: " << temp_normal.rows );
@@ -115,32 +113,36 @@ int main(int argc, char **argv) {
 //
 //    }
 
-//    int dim = temp_point.rows;
-//    for (int i = 0; i < dim; ++i) {
-//
-//        cv::Point2d prjpt_1;
-//        prjpt_1.x = temp_point.at<double>(i,0);
-//        prjpt_1.y = temp_point.at<double>(i,1);
-//
-//        double y_k = temp_normal.at<double>(i,1);
-//        double x_k = temp_normal.at<double>(i,0);
-//        double theta = atan2(y_k, x_k);
-//        double r = 40;
-//
-//        cv::Point2d prjpt_2;
-//        prjpt_2.x = prjpt_1.x  + r * cos(theta);
-//        prjpt_2.y = prjpt_1.y  + r * sin(theta);
-//        cv::line(testImg, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
-////        cv::imshow("rendered_image:", inputImage);
-////        cv::waitKey();
-//    }
+    int dim = temp_point.rows;
+    for (int i = 0; i < dim; ++i) {
+
+        cv::Point2d prjpt_1;
+        prjpt_1.x = temp_point.at<double>(i,0);
+        prjpt_1.y = temp_point.at<double>(i,1);
+
+        double y_k = temp_normal.at<double>(i,1);
+        double x_k = temp_normal.at<double>(i,0);
+        double theta = atan2(y_k, x_k);
+        double r = 40;
+
+        cv::Point2d prjpt_2;
+        prjpt_2.x = prjpt_1.x  + r * cos(theta);
+        prjpt_2.y = prjpt_1.y  + r * sin(theta);
+        cv::line(testImg, prjpt_1, prjpt_2, cv::Scalar(255, 255, 255), 1, 8, 0);
+//		cv::imshow("rendered_image:", inputImage);
+//		cv::waitKey();
+    }
 
     //double score = newToolModel.calculateMatchingScore(testImg, testImg );
     //ROS_INFO_STREAM("new_temp" << new_temp);
+    cv::imshow("tool image: ",testImg );
+
+    cv::waitKey(0);
+
     //cv::imwrite("/home/rxh349/ros_ws/src/Tool_tracking/tool_tracking/new.png", testImg);
 
-/********write a test segmentation ********/
-/*
+/********write a test segmentation ********//*
+
     ToolModel::toolModel newModel;
     newModel.tvec_elp(0) = 0.0;  //left and right (image frame)
     newModel.tvec_elp(1) = 0.0;  //up and down
@@ -150,11 +152,15 @@ int main(int argc, char **argv) {
     newModel.rvec_elp(2) = -1;
     newToolModel.computeModelPose(newModel, 0.1, 0.1, 0 );
     newToolModel.renderTool(segImg, newModel, Cam, P);
+
     cv::cvtColor(segImg, segImg, CV_BGR2GRAY); //convert it to grey scale
     cv::cvtColor(testImg, testImg, CV_BGR2GRAY); //convert it to grey scale
+
     cv::imshow("tool image: ",testImg );
     //cv::imshow("segImg : ",segImg );
+
     cv::waitKey(0);
+
     float sec1 = (float) t1 / CLOCKS_PER_SEC;
     float sec = (float) t / CLOCKS_PER_SEC;
 */
@@ -180,3 +186,4 @@ int main(int argc, char **argv) {
     return 0;
 
 }
+
