@@ -70,12 +70,7 @@
 #include <cwru_opencv_common/projective_geometry.h>
 
 /**
- * @brief cwru_xform_utils is for running in the Jade version
- */
-//#include <cwru_xform_utils/xform_utils.h>
-
-/**
- * @brief xform_utils is for running in the Indigo version
+ * @brief xform_utils is for kinematics computation
  */
 #include <xform_utils/xform_utils.h>
 

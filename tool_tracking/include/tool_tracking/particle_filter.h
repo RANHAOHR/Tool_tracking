@@ -65,8 +65,9 @@
 #include <tf/transform_listener.h>
 #include <cwru_davinci_interface/davinci_interface.h>
 #include <cwru_davinci_kinematics/davinci_kinematics.h>
-
-//#include <cwru_xform_utils/xform_utils.h>
+/**
+ * @brief xform_utils is for kinematics computation
+ */
 #include <xform_utils/xform_utils.h>
 
 class ParticleFilter {
