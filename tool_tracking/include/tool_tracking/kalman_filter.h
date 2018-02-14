@@ -64,13 +64,15 @@
 
 #include <geometry_msgs/Transform.h>
 #include <tf/transform_listener.h>
-#include <cwru_davinci_interface/davinci_interface.h>
+//#include <cwru_davinci_interface/davinci_interface.h>
 #include <cwru_davinci_kinematics/davinci_kinematics.h>
 #include <sensor_msgs/image_encodings.h>
 #include <cwru_opencv_common/projective_geometry.h>
 
+#include <cwru_davinci_control/psm_controller.h>
+
 /**
- * @brief xform_utils is for kinematics computation
+ * @brief cwru_xform_utils is for running in the Jade version
  */
 #include <xform_utils/xform_utils.h>
 
@@ -136,9 +138,9 @@ private:
 /**
  * @brief Unscented Kalman filter parameters
  */
-    const static double alpha = 0.001;
-    const static double k = 0.0;
-    const static double beta = 2;
+    const double alpha = 0.001;
+    const double k = 0.0;
+    const double beta = 2;
 
 /**
  * @brief joint sensor feedback, gives 7 joint angles. sensor_1 for green arm, sensor_2 for yellow arm

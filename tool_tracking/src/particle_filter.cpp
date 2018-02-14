@@ -110,14 +110,18 @@ void ParticleFilter::initializeParticles() {
 
 void ParticleFilter::getCoarseGuess() {
     //Pull in our first round of sensor data.
-    davinci_interface::init_joint_feedback(node_handle);
+    //davinci_interface::init_joint_feedback(node_handle);
+	psm_controller psm1(1, node_handle, true);
+	psm_controller psm2(2, node_handle, true);
 
-    std::vector<std::vector<double> > tmp;
-    tmp.resize(2);
-    if (davinci_interface::get_fresh_robot_pos(tmp)) {
-        sensor_1 = tmp[0];
-        sensor_2 = tmp[1];
+    sensor_msgs::JointState tmp;
+    if (psm1.get_fresh_psm_state(tmp)) {
+        sensor_1 = tmp.position;
     }
+    if (psm2.get_fresh_psm_state(tmp)) {
+        sensor_2 = tmp.position;
+    }
+
 
     Eigen::Affine3d a1_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0],
                                                             sensor_1[0] + DH_q_offset0);
@@ -343,12 +347,23 @@ void ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &
 void ParticleFilter::updateParticles(std::vector<double> &best_particle_last, double &maxScore,
                                      std::vector<std::vector<double> > &updatedParticles,
                                      ToolModel::toolModel &next_step_pose) {
-    std::vector<std::vector<double> > tmp;
+                                     
+    psm_controller psm1(1, node_handle, true);
+	psm_controller psm2(2, node_handle, true);
+    sensor_msgs::JointState tmp;
+    if (psm1.get_fresh_psm_state(tmp)) {
+        sensor_1 = tmp.position;
+    }
+    if (psm2.get_fresh_psm_state(tmp)) {
+        sensor_2 = tmp.position;
+    }
+                                     
+    /*std::vector<std::vector<double> > tmp;
     tmp.resize(2);
     if (davinci_interface::get_fresh_robot_pos(tmp)) {
         sensor_1 = tmp[0];
         sensor_2 = tmp[1];
-    }
+    }*/
 
     Eigen::Affine3d a1_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0],
                                                             sensor_1[0] + DH_q_offset0);

@@ -60,14 +60,14 @@
 #include <boost/random/normal_distribution.hpp>
 
 #include <geometry_msgs/Transform.h>
-#include <cwru_davinci_interface/davinci_interface.h>
+//#include <cwru_davinci_interface/davinci_interface.h>
 
 #include <tf/transform_listener.h>
-#include <cwru_davinci_interface/davinci_interface.h>
+//#include <cwru_davinci_interface/davinci_interface.h>
 #include <cwru_davinci_kinematics/davinci_kinematics.h>
-/**
- * @brief xform_utils is for kinematics computation
- */
+
+#include <cwru_davinci_control/psm_controller.h>
+
 #include <xform_utils/xform_utils.h>
 
 class ParticleFilter {
