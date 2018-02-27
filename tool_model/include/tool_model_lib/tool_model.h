@@ -252,19 +252,6 @@ public:
      */
     void computeEllipsePose(toolModel &inputmodel, const double &theta_ellipse, const double &theta_grip_1,
                             const double &theta_grip_2);
-
-    /**
-     * @brief Given already perturbed joints 1-4 and toolModel representation of 5,6,7 plus their noise, compute a gaussian perturbed toolModel
-     * Used by gaussianSampling and used in particle filter's motion model
-     * @param seed_pose unperturbed toolModel; used to get joints 5,6,7
-     * @param inputModel contains gaussian perturbed joints 1-4 and empty 5,6,7
-     * @param theta_tool gaussian delta joint 5
-     * @param theta_grip_1 gaussian delta joint 6
-     * @param theta_grip_2 gaussian delta joint 7
-     * Note in setRandomConfig, joints are the joint values, not joint noise values
-     */
-    void computeRandomPose(const toolModel &seed_pose, toolModel &inputModel, const double &theta_tool, const double &theta_grip_1,
-                                      const double &theta_grip_2);
     /**
      * @brief render a tool given its toolModel pose onto an image
      * do so by finding/rendering the silhoutte of all 4 of its components (cyl, elp, grip1, grip2)

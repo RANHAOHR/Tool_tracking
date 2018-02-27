@@ -42,7 +42,7 @@ using cv_projective::reprojectPoint;
 using cv_projective::transformPoints;
 
 ParticleFilter::ParticleFilter(ros::NodeHandle *nodehandle):
-        node_handle(*nodehandle), numParticles(800), downsample_rate_pos(0.003), downsample_rate_rot(0.003){
+        node_handle(*nodehandle), numParticles(800), downsample_rate_pos(0.0003), downsample_rate_rot(0.0005){
 
     error_vec.resize(2);
 
@@ -173,7 +173,7 @@ void ParticleFilter::getCoarseGuess(){
 
 
 	/*get the noised pose*/
-    sensor_1[0] = sensor_1[0] * 1.1;
+    // sensor_1[0] = sensor_1[0] * 1.1;
 	//Compute position variable a1_rvec representing joints 1-4 (3x1 cv::mat) using FK and DH parameters
 	a1_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0], sensor_1[0] + DH_q_offset0 );
     a1_pos_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1], sensor_1[1] + DH_q_offset1 );
@@ -335,7 +335,7 @@ void ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &
 
 	    //show composite of all particles in left/right camera on temp images
 
-		ROS_INFO_STREAM("Maxscore arm 1: " << maxScore_1);  //debug
+		// ROS_INFO_STREAM("Maxscore arm 1: " << maxScore_1);  //debug
 
 	    //compute weights as normalized matching scores
 		for (int j = 0; j < numParticles; ++j) {
@@ -345,10 +345,10 @@ void ParticleFilter::trackingTool(const cv::Mat &segmented_left, const cv::Mat &
 
 	    //store the best particle (that with highest weight)
 		ToolModel::toolModel best_particle = particles_arm_1[maxScoreIdx_1];
-		ROS_INFO("Real tool at (%f %f %f): %f %f %f, ", initial.tvec_cyl(0), initial.tvec_cyl(1),initial.tvec_cyl(2),initial.rvec_cyl(0),initial.rvec_cyl(1), initial.rvec_cyl(2));
-		ROS_WARN("Particle ARM AT (%f %f %f): %f %f %f, ",best_particle.tvec_cyl(0), best_particle.tvec_cyl(1),best_particle.tvec_cyl(2),best_particle.rvec_cyl(0),best_particle.rvec_cyl(1), best_particle.rvec_cyl(2));
+		// ROS_INFO("Real tool at (%f %f %f): %f %f %f, ", initial.tvec_cyl(0), initial.tvec_cyl(1),initial.tvec_cyl(2),initial.rvec_cyl(0),initial.rvec_cyl(1), initial.rvec_cyl(2));
+		// ROS_WARN("Particle ARM AT (%f %f %f): %f %f %f, ",best_particle.tvec_cyl(0), best_particle.tvec_cyl(1),best_particle.tvec_cyl(2),best_particle.rvec_cyl(0),best_particle.rvec_cyl(1), best_particle.rvec_cyl(2));
 
-		///render the best particle on real images and show
+		// ///render the best particle on real images and show
 		cv::Mat show_raw_left = raw_image_left.clone();
 		cv::Mat show_raw_right = raw_image_right.clone();
 		newToolModel.renderTool(show_raw_left, best_particle, Cam_left_arm_1, P_left);
@@ -487,105 +487,109 @@ void ParticleFilter::updateParticles(std::vector<ToolModel::toolModel> &updatedP
         sensor_2 = tmp[0];
     }
 
- //    /* add noise */
-	// sensor_1[1] = sensor_1[1]*1.2;
-	// sensor_1[2] = sensor_1[2]*1.03;
-	// sensor_1[4] = sensor_1[4]*1.3;
-	// sensor_1[5] = sensor_1[5]*1.07;
+    /* add noise */
+    sensor_1[0] = sensor_1[0]*1.001;
+	sensor_1[1] = sensor_1[1]*1.193 ;
+	sensor_1[2] = sensor_1[2]*1.006 ;
+	sensor_1[3] = sensor_1[3]*1.0;
+	sensor_1[4] = sensor_1[4]*1.2 ;
+	sensor_1[5] = sensor_1[5]*1.0 +  newToolModel.randomNumber(0.00001,0);
 
- //    Eigen::Affine3d a1_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0],
- //                                                            sensor_1[0] + DH_q_offset0);
- //    Eigen::Affine3d a1_pos_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1],
- //                                                            sensor_1[1] + DH_q_offset1);
- //    Eigen::Affine3d a1_pos_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_1[2] + DH_q_offset2,
- //                                                            DH_alpha_params[2], 0.0);
- //    Eigen::Affine3d a1_pos_4 = kinematics.computeAffineOfDH(DH_a_params[3], DH_d4, DH_alpha_params[3],
- //                                                            sensor_1[3] + DH_q_offset3);
+    Eigen::Affine3d a1_pos_1 = kinematics.computeAffineOfDH(DH_a_params[0], DH_d1, DH_alpha_params[0],
+                                                            sensor_1[0] + DH_q_offset0);
+    Eigen::Affine3d a1_pos_2 = kinematics.computeAffineOfDH(DH_a_params[1], DH_d2, DH_alpha_params[1],
+                                                            sensor_1[1] + DH_q_offset1);
+    Eigen::Affine3d a1_pos_3 = kinematics.computeAffineOfDH(DH_a_params[2], sensor_1[2] + DH_q_offset2,
+                                                            DH_alpha_params[2], 0.0);
+    Eigen::Affine3d a1_pos_4 = kinematics.computeAffineOfDH(DH_a_params[3], DH_d4, DH_alpha_params[3],
+                                                            sensor_1[3] + DH_q_offset3);
 
- //    Eigen::Affine3d a1_pos = kinematics.affine_frame0_wrt_base_ * a1_pos_1 * a1_pos_2 * a1_pos_3 *
- //                             a1_pos_4;// *a1_5 * a1_6 * a1_7 * kinematics.affine_gripper_wrt_frame6_ ;
- //    Eigen::Vector3d a1_trans = a1_pos.translation();
+    Eigen::Affine3d a1_pos = kinematics.affine_frame0_wrt_base_ * a1_pos_1 * a1_pos_2 * a1_pos_3 *
+                             a1_pos_4;// *a1_5 * a1_6 * a1_7 * kinematics.affine_gripper_wrt_frame6_ ;
+    Eigen::Vector3d a1_trans = a1_pos.translation();
 
- //    cv::Mat a1_rvec = cv::Mat::zeros(3, 1, CV_64FC1);
- //    computeRodriguesVec(a1_pos, a1_rvec);
+    cv::Mat a1_rvec = cv::Mat::zeros(3, 1, CV_64FC1);
+    computeRodriguesVec(a1_pos, a1_rvec);
 
-	// ToolModel::toolModel new_pose;
-	// new_pose.tvec_cyl(0) = a1_trans[0];
-	// new_pose.tvec_cyl(1) = a1_trans[1];
-	// new_pose.tvec_cyl(2) = a1_trans[2];
-	// new_pose.rvec_cyl(0) = a1_rvec.at<double>(0, 0);
-	// new_pose.rvec_cyl(1) = a1_rvec.at<double>(1, 0);
-	// new_pose.rvec_cyl(2) = a1_rvec.at<double>(2, 0);
+	ToolModel::toolModel new_pose;
+	new_pose.tvec_cyl(0) = a1_trans[0];
+	new_pose.tvec_cyl(1) = a1_trans[1];
+	new_pose.tvec_cyl(2) = a1_trans[2];
+	new_pose.rvec_cyl(0) = a1_rvec.at<double>(0, 0);
+	new_pose.rvec_cyl(1) = a1_rvec.at<double>(1, 0);
+	new_pose.rvec_cyl(2) = a1_rvec.at<double>(2, 0);
 
     double theta_caudier = sensor_1[4];
     double theta_grip = sensor_1[5];
     double theta_open = sensor_1[6];
 
- //    newToolModel.computeEllipsePose(new_pose, theta_caudier, theta_grip, theta_open);
+    newToolModel.computeEllipsePose(new_pose, theta_caudier, theta_grip, theta_open);
 
+	cv::Mat diff_1 = cv::Mat(new_pose.tvec_cyl) - cv::Mat(last_tool.tvec_cyl);
+	cv::Mat diff_2 = cv::Mat(new_pose.rvec_cyl) - cv::Mat(last_tool.rvec_cyl);
+	double diff_cly = sqrt(diff_1.dot(diff_1)) + sqrt(diff_2.dot(diff_2));
 
-	// cv::Mat diff_1 = cv::Mat(new_pose.tvec_cyl) - cv::Mat(last_tool.tvec_cyl);
-	// cv::Mat diff_2 = cv::Mat(new_pose.rvec_cyl) - cv::Mat(last_tool.rvec_cyl);
-	// double diff_cly = sqrt(diff_1.dot(diff_1)) + sqrt(diff_2.dot(diff_2));
+	cv::Mat diff_3 = cv::Mat(new_pose.tvec_elp) - cv::Mat(last_tool.tvec_elp);
+	cv::Mat diff_4 = cv::Mat(new_pose.rvec_elp) - cv::Mat(last_tool.rvec_elp);
+	double diff_caudier = sqrt(diff_3.dot(diff_3)) + sqrt(diff_4.dot(diff_4));
 
-	// cv::Mat diff_3 = cv::Mat(new_pose.tvec_elp) - cv::Mat(last_tool.tvec_elp);
-	// cv::Mat diff_4 = cv::Mat(new_pose.rvec_elp) - cv::Mat(last_tool.rvec_elp);
-	// double diff_caudier = sqrt(diff_3.dot(diff_3)) + sqrt(diff_4.dot(diff_4));
+	cv::Mat diff_5 = cv::Mat(new_pose.tvec_grip1) - cv::Mat(last_tool.tvec_grip1);
+	cv::Mat diff_6 = cv::Mat(new_pose.rvec_grip1) - cv::Mat(last_tool.rvec_grip1);
 
-	// cv::Mat diff_5 = cv::Mat(new_pose.tvec_grip1) - cv::Mat(last_tool.tvec_grip1);
-	// cv::Mat diff_6 = cv::Mat(new_pose.rvec_grip1) - cv::Mat(last_tool.rvec_grip1);
+	cv::Mat diff_7 = cv::Mat(new_pose.tvec_grip2) - cv::Mat(last_tool.tvec_grip2);
+	cv::Mat diff_8 = cv::Mat(new_pose.rvec_grip2) - cv::Mat(last_tool.rvec_grip2);
 
-	// cv::Mat diff_7 = cv::Mat(new_pose.tvec_grip2) - cv::Mat(last_tool.tvec_grip2);
-	// cv::Mat diff_8 = cv::Mat(new_pose.rvec_grip2) - cv::Mat(last_tool.rvec_grip2);
+	double diff_gripper = sqrt(diff_5.dot(diff_5)) + sqrt(diff_6.dot(diff_6));
 
-	// double diff_gripper = sqrt(diff_5.dot(diff_5)) + sqrt(diff_6.dot(diff_6));
-
-	// ROS_INFO_STREAM("downsample_rate_pos " << downsample_rate_pos); //annealing coefficient
-	// ROS_INFO_STREAM("downsample_rate_rot " << downsample_rate_rot); //annealing coefficient
+	ROS_INFO_STREAM("downsample_rate_pos " << downsample_rate_pos); //annealing coefficient
+	ROS_INFO_STREAM("downsample_rate_rot " << downsample_rate_rot); //annealing coefficient
 
 	// ROS_INFO_STREAM("new_pose tvec cly" << cv::Mat(new_pose.tvec_cyl));
+
 	//Move particles through gaussian noise motion model
 	//after resampling, first particle is best -> save it in the searching pool
 
 	//If error is small decrement it even more
 
-	downsample_rate_pos -= 0.0002;
-	if(downsample_rate_pos < 0.0002){
-		downsample_rate_pos = 0.0002;
-	};
 
-	downsample_rate_rot -= 0.0002;
-	if(downsample_rate_rot < 0.0005){
-		downsample_rate_rot = 0.0005;
-	};
+	// if(error_vec[0] < 1){
+	// 	downsample_rate_pos = 0.0005;
+	// }
+	// if(error_vec[1] < 3.0){
+	// 	downsample_rate_rot = 0.0005;
+	// }
+
+	ROS_WARN_STREAM("diff_caudier " << fabs(diff_caudier));
+	ROS_WARN_STREAM("diff_cly " << fabs(diff_cly));
+	ROS_WARN_STREAM("diff_gripper " << fabs(diff_gripper));    
+	if (fabs(diff_cly) >0.01 || fabs(diff_caudier) >0.01 || fabs(diff_gripper) >0.01 )
+	{	
+		ROS_WARN_STREAM("UPDATE!");
+		for (int i = 0; i < numParticles; ++i) {
+			updatedParticles[i] = newToolModel.gaussianSampling(new_pose, downsample_rate_pos, downsample_rate_rot, theta_caudier, theta_grip, theta_open);
+		}
+	 	
+	}else{
+		ROS_WARN_STREAM("perturb!");
+		downsample_rate_pos -= 0.0002;
+		if(downsample_rate_pos < 0.0001){
+			downsample_rate_pos = 0.0001;
+		};
+
+		downsample_rate_rot -= 0.0002;
+		if(downsample_rate_rot < 0.0002){
+			downsample_rate_rot = 0.0002;
+		};
 
 
-	if(error_vec[0] < 5){
-		downsample_rate_pos = 0.0002;
+		for (int i = 0; i < numParticles; ++i) {
+			updatedParticles[i] = newToolModel.gaussianSampling(updatedParticles[i], downsample_rate_pos, downsample_rate_rot, theta_caudier, theta_grip, theta_open);
+		}
+		
 	}
-	if(error_vec[1] < 3.0){
-		downsample_rate_rot = 0.0005;
-	}
 
-	ROS_WARN_STREAM("downsample_rate_pos " << downsample_rate_pos);
-	ROS_WARN_STREAM("downsample_rate_rot " << downsample_rate_rot);
-	// ROS_WARN_STREAM("diff_caudier " << fabs(diff_caudier));
-	// ROS_WARN_STREAM("diff_cly " << fabs(diff_cly));
-	// ROS_WARN_STREAM("diff_gripper " << fabs(diff_gripper));
-	// if (fabs(diff_cly) >0.01 || fabs(diff_caudier) >0.01 || fabs(diff_gripper) >0.01 ){ROS_WARN_STREAM("UPDATE!");} 
 
-    for (int i = 0; i < numParticles; ++i) {
-    	// if (fabs(diff_cly) >0.01 || fabs(diff_caudier) >0.01 || fabs(diff_gripper) >0.01 )
-    	// {			
-    	// 	// downsample_rate_pos = 0.0006;
-    	// 	// downsample_rate_rot = 0.001;
-    	//  	updatedParticles[i] = newToolModel.gaussianSampling(new_pose, downsample_rate_pos, downsample_rate_rot, theta_caudier, theta_grip, theta_open );
-    	// }else{
-    		updatedParticles[i] = newToolModel.gaussianSampling(updatedParticles[i], downsample_rate_pos, downsample_rate_rot, theta_caudier, theta_grip, theta_open);
-    	// }
-    }
-
-    // last_tool = new_pose;
+    last_tool = new_pose;
 };
 
 double ParticleFilter::measureFuncSameCam(cv::Mat & toolImage_left, cv::Mat & toolImage_right, ToolModel::toolModel &toolPose,
@@ -719,7 +723,7 @@ void ParticleFilter::dataCollection(const cv::Mat &segmented_left, const cv::Mat
 	/**
 	 * Noise set 1
 	 */
- 	ofstream datafile_1 ("/home/ranhao/Desktop/joint_set1.txt", std::ios_base::app);
+ 	ofstream datafile_1 ("/home/ranhao/Desktop/joint_set1.txt", std::ios_base::app); 
  	if (datafile_1.is_open())
  	{
  		// initializeParticles(); //every time restart the particles. if in for loop
@@ -727,7 +731,7 @@ void ParticleFilter::dataCollection(const cv::Mat &segmented_left, const cv::Mat
 		datafile_1 << "  ";
 		datafile_1 << initial_error_vec[1];
  		datafile_1 << "  ";
- 		for (int k = 0; k < 24; ++k) { 
+ 		for (int k = 0; k < 50; ++k) { 
  			ROS_ERROR_STREAM("POSE new " << k << " th round");  
  			trackingTool(segmented_left, segmented_right);
 

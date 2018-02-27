@@ -55,6 +55,10 @@ int main(int argc, char **argv) {
 
 	ros::NodeHandle nh;
 	//Initialize particles
+	ros::Duration(10).sleep();
+
+
+
 	ParticleFilter Particles(&nh);
 
     freshImage = false;
@@ -102,60 +106,63 @@ int main(int argc, char **argv) {
 	// }
 
 	// if camera is ready, track segmented image
-	ros::spinOnce();
-	if (freshImage) {
+	// ros::spinOnce();
+	// if (freshImage) {
 
-		Particles.raw_image_left = rawImage_left.clone();
-		Particles.raw_image_right = rawImage_right.clone();
+	// 	Particles.raw_image_left = rawImage_left.clone();
+	// 	Particles.raw_image_right = rawImage_right.clone();
 
-		seg_left = segmentation(rawImage_left);
-		seg_right = segmentation(rawImage_right);
+	// 	seg_left = segmentation(rawImage_left);
+	// 	seg_right = segmentation(rawImage_right);
 
-		Particles.dataCollection(seg_left, seg_right);
+	// 	Particles.dataCollection(seg_left, seg_right);
 
-		freshImage = false;
+	// 	freshImage = false;
 
-	}
-
-
-	// /* test the convergence for sequential poses*/
-	// int i = 0;
-	// while (nh.ok()) {
-	// 	ofstream datafile_1 ("/home/ranhao/Desktop/joint_sd3.txt", std::ios_base::app);
-	// 	if (datafile_1.is_open())
-	// 	{
-	// 		ros::spinOnce();
-	// 		// if camera is ready, track segmented image
-	// 		if (freshImage) {
-	// 			ROS_ERROR_STREAM("POSE new " << i << " th round");
-
-	// 			Particles.raw_image_left = rawImage_left.clone();
-	// 			Particles.raw_image_right = rawImage_right.clone();
-
-	// 			seg_left = segmentation(rawImage_left);
-	// 			seg_right = segmentation(rawImage_right);
-
-	// 			// cv::imshow("seg_left ", seg_left);
-	// 			// cv::imshow("seg_right ", seg_right);
-	// 		    // cv::waitKey(10);
-	// 			ROS_INFO("---- START TRACKING -----");
-	// 			Particles.trackingTool(seg_left, seg_right);
-
-	// 			datafile_1 << Particles.error_vec[0];
-	// 			datafile_1 << "  ";
-	// 			datafile_1 << Particles.error_vec[1];
-	// 			datafile_1 << "  ";
-
-
-	// 			datafile_1 << "\n";
-	// 			datafile_1.close();
-
-	// 			freshImage = false;
-	// 			i+=1;
-	// 		}
-	// 	}else cout << "Unable to open file";
-		
 	// }
+
+
+	/* test the convergence for sequential poses*/
+	int i = 0;
+	ofstream datafile_1 ("/home/ranhao/Desktop/joint_D2_more.txt", std::ios_base::app);
+	if (datafile_1.is_open())
+	{
+		datafile_1 << Particles.initial_error_vec[0];
+		datafile_1 << "  ";
+		datafile_1 << Particles.initial_error_vec[1];
+ 		datafile_1 << "  ";
+
+		while (nh.ok() && i < 40) {
+			ros::spinOnce();
+			// if camera is ready, track segmented image
+
+			if (freshImage) {
+				ROS_ERROR_STREAM("POSE new " << i << " th round");
+
+				Particles.raw_image_left = rawImage_left.clone();
+				Particles.raw_image_right = rawImage_right.clone();
+
+				seg_left = segmentation(rawImage_left);
+				seg_right = segmentation(rawImage_right);
+
+				ROS_INFO("---- START TRACKING -----");
+				Particles.trackingTool(seg_left, seg_right);
+
+				datafile_1 << Particles.error_vec[0];
+				datafile_1 << "  ";
+				datafile_1 << Particles.error_vec[1];
+				datafile_1 << "  ";
+
+				freshImage = false;
+				i+=1;
+			}
+		}
+
+		datafile_1 << "\n";
+		datafile_1.close();
+
+		
+	}else cout << "Unable to open file";
 
 	return 0;
 }
