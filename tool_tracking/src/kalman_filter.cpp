@@ -72,7 +72,9 @@ KalmanFilter::KalmanFilter(ros::NodeHandle *nodehandle) :
 	/***motion model params***/
 	//Initialization of sensor data.
 	kinematics = Davinci_fwd_solver();
-	davinci_interface::init_joint_feedback(nh_);
+	//davinci_interface::init_joint_feedback(nh_);
+	psm_controller psm1(1, nh_, true);
+	psm_controller psm2(2, nh_, true);
 
 	//The projection matrix from the simulation does not accurately reflect the Da Vinci robot. We are hardcoding the matrix from the da vinci itself.
 	projectionMat_subscriber_r = nh_.subscribe("/davinci_endo/right/camera_info", 1, &KalmanFilter::projectionRightCB, this);
@@ -413,12 +415,16 @@ void KalmanFilter::h(cv::Mat & sigma_point_out, const cv::Mat_<double> & sigma_p
  */
 void KalmanFilter::getCoarseEstimation(){
 
-	std::vector<std::vector<double> > tmp;
-	tmp.resize(2);
-	if(davinci_interface::get_fresh_robot_pos(tmp)){
-		sensor_1 = tmp[0];
-		sensor_2 = tmp[1];
-	}
+	psm_controller psm1(1, nh_, true);
+	psm_controller psm2(2, nh_, true);
+
+	sensor_msgs::JointState tmp;
+    if (psm1.get_fresh_psm_state(tmp)) {
+        sensor_1 = tmp.position;
+    }
+    if (psm2.get_fresh_psm_state(tmp)) {
+        sensor_2 = tmp.position;
+    }
 
 	real_mu = cv::Mat_<double>::zeros(L, 1);
 	real_mu.at<double>(0 , 0) = sensor_1[0];
@@ -673,12 +679,16 @@ void KalmanFilter::computeJointVelocity(cv::Mat & u_t){
 
 	t_1_step = ros::Time::now().toSec();
 
-	std::vector<std::vector<double> > tmp;
-	tmp.resize(2);
-	if(davinci_interface::get_fresh_robot_pos(tmp)){
-		sensor_1 = tmp[0];
-		sensor_2 = tmp[1];
-	}
+	psm_controller psm1(1, nh_, true);
+	psm_controller psm2(2, nh_, true);
+
+	sensor_msgs::JointState tmp;
+    if (psm1.get_fresh_psm_state(tmp)) {
+        sensor_1 = tmp.position;
+    }
+    if (psm2.get_fresh_psm_state(tmp)) {
+        sensor_2 = tmp.position;
+    }
 
 	real_mu.at<double>(0 , 0) = sensor_1[0];
 	real_mu.at<double>(1 , 0) = sensor_1[1];

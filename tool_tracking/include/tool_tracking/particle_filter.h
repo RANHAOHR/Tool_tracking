@@ -60,13 +60,14 @@
 #include <boost/random/normal_distribution.hpp>
 
 #include <geometry_msgs/Transform.h>
-#include <cwru_davinci_interface/davinci_interface.h>
+//#include <cwru_davinci_interface/davinci_interface.h>
 
 #include <tf/transform_listener.h>
-#include <cwru_davinci_interface/davinci_interface.h>
+//#include <cwru_davinci_interface/davinci_interface.h>
 #include <cwru_davinci_kinematics/davinci_kinematics.h>
 
-//#include <cwru_xform_utils/xform_utils.h>
+#include <cwru_davinci_control/psm_controller.h>
+
 #include <xform_utils/xform_utils.h>
 
 class ParticleFilter {
@@ -76,10 +77,6 @@ private:
     ros::NodeHandle node_handle;
 
     ToolModel newToolModel;
-/**
- * @brief predicted_real_pose is used to get the predicted real tool pose from using the forward kinematics
- */
-    ToolModel::toolModel next_step_pose;
 
     unsigned int numParticles; //total number of particles
 
@@ -217,8 +214,7 @@ public:
  * @param updatedParticles : input and output particles
  */
     void updateParticles(std::vector<double> &best_particle_last, double &maxScore,
-                         std::vector<std::vector<double> > &updatedParticles,
-                         ToolModel::toolModel &predicted_real_pose);
+                         std::vector<std::vector<double> > &updatedParticles);
 
 /**
  * @brief Getting the particles by addding Gaussain noise to the initialization

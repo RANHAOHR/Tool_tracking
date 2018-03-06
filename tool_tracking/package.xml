@@ -26,9 +26,8 @@
   <build_depend>vesselness_image_filter</build_depend>
   <build_depend>tool_model</build_depend>
   <build_depend>geometry_msgs</build_depend>
-  <build_depend>cwru_davinci_interface</build_depend>
+  <build_depend>cwru_davinci_control</build_depend>
   <build_depend>cwru_davinci_kinematics</build_depend>
-  <build_depend>cwru_xform_utils</build_depend>
   <build_depend>xform_utils</build_depend>
 
 
@@ -42,9 +41,8 @@
   <run_depend>vesselness_image_filter</run_depend >
   <run_depend>tool_model</run_depend>
   <run_depend>geometry_msgs</run_depend>
-  <run_depend>cwru_davinci_interface</run_depend>
+  <run_depend>cwru_davinci_control</run_depend>
   <run_depend>cwru_davinci_kinematics</run_depend>
-  <run_depend>cwru_xform_utils</run_depend>
   <run_depend>xform_utils</run_depend>
 
 </package>

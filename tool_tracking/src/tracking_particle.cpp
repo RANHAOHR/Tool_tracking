@@ -37,7 +37,7 @@ cv::Mat segmentation(cv::Mat &InputImg) {
 
 	resize(src, src, cv::Size(), 1, 1);
 
-	double lowThresh = 20;
+	double lowThresh = 30;
 
 //	cv::cvtColor(src, src_gray, CV_BGR2GRAY); //if this is already CV_8UC1 in rect image
 
@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 
             cv::imshow("seg left: ",seg_left );
             cv::imshow("seg right: ",seg_right );
-
+            // cv::waitKey();
             Particles.trackingTool(seg_left, seg_right); //with rendered tool and segmented img
 
 			freshImage = false;

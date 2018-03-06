@@ -37,9 +37,9 @@ int main(int argc, char **argv) {
     freshImage = false;
 
     image_transport::ImageTransport it(nodeHandle);
-    image_transport::Subscriber img_sub_l = it.subscribe("/davinci_endo/left/image_rect", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_left)));
+    image_transport::Subscriber img_sub_l = it.subscribe("/davinci_endo/left/image_raw", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_left)));
 
-    image_transport::Subscriber img_sub_r = it.subscribe("/davinci_endo/right/image_rect", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_right)));
+    image_transport::Subscriber img_sub_r = it.subscribe("/davinci_endo/right/image_raw", 1, boost::function<void(const sensor_msgs::ImageConstPtr &)>(boost::bind(newImageCallback, _1, &rawImage_right)));
 
     ROS_INFO("---- done subscribe -----");
 
@@ -56,14 +56,17 @@ int main(int argc, char **argv) {
 
     cv::Mat P = cam_mat.colRange(3, 4).rowRange(0, 3);
     ROS_INFO_STREAM("P " << P); */
-
+cv::Mat rgbImage_left = cv::Mat::zeros(480, 640, CV_8UC3);//CV_32FC1
+cv::Mat rgbImage_right = cv::Mat::zeros(480, 640, CV_8UC3);
 
     while (nodeHandle.ok()) {
         ros::spinOnce();
 
         if (freshImage) {
-            cv::imshow("raw image left: ", rawImage_left);
-            cv::imshow("raw image right: ", rawImage_right);
+            cv::cvtColor(rawImage_left, rgbImage_left, CV_BGR2RGB);
+            cv::cvtColor(rawImage_right, rgbImage_right, CV_BGR2RGB);
+            cv::imshow("raw image left: ", rgbImage_left);
+            cv::imshow("raw image right: ", rgbImage_right);
             cv::waitKey(10);
         }
         freshImage = false;
