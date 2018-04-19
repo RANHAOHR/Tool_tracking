@@ -1,7 +1,7 @@
-# Davinci Surgical Tool Tracking 
+## Davinci Surgical Tool Tracking 
 This package is for da Vinci surgical robot tool tracking
 
-# Dependences:
+#### Dependences:
 cwru_vision: https://github.com/cwru-robotics/cwru_vision.git
 
 glm library: sudo apt-get install libglm-dev
