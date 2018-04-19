@@ -1,4 +1,4 @@
-# Davinci Tool Tracking 
+# Davinci Surgical Tool Tracking 
 This package is for da Vinci surgical robot tool tracking
 
 # Dependences:
@@ -10,7 +10,7 @@ vision_opencv: https://github.com/ros-perception/vision_opencv.git
 
 cwru_davinci: https://github.com/cwru-robotics/cwru_davinci 
 
-- tool model package: load the surgical tool model, construct tool geometry and acheive  virtual rendering.
+### Tool model package: load the surgical tool model, construct tool geometry and acheive  virtual rendering.
 
 To check the tool geometry and virtual rendering performance, run:
 
@@ -18,15 +18,15 @@ To check the tool geometry and virtual rendering performance, run:
 
 - tool tracking package: integrate Particle Filter (PF) algorithm, Unscented Kalman Filter (UKF) algorithm
 
-To run PF tracking algorithm:
+### To run PF tracking algorithm:
 
 `rosrun tool_tracking tracking_particle`
 
-To run UKF tracking algorithm:
+### To run UKF tracking algorithm:
 
 `rosrun tool_tracking tracking_kalman`
 
-- load model package: load CAD model in obj files
+### load model package: load CAD model in obj files
 
 This package is to test the object loading via OpenGl glm library.
 
