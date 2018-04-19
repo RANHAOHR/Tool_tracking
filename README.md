@@ -10,7 +10,7 @@ vision_opencv: https://github.com/ros-perception/vision_opencv.git
 
 cwru_davinci: https://github.com/cwru-robotics/cwru_davinci 
 
-### Tool model package: load the surgical tool model, construct tool geometry and acheive  virtual rendering.
+### Tool model package: load the surgical tool model, construct tool geometry and perform virtual rendering.
 
 To check the tool geometry and virtual rendering performance, run:
 
